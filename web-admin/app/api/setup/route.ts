@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
-import { createTablesSQLArray, addForeignKeysSQLArray } from '@/lib/create-tables'
+import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray } from '@/lib/create-tables'
 
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
@@ -17,16 +17,29 @@ export async function POST(request: NextRequest) {
       // 如果表不存在，创建所有表
       if (error.message?.includes('does not exist')) {
         try {
-          console.log('表不存在，开始创建所有表...')
+          console.log('表不存在，开始初始化数据库...')
           
-          // 逐条执行创建表的SQL
+          // 1. 先创建枚举类型
+          console.log('创建枚举类型...')
+          for (const sql of createEnumsSQLArray) {
+            try {
+              await prisma.$executeRawUnsafe(sql)
+            } catch (enumError: any) {
+              // 如果枚举已存在，忽略错误
+              if (!enumError.message?.includes('already exists')) {
+                throw enumError
+              }
+            }
+          }
+          
+          // 2. 创建表
+          console.log('创建数据库表...')
           for (const sql of createTablesSQLArray) {
             await prisma.$executeRawUnsafe(sql)
           }
           
-          console.log('表创建成功，开始添加外键约束...')
-          
-          // 添加外键约束
+          // 3. 添加外键约束
+          console.log('添加外键约束...')
           for (const sql of addForeignKeysSQLArray) {
             await prisma.$executeRawUnsafe(sql)
           }

@@ -1,17 +1,11 @@
+// 创建枚举类型的SQL（需要先执行）
+export const createEnumsSQLArray = [
+  `CREATE TYPE "UserRole" AS ENUM ('TEACHER', 'STUDENT')`,
+  `CREATE TYPE "WordDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD')`,
+]
+
 // 创建所有数据库表的SQL语句数组（每条语句单独执行）
 export const createTablesSQLArray = [
-  // 创建枚举类型
-  `DO $$ BEGIN
-    CREATE TYPE "UserRole" AS ENUM ('TEACHER', 'STUDENT');
-  EXCEPTION
-    WHEN duplicate_object THEN null;
-  END $$`,
-  
-  `DO $$ BEGIN
-    CREATE TYPE "WordDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
-  EXCEPTION
-    WHEN duplicate_object THEN null;
-  END $$`,
   
   // Users table
   `CREATE TABLE IF NOT EXISTS "users" (
