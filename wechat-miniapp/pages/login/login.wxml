@@ -1,0 +1,42 @@
+<!--pages/login/login.wxml-->
+<view class="container login-container">
+  <view class="login-header">
+    <text class="title-large">智能词汇复习</text>
+    <text class="text-secondary mt-2">基于艾宾浩斯遗忘曲线的学习系统</text>
+  </view>
+
+  <view class="login-form card mt-5">
+    <view class="form-item">
+      <text class="form-label">学号</text>
+      <input 
+        class="form-input" 
+        placeholder="请输入学号" 
+        value="{{studentNo}}"
+        bindinput="onStudentNoInput"
+      />
+    </view>
+
+    <view class="form-item mt-3">
+      <text class="form-label">密码</text>
+      <input 
+        class="form-input" 
+        placeholder="请输入密码" 
+        password="{{true}}"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+      />
+    </view>
+
+    <button 
+      class="btn-primary mt-4" 
+      bindtap="handleLogin"
+      loading="{{loading}}"
+    >
+      登录
+    </button>
+  </view>
+
+  <view class="login-footer mt-4 text-center">
+    <text class="text-muted">首次登录请使用默认密码 123456</text>
+  </view>
+</view>

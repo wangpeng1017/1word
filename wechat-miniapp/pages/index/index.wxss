@@ -1,0 +1,131 @@
+/* pages/index/index.wxss */
+.welcome-section {
+  padding: 40rpx;
+}
+
+.study-card {
+  padding: 32rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #FFFFFF;
+}
+
+.study-header {
+  display: flex;
+  align-items: center;
+}
+
+.study-icon {
+  font-size: 64rpx;
+  margin-right: 24rpx;
+}
+
+.study-info {
+  flex: 1;
+}
+
+.study-card .title-small {
+  color: #FFFFFF;
+  font-size: 36rpx;
+}
+
+.study-card .text-secondary {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.study-progress {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 16rpx;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #FFFFFF;
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #FFFFFF;
+  font-size: 24rpx;
+  min-width: 100rpx;
+  text-align: right;
+}
+
+.stats-section {
+  display: flex;
+  gap: 16rpx;
+}
+
+.stat-card {
+  flex: 1;
+  padding: 32rpx 24rpx;
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  display: block;
+  font-size: 24rpx;
+}
+
+.wrong-card {
+  padding: 32rpx;
+}
+
+.arrow {
+  font-size: 32rpx;
+  color: #9CA3AF;
+}
+
+/* 弹窗样式 */
+.resume-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  width: 600rpx;
+  padding: 48rpx;
+  z-index: 1001;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.modal-actions button {
+  flex: 1;
+}
