@@ -2,43 +2,33 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-
-const execAsync = promisify(exec)
+import { createTablesSQL } from '@/lib/create-tables'
 
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
   try {
     // 检查是否已经初始化（通过查询用户表）
-    let needsDbPush = false
     try {
       const userCount = await prisma.user.count()
       if (userCount > 0) {
         return errorResponse('数据库已初始化，无需重复执行')
       }
     } catch (error: any) {
-      // 如果表不存在，需要执行 db push
+      // 如果表不存在，创建所有表
       if (error.message?.includes('does not exist')) {
-        needsDbPush = true
+        try {
+          console.log('表不存在，开始创建所有表...')
+          
+          // 执行创建表的SQL
+          await prisma.$executeRawUnsafe(createTablesSQL)
+          
+          console.log('所有表创建成功')
+        } catch (createError: any) {
+          console.error('创建表失败:', createError)
+          return errorResponse(`创建数据库表失败: ${createError.message}`, 500)
+        }
       } else {
         throw error
-      }
-    }
-
-    // 如果需要，执行 prisma db push
-    if (needsDbPush) {
-      try {
-        console.log('执行 prisma db push...')
-        const { stdout, stderr } = await execAsync('npx prisma db push --accept-data-loss --skip-generate', {
-          cwd: process.cwd(),
-          env: process.env,
-        })
-        console.log('prisma db push 输出:', stdout)
-        if (stderr) console.error('prisma db push 错误:', stderr)
-      } catch (error: any) {
-        console.error('prisma db push 失败:', error)
-        return errorResponse(`创建数据库表失败: ${error.message}`, 500)
       }
     }
 
