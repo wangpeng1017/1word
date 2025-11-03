@@ -112,3 +112,9 @@ export const addForeignKeysSQLArray = [
      END IF;
    END $$`,
 ]
+
+// 确保缺失列的补齐（可重复执行，安全）
+export const ensureColumnsSQLArray = [
+  // teachers.subject 列
+  `ALTER TABLE "teachers" ADD COLUMN IF NOT EXISTS "subject" TEXT DEFAULT '英语'`,
+]

@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
         ],
       },
       include: {
-        teacher: true,
-        student: true,
+        teacher: { select: { id: true } },
+        student: { select: { id: true } },
       },
     })
 

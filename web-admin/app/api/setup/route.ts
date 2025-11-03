@@ -2,13 +2,18 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
-import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray, alterColumnsToEnumSQLArray } from '@/lib/create-tables'
+import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray, alterColumnsToEnumSQLArray, ensureColumnsSQLArray } from '@/lib/create-tables'
 
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
   try {
-    // 无论当前状态如何，优先确保：创建枚举类型 + 迁移列类型
+    // 无论当前状态如何，优先确保：补齐缺失列 + 创建枚举类型 + 迁移列类型
     try {
+      // 0) 补齐缺失列（幂等）
+      for (const sql of ensureColumnsSQLArray) {
+        try { await prisma.$executeRawUnsafe(sql) } catch (_) {}
+      }
+
       // 1) 创建枚举（若已存在则忽略）
       for (const sql of createEnumsSQLArray) {
         try {
@@ -119,6 +124,13 @@ export async function POST(request: NextRequest) {
 // 获取初始化状态
 export async function GET(request: NextRequest) {
   try {
+    // 先进行一次补齐缺失列（幂等），避免登录失败
+    try {
+      for (const sql of ensureColumnsSQLArray) {
+        try { await prisma.$executeRawUnsafe(sql) } catch (_) {}
+      }
+    } catch (_) {}
+
     const userCount = await prisma.user.count()
     return successResponse({
       initialized: userCount > 0,
