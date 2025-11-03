@@ -1,3 +1,6 @@
+
+require('dotenv').config();
+
 // 数据库初始化脚本
 // 用于在Vercel部署后初始化数据库
 
