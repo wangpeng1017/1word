@@ -13,16 +13,18 @@ export async function POST(request: NextRequest) {
       return errorResponse('密码不能为空')
     }
 
-    if (!email && !phone) {
-      return errorResponse('邮箱或手机号至少填写一个')
+    // email字段可以是邮箱或手机号
+    const loginIdentifier = email || phone
+    if (!loginIdentifier) {
+      return errorResponse('邮箱或手机号不能为空')
     }
 
-    // 查找用户
+    // 查找用户（支持邮箱或手机号登录）
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          email ? { email } : {},
-          phone ? { phone } : {},
+          { email: loginIdentifier },
+          { phone: loginIdentifier },
         ],
       },
       include: {
