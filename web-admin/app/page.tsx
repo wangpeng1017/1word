@@ -16,7 +16,12 @@ export default function Home() {
         <p className="text-lg text-gray-700 mb-8">
           基于艾宾浩斯遗忘曲线的智能词汇学习系统
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center flex-wrap">
+          <Link href="/setup">
+            <Button type="default" size="large">
+              首次设置
+            </Button>
+          </Link>
           <Link href="/login">
             <Button type="primary" size="large">
               登录
