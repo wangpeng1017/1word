@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
-import { createTablesSQL } from '@/lib/create-tables'
+import { createTablesSQLArray, addForeignKeysSQLArray } from '@/lib/create-tables'
 
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
@@ -19,10 +19,19 @@ export async function POST(request: NextRequest) {
         try {
           console.log('表不存在，开始创建所有表...')
           
-          // 执行创建表的SQL
-          await prisma.$executeRawUnsafe(createTablesSQL)
+          // 逐条执行创建表的SQL
+          for (const sql of createTablesSQLArray) {
+            await prisma.$executeRawUnsafe(sql)
+          }
           
-          console.log('所有表创建成功')
+          console.log('表创建成功，开始添加外键约束...')
+          
+          // 添加外键约束
+          for (const sql of addForeignKeysSQLArray) {
+            await prisma.$executeRawUnsafe(sql)
+          }
+          
+          console.log('所有表和约束创建成功')
         } catch (createError: any) {
           console.error('创建表失败:', createError)
           return errorResponse(`创建数据库表失败: ${createError.message}`, 500)
