@@ -1,8 +1,8 @@
-// 创建枚举类型的SQL（需要先执行）
-export const createEnumsSQLArray = [
-  `CREATE TYPE "UserRole" AS ENUM ('TEACHER', 'STUDENT')`,
-  `CREATE TYPE "WordDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD')`,
-]
+// 创建枚举类型的SQL（不再需要，保持为空以避免依赖数据库枚举）
+export const createEnumsSQLArray: string[] = []
+
+// 迁移列类型为枚举（不再需要，保持为空）
+export const alterColumnsToEnumSQLArray: string[] = []
 
 // 创建所有数据库表的SQL语句数组（每条语句单独执行）
 export const createTablesSQLArray = [
@@ -14,7 +14,7 @@ export const createTablesSQLArray = [
     "phone" TEXT,
     "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
+    "role" TEXT NOT NULL DEFAULT 'STUDENT',
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -70,7 +70,7 @@ export const createTablesSQLArray = [
     "phonetic_us" TEXT,
     "phonetic_uk" TEXT,
     "is_high_frequency" BOOLEAN NOT NULL DEFAULT false,
-    "difficulty" "WordDifficulty" NOT NULL DEFAULT 'MEDIUM',
+    "difficulty" TEXT NOT NULL DEFAULT 'MEDIUM',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,

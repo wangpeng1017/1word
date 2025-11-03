@@ -2,11 +2,31 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
-import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray } from '@/lib/create-tables'
+import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray, alterColumnsToEnumSQLArray } from '@/lib/create-tables'
 
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
   try {
+    // 无论当前状态如何，优先确保：创建枚举类型 + 迁移列类型
+    try {
+      // 1) 创建枚举（若已存在则忽略）
+      for (const sql of createEnumsSQLArray) {
+        try {
+          await prisma.$executeRawUnsafe(sql)
+        } catch (enumError: any) {
+          if (!enumError.message?.toLowerCase().includes('already exists')) {
+            throw enumError
+          }
+        }
+      }
+
+      // 2) 迁移已存在表的列类型为枚举（如果列/表不存在，DO 块内会跳过）
+      for (const sql of alterColumnsToEnumSQLArray) {
+        await prisma.$executeRawUnsafe(sql)
+      }
+    } catch (preError) {
+      console.error('确保枚举/列类型失败(将继续尝试创建表):', preError)
+    }
     // 检查是否已经初始化（通过查询用户表）
     try {
       const userCount = await prisma.user.count()
@@ -19,16 +39,11 @@ export async function POST(request: NextRequest) {
         try {
           console.log('表不存在，开始初始化数据库...')
           
-          // 1. 先创建枚举类型
-          console.log('创建枚举类型...')
+          // 1. 再次确保枚举类型（幂等）
+          console.log('创建枚举类型(幂等)...')
           for (const sql of createEnumsSQLArray) {
-            try {
-              await prisma.$executeRawUnsafe(sql)
-            } catch (enumError: any) {
-              // 如果枚举已存在，忽略错误
-              if (!enumError.message?.includes('already exists')) {
-                throw enumError
-              }
+            try { await prisma.$executeRawUnsafe(sql) } catch (enumError: any) {
+              if (!enumError.message?.toLowerCase().includes('already exists')) throw enumError
             }
           }
           
@@ -43,6 +58,12 @@ export async function POST(request: NextRequest) {
           for (const sql of addForeignKeysSQLArray) {
             await prisma.$executeRawUnsafe(sql)
           }
+
+          // 4. 迁移列类型为枚举（幂等）
+          console.log('迁移列类型为枚举(幂等)...')
+          for (const sql of alterColumnsToEnumSQLArray) {
+            await prisma.$executeRawUnsafe(sql)
+          }
           
           console.log('所有表和约束创建成功')
         } catch (createError: any) {
@@ -54,29 +75,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 创建默认管理员账号
+    // 创建默认管理员账号（使用原生SQL，避免潜在的枚举类型/客户端缓存问题）
     const hashedPassword = await hashPassword('admin123456')
-    
-    const admin = await prisma.user.create({
-      data: {
-        email: 'admin@vocab.com',
-        password: hashedPassword,
-        name: '系统管理员',
-        role: 'TEACHER',
-        teacher: {
-          create: {
-            school: '示例学校',
-          },
-        },
-      },
-    })
+
+    const inserted = await prisma.$queryRawUnsafe<{ id: string }[]>(
+      `INSERT INTO "users" ("email","password","name","role","is_active")
+       VALUES ('admin@vocab.com','${hashedPassword}','系统管理员','TEACHER', true)
+       ON CONFLICT ("email") DO NOTHING
+       RETURNING id;`
+    )
+
+    let adminUserId = inserted[0]?.id
+    if (!adminUserId) {
+      const existing = await prisma.$queryRawUnsafe<{ id: string }[]>(
+        `SELECT "id" FROM "users" WHERE "email"='admin@vocab.com' LIMIT 1;`
+      )
+      adminUserId = existing[0]?.id
+    }
+
+    if (!adminUserId) {
+      return errorResponse('创建管理员账号失败：未能获取用户ID', 500)
+    }
+
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "teachers" ("user_id","school")
+       VALUES ('${adminUserId}','示例学校')
+       ON CONFLICT ("user_id") DO NOTHING;`
+    )
 
     return successResponse({
       message: '数据库初始化成功',
       admin: {
         email: 'admin@vocab.com',
         password: 'admin123456',
-        name: admin.name,
       },
     }, '初始化成功！请使用管理员账号登录')
   } catch (error: any) {

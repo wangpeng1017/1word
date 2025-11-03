@@ -23,7 +23,7 @@ model User {
   phone     String?  @unique
   password  String
   name      String
-  role      UserRole
+  role      String   @default("STUDENT")
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -102,7 +102,7 @@ model Vocabulary {
   phoneticUS      String?        @map("phonetic_us") // 美式音标
   phoneticUK      String?        @map("phonetic_uk") // 英式音标
   isHighFrequency Boolean        @default(false) @map("is_high_frequency") // 是否高考高频
-  difficulty      WordDifficulty @default(MEDIUM)
+  difficulty      String         @default("MEDIUM")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
