@@ -1,5 +1,18 @@
 // 创建所有数据库表的SQL语句数组（每条语句单独执行）
 export const createTablesSQLArray = [
+  // 创建枚举类型
+  `DO $$ BEGIN
+    CREATE TYPE "UserRole" AS ENUM ('TEACHER', 'STUDENT');
+  EXCEPTION
+    WHEN duplicate_object THEN null;
+  END $$`,
+  
+  `DO $$ BEGIN
+    CREATE TYPE "WordDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+  EXCEPTION
+    WHEN duplicate_object THEN null;
+  END $$`,
+  
   // Users table
   `CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -7,7 +20,7 @@ export const createTablesSQLArray = [
     "phone" TEXT,
     "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'STUDENT',
+    "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -63,7 +76,7 @@ export const createTablesSQLArray = [
     "phonetic_us" TEXT,
     "phonetic_uk" TEXT,
     "is_high_frequency" BOOLEAN NOT NULL DEFAULT false,
-    "difficulty" TEXT NOT NULL DEFAULT 'MEDIUM',
+    "difficulty" "WordDifficulty" NOT NULL DEFAULT 'MEDIUM',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
