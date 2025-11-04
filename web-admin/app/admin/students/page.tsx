@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { Table, Button, Input, Space, message, Card, Modal, Form, Select } from 'antd'
 import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useRouter } from 'next/navigation'
 
 export default function StudentsPage() {
+  const router = useRouter()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [classes, setClasses] = useState([])
@@ -75,7 +77,14 @@ export default function StudentsPage() {
   }
 
   const columns = [
-    { title: '姓名', dataIndex: 'name', key: 'name' },
+    {
+      title: '姓名',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: any) => (
+        <a onClick={() => router.push(`/admin/students/${record.id}`)}>{text}</a>
+      ),
+    },
     { title: '学号', dataIndex: 'studentNo', key: 'studentNo' },
     { title: '年级', dataIndex: 'grade', key: 'grade' },
     {

@@ -23,6 +23,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { useRouter } from 'next/navigation'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -40,6 +41,7 @@ interface Vocabulary {
 }
 
 export default function VocabulariesPage() {
+  const router = useRouter()
   const [data, setData] = useState<Vocabulary[]>([])
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
@@ -211,6 +213,13 @@ export default function VocabulariesPage() {
       fixed: 'right',
       render: (_, record) => (
         <Space>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => router.push(`/admin/vocabularies/${record.id}`)}
+          >
+            题目
+          </Button>
           <Button
             type="link"
             size="small"

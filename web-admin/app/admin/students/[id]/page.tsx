@@ -1,0 +1,144 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { Card, Descriptions, Button, Space, Table, Tag, Statistic, Row, Col, Empty } from 'antd'
+import { ArrowLeftOutlined } from '@ant-design/icons'
+
+export default function StudentDetailPage() {
+  const router = useRouter()
+  const params = useParams()
+  const studentId = params.id as string
+
+  const [student, setStudent] = useState<any>(null)
+  const [wrongQuestions, setWrongQuestions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [studentId])
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      
+      // 加载学生信息和错题
+      const [studentRes, wrongRes] = await Promise.all([
+        fetch(`/api/students/${studentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`/api/students/${studentId}/wrong-questions`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
+
+      const studentData = await studentRes.json()
+      const wrongData = await wrongRes.json()
+
+      if (studentData.success) {
+        setStudent(studentData.data)
+      }
+      if (wrongData.success) {
+        setWrongQuestions(wrongData.data?.wrongQuestions || [])
+      }
+    } catch (error) {
+      console.error('加载失败:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const wrongColumns = [
+    {
+      title: '单词',
+      dataIndex: ['vocabulary', 'word'],
+      key: 'word',
+    },
+    {
+      title: '题型',
+      dataIndex: ['question', 'type'],
+      key: 'type',
+      render: (type: string) => {
+        const typeMap: Record<string, string> = {
+          ENGLISH_TO_CHINESE: '英选汉',
+          CHINESE_TO_ENGLISH: '汉选英',
+          LISTENING: '听音选词',
+          FILL_IN_BLANK: '选词填空',
+        }
+        return <Tag>{typeMap[type] || type}</Tag>
+      },
+    },
+    {
+      title: '错误答案',
+      dataIndex: 'wrongAnswer',
+      key: 'wrongAnswer',
+    },
+    {
+      title: '正确答案',
+      dataIndex: 'correctAnswer',
+      key: 'correctAnswer',
+      render: (text: string) => <Tag color="success">{text}</Tag>,
+    },
+    {
+      title: '错误时间',
+      dataIndex: 'wrongAt',
+      key: 'wrongAt',
+      render: (date: string) => new Date(date).toLocaleString('zh-CN'),
+    },
+  ]
+
+  return (
+    <div>
+      <Space style={{ marginBottom: 16 }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => router.back()}>
+          返回
+        </Button>
+      </Space>
+
+      <Card title="学生信息" loading={loading} style={{ marginBottom: 16 }}>
+        {student && (
+          <Descriptions column={2}>
+            <Descriptions.Item label="姓名">{student.name}</Descriptions.Item>
+            <Descriptions.Item label="学号">{student.studentNo}</Descriptions.Item>
+            <Descriptions.Item label="年级">{student.grade || '-'}</Descriptions.Item>
+            <Descriptions.Item label="班级">
+              {student.class?.name || '未分配'}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Card>
+
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card>
+            <Statistic title="学习词汇" value={0} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="已掌握" value={0} valueStyle={{ color: '#3f8600' }} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="错题数" value={wrongQuestions.length} valueStyle={{ color: '#cf1322' }} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="学习天数" value={0} />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card title={`错题记录 (${wrongQuestions.length})`}>
+        {wrongQuestions.length > 0 ? (
+          <Table columns={wrongColumns} dataSource={wrongQuestions} rowKey="id" />
+        ) : (
+          <Empty description="暂无错题" />
+        )}
+      </Card>
+    </div>
+  )
+}
