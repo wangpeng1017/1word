@@ -6,8 +6,9 @@ import { apiResponse } from '@/lib/response'
 // GET /api/students/[id]/wrong-questions - 获取学生错题本
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: studentId } = await params
   try {
     // 验证token
     const token = getTokenFromHeader(request.headers.get('authorization'))
@@ -20,7 +21,6 @@ export async function GET(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const studentId = params.id
     const { searchParams } = new URL(request.url)
     const vocabularyId = searchParams.get('vocabularyId')
     const questionType = searchParams.get('questionType')

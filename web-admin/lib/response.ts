@@ -36,3 +36,12 @@ export function notFoundResponse(message: string = '资源不存在') {
 export function serverErrorResponse(message: string = '服务器错误') {
   return errorResponse(message, 500)
 }
+
+// Convenience object for common API responses
+export const apiResponse = {
+  success: successResponse,
+  error: errorResponse,
+  unauthorized: unauthorizedResponse,
+  notFound: notFoundResponse,
+  serverError: serverErrorResponse,
+}

@@ -7,8 +7,9 @@ import { apiResponse } from '@/lib/response'
 // GET /api/students/[id]/daily-tasks - 获取学生当日任务
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: studentId } = await params
   try {
     // 验证token
     const token = getTokenFromHeader(request.headers.get('authorization'))
@@ -21,7 +22,6 @@ export async function GET(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const studentId = params.id
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -61,8 +61,9 @@ export async function GET(
 // POST /api/students/[id]/daily-tasks - 生成学生当日任务
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: studentId } = await params
   try {
     // 验证token
     const token = getTokenFromHeader(request.headers.get('authorization'))
@@ -75,7 +76,6 @@ export async function POST(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const studentId = params.id
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
