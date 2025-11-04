@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Table, Button, Input, Space, message, Card, Modal, Form, Select } from 'antd'
-import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload } from 'antd'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
+import type { UploadProps } from 'antd'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -11,6 +12,8 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(false)
   const [classes, setClasses] = useState([])
   const [modalVisible, setModalVisible] = useState(false)
+  const [importModalVisible, setImportModalVisible] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -76,6 +79,40 @@ export default function StudentsPage() {
     }
   }
 
+  const handleImport = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/students/import', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      const result = await response.json()
+      if (result.success) {
+        message.success(`成功导入${result.data?.count || 0}个学生`)
+        setImportModalVisible(false)
+        loadData()
+      } else {
+        message.error(result.error || '导入失败')
+      }
+    } catch (error) {
+      message.error('导入失败')
+    } finally {
+      setUploading(false)
+    }
+    return false
+  }
+
+  const downloadTemplate = () => {
+    const link = document.createElement('a')
+    link.href = '/templates/students-template.xlsx'
+    link.download = '学生导入模板.xlsx'
+    link.click()
+  }
+
   const columns = [
     {
       title: '姓名',
@@ -101,6 +138,9 @@ export default function StudentsPage() {
         <Button icon={<ReloadOutlined />} onClick={loadData}>刷新</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
           添加学生
+        </Button>
+        <Button icon={<UploadOutlined />} onClick={() => setImportModalVisible(true)}>
+          批量导入
         </Button>
       </Space>
       <Table columns={columns} dataSource={data} rowKey="id" loading={loading} />
@@ -131,6 +171,31 @@ export default function StudentsPage() {
             <Input.Password placeholder="默认: 123456" />
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        title="批量导入学生"
+        open={importModalVisible}
+        onCancel={() => setImportModalVisible(false)}
+        footer={null}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>
+            下载导入模板
+          </Button>
+          <Upload.Dragger
+            accept=".xlsx,.xls"
+            beforeUpload={handleImport}
+            showUploadList={false}
+          >
+            <p className="ant-upload-drag-icon">
+              <UploadOutlined />
+            </p>
+            <p className="ant-upload-text">点击或拖拽Excel文件到此区域</p>
+            <p className="ant-upload-hint">
+              支持 .xlsx 和 .xls 格式，请使用模板格式
+            </p>
+          </Upload.Dragger>
+        </Space>
       </Modal>
     </Card>
   )

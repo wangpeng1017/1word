@@ -18,6 +18,7 @@ import {
   Radio,
 } from 'antd'
 import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Popconfirm } from 'antd'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -132,6 +133,25 @@ export default function VocabularyDetailPage() {
     return questions.filter((q) => q.type === type)
   }
 
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/vocabularies/${vocabularyId}/questions/${questionId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const result = await response.json()
+      if (result.success) {
+        message.success('删除成功')
+        loadData()
+      } else {
+        message.error('删除失败')
+      }
+    } catch (error) {
+      message.error('删除失败')
+    }
+  }
+
   const renderQuestionList = (type: string) => {
     const typeQuestions = getQuestionsByType(type)
 
@@ -159,7 +179,23 @@ export default function VocabularyDetailPage() {
           添加题目
         </Button>
         {typeQuestions.map((question, index) => (
-          <Card key={question.id} size="small" style={{ marginBottom: 16 }}>
+          <Card 
+            key={question.id} 
+            size="small" 
+            style={{ marginBottom: 16 }}
+            extra={
+              <Popconfirm
+                title="确认删除这道题目？"
+                onConfirm={() => handleDeleteQuestion(question.id)}
+                okText="确认"
+                cancelText="取消"
+              >
+                <Button type="text" danger size="small" icon={<DeleteOutlined />}>
+                  删除
+                </Button>
+              </Popconfirm>
+            }
+          >
             <div>
               <div style={{ marginBottom: 12, fontWeight: 500 }}>
                 题目 {index + 1}: {question.content}

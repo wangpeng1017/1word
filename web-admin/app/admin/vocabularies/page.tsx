@@ -21,6 +21,8 @@ import {
   DeleteOutlined,
   SearchOutlined,
   ReloadOutlined,
+  DownloadOutlined,
+  FilterOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/navigation'
@@ -47,6 +49,9 @@ export default function VocabulariesPage() {
   const [searchText, setSearchText] = useState('')
   const [modalVisible, setModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<Vocabulary | null>(null)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('')
+  const [highFreqFilter, setHighFreqFilter] = useState<boolean | null>(null)
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -136,6 +141,31 @@ export default function VocabulariesPage() {
       }
     } catch (error) {
       console.error('提交失败:', error)
+    }
+  }
+
+  const handleExport = () => {
+    const token = localStorage.getItem('token')
+    window.open(`/api/vocabularies/export?token=${token}`, '_blank')
+    message.success('导出已开始')
+  }
+
+  const handleBatchDelete = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      await Promise.all(
+        selectedRowKeys.map((id) =>
+          fetch(`/api/vocabularies/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      )
+      message.success('批量删除成功')
+      setSelectedRowKeys([])
+      loadData()
+    } catch (error) {
+      message.error('批量删除失败')
     }
   }
 
@@ -246,7 +276,7 @@ export default function VocabulariesPage() {
   return (
     <div>
       <Card>
-        <Space style={{ marginBottom: 16 }}>
+        <Space style={{ marginBottom: 16 }} wrap>
           <Input
             placeholder="搜索单词"
             prefix={<SearchOutlined />}
@@ -254,20 +284,57 @@ export default function VocabulariesPage() {
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 200 }}
           />
+          <Select
+            placeholder="难度筛选"
+            allowClear
+            style={{ width: 120 }}
+            value={difficultyFilter || undefined}
+            onChange={setDifficultyFilter}
+          >
+            <Select.Option value="EASY">简单</Select.Option>
+            <Select.Option value="MEDIUM">中等</Select.Option>
+            <Select.Option value="HARD">困难</Select.Option>
+          </Select>
+          <Select
+            placeholder="高频词"
+            allowClear
+            style={{ width: 120 }}
+            value={highFreqFilter === null ? undefined : highFreqFilter}
+            onChange={setHighFreqFilter}
+          >
+            <Select.Option value={true}>高频词</Select.Option>
+            <Select.Option value={false}>非高频</Select.Option>
+          </Select>
           <Button icon={<ReloadOutlined />} onClick={loadData}>
             刷新
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             添加词汇
           </Button>
+          <Button icon={<DownloadOutlined />} onClick={handleExport}>
+            导出
+          </Button>
+          {selectedRowKeys.length > 0 && (
+            <Button danger onClick={handleBatchDelete}>
+              批量删除 ({selectedRowKeys.length})
+            </Button>
+          )}
         </Space>
 
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={data.filter((item) => {
+            if (difficultyFilter && item.difficulty !== difficultyFilter) return false
+            if (highFreqFilter !== null && item.isHighFrequency !== highFreqFilter) return false
+            return true
+          })}
           rowKey="id"
           loading={loading}
           scroll={{ x: 1000 }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+          }}
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
