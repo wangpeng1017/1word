@@ -117,4 +117,6 @@ export const addForeignKeysSQLArray = [
 export const ensureColumnsSQLArray = [
   // teachers.subject 列
   `ALTER TABLE "teachers" ADD COLUMN IF NOT EXISTS "subject" TEXT DEFAULT '英语'`,
+  `ALTER TABLE "students" ADD COLUMN IF NOT EXISTS "wechat_id" TEXT`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "students_wechat_id_key" ON "students"("wechat_id")`,
 ]
