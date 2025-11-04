@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Form, Input, Button, Select, message, Space } from 'antd'
+import { Card, Form, Input, Button, Select, message, Space, Alert } from 'antd'
 import { useRouter } from 'next/navigation'
 
 interface ClassItem {
@@ -12,6 +12,7 @@ interface ClassItem {
 
 export default function CreateStudentPage() {
   const [loading, setLoading] = useState(false)
+  const [serverError, setServerError] = useState<string>('')
   const [classes, setClasses] = useState<ClassItem[]>([])
   const router = useRouter()
 
@@ -37,21 +38,35 @@ export default function CreateStudentPage() {
       return
     }
     setLoading(true)
+    setServerError('')
     try {
+      // 构造干净的负载，避免空字符串/空格
+      const payload = {
+        name: (values.name || '').trim(),
+        studentNo: (values.studentNo || '').trim(),
+        password: values.password,
+        phone: values.phone ? String(values.phone).trim() : undefined,
+        email: values.email ? String(values.email).trim() : undefined,
+        grade: values.grade ? String(values.grade).trim() : undefined,
+        classId: values.classId || undefined,
+      }
+
       const res = await fetch('/api/students', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       })
-      const data = await res.json()
-      if (data.success) {
+      const data = await res.json().catch(() => ({ success: false, error: '服务器返回格式异常' }))
+      if (res.ok && data.success) {
         message.success('学生创建成功')
-        router.push('/dashboard')
+        setTimeout(() => router.push('/dashboard'), 800)
       } else {
-        message.error(data.error || '创建失败')
+        const errMsg = data?.error || `创建失败（${res.status}）`
+        setServerError(errMsg)
+        message.error(errMsg)
       }
     } catch (e) {
       message.error('网络错误，请稍后重试')
@@ -67,6 +82,9 @@ export default function CreateStudentPage() {
           <h2 className="text-xl font-bold">添加学生</h2>
           <Button onClick={() => router.back()}>返回</Button>
         </div>
+        {serverError && (
+          <Alert type="error" showIcon className="mb-4" message={serverError} onClose={() => setServerError('')} closable />
+        )}
         <Form layout="vertical" onFinish={onFinish} size="large">
           <Form.Item label="姓名" name="name" rules={[{ required: true, message: '请输入姓名' }]}>
             <Input placeholder="学生姓名" />
@@ -105,7 +123,7 @@ export default function CreateStudentPage() {
           </Space>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <Button type="primary" htmlType="submit" loading={loading} block disabled={loading}>
               提交
             </Button>
           </Form.Item>
