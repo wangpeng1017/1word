@@ -28,7 +28,7 @@ export default function LoginPage() {
         localStorage.setItem('token', data.data.token)
         localStorage.setItem('userInfo', JSON.stringify(data.data.user))
         // 跳转到后台
-        router.push('/dashboard')
+        router.push('/admin')
       } else {
         message.error(data.error || '登录失败')
       }
