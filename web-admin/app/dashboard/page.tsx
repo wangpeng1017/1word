@@ -122,7 +122,7 @@ export default function DashboardPage() {
                 <Button type="primary" block size="large">
                   添加词汇
                 </Button>
-                <Button block size="large">
+                <Button block size="large" onClick={() => router.push('/students/new')}>
                   添加学生
                 </Button>
                 <Button block size="large">
