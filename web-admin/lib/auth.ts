@@ -34,7 +34,7 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 // 从请求头获取token
-export function getTokenFromHeader(authHeader?: string): string | null {
+export function getTokenFromHeader(authHeader?: string | null): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null
   }
