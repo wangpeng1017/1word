@@ -1,0 +1,56 @@
+<!--pages/study/result.wxml-->
+<view class="container">
+  <!-- 结果卡片 -->
+  <view class="result-card">
+    <view class="result-icon">
+      <text wx:if="{{accuracy >= 80}}">🎉</text>
+      <text wx:elif="{{accuracy >= 60}}">👍</text>
+      <text wx:else>💪</text>
+    </view>
+    
+    <view class="result-title">
+      <text wx:if="{{accuracy >= 80}}">太棒了！</text>
+      <text wx:elif="{{accuracy >= 60}}">继续加油！</text>
+      <text wx:else>再接再厉！</text>
+    </view>
+
+    <view class="accuracy-circle">
+      <text class="accuracy-value">{{accuracy}}%</text>
+      <text class="accuracy-label">正确率</text>
+    </view>
+
+    <!-- 统计数据 -->
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{total}}</text>
+        <text class="stat-label">总题数</text>
+      </view>
+      <view class="stat-item correct">
+        <text class="stat-value">{{correct}}</text>
+        <text class="stat-label">正确</text>
+      </view>
+      <view class="stat-item wrong">
+        <text class="stat-value">{{wrong}}</text>
+        <text class="stat-label">错误</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <button class="btn-secondary" bindtap="viewWrongQuestions" wx:if="{{wrong > 0}}">
+        查看错题
+      </button>
+      <button class="btn-primary" bindtap="backToHome">
+        返回首页
+      </button>
+    </view>
+  </view>
+
+  <!-- 鼓励语 -->
+  <view class="encouragement">
+    <text wx:if="{{accuracy === 100}}">完美答题！所有单词都掌握了 🎯</text>
+    <text wx:elif="{{accuracy >= 80}}">表现出色！继续保持这个状态 ✨</text>
+    <text wx:elif="{{accuracy >= 60}}">不错的开始！多复习错题效果更好 📚</text>
+    <text wx:else>坚持练习，进步会很明显的 🌟</text>
+  </view>
+</view>

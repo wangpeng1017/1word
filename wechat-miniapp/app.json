@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/study/study",
+    "pages/study/result",
     "pages/wrong/wrong",
     "pages/profile/profile",
     "pages/login/login"

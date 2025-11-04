@@ -1,0 +1,98 @@
+<!--pages/wrong/wrong.wxml-->
+<view class="container">
+  <!-- 标题栏 -->
+  <view class="header">
+    <text class="header-title">错题本</text>
+    <text class="header-count">共 {{filteredQuestions.length}} 题</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{isLoading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{isEmpty}}" class="empty">
+    <text class="empty-icon">📚</text>
+    <text class="empty-text">还没有错题</text>
+    <text class="empty-hint">继续学习积累词汇吧</text>
+  </view>
+
+  <!-- 错题列表 -->
+  <view wx:else class="content">
+    <!-- 筛选器 -->
+    <scroll-view class="filter-tabs" scroll-x>
+      <view 
+        class="filter-item {{currentFilter === 'ALL' ? 'active' : ''}}"
+        data-type="ALL"
+        bindtap="filterByType"
+      >
+        全部 ({{wrongQuestions.length}})
+      </view>
+      <view 
+        class="filter-item {{currentFilter === 'ENGLISH_TO_CHINESE' ? 'active' : ''}}"
+        data-type="ENGLISH_TO_CHINESE"
+        bindtap="filterByType"
+      >
+        英选汉 ({{stats.byType.ENGLISH_TO_CHINESE || 0}})
+      </view>
+      <view 
+        class="filter-item {{currentFilter === 'CHINESE_TO_ENGLISH' ? 'active' : ''}}"
+        data-type="CHINESE_TO_ENGLISH"
+        bindtap="filterByType"
+      >
+        汉选英 ({{stats.byType.CHINESE_TO_ENGLISH || 0}})
+      </view>
+      <view 
+        class="filter-item {{currentFilter === 'LISTENING' ? 'active' : ''}}"
+        data-type="LISTENING"
+        bindtap="filterByType"
+      >
+        听音 ({{stats.byType.LISTENING || 0}})
+      </view>
+      <view 
+        class="filter-item {{currentFilter === 'FILL_IN_BLANK' ? 'active' : ''}}"
+        data-type="FILL_IN_BLANK"
+        bindtap="filterByType"
+      >
+        填空 ({{stats.byType.FILL_IN_BLANK || 0}})
+      </view>
+    </scroll-view>
+
+    <!-- 错题列表 -->
+    <view class="question-list">
+      <view 
+        wx:for="{{filteredQuestions}}" 
+        wx:key="id"
+        class="question-item"
+        data-index="{{index}}"
+        bindtap="viewDetail"
+      >
+        <view class="question-header">
+          <view class="word">{{item.vocabulary.word}}</view>
+          <view class="type-badge">
+            <text wx:if="{{item.question.type === 'ENGLISH_TO_CHINESE'}}">英选汉</text>
+            <text wx:elif="{{item.question.type === 'CHINESE_TO_ENGLISH'}}">汉选英</text>
+            <text wx:elif="{{item.question.type === 'LISTENING'}}">听音</text>
+            <text wx:elif="{{item.question.type === 'FILL_IN_BLANK'}}">填空</text>
+          </view>
+        </view>
+        
+        <view class="question-content">
+          <view class="answer-row">
+            <text class="label wrong-label">你的答案：</text>
+            <text class="value wrong-value">{{item.wrongAnswer}}</text>
+          </view>
+          <view class="answer-row">
+            <text class="label correct-label">正确答案：</text>
+            <text class="value correct-value">{{item.correctAnswer}}</text>
+          </view>
+        </view>
+
+        <view class="meaning">
+          {{item.vocabulary.primaryMeaning}}
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
