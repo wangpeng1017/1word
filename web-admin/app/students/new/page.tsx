@@ -15,6 +15,7 @@ export default function CreateStudentPage() {
   const [serverError, setServerError] = useState<string>('')
   const [classes, setClasses] = useState<ClassItem[]>([])
   const router = useRouter()
+  const [form] = Form.useForm()
 
   useEffect(() => {
     // 拉取班级下拉（可选）
@@ -67,6 +68,14 @@ export default function CreateStudentPage() {
         const errMsg = data?.error || `创建失败（${res.status}）`
         setServerError(errMsg)
         message.error(errMsg)
+        // 将常见后端错误映射到表单字段
+        if (/学号已存在/.test(errMsg)) {
+          form.setFields([{ name: 'studentNo', errors: ['学号已存在'] }])
+        }
+        if (/邮箱|手机号/.test(errMsg)) {
+          const field = /邮箱/.test(errMsg) ? 'email' : 'phone'
+          form.setFields([{ name: field as any, errors: [errMsg] }])
+        }
       }
     } catch (e) {
       message.error('网络错误，请稍后重试')
@@ -85,7 +94,7 @@ export default function CreateStudentPage() {
         {serverError && (
           <Alert type="error" showIcon className="mb-4" message={serverError} onClose={() => setServerError('')} closable />
         )}
-        <Form layout="vertical" onFinish={onFinish} size="large">
+        <Form form={form} layout="vertical" onFinish={onFinish} size="large">
           <Form.Item label="姓名" name="name" rules={[{ required: true, message: '请输入姓名' }]}>
             <Input placeholder="学生姓名" />
           </Form.Item>
