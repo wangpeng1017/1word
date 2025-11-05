@@ -10,7 +10,7 @@ import { unauthorizedResponse, errorResponse, successResponse } from '@/lib/resp
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; fileId: string } }
+  { params }: { params: Promise<{ id: string; fileId: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -21,7 +21,7 @@ export async function DELETE(
       return unauthorizedResponse('只有教师可以删除文件')
     }
 
-    const { fileId } = params
+    const { fileId } = await params
 
     // 尝试查找音频文件
     let file: any = await prisma.wordAudio.findUnique({

@@ -9,7 +9,7 @@ import { unauthorizedResponse, errorResponse, successResponse } from '@/lib/resp
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -20,7 +20,7 @@ export async function GET(
       return unauthorizedResponse('只有教师可以访问')
     }
 
-    const vocabularyId = params.id
+    const { id: vocabularyId } = await params
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'all' // audio, image, all
 
@@ -55,7 +55,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -66,7 +66,7 @@ export async function POST(
       return unauthorizedResponse('只有教师可以保存文件')
     }
 
-    const vocabularyId = params.id
+    const { id: vocabularyId } = await params
     const { type, url, filename } = await request.json()
 
     if (!type || !url || !filename) {
@@ -88,16 +88,14 @@ export async function POST(
       file = await prisma.wordAudio.create({
         data: {
           vocabularyId,
-          url,
-          filename,
+          audioUrl: url,
         },
       })
     } else if (type === 'image') {
       file = await prisma.wordImage.create({
         data: {
           vocabularyId,
-          url,
-          filename,
+          imageUrl: url,
         },
       })
     } else {

@@ -1,0 +1,69 @@
+
+> vocab-assistant-admin@0.1.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+鉁?Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 215ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+   鈻?Next.js 15.5.6
+   - Environments: .env.local, .env.production, .env
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./app/api/vocabularies/[id]/files/route.ts
+Error:   x Expected a semicolon
+     ,-[E:\trae\1鍗曡瘝\web-admin\app\api\vocabularies\[id]\files\route.ts:105:1]
+ 102 |       return errorResponse('涓嶆敮鎸佺殑鏂囦欢绫诲瀷')
+ 103 |     }
+ 104 | 
+ 105 |     return successResponse(file, '鏂囦欢淇濆瓨鎴愬姛')
+     :     ^
+ 106 |   } catch (error) {
+ 107 |     console.error('淇濆瓨鏂囦欢澶辫触:', error)
+ 107 |     return errorResponse('淇濆瓨鏂囦欢澶辫触', 500)
+     `----
+  x Expected a semicolon
+     ,-[E:\trae\1鍗曡瘝\web-admin\app\api\vocabularies\[id]\files\route.ts:106:1]
+ 103 |     }
+ 104 | 
+ 105 |     return successResponse(file, '鏂囦欢淇濆瓨鎴愬姛')
+ 106 |   } catch (error) {
+     :     ^^^^^
+ 107 |     console.error('淇濆瓨鏂囦欢澶辫触:', error)
+ 108 |     return errorResponse('淇濆瓨鏂囦欢澶辫触', 500)
+ 108 |   }
+     `----
+  x Return statement is not allowed here
+     ,-[E:\trae\1鍗曡瘝\web-admin\app\api\vocabularies\[id]\files\route.ts:108:1]
+ 105 |     return successResponse(file, '鏂囦欢淇濆瓨鎴愬姛')
+ 106 |   } catch (error) {
+ 107 |     console.error('淇濆瓨鏂囦欢澶辫触:', error)
+ 108 |     return errorResponse('淇濆瓨鏂囦欢澶辫触', 500)
+     :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 109 |   }
+ 110 | }
+     `----
+  x Expression expected
+     ,-[E:\trae\1鍗曡瘝\web-admin\app\api\vocabularies\[id]\files\route.ts:110:1]
+ 107 |     console.error('淇濆瓨鏂囦欢澶辫触:', error)
+ 108 |     return errorResponse('淇濆瓨鏂囦欢澶辫触', 500)
+ 109 |   }
+ 110 | }
+     : ^
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/vocabularies/[id]/files/route.ts
+
+
+> Build failed because of webpack errors

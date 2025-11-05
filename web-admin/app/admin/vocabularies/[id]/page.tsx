@@ -347,7 +347,7 @@ export default function VocabularyDetailPage() {
           </Card>
         ))}
       </div>
-    }
+    )
   }
 
   const handleAudioUpload: UploadProps['customRequest'] = async (options) => {
