@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Card, Descriptions, Button, Space, Table, Tag, Statistic, Row, Col, Empty } from 'antd'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { Card, Descriptions, Button, Space, Table, Tag, Statistic, Row, Col, Empty, message, DatePicker } from 'antd'
+import { ArrowLeftOutlined, DownloadOutlined, FileExcelOutlined } from '@ant-design/icons'
+import dayjs, { Dayjs } from 'dayjs'
 
 export default function StudentDetailPage() {
   const router = useRouter()
@@ -13,6 +14,8 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<any>(null)
   const [wrongQuestions, setWrongQuestions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null)
 
   useEffect(() => {
     loadData()
@@ -46,6 +49,43 @@ export default function StudentDetailPage() {
       console.error('加载失败:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExportReport = async () => {
+    setExporting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const params = new URLSearchParams({ studentId })
+      
+      if (dateRange) {
+        params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
+        params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
+      }
+
+      const response = await fetch(`/api/export/student-report?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${student?.name || '学生'}_学习报告_${new Date().toISOString().split('T')[0]}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        message.success('导出成功')
+      } else {
+        message.error('导出失败')
+      }
+    } catch (error) {
+      console.error('导出错误:', error)
+      message.error('导出失败')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -90,11 +130,27 @@ export default function StudentDetailPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => router.back()}>
           返回
         </Button>
-      </Space>
+        <Space>
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+            format="YYYY-MM-DD"
+            placeholder={['开始日期', '结束日期']}
+          />
+          <Button
+            type="primary"
+            icon={<FileExcelOutlined />}
+            loading={exporting}
+            onClick={handleExportReport}
+          >
+            导出学习报告
+          </Button>
+        </Space>
+      </div>
 
       <Card title="学生信息" loading={loading} style={{ marginBottom: 16 }}>
         {student && (
