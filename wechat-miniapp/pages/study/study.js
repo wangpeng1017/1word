@@ -25,6 +25,9 @@ Page({
     correctCount: 0,
     wrongCount: 0,
     startTime: null,
+    sessionStartTime: null, // 总开始时间
+    elapsedTime: '00:00', // 已用时
+    timer: null, // 计时器
     
     // 进度
     progress: 0,
@@ -32,6 +35,9 @@ Page({
     // 加载状态
     isLoading: true,
     loadError: false,
+    
+    // 音频播放
+    audioContext: null,
   },
 
   onLoad(options) {
@@ -45,7 +51,11 @@ Page({
 
     this.setData({
       startTime: Date.now(),
+      sessionStartTime: Date.now(),
     })
+
+    // 启动计时器
+    this.startTimer()
 
     // 检查是否恢复之前的进度
     if (options.resume === 'true') {
@@ -56,10 +66,29 @@ Page({
   },
 
   onUnload() {
+    // 清除计时器
+    if (this.data.timer) {
+      clearInterval(this.data.timer)
+    }
+    
     // 页面卸载时保存进度（如果未完成）
     if (this.data.currentIndex < this.data.totalCount) {
       this.saveProgress()
     }
+  },
+
+  // 启动计时器
+  startTimer() {
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - this.data.sessionStartTime) / 1000)
+      const minutes = Math.floor(elapsed / 60)
+      const seconds = elapsed % 60
+      this.setData({
+        elapsedTime: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      })
+    }, 1000)
+    
+    this.setData({ timer })
   },
 
   // 加载每日任务
@@ -225,10 +254,13 @@ Page({
       wrongCount,
     })
 
-    // 自动进入下一题（1.5秒后）
-    setTimeout(() => {
-      this.nextQuestion()
-    }, 1500)
+    // 如果回答正确，1.5秒后自动进入下一题
+    if (isCorrect) {
+      setTimeout(() => {
+        this.nextQuestion()
+      }, 1500)
+    }
+    // 如果回答错误，显示“继续”按钮，手动点击后才进入下一题
   },
 
   // 下一题
@@ -344,5 +376,34 @@ Page({
         }
       },
     })
+  },
+
+  // 播放音频（听力题）
+  playAudio() {
+    const { currentTask } = this.data
+    
+    if (!currentTask || !currentTask.vocabulary) {
+      return
+    }
+
+    // 如果有音频URL，播放音频
+    if (currentTask.vocabulary.audioUrl) {
+      if (!this.data.audioContext) {
+        this.data.audioContext = wx.createInnerAudioContext()
+      }
+      
+      this.data.audioContext.src = currentTask.vocabulary.audioUrl
+      this.data.audioContext.play()
+    } else {
+      // 如果没有音频，使用TTS接口
+      wx.showToast({
+        title: '正在加载音频...',
+        icon: 'loading',
+        duration: 1000
+      })
+      
+      // TODO: 调用TTS接口或使用第三方服务
+      // 这里可以集成百度TTS、讯飞TTS或其他服务
+    }
   },
 })

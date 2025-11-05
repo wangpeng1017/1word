@@ -1,8 +1,10 @@
 <!--pages/login/login.wxml-->
 <view class="container login-container">
   <view class="login-header">
+    <view class="logo-container">
+      <text class="logo-icon">📖</text>
+    </view>
     <text class="title-large">智能词汇复习</text>
-    <text class="text-secondary mt-2">基于艾宾浩斯遗忘曲线的学习系统</text>
   </view>
 
   <view class="login-form card mt-5">

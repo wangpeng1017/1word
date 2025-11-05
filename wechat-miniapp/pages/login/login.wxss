@@ -13,6 +13,29 @@
   margin-bottom: 80rpx;
 }
 
+.logo-container {
+  width: 160rpx;
+  height: 160rpx;
+  margin: 0 auto 40rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+}
+
+.logo-icon {
+  font-size: 96rpx;
+  line-height: 1;
+}
+
+.login-header .title-large {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
 .login-form {
   width: 100%;
   max-width: 600rpx;

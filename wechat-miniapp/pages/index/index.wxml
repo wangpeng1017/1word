@@ -1,62 +1,58 @@
 <!--pages/index/index.wxml-->
 <view class="container">
   <!-- 欢迎区域 -->
-  <view class="welcome-section card">
-    <text class="title-medium">你好，{{userName}}</text>
-    <text class="text-secondary mt-2">今天也要加油学习哦！</text>
+  <view class="welcome-section">
+    <text class="title-large">你好，{{userName}}</text>
+    <text class="subtitle">今天也要加油学习哦！</text>
   </view>
 
-  <!-- 今日复习 -->
-  <view class="study-card card mt-3" bindtap="goToStudy">
-    <view class="study-header">
-      <view class="study-icon">📚</view>
-      <view class="study-info">
-        <text class="title-small">今日复习</text>
-        <text class="text-secondary mt-1">{{todayWordCount}} 个单词待复习</text>
+  <!-- 三个核心入口 -->
+  <view class="main-entries">
+    <!-- 今日复习 -->
+    <view class="entry-card primary-card" bindtap="goToStudy">
+      <view class="card-icon">📚</view>
+      <view class="card-content">
+        <text class="card-title">今日复习</text>
+        <text class="card-subtitle">温故知新</text>
+        <text class="card-info">{{todayWordCount}} 个单词待复习</text>
+        <view class="progress-mini">
+          <view class="progress-mini-fill" style="width: {{todayProgress}}%"></view>
+        </view>
       </view>
     </view>
-    <view class="study-progress mt-3">
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{todayProgress}}%"></view>
-      </view>
-      <text class="progress-text">{{completedCount}}/{{todayWordCount}}</text>
-    </view>
-  </view>
 
-  <!-- 学习统计 -->
-  <view class="stats-section mt-3">
-    <view class="stat-card card">
-      <text class="stat-number text-success">{{masteredCount}}</text>
-      <text class="stat-label text-secondary">已掌握</text>
-    </view>
-    <view class="stat-card card">
-      <text class="stat-number text-warning">{{difficultCount}}</text>
-      <text class="stat-label text-secondary">重点难点</text>
-    </view>
-    <view class="stat-card card">
-      <text class="stat-number text-primary">{{totalStudyDays}}</text>
-      <text class="stat-label text-secondary">学习天数</text>
-    </view>
-  </view>
-
-  <!-- 错题本入口 -->
-  <view class="wrong-card card mt-3" bindtap="goToWrong">
-    <view class="flex justify-between items-center">
-      <view>
-        <text class="title-small">错题本</text>
-        <text class="text-secondary mt-1">{{wrongCount}} 道错题</text>
+    <!-- 错题本 -->
+    <view class="entry-card danger-card" bindtap="goToWrong">
+      <view class="card-icon">❌</view>
+      <view class="card-content">
+        <text class="card-title">错题本</text>
+        <text class="card-subtitle">强化记忆</text>
+        <text class="card-info">{{wrongCount}} 道错题需复习</text>
       </view>
-      <text class="arrow">→</text>
+    </view>
+
+    <!-- 学习数据 -->
+    <view class="entry-card success-card" bindtap="goToProfile">
+      <view class="card-icon">📊</view>
+      <view class="card-content">
+        <text class="card-title">学习数据</text>
+        <text class="card-subtitle">我的成果</text>
+        <view class="mini-stats">
+          <text class="mini-stat">已掌握 {{masteredCount}}</text>
+          <text class="mini-stat-divider">·</text>
+          <text class="mini-stat">学习 {{totalStudyDays}} 天</text>
+        </view>
+      </view>
     </view>
   </view>
 
   <!-- 继续上次复习提示 -->
   <view class="resume-modal" wx:if="{{showResumeModal}}">
     <view class="modal-mask" bindtap="closeResumeModal"></view>
-    <view class="modal-content card">
-      <text class="title-small">检测到未完成的复习</text>
-      <text class="text-secondary mt-2">是否继续上次的复习？</text>
-      <view class="modal-actions mt-4">
+    <view class="modal-content">
+      <text class="modal-title">检测到未完成的复习</text>
+      <text class="modal-text">是否继续上次的复习？</text>
+      <view class="modal-actions">
         <button class="btn-secondary" bindtap="startNewStudy">重新开始</button>
         <button class="btn-primary" bindtap="resumeStudy">继续复习</button>
       </view>

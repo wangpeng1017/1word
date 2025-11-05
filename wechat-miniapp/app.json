@@ -22,9 +22,9 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "images/home.png",
-        "selectedIconPath": "images/home-active.png"
+        "text": "今日复习",
+        "iconPath": "images/study.png",
+        "selectedIconPath": "images/study-active.png"
       },
       {
         "pagePath": "pages/wrong/wrong",
@@ -34,9 +34,9 @@
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "images/profile.png",
-        "selectedIconPath": "images/profile-active.png"
+        "text": "学习数据",
+        "iconPath": "images/data.png",
+        "selectedIconPath": "images/data-active.png"
       }
     ]
   },

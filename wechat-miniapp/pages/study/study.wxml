@@ -1,13 +1,20 @@
 <!--pages/study/study.wxml-->
-<view class="container">
-  <!-- 头部进度 -->
-  <view class="header">
-    <view class="progress-bar">
-      <view class="progress-fill" style="width: {{progress}}%"></view>
+<view class="container study-page">
+  <!-- 头部信息 -->
+  <view class="study-header">
+    <view class="header-info">
+      <text class="word-count">当前单词（第 {{currentIndex + 1}}/{{totalCount}} 个）</text>
+      <text class="time-spent">已用时 {{elapsedTime}}</text>
     </view>
-    <view class="progress-text">
-      <text>{{currentIndex + 1}}/{{totalCount}}</text>
-      <text class="exit-btn" bindtap="exitStudy">退出</text>
+    <view class="exit-btn" bindtap="exitStudy">×</view>
+  </view>
+  
+  <!-- 趣味进度条 -->
+  <view class="fun-progress">
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{progress}}%">
+        <text class="progress-emoji">🚀</text>
+      </view>
     </view>
   </view>
 
@@ -18,23 +25,35 @@
 
   <!-- 答题区域 -->
   <view wx:else class="study-content">
-    <!-- 单词展示 -->
-    <view class="word-section">
-      <view class="word-main">{{currentTask.vocabulary.word}}</view>
-      <view wx:if="{{currentTask.vocabulary.phonetic}}" class="word-phonetic">
-        [{{currentTask.vocabulary.phonetic}}]
-      </view>
-      <view wx:if="{{currentTask.vocabulary.partOfSpeech && currentTask.vocabulary.partOfSpeech.length > 0}}" class="word-pos">
-        {{currentTask.vocabulary.partOfSpeech.join(' ')}}
-      </view>
+    <!-- 选择题模式1: 英文单词 + 4个中文释义选项 -->
+    <view wx:if="{{currentQuestion.type === 'ENGLISH_TO_CHINESE'}}" class="word-display">
+      <text class="word-text">{{currentTask.vocabulary.word}}</text>
+      <text class="question-hint">请选择正确的中文释义</text>
     </view>
-
-    <!-- 题型说明 -->
-    <view class="question-type">
-      <text wx:if="{{currentQuestion.type === 'ENGLISH_TO_CHINESE'}}">请选择正确的中文释义</text>
-      <text wx:elif="{{currentQuestion.type === 'CHINESE_TO_ENGLISH'}}">请选择正确的英文单词</text>
-      <text wx:elif="{{currentQuestion.type === 'LISTENING'}}">听音选词</text>
-      <text wx:elif="{{currentQuestion.type === 'FILL_IN_BLANK'}}">选词填空</text>
+    
+    <!-- 选择题模式2: 汉语 + 4个英文单词选项 -->
+    <view wx:elif="{{currentQuestion.type === 'CHINESE_TO_ENGLISH'}}" class="word-display">
+      <text class="word-text chinese-text">{{currentTask.vocabulary.primaryMeaning}}</text>
+      <text class="question-hint">请选择正确的英文单词</text>
+    </view>
+    
+    <!-- 选择题模式3: 英文单词读音 + 4个英文单词选项 -->
+    <view wx:elif="{{currentQuestion.type === 'LISTENING'}}" class="word-display">
+      <view class="audio-icon" bindtap="playAudio">🔊</view>
+      <text class="question-hint">听音选词</text>
+    </view>
+    
+    <!-- 选择题模式4: 选词填空 -->
+    <view wx:elif="{{currentQuestion.type === 'FILL_IN_BLANK'}}" class="word-display">
+      <view class="sentence-display">
+        <text class="sentence-text">{{currentQuestion.sentence}}</text>
+      </view>
+      <text class="question-hint">选择正确的单词填空</text>
+    </view>
+    
+    <!-- 默认显示 -->
+    <view wx:else class="word-display">
+      <text class="word-text">{{currentTask.vocabulary.word}}</text>
     </view>
 
     <!-- 选项列表 -->
@@ -71,10 +90,22 @@
       </view>
     </view>
 
-    <!-- 提交按钮 -->
-    <view wx:if="{{!isAnswered}}" class="submit-section">
-      <button class="submit-btn" bindtap="submitAnswer" disabled="{{!selectedAnswer}}">
+    <!-- 提交按钮 / 继续按钮 -->
+    <view class="submit-section">
+      <button 
+        wx:if="{{!isAnswered}}" 
+        class="submit-btn" 
+        bindtap="submitAnswer" 
+        disabled="{{!selectedAnswer}}"
+      >
         提交答案
+      </button>
+      <button 
+        wx:elif="{{isAnswered && !isCorrect}}" 
+        class="submit-btn continue-btn" 
+        bindtap="nextQuestion"
+      >
+        继续
       </button>
     </view>
 

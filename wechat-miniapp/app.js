@@ -3,7 +3,7 @@ App({
   globalData: {
     userInfo: null,
     token: null,
-    apiUrl: 'http://localhost:3000/api', // 开发环境API地址
+    apiUrl: 'https://11word.vercel.app/api', // 线上环境API地址
   },
 
   onLaunch() {

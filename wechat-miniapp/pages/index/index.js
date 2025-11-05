@@ -117,4 +117,11 @@ Page({
       url: '/pages/wrong/wrong',
     })
   },
+
+  // 前往个人中心
+  goToProfile() {
+    wx.switchTab({
+      url: '/pages/profile/profile',
+    })
+  },
 })
