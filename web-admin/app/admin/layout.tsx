@@ -138,17 +138,22 @@ export default function AdminLayout({
             margin: '20px 16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 12,
-            color: '#ffffff',
-            fontSize: collapsed ? 20 : 18,
-            fontWeight: 700,
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            paddingLeft: collapsed ? 0 : 16,
+            color: '#1f2937',
+            fontSize: collapsed ? 24 : 18,
+            fontWeight: 600,
             transition: 'all 0.3s',
           }}
         >
-          {collapsed ? '词' : '智能词汇复习'}
+          {collapsed ? (
+            <span style={{ fontSize: 28 }}>📚</span>
+          ) : (
+            <>
+              <span style={{ fontSize: 24, marginRight: 8 }}>📚</span>
+              <span>智能词汇复习</span>
+            </>
+          )}
         </div>
         <Menu
           mode="inline"
