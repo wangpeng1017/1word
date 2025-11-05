@@ -66,9 +66,14 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取词汇列表错误:', error)
-    return errorResponse('获取词汇列表失败', 500)
+    console.error('错误详情:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack
+    })
+    return errorResponse(`获取词汇列表失败: ${error?.message || '未知错误'}`, 500)
   }
 }
 
