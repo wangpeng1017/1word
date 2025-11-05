@@ -1,0 +1,201 @@
+import { PrismaClient } from '@prisma/client'
+import * as fs from 'fs'
+import * as path from 'path'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+  const backupDir = path.join(process.cwd(), 'backups')
+  
+  // 创建备份目录
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true })
+  }
+
+  console.log('🔄 开始备份和迁移流程...\n')
+
+  try {
+    // ==================== 步骤1: 数据备份 ====================
+    console.log('📦 步骤 1/4: 备份现有数据...')
+    
+    const students = await prisma.student.findMany({
+      include: {
+        user: true,
+        class: true,
+      },
+    })
+
+    const studyPlans = await prisma.studyPlan.findMany()
+    const classes = await prisma.class.findMany()
+    
+    const backup = {
+      timestamp,
+      students: students.map(s => ({
+        id: s.id,
+        userId: s.userId,
+        studentNo: s.studentNo,
+        classId: s.classId,
+        grade: s.grade,
+        userName: s.user.name,
+        className: s.class?.name,
+      })),
+      studyPlans: studyPlans.length,
+      classes: classes.length,
+    }
+
+    const backupFile = path.join(backupDir, `backup-${timestamp}.json`)
+    fs.writeFileSync(backupFile, JSON.stringify(backup, null, 2))
+    
+    console.log(`✅ 备份完成: ${backupFile}`)
+    console.log(`   - 学生数: ${students.length}`)
+    console.log(`   - 学习计划数: ${studyPlans.length}`)
+    console.log(`   - 班级数: ${classes.length}\n`)
+
+    // ==================== 步骤2: 检查需要迁移的数据 ====================
+    console.log('🔍 步骤 2/4: 检查待迁移数据...')
+    
+    const studentsWithoutClass = students.filter(s => !s.classId || !s.grade)
+    
+    console.log(`   - 需要分配班级的学生: ${studentsWithoutClass.length}`)
+    
+    if (studentsWithoutClass.length === 0) {
+      console.log('✅ 所有学生都已分配班级，无需迁移\n')
+      
+      console.log('📊 步骤 3/4: 推送 Schema 变更到数据库...')
+      console.log('⚠️  请手动执行: npx prisma db push')
+      console.log('   (由于可能涉及外键约束变更，建议手动确认)\n')
+      
+      return
+    }
+
+    // ==================== 步骤3: 创建或获取默认班级 ====================
+    console.log('\n🏫 步骤 3/4: 准备默认班级...')
+    
+    let defaultClass = await prisma.class.findFirst({
+      where: { name: '未分配班级' },
+    })
+
+    if (!defaultClass) {
+      // 获取或创建默认教师
+      let defaultTeacher = await prisma.teacher.findFirst()
+
+      if (!defaultTeacher) {
+        console.log('   - 未找到教师，创建默认教师账户...')
+        
+        const existingAdmin = await prisma.user.findFirst({
+          where: { email: 'admin@default.com' },
+        })
+
+        let adminUser = existingAdmin
+        
+        if (!existingAdmin) {
+          adminUser = await prisma.user.create({
+            data: {
+              email: 'admin@default.com',
+              password: '$2a$10$temp_password_hash_change_me',
+              name: '系统管理员',
+              role: 'TEACHER',
+            },
+          })
+        }
+
+        defaultTeacher = await prisma.teacher.create({
+          data: {
+            userId: adminUser!.id,
+            school: '默认学校',
+            subject: '英语',
+          },
+        })
+
+        console.log('   ✅ 默认教师创建成功')
+      }
+
+      // 创建默认班级
+      defaultClass = await prisma.class.create({
+        data: {
+          name: '未分配班级',
+          grade: '待分配',
+          teacherId: defaultTeacher.id,
+          isActive: true,
+        },
+      })
+
+      console.log('   ✅ 默认班级创建成功')
+    } else {
+      console.log('   ✅ 默认班级已存在')
+    }
+
+    // ==================== 步骤4: 迁移学生数据 ====================
+    console.log('\n👥 步骤 4/4: 迁移学生数据...')
+    
+    let migratedCount = 0
+    const migrationLog: any[] = []
+
+    for (const student of studentsWithoutClass) {
+      try {
+        await prisma.student.update({
+          where: { id: student.id },
+          data: {
+            classId: defaultClass.id,
+            grade: defaultClass.grade,
+          },
+        })
+
+        migratedCount++
+        migrationLog.push({
+          studentNo: student.studentNo,
+          name: student.user.name,
+          oldClassId: student.classId,
+          oldGrade: student.grade,
+          newClassId: defaultClass.id,
+          newGrade: defaultClass.grade,
+          status: 'success',
+        })
+
+        console.log(`   ✅ ${student.user.name} (${student.studentNo}) -> ${defaultClass.name}`)
+      } catch (error: any) {
+        migrationLog.push({
+          studentNo: student.studentNo,
+          name: student.user.name,
+          status: 'failed',
+          error: error.message,
+        })
+        console.log(`   ❌ ${student.user.name} 迁移失败: ${error.message}`)
+      }
+    }
+
+    // 保存迁移日志
+    const migrationLogFile = path.join(backupDir, `migration-log-${timestamp}.json`)
+    fs.writeFileSync(migrationLogFile, JSON.stringify(migrationLog, null, 2))
+
+    console.log(`\n✅ 迁移完成！`)
+    console.log(`   - 成功迁移: ${migratedCount} 个学生`)
+    console.log(`   - 迁移日志: ${migrationLogFile}\n`)
+
+    console.log('⚠️  重要提醒：')
+    console.log('   1. 所有未分配班级的学生已移至 "未分配班级"')
+    console.log('   2. 请登录管理后台为这些学生手动分配正确的班级')
+    console.log('   3. 备份文件已保存在 backups/ 目录\n')
+
+    console.log('📋 下一步操作：')
+    console.log('   1. 执行: npx prisma db push')
+    console.log('   2. 执行: npm run build')
+    console.log('   3. 重启服务: npm run dev\n')
+
+  } catch (error: any) {
+    console.error('❌ 迁移失败:', error.message)
+    console.error('\n回滚建议：')
+    console.error(`   使用备份文件恢复: ${backupDir}/backup-${timestamp}.json`)
+    process.exit(1)
+  }
+}
+
+main()
+  .catch((e) => {
+    console.error('严重错误:', e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

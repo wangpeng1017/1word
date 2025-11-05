@@ -1,0 +1,230 @@
+import { NextRequest } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { verifyToken, getTokenFromHeader } from '@/lib/auth'
+import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
+
+// 获取题目列表
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const token = getTokenFromHeader(authHeader || '')
+    
+    if (!token || !verifyToken(token)) {
+      return unauthorizedResponse()
+    }
+
+    const { searchParams } = new URL(request.url)
+    const vocabularyId = searchParams.get('vocabularyId')
+    const type = searchParams.get('type')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
+
+    const skip = (page - 1) * limit
+
+    const where: any = {}
+    
+    if (vocabularyId) {
+      where.vocabularyId = vocabularyId
+    }
+    
+    if (type) {
+      where.type = type
+    }
+
+    const [questions, total] = await Promise.all([
+      prisma.question.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          vocabulary: {
+            select: {
+              word: true,
+              primaryMeaning: true,
+            },
+          },
+          options: {
+            orderBy: { order: 'asc' },
+          },
+        },
+      }),
+      prisma.question.count({ where }),
+    ])
+
+    return successResponse({
+      questions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    })
+  } catch (error: any) {
+    console.error('获取题目列表错误:', error)
+    return errorResponse(`获取题目列表失败: ${error?.message || '未知错误'}`, 500)
+  }
+}
+
+// 创建题目
+export async function POST(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const token = getTokenFromHeader(authHeader || '')
+    
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role !== 'TEACHER') {
+      return unauthorizedResponse('只有教师可以创建题目')
+    }
+
+    const body = await request.json()
+    const { vocabularyId, type, content, sentence, audioUrl, correctAnswer, options } = body
+
+    if (!vocabularyId || !type || !content || !correctAnswer) {
+      return errorResponse('缺少必要字段')
+    }
+
+    // 验证词汇是否存在
+    const vocabulary = await prisma.vocabulary.findUnique({
+      where: { id: vocabularyId },
+    })
+
+    if (!vocabulary) {
+      return errorResponse('词汇不存在')
+    }
+
+    // 创建题目和选项
+    const question = await prisma.question.create({
+      data: {
+        vocabularyId,
+        type,
+        content,
+        sentence,
+        audioUrl,
+        correctAnswer,
+        options: {
+          create: options?.map((opt: any, index: number) => ({
+            content: opt.content,
+            isCorrect: opt.isCorrect,
+            order: opt.order ?? index,
+          })) || [],
+        },
+      },
+      include: {
+        vocabulary: {
+          select: {
+            word: true,
+            primaryMeaning: true,
+          },
+        },
+        options: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    })
+
+    return successResponse(question, '题目创建成功')
+  } catch (error: any) {
+    console.error('创建题目错误:', error)
+    return errorResponse(`创建题目失败: ${error?.message || '未知错误'}`, 500)
+  }
+}
+
+// 更新题目
+export async function PUT(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const token = getTokenFromHeader(authHeader || '')
+    
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role !== 'TEACHER') {
+      return unauthorizedResponse('只有教师可以更新题目')
+    }
+
+    const body = await request.json()
+    const { id, type, content, sentence, audioUrl, correctAnswer, options } = body
+
+    if (!id) {
+      return errorResponse('缺少题目ID')
+    }
+
+    // 更新题目（先删除旧选项再创建新选项）
+    await prisma.$transaction(async (tx) => {
+      await tx.questionOption.deleteMany({
+        where: { questionId: id },
+      })
+
+      await tx.question.update({
+        where: { id },
+        data: {
+          type,
+          content,
+          sentence,
+          audioUrl,
+          correctAnswer,
+          options: {
+            create: options?.map((opt: any, index: number) => ({
+              content: opt.content,
+              isCorrect: opt.isCorrect,
+              order: opt.order ?? index,
+            })) || [],
+          },
+        },
+      })
+    })
+
+    const question = await prisma.question.findUnique({
+      where: { id },
+      include: {
+        vocabulary: {
+          select: {
+            word: true,
+            primaryMeaning: true,
+          },
+        },
+        options: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    })
+
+    return successResponse(question, '题目更新成功')
+  } catch (error: any) {
+    console.error('更新题目错误:', error)
+    return errorResponse(`更新题目失败: ${error?.message || '未知错误'}`, 500)
+  }
+}
+
+// 批量删除题目
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const token = getTokenFromHeader(authHeader || '')
+    
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role !== 'TEACHER') {
+      return unauthorizedResponse('只有教师可以删除题目')
+    }
+
+    const { searchParams } = new URL(request.url)
+    const ids = searchParams.get('ids')?.split(',') || []
+
+    if (ids.length === 0) {
+      return errorResponse('缺少题目ID')
+    }
+
+    await prisma.question.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    })
+
+    return successResponse(null, '题目删除成功')
+  } catch (error: any) {
+    console.error('删除题目错误:', error)
+    return errorResponse(`删除题目失败: ${error?.message || '未知错误'}`, 500)
+  }
+}

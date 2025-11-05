@@ -54,11 +54,34 @@ export async function POST(request: NextRequest) {
         },
       })
     } else if (role === 'STUDENT') {
-      // 学生需要学号，这里暂时使用用户ID
+      // 学生需要学号和班级，先分配到默认班级
+      // 获取或创建默认班级
+      let defaultClass = await prisma.class.findFirst({
+        where: { name: '未分配班级' },
+      })
+
+      if (!defaultClass) {
+        // 创建默认班级（需要一个教师）
+        const defaultTeacher = await prisma.teacher.findFirst()
+        if (defaultTeacher) {
+          defaultClass = await prisma.class.create({
+            data: {
+              name: '未分配班级',
+              grade: '待分配',
+              teacherId: defaultTeacher.id,
+            },
+          })
+        } else {
+          return errorResponse('系统未配置，请联系管理员', 500)
+        }
+      }
+
       await prisma.student.create({
         data: {
           userId: user.id,
-          studentNo: `STU${Date.now()}`, // 临时学号，后续可以修改
+          studentNo: `STU${Date.now()}`,
+          classId: defaultClass.id,
+          grade: defaultClass.grade,
         },
       })
     }

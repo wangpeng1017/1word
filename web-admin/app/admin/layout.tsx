@@ -13,6 +13,7 @@ import {
   MenuUnfoldOutlined,
   SettingOutlined,
   CalendarOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -31,6 +32,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/vocabularies',
     icon: <BookOutlined />,
     label: '词汇管理',
+  },
+  {
+    key: '/admin/questions',
+    icon: <FileTextOutlined />,
+    label: '题目管理',
   },
   {
     key: '/admin/students',

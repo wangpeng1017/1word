@@ -1,0 +1,98 @@
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  console.log('开始迁移学生班级数据...')
+
+  // 1. 找到所有没有班级的学生
+  const studentsWithoutClass = await prisma.student.findMany({
+    where: {
+      OR: [
+        { classId: null },
+        { grade: null },
+      ],
+    },
+    include: {
+      user: true,
+    },
+  })
+
+  console.log(`找到 ${studentsWithoutClass.length} 个学生需要分配班级`)
+
+  if (studentsWithoutClass.length === 0) {
+    console.log('所有学生都已分配班级，无需迁移')
+    return
+  }
+
+  // 2. 获取或创建默认班级
+  let defaultClass = await prisma.class.findFirst({
+    where: {
+      name: '未分配班级',
+    },
+  })
+
+  if (!defaultClass) {
+    // 找到第一个教师或创建默认教师
+    let defaultTeacher = await prisma.teacher.findFirst()
+
+    if (!defaultTeacher) {
+      // 创建默认管理员用户
+      const adminUser = await prisma.user.create({
+        data: {
+          email: 'admin@default.com',
+          password: 'temp_password_change_me',
+          name: '系统管理员',
+          role: 'TEACHER',
+        },
+      })
+
+      defaultTeacher = await prisma.teacher.create({
+        data: {
+          userId: adminUser.id,
+          school: '默认学校',
+          subject: '英语',
+        },
+      })
+
+      console.log('已创建默认教师账户')
+    }
+
+    // 创建默认班级
+    defaultClass = await prisma.class.create({
+      data: {
+        name: '未分配班级',
+        grade: '待分配',
+        teacherId: defaultTeacher.id,
+        isActive: true,
+      },
+    })
+
+    console.log('已创建默认班级')
+  }
+
+  // 3. 将所有未分配班级的学生分配到默认班级
+  for (const student of studentsWithoutClass) {
+    await prisma.student.update({
+      where: { id: student.id },
+      data: {
+        classId: defaultClass.id,
+        grade: defaultClass.grade,
+      },
+    })
+
+    console.log(`已分配学生 ${student.user.name} 到默认班级`)
+  }
+
+  console.log('迁移完成！')
+  console.log('⚠️  重要：请登录管理后台为这些学生手动分配正确的班级')
+}
+
+main()
+  .catch((e) => {
+    console.error('迁移失败:', e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

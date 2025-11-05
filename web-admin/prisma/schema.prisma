@@ -53,9 +53,9 @@ model Student {
   userId      String   @unique @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   studentNo   String   @unique @map("student_no")
-  classId     String?  @map("class_id")
-  class       Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
-  grade       String?
+  classId     String   @map("class_id")
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  grade       String   // 冗余字段，方便查询（与 class.grade 一致）
   wechatId    String?  @unique @map("wechat_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -66,6 +66,8 @@ model Student {
   wrongQuestions WrongQuestion[]
   wordMasteries  WordMastery[]
 
+  @@index([classId])
+  @@index([grade])
   @@map("students")
 }
 
@@ -79,7 +81,8 @@ model Class {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  students Student[]
+  students    Student[]
+  planClasses PlanClass[]
 
   @@map("classes")
 }
@@ -107,11 +110,12 @@ model Vocabulary {
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
-  audios        WordAudio[]
-  images        WordImage[]
-  questions     Question[]
-  studyPlans    StudyPlan[]
-  dailyTasks    DailyTask[]
+  audios         WordAudio[]
+  images         WordImage[]
+  questions      Question[]
+  studyPlans     StudyPlan[]
+  planClasses    PlanClass[]
+  dailyTasks     DailyTask[]
   wrongQuestions WrongQuestion[]
   wordMasteries  WordMastery[]
 
@@ -204,6 +208,25 @@ model StudyPlan {
 
   @@unique([studentId, vocabularyId])
   @@map("study_plans")
+}
+
+// 班级学习计划（批量下发给班级）
+model PlanClass {
+  id           String           @id @default(cuid())
+  classId      String           @map("class_id")
+  class        Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  vocabularyId String           @map("vocabulary_id")
+  vocabulary   Vocabulary       @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  status       StudyPlanStatus  @default(PENDING)
+  startDate    DateTime         @map("start_date") @db.Date // 计划开始日期
+  endDate      DateTime?        @map("end_date") @db.Date   // 计划结束日期
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([classId, vocabularyId])
+  @@index([classId])
+  @@index([status])
+  @@map("plan_classes")
 }
 
 enum TaskStatus {

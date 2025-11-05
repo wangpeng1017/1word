@@ -23,6 +23,7 @@ import {
   ReloadOutlined,
   DownloadOutlined,
   FilterOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/navigation'
@@ -52,6 +53,7 @@ export default function VocabulariesPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [difficultyFilter, setDifficultyFilter] = useState<string>('')
   const [highFreqFilter, setHighFreqFilter] = useState<boolean | null>(null)
+  const [importing, setImporting] = useState(false)
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -148,6 +150,42 @@ export default function VocabulariesPage() {
     const token = localStorage.getItem('token')
     window.open(`/api/vocabularies/export?token=${token}`, '_blank')
     message.success('导出已开始')
+  }
+
+  const handleImport = async (file: File) => {
+    setImporting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/vocabularies/import', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(result.message || '导入成功')
+        loadData()
+      } else {
+        message.error(result.error || '导入失败')
+      }
+    } catch (error) {
+      message.error('导入失败')
+    } finally {
+      setImporting(false)
+    }
+    return false
+  }
+
+  const handleDownloadTemplate = () => {
+    const token = localStorage.getItem('token')
+    window.open(`/api/vocabularies/import?token=${token}`, '_blank')
+    message.success('模板下载已开始')
   }
 
   const handleBatchDelete = async () => {
@@ -311,8 +349,27 @@ export default function VocabulariesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             添加词汇
           </Button>
+          <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
+            下载模板
+          </Button>
+          <Button 
+            icon={<UploadOutlined />} 
+            loading={importing}
+            onClick={() => {
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.accept = '.xlsx,.xls'
+              input.onchange = (e: any) => {
+                const file = e.target.files?.[0]
+                if (file) handleImport(file)
+              }
+              input.click()
+            }}
+          >
+            批量导入
+          </Button>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
-            导出
+            导出数据
           </Button>
           {selectedRowKeys.length > 0 && (
             <Button danger onClick={handleBatchDelete}>

@@ -97,6 +97,19 @@ export async function POST(request: NextRequest) {
       return errorResponse('姓名、学号和密码不能为空')
     }
 
+    if (!classId) {
+      return errorResponse('必须指定班级')
+    }
+
+    // 验证班级是否存在并获取 grade
+    const classData = await prisma.class.findUnique({
+      where: { id: classId },
+    })
+
+    if (!classData) {
+      return errorResponse('班级不存在')
+    }
+
     // 检查学号是否已存在
     const existingStudent = await prisma.student.findUnique({
       where: { studentNo },
@@ -137,7 +150,7 @@ export async function POST(request: NextRequest) {
           create: {
             studentNo,
             classId,
-            grade,
+            grade: grade || classData.grade,
           },
         },
       },

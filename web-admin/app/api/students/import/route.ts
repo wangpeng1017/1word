@@ -55,13 +55,60 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // 查找班级
-        let classId: string | undefined
+        // 查找班级，如果没有则使用默认班级
+        let classId: string
+        let classGrade: string
+        
         if (className) {
           const classData = await prisma.class.findFirst({
             where: { name: className },
           })
-          classId = classData?.id
+          if (classData) {
+            classId = classData.id
+            classGrade = classData.grade
+          } else {
+            // 班级不存在，使用默认班级
+            let defaultClass = await prisma.class.findFirst({
+              where: { name: '未分配班级' },
+            })
+            
+            if (!defaultClass) {
+              const defaultTeacher = await prisma.teacher.findFirst()
+              if (!defaultTeacher) {
+                throw new Error('系统未配置，请联系管理员')
+              }
+              defaultClass = await prisma.class.create({
+                data: {
+                  name: '未分配班级',
+                  grade: '待分配',
+                  teacherId: defaultTeacher.id,
+                },
+              })
+            }
+            classId = defaultClass.id
+            classGrade = defaultClass.grade
+          }
+        } else {
+          // 没有指定班级，使用默认班级
+          let defaultClass = await prisma.class.findFirst({
+            where: { name: '未分配班级' },
+          })
+          
+          if (!defaultClass) {
+            const defaultTeacher = await prisma.teacher.findFirst()
+            if (!defaultTeacher) {
+              throw new Error('系统未配置，请联系管理员')
+            }
+            defaultClass = await prisma.class.create({
+              data: {
+                name: '未分配班级',
+                grade: '待分配',
+                teacherId: defaultTeacher.id,
+              },
+            })
+          }
+          classId = defaultClass.id
+          classGrade = defaultClass.grade
         }
 
         // 创建用户和学生
@@ -74,7 +121,7 @@ export async function POST(request: NextRequest) {
               create: {
                 studentNo,
                 classId,
-                grade,
+                grade: grade || classGrade,
               },
             },
           },

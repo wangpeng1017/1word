@@ -162,27 +162,34 @@ export default function StudyPlansPage() {
     }
   }
 
-  // 批量生成学习计划
+  // 批量生成班级学习计划
   const handleGenerate = async (values: any) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/study-plans/generate', {
+      const payload = {
+        classIds: values.classIds,
+        vocabularyIds: values.vocabularyIds,
+        startDate: values.startDate ? dayjs(values.startDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+        endDate: values.endDate ? dayjs(values.endDate).format('YYYY-MM-DD') : null,
+      }
+
+      const response = await fetch('/api/plan-classes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       })
 
       const result = await response.json()
       if (result.success) {
-        message.success(result.message || '学习计划生成成功')
+        message.success(result.message || '班级学习计划生成成功')
         setGenerateModalVisible(false)
         generateForm.resetFields()
         fetchData()
       } else {
-        message.error(result.error || '生成失败')
+        message.error(result.message || '生成失败')
       }
     } catch (error) {
       message.error('生成失败')
@@ -442,7 +449,7 @@ export default function StudyPlansPage() {
 
       {/* 批量生成对话框 */}
       <Modal
-        title="批量生成学习计划"
+        title="批量生成班级学习计划"
         open={generateModalVisible}
         onOk={() => generateForm.submit()}
         onCancel={() => {
@@ -457,74 +464,32 @@ export default function StudyPlansPage() {
           onFinish={handleGenerate}
         >
           <Form.Item
-            label="选择方式"
-            name="type"
-            rules={[{ required: true, message: '请选择生成方式' }]}
+            label="选择班级"
+            name="classIds"
+            rules={[{ required: true, message: '请选择至少一个班级' }]}
           >
             <Select
-              placeholder="请选择"
-              onChange={(value) => {
-                if (value === 'class') {
-                  generateForm.resetFields(['studentIds'])
-                } else {
-                  generateForm.resetFields(['classId'])
-                }
-              }}
+              mode="multiple"
+              placeholder="请选择班级（可多选）"
+              showSearch
+              optionFilterProp="children"
             >
-              <Select.Option value="students">按学生</Select.Option>
-              <Select.Option value="class">按班级</Select.Option>
+              {classes.map((c) => (
+                <Select.Option key={c.id} value={c.id}>
+                  {c.name} ({c.grade})
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item noStyle shouldUpdate>
-            {() => {
-              const type = generateForm.getFieldValue('type')
-              if (type === 'students') {
-                return (
-                  <Form.Item
-                    label="选择学生"
-                    name="studentIds"
-                    rules={[{ required: true, message: '请选择学生' }]}
-                  >
-                    <Select
-                      mode="multiple"
-                      placeholder="请选择学生"
-                      showSearch
-                      optionFilterProp="children"
-                    >
-                      {students.map((s) => (
-                        <Select.Option key={s.id} value={s.id}>
-                          {s.user.name} - {s.class?.name || '无班级'}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                )
-              } else if (type === 'class') {
-                return (
-                  <Form.Item
-                    label="选择班级"
-                    name="classId"
-                    rules={[{ required: true, message: '请选择班级' }]}
-                  >
-                    <Select placeholder="请选择班级">
-                      {classes.map((c) => (
-                        <Select.Option key={c.id} value={c.id}>
-                          {c.name} ({c.grade})
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                )
-              }
-              return null
-            }}
-          </Form.Item>
-
-          <Form.Item label="选择词汇" name="vocabularyIds">
+          <Form.Item
+            label="选择词汇"
+            name="vocabularyIds"
+            rules={[{ required: true, message: '请选择至少一个词汇' }]}
+          >
             <Select
               mode="multiple"
-              placeholder="不选择则生成所有词汇"
+              placeholder="请选择词汇（可多选）"
               showSearch
               optionFilterProp="children"
             >
@@ -534,6 +499,19 @@ export default function StudyPlansPage() {
                 </Select.Option>
               ))}
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="计划开始日期"
+            name="startDate"
+            rules={[{ required: true, message: '请选择开始日期' }]}
+            initialValue={dayjs()}
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="计划结束日期" name="endDate">
+            <DatePicker style={{ width: '100%' }} />
           </Form.Item>
         </Form>
       </Modal>
