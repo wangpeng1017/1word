@@ -20,6 +20,9 @@ import {
   Alert,
   Badge,
   Tooltip,
+  Upload,
+  Image,
+  Spin,
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -30,8 +33,13 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   QuestionCircleOutlined,
+  SoundOutlined,
+  PictureOutlined,
+  LoadingOutlined,
+  PlayCircleOutlined,
 } from '@ant-design/icons'
 import { Popconfirm } from 'antd'
+import type { UploadFile, UploadProps } from 'antd'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -64,11 +72,42 @@ export default function VocabularyDetailPage() {
   const [currentType, setCurrentType] = useState<string>('ENGLISH_TO_CHINESE')
   const [previewVisible, setPreviewVisible] = useState(false)
   const [previewQuestion, setPreviewQuestion] = useState<any>(null)
+  const [audioUploading, setAudioUploading] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [audioList, setAudioList] = useState<any[]>([])
+  const [imageList, setImageList] = useState<any[]>([])
   const [form] = Form.useForm()
 
   useEffect(() => {
     loadData()
+    loadFiles()
   }, [vocabularyId])
+
+  const loadFiles = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      
+      // 加载音频文件
+      const audioRes = await fetch(`/api/vocabularies/${vocabularyId}/files?type=audio`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const audioResult = await audioRes.json()
+      if (audioResult.success) {
+        setAudioList(audioResult.data || [])
+      }
+      
+      // 加载图片文件
+      const imageRes = await fetch(`/api/vocabularies/${vocabularyId}/files?type=image`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const imageResult = await imageRes.json()
+      if (imageResult.success) {
+        setImageList(imageResult.data || [])
+      }
+    } catch (error) {
+      console.error('加载文件失败:', error)
+    }
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -308,7 +347,128 @@ export default function VocabularyDetailPage() {
           </Card>
         ))}
       </div>
-    )
+    }
+  }
+
+  const handleAudioUpload: UploadProps['customRequest'] = async (options) => {
+    const { file, onSuccess, onError } = options
+    setAudioUploading(true)
+
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', file as File)
+      formData.append('type', 'audio')
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+
+      const uploadResult = await uploadRes.json()
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || '上传失败')
+      }
+
+      // 保存文件记录到数据库
+      const saveRes = await fetch(`/api/vocabularies/${vocabularyId}/files`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: 'audio',
+          url: uploadResult.data.url,
+          filename: uploadResult.data.filename,
+        }),
+      })
+
+      const saveResult = await saveRes.json()
+      if (saveResult.success) {
+        message.success('音频上传成功')
+        onSuccess?.(saveResult.data, file as any)
+        loadFiles()
+      } else {
+        throw new Error(saveResult.error || '保存失败')
+      }
+    } catch (error: any) {
+      message.error(error.message || '上传失败')
+      onError?.(error)
+    } finally {
+      setAudioUploading(false)
+    }
+  }
+
+  const handleImageUpload: UploadProps['customRequest'] = async (options) => {
+    const { file, onSuccess, onError } = options
+    setImageUploading(true)
+
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', file as File)
+      formData.append('type', 'image')
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+
+      const uploadResult = await uploadRes.json()
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || '上传失败')
+      }
+
+      // 保存文件记录到数据库
+      const saveRes = await fetch(`/api/vocabularies/${vocabularyId}/files`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: 'image',
+          url: uploadResult.data.url,
+          filename: uploadResult.data.filename,
+        }),
+      })
+
+      const saveResult = await saveRes.json()
+      if (saveResult.success) {
+        message.success('图片上传成功')
+        onSuccess?.(saveResult.data, file as any)
+        loadFiles()
+      } else {
+        throw new Error(saveResult.error || '保存失败')
+      }
+    } catch (error: any) {
+      message.error(error.message || '上传失败')
+      onError?.(error)
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
+  const handleDeleteFile = async (fileId: string, type: 'audio' | 'image') => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/vocabularies/${vocabularyId}/files/${fileId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const result = await response.json()
+      if (result.success) {
+        message.success('删除成功')
+        loadFiles()
+      } else {
+        message.error('删除失败')
+      }
+    } catch (error) {
+      message.error('删除失败')
+    }
   }
 
   const tabs = [
@@ -369,6 +529,107 @@ export default function VocabularyDetailPage() {
             )}
           </Descriptions>
         )}
+      </Card>
+
+      <Card title="多媒体资源" style={{ marginBottom: 16 }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 音频上传 */}
+          <div>
+            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SoundOutlined style={{ fontSize: 18, color: '#1890ff' }} />
+              <span style={{ fontSize: 16, fontWeight: 500 }}>发音音频</span>
+              <Tag color="blue">{audioList.length} 个文件</Tag>
+            </div>
+            <Upload
+              customRequest={handleAudioUpload}
+              showUploadList={false}
+              accept="audio/*"
+              disabled={audioUploading}
+            >
+              <Button icon={audioUploading ? <LoadingOutlined /> : <PlusOutlined />} disabled={audioUploading}>
+                {audioUploading ? '上传中...' : '上传音频'}
+              </Button>
+            </Upload>
+            <div style={{ marginTop: 12 }}>
+              {audioList.map((audio) => (
+                <Card
+                  key={audio.id}
+                  size="small"
+                  style={{ marginBottom: 8 }}
+                  bodyStyle={{ padding: '12px 16px' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Space>
+                      <PlayCircleOutlined style={{ fontSize: 20, color: '#52c41a' }} />
+                      <span>{audio.filename}</span>
+                      <audio controls src={audio.url} style={{ height: 32 }}>
+                        您的浏览器不支持音频播放
+                      </audio>
+                    </Space>
+                    <Popconfirm
+                      title="确认删除这个音频？"
+                      onConfirm={() => handleDeleteFile(audio.id, 'audio')}
+                      okText="确认"
+                      cancelText="取消"
+                    >
+                      <Button type="text" danger size="small" icon={<DeleteOutlined />}>
+                        删除
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <Divider style={{ margin: '8px 0' }} />
+
+          {/* 图片上传 */}
+          <div>
+            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <PictureOutlined style={{ fontSize: 18, color: '#1890ff' }} />
+              <span style={{ fontSize: 16, fontWeight: 500 }}>示意图片</span>
+              <Tag color="blue">{imageList.length} 个文件</Tag>
+            </div>
+            <Upload
+              customRequest={handleImageUpload}
+              showUploadList={false}
+              accept="image/*"
+              disabled={imageUploading}
+            >
+              <Button icon={imageUploading ? <LoadingOutlined /> : <PlusOutlined />} disabled={imageUploading}>
+                {imageUploading ? '上传中...' : '上传图片'}
+              </Button>
+            </Upload>
+            <div style={{ marginTop: 12, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {imageList.map((image) => (
+                <Card
+                  key={image.id}
+                  size="small"
+                  bodyStyle={{ padding: 8 }}
+                  style={{ width: 200 }}
+                >
+                  <Image
+                    src={image.url}
+                    alt={image.filename}
+                    style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 4 }}
+                  />
+                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: '#666' }}>{image.filename}</span>
+                    <Popconfirm
+                      title="确认删除？"
+                      onConfirm={() => handleDeleteFile(image.id, 'image')}
+                      okText="确认"
+                      cancelText="取消"
+                    >
+                      <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </Space>
       </Card>
 
       <Card title="题目管理">
