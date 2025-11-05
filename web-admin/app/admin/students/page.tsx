@@ -116,19 +116,21 @@ export default function StudentsPage() {
   const columns = [
     {
       title: '姓名',
-      dataIndex: 'name',
+      dataIndex: ['user', 'name'],
       key: 'name',
       render: (text: string, record: any) => (
-        <a onClick={() => router.push(`/admin/students/${record.id}`)}>{text}</a>
+        <a onClick={() => router.push(`/admin/students/${record.id}`)}>
+          {record.user?.name || '未命名'}
+        </a>
       ),
     },
     { title: '学号', dataIndex: 'studentNo', key: 'studentNo' },
     { title: '年级', dataIndex: 'grade', key: 'grade' },
     {
       title: '班级',
-      dataIndex: 'class',
+      dataIndex: ['class', 'name'],
       key: 'class',
-      render: (cls: any) => cls?.name || '未分配',
+      render: (text: string, record: any) => record.class?.name || '未分配',
     },
   ]
 

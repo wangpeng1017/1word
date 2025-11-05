@@ -67,7 +67,7 @@ export default function VocabulariesPage() {
       })
       const result = await response.json()
       if (result.success) {
-        setData(result.data || [])
+        setData(result.data?.vocabularies || [])
       } else {
         message.error('加载失败')
       }
