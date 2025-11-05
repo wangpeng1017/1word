@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
           studyPlansToCreate.push({
             studentId,
             vocabularyId: vocab.id,
-            status: 'PENDING',
+            status: 'PENDING' as const,
             reviewCount: 0,
             nextReviewAt,
           })
