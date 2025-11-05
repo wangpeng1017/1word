@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd web-admin && npm run build",
+  "devCommand": "cd web-admin && npm run dev",
+  "installCommand": "cd web-admin && npm install",
+  "framework": null,
+  "outputDirectory": "web-admin/.next"
+}
