@@ -103,7 +103,7 @@ export default function AdminLayout({
   const selectedKeys = [pathname]
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}>
       <Sider 
         trigger={null} 
         collapsible 
@@ -115,39 +115,51 @@ export default function AdminLayout({
           left: 0,
           top: 0,
           bottom: 0,
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%)',
+          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.04)',
+          borderRight: 'none',
         }}
       >
         <div
           style={{
             height: 64,
-            margin: 16,
+            margin: '20px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fff',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 12,
+            color: '#ffffff',
             fontSize: collapsed ? 20 : 18,
-            fontWeight: 600,
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+            transition: 'all 0.3s',
           }}
         >
           {collapsed ? '词' : '智能词汇复习'}
         </div>
         <Menu
-          theme="dark"
           mode="inline"
           selectedKeys={selectedKeys}
           items={menuItems}
           onClick={handleMenuClick}
+          style={{
+            border: 'none',
+            background: 'transparent',
+          }}
         />
       </Sider>
-      <Layout style={{ marginLeft: collapsed ? 80 : 200, transition: 'all 0.2s' }}>
+      <Layout style={{ marginLeft: collapsed ? 80 : 200, transition: 'all 0.2s', background: '#f5f7fa' }}>
         <Header
           style={{
-            padding: '0 24px',
-            background: colorBgContainer,
+            padding: '0 32px',
+            background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            boxShadow: '0 1px 4px rgba(0,21,41,.08)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            borderRadius: '0 0 16px 16px',
+            marginBottom: 2,
           }}
         >
           <Button
@@ -171,11 +183,12 @@ export default function AdminLayout({
         </Header>
         <Content
           style={{
-            margin: '24px 16px',
-            padding: 24,
+            margin: '24px 24px',
+            padding: 32,
             minHeight: 280,
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
+            background: '#ffffff',
+            borderRadius: 16,
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
           }}
         >
           {children}

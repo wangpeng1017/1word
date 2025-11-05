@@ -16,8 +16,21 @@ import {
   Input,
   Select,
   Radio,
+  Divider,
+  Alert,
+  Badge,
+  Tooltip,
 } from 'antd'
-import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import {
+  ArrowLeftOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  QuestionCircleOutlined,
+} from '@ant-design/icons'
 import { Popconfirm } from 'antd'
 
 const { TextArea } = Input
@@ -49,6 +62,8 @@ export default function VocabularyDetailPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [currentType, setCurrentType] = useState<string>('ENGLISH_TO_CHINESE')
+  const [previewVisible, setPreviewVisible] = useState(false)
+  const [previewQuestion, setPreviewQuestion] = useState<any>(null)
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -152,75 +167,143 @@ export default function VocabularyDetailPage() {
     }
   }
 
+  const handlePreviewQuestion = (question: Question) => {
+    setPreviewQuestion(question)
+    setPreviewVisible(true)
+  }
+
+  const handlePreviewFormQuestion = () => {
+    form.validateFields().then(values => {
+      const options = values.options.map((opt: any, index: number) => ({
+        content: opt,
+        isCorrect: index === values.correctAnswerIndex,
+        order: index,
+      }))
+      
+      setPreviewQuestion({
+        type: values.type,
+        content: values.content,
+        options,
+      })
+      setPreviewVisible(true)
+    }).catch(() => {
+      message.warning('请先填写完整题目信息')
+    })
+  }
+
   const renderQuestionList = (type: string) => {
     const typeQuestions = getQuestionsByType(type)
 
     if (typeQuestions.length === 0) {
       return (
-        <Empty
-          description={`暂无${questionTypeNames[type]}题目`}
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        >
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleAddQuestion(type)}>
-            添加题目
-          </Button>
-        </Empty>
+        <div style={{ padding: '40px 0' }}>
+          <Empty
+            description={
+              <span>
+                暂无{questionTypeNames[type]}题目
+                <br />
+                <span style={{ color: '#999', fontSize: 12 }}>
+                  建议为每个单词添加至少3道题目
+                </span>
+              </span>
+            }
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          >
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleAddQuestion(type)}>
+              添加{questionTypeNames[type]}题目
+            </Button>
+          </Empty>
+        </div>
       )
     }
 
     return (
       <div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => handleAddQuestion(type)}
-          style={{ marginBottom: 16 }}
-        >
-          添加题目
-        </Button>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => handleAddQuestion(type)}
+          >
+            添加{questionTypeNames[type]}题目
+          </Button>
+          <span style={{ color: '#999' }}>
+            已有 <strong style={{ color: '#1890ff' }}>{typeQuestions.length}</strong> 道题目
+          </span>
+        </div>
+        
         {typeQuestions.map((question, index) => (
           <Card 
             key={question.id} 
             size="small" 
-            style={{ marginBottom: 16 }}
+            style={{ 
+              marginBottom: 16,
+              borderRadius: 8,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            }}
+            title={
+              <Space>
+                <Badge 
+                  count={index + 1} 
+                  style={{ backgroundColor: '#1890ff' }}
+                />
+                <span style={{ fontWeight: 500 }}>{question.content}</span>
+              </Space>
+            }
             extra={
-              <Popconfirm
-                title="确认删除这道题目？"
-                onConfirm={() => handleDeleteQuestion(question.id)}
-                okText="确认"
-                cancelText="取消"
-              >
-                <Button type="text" danger size="small" icon={<DeleteOutlined />}>
-                  删除
-                </Button>
-              </Popconfirm>
+              <Space>
+                <Tooltip title="预览题目">
+                  <Button 
+                    type="text" 
+                    size="small" 
+                    icon={<EyeOutlined />}
+                    onClick={() => handlePreviewQuestion(question)}
+                  >
+                    预览
+                  </Button>
+                </Tooltip>
+                <Popconfirm
+                  title="确认删除这道题目？"
+                  description="删除后无法恢复"
+                  onConfirm={() => handleDeleteQuestion(question.id)}
+                  okText="确认删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button type="text" danger size="small" icon={<DeleteOutlined />}>
+                    删除
+                  </Button>
+                </Popconfirm>
+              </Space>
             }
           >
-            <div>
-              <div style={{ marginBottom: 12, fontWeight: 500 }}>
-                题目 {index + 1}: {question.content}
-              </div>
-              <div>
-                {question.options.map((opt) => (
-                  <div
-                    key={opt.id}
-                    style={{
-                      padding: '8px 12px',
-                      marginBottom: 8,
-                      background: opt.isCorrect ? '#f6ffed' : '#fafafa',
-                      border: opt.isCorrect ? '1px solid #52c41a' : '1px solid #d9d9d9',
-                      borderRadius: 4,
-                    }}
-                  >
-                    {String.fromCharCode(65 + opt.order)}. {opt.content}
-                    {opt.isCorrect && (
-                      <Tag color="success" style={{ marginLeft: 8 }}>
-                        正确答案
-                      </Tag>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div style={{ marginLeft: 8 }}>
+              {question.options.map((opt) => (
+                <div
+                  key={opt.id}
+                  style={{
+                    padding: '10px 14px',
+                    marginBottom: 10,
+                    background: opt.isCorrect ? 'linear-gradient(135deg, #f6ffed 0%, #efffec 100%)' : '#fafafa',
+                    border: opt.isCorrect ? '1px solid #52c41a' : '1px solid #e8e8e8',
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <span>
+                    <strong style={{ marginRight: 8 }}>{String.fromCharCode(65 + opt.order)}.</strong>
+                    {opt.content}
+                  </span>
+                  {opt.isCorrect && (
+                    <Tag color="success" icon={<CheckCircleOutlined />}>
+                      正确答案
+                    </Tag>
+                  )}
+                </div>
+              ))}
             </div>
           </Card>
         ))}
@@ -293,24 +376,70 @@ export default function VocabularyDetailPage() {
       </Card>
 
       <Modal
-        title={`添加${questionTypeNames[currentType]}题目`}
+        title={
+          <Space>
+            <QuestionCircleOutlined style={{ color: '#1890ff' }} />
+            <span>添加{questionTypeNames[currentType]}题目</span>
+          </Space>
+        }
         open={modalVisible}
         onOk={handleSubmitQuestion}
         onCancel={() => setModalVisible(false)}
         width={700}
+        footer={[
+          <Button key="preview" onClick={handlePreviewFormQuestion}>
+            <EyeOutlined /> 预览题目
+          </Button>,
+          <Button key="cancel" onClick={() => setModalVisible(false)}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={handleSubmitQuestion}>
+            保存
+          </Button>,
+        ]}
       >
+        <Alert
+          message="题目设计建议"
+          description={
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <li>选项应包含1个正确答案和3个干扰项</li>
+              <li>干扰项建议选择易混淆的词义或词汇</li>
+              <li>选项长度应尽量保持一致</li>
+            </ul>
+          }
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+
         <Form form={form} layout="vertical">
           <Form.Item name="type" hidden>
             <Input />
           </Form.Item>
 
           <Form.Item
-            label="题目内容"
+            label={
+              <Space>
+                <span>题目内容</span>
+                <Tooltip title="根据题目类型输入相应内容">
+                  <QuestionCircleOutlined style={{ color: '#999' }} />
+                </Tooltip>
+              </Space>
+            }
             name="content"
             rules={[{ required: true, message: '请输入题目内容' }]}
           >
-            <Input placeholder="例如: 单词或句子" />
+            <Input 
+              placeholder={
+                currentType === 'FILL_IN_BLANK' 
+                  ? '例如: I want to ___ English well.' 
+                  : '例如: ' + (vocabulary?.word || '单词')
+              } 
+              size="large"
+            />
           </Form.Item>
+
+          <Divider orientation="left">题目选项</Divider>
 
           <Form.Item label="选项">
             {[0, 1, 2, 3].map((index) => (
@@ -318,26 +447,113 @@ export default function VocabularyDetailPage() {
                 key={index}
                 name={['options', index]}
                 rules={[{ required: true, message: '请输入选项' }]}
-                style={{ marginBottom: 8 }}
+                style={{ marginBottom: 12 }}
               >
-                <Input placeholder={`选项 ${String.fromCharCode(65 + index)}`} />
+                <Input 
+                  placeholder={`选项 ${String.fromCharCode(65 + index)}`}
+                  prefix={
+                    <strong style={{ 
+                      color: '#1890ff',
+                      minWidth: 24,
+                      display: 'inline-block',
+                    }}>
+                      {String.fromCharCode(65 + index)}.
+                    </strong>
+                  }
+                  size="large"
+                />
               </Form.Item>
             ))}
           </Form.Item>
 
           <Form.Item
-            label="正确答案"
+            label={
+              <Space>
+                <span>正确答案</span>
+                <Tag color="success">必选</Tag>
+              </Space>
+            }
             name="correctAnswerIndex"
             rules={[{ required: true, message: '请选择正确答案' }]}
           >
-            <Radio.Group>
-              <Radio value={0}>A</Radio>
-              <Radio value={1}>B</Radio>
-              <Radio value={2}>C</Radio>
-              <Radio value={3}>D</Radio>
+            <Radio.Group size="large">
+              <Radio.Button value={0}>A</Radio.Button>
+              <Radio.Button value={1}>B</Radio.Button>
+              <Radio.Button value={2}>C</Radio.Button>
+              <Radio.Button value={3}>D</Radio.Button>
             </Radio.Group>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 题目预览 Modal */}
+      <Modal
+        title={
+          <Space>
+            <EyeOutlined style={{ color: '#52c41a' }} />
+            <span>题目预览</span>
+          </Space>
+        }
+        open={previewVisible}
+        onCancel={() => setPreviewVisible(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setPreviewVisible(false)}>
+            关闭
+          </Button>,
+        ]}
+        width={600}
+      >
+        {previewQuestion && (
+          <div style={{ padding: '20px 0' }}>
+            <div style={{ 
+              marginBottom: 20,
+              padding: 16,
+              background: '#f5f5f5',
+              borderRadius: 8,
+            }}>
+              <Tag color="blue" style={{ marginBottom: 8 }}>
+                {questionTypeNames[previewQuestion.type]}
+              </Tag>
+              <div style={{ fontSize: 18, fontWeight: 500 }}>
+                {previewQuestion.content}
+              </div>
+            </div>
+
+            <div>
+              {previewQuestion.options?.map((opt: any, index: number) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '14px 18px',
+                    marginBottom: 12,
+                    background: opt.isCorrect 
+                      ? 'linear-gradient(135deg, #f6ffed 0%, #efffec 100%)' 
+                      : '#ffffff',
+                    border: opt.isCorrect 
+                      ? '2px solid #52c41a' 
+                      : '1px solid #e8e8e8',
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>
+                    <strong style={{ marginRight: 12, color: '#1890ff' }}>
+                      {String.fromCharCode(65 + index)}.
+                    </strong>
+                    {opt.content}
+                  </span>
+                  {opt.isCorrect && (
+                    <CheckCircleOutlined style={{ fontSize: 20, color: '#52c41a' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
