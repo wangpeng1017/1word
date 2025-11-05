@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { shouldReviewToday, getTodayDate, calculatePriority, daysBetween, DEFAULT_CONFIG } from '@/lib/ebbinghaus'
+import { allocateQuestionTypes, selectQuestionByType, getQuestionTypeStats } from '@/lib/question-type-allocator'
 
 /**
  * 获取学生每日任务
@@ -65,9 +66,32 @@ export async function GET(request: NextRequest) {
       interrupted: dailyTasks.filter(t => t.status === 'INTERRUPTED').length,
     }
 
+    // 为每个任务分配题型，并选择对应的题目
+    const vocabularyIds = dailyTasks.map(t => t.vocabularyId)
+    const questionTypeAllocation = allocateQuestionTypes(vocabularyIds)
+    const questionTypeStats = getQuestionTypeStats(questionTypeAllocation)
+
+    // 为每个任务选择对应题型的题目
+    const tasksWithSelectedQuestion = dailyTasks.map(task => {
+      const targetType = questionTypeAllocation.get(task.vocabularyId)
+      const selectedQuestionId = targetType 
+        ? selectQuestionByType(
+            task.vocabulary.questions.map(q => ({ id: q.id, type: q.type })),
+            targetType
+          )
+        : task.vocabulary.questions[0]?.id || null
+
+      return {
+        ...task,
+        targetQuestionType: targetType,
+        selectedQuestionId,
+      }
+    })
+
     return successResponse({
-      tasks: dailyTasks,
+      tasks: tasksWithSelectedQuestion,
       stats,
+      questionTypeStats,
       date: targetDate,
     })
   } catch (error: any) {
