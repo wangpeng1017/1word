@@ -11,6 +11,7 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -44,6 +45,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/statistics',
     icon: <BarChartOutlined />,
     label: '学习统计',
+  },
+  {
+    key: '/admin/settings',
+    icon: <SettingOutlined />,
+    label: '系统设置',
   },
 ]
 
