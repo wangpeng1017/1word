@@ -12,6 +12,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -40,6 +41,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/classes',
     icon: <TeamOutlined />,
     label: '班级管理',
+  },
+  {
+    key: '/admin/study-plans',
+    icon: <CalendarOutlined />,
+    label: '学习计划',
   },
   {
     key: '/admin/statistics',
