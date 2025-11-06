@@ -42,6 +42,11 @@ export default function QuestionsPage() {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [importModalVisible, setImportModalVisible] = useState(false)
   const [form] = Form.useForm()
+  const [vocabularies, setVocabularies] = useState<Array<{ id: string; word: string }>>([])
+  const [filters, setFilters] = useState<{
+    vocabularyId?: string
+    type?: string
+  }>({})
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
@@ -50,14 +55,48 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     fetchQuestions()
-  }, [pagination.current, pagination.pageSize])
+    fetchVocabularies()
+  }, [])
+
+  useEffect(() => {
+    fetchQuestions()
+  }, [pagination.current, pagination.pageSize, filters])
+
+  const fetchVocabularies = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/vocabularies?limit=1000', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      const data = await response.json()
+      if (data.success) {
+        setVocabularies(data.data.vocabularies)
+      }
+    } catch (error) {
+      console.error('获取词汇列表失败', error)
+    }
+  }
 
   const fetchQuestions = async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
+      const params = new URLSearchParams({
+        page: pagination.current.toString(),
+        limit: pagination.pageSize.toString(),
+      })
+      
+      if (filters.vocabularyId) {
+        params.append('vocabularyId', filters.vocabularyId)
+      }
+      if (filters.type) {
+        params.append('type', filters.type)
+      }
+      
       const response = await fetch(
-        `/api/questions?page=${pagination.current}&limit=${pagination.pageSize}`,
+        `/api/questions?${params.toString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -237,21 +276,38 @@ export default function QuestionsPage() {
     },
     {
       title: '题目内容',
-      dataIndex: 'content',
-      key: 'content',
-      ellipsis: true,
+      key: 'contentWithOptions',
+      render: (_, record) => (
+        <div style={{ maxWidth: 400 }}>
+          <div style={{ marginBottom: 8, fontWeight: 500 }}>
+            {record.content}
+            {record.sentence && (
+              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                句子: {record.sentence}
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: 12, color: '#888' }}>
+            选项:
+            {record.options
+              .sort((a, b) => a.order - b.order)
+              .map((opt, idx) => (
+                <div key={opt.id} style={{ marginLeft: 8 }}>
+                  {String.fromCharCode(65 + idx)}. {opt.content}
+                  {opt.isCorrect && (
+                    <Tag color="green" style={{ marginLeft: 4 }}>✓</Tag>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      ),
     },
     {
       title: '正确答案',
       dataIndex: 'correctAnswer',
       key: 'correctAnswer',
       width: 150,
-    },
-    {
-      title: '选项数',
-      key: 'optionsCount',
-      width: 80,
-      render: (_, record) => record.options.length,
     },
     {
       title: '操作',
@@ -279,18 +335,73 @@ export default function QuestionsPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h2>题目管理</h2>
-        <Space>
-          <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
-            下载模板
-          </Button>
-          <Button icon={<UploadOutlined />} onClick={() => setImportModalVisible(true)}>
-            批量导入
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            新增题目
-          </Button>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ margin: 0 }}>题目管理</h2>
+          <Space>
+            <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
+              下载模板
+            </Button>
+            <Button icon={<UploadOutlined />} onClick={() => setImportModalVisible(true)}>
+              批量导入
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              新增题目
+            </Button>
+          </Space>
+        </div>
+        
+        {/* 筛选区域 */}
+        <Space size="middle" style={{ marginBottom: 16 }}>
+          <span>筛选：</span>
+          <Select
+            style={{ width: 200 }}
+            placeholder="选择词汇"
+            allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            options={[
+              { label: '全部词汇', value: '' },
+              ...vocabularies.map(v => ({
+                label: v.word,
+                value: v.id,
+              })),
+            ]}
+            value={filters.vocabularyId || ''}
+            onChange={(value) => {
+              setFilters({ ...filters, vocabularyId: value || undefined })
+              setPagination({ ...pagination, current: 1 })
+            }}
+          />
+          <Select
+            style={{ width: 150 }}
+            placeholder="选择题型"
+            allowClear
+            options={[
+              { label: '全部题型', value: '' },
+              ...Object.entries(questionTypeMap).map(([key, { label }]) => ({
+                label,
+                value: key,
+              })),
+            ]}
+            value={filters.type || ''}
+            onChange={(value) => {
+              setFilters({ ...filters, type: value || undefined })
+              setPagination({ ...pagination, current: 1 })
+            }}
+          />
+          {(filters.vocabularyId || filters.type) && (
+            <Button
+              onClick={() => {
+                setFilters({})
+                setPagination({ ...pagination, current: 1 })
+              }}
+            >
+              清空筛选
+            </Button>
+          )}
         </Space>
       </div>
 
