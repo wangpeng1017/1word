@@ -6,6 +6,18 @@ import { PlusOutlined, DeleteOutlined, EditOutlined, UploadOutlined, LinkOutline
 import type { UploadFile } from 'antd';
 import AudioPlayer from './AudioPlayer';
 
+/**
+ * 构建完整的音频URL
+ */
+function buildFullAudioUrl(audioUrl: string): string {
+  if (!audioUrl) return '';
+  if (audioUrl.startsWith('http://') || audioUrl.startsWith('https://')) {
+    return audioUrl;
+  }
+  const baseUrl = 'https://ssl.gstatic.com/dictionary/static/sounds/oxford';
+  return `${baseUrl}/${audioUrl}`;
+}
+
 interface Audio {
   id: string;
   audioUrl: string;
