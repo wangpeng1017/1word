@@ -38,6 +38,8 @@ interface Vocabulary {
   primaryMeaning: string
   secondaryMeaning?: string
   phonetic?: string
+  phoneticUS?: string
+  phoneticUK?: string
   isHighFrequency: boolean
   difficulty: string
   createdAt: string
@@ -242,9 +244,30 @@ export default function VocabulariesPage() {
     },
     {
       title: '音标',
-      dataIndex: 'phonetic',
       key: 'phonetic',
-      width: 150,
+      width: 200,
+      render: (record: Vocabulary) => (
+        <Space direction="vertical" size="small" style={{ fontSize: 12 }}>
+          {record.phoneticUS && (
+            <div>
+              <Tag color="blue" style={{ fontSize: 11 }}>美</Tag>
+              <span>{record.phoneticUS}</span>
+            </div>
+          )}
+          {record.phoneticUK && (
+            <div>
+              <Tag color="green" style={{ fontSize: 11 }}>英</Tag>
+              <span>{record.phoneticUK}</span>
+            </div>
+          )}
+          {!record.phoneticUS && !record.phoneticUK && record.phonetic && (
+            <span>{record.phonetic}</span>
+          )}
+          {!record.phoneticUS && !record.phoneticUK && !record.phonetic && (
+            <span style={{ color: '#999' }}>-</span>
+          )}
+        </Space>
+      ),
     },
     {
       title: '难度',
@@ -447,8 +470,25 @@ export default function VocabulariesPage() {
             <TextArea rows={2} placeholder="其他释义（可选）" />
           </Form.Item>
 
-          <Form.Item label="音标" name="phonetic">
-            <Input placeholder="例如: /həˈloʊ/" />
+          <Space.Compact style={{ width: '100%' }}>
+            <Form.Item
+              label="美式音标"
+              name="phoneticUS"
+              style={{ flex: 1, marginBottom: 12 }}
+            >
+              <Input placeholder="例如: /həˈloʊ/" />
+            </Form.Item>
+            <Form.Item
+              label="英式音标"
+              name="phoneticUK"
+              style={{ flex: 1, marginBottom: 12, marginLeft: 8 }}
+            >
+              <Input placeholder="例如: /həˈləʊ/" />
+            </Form.Item>
+          </Space.Compact>
+          
+          <Form.Item label="通用音标" name="phonetic">
+            <Input placeholder="如果不区分英美，可填写通用音标" />
           </Form.Item>
 
           <Form.Item

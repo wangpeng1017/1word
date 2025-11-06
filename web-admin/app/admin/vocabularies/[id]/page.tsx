@@ -40,6 +40,9 @@ import {
 } from '@ant-design/icons'
 import { Popconfirm } from 'antd'
 import type { UploadFile, UploadProps } from 'antd'
+import AudioManager from '@/components/AudioManager'
+import ImageManager from '@/components/ImageManager'
+import AudioPlayer from '@/components/AudioPlayer'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -532,6 +535,30 @@ export default function VocabularyDetailPage() {
       </Card>
 
       <Card title="多媒体资源" style={{ marginBottom: 16 }}>
+        <Tabs
+          items={[
+            {
+              key: 'audio',
+              label: (
+                <span>
+                  <SoundOutlined /> 音频管理
+                </span>
+              ),
+              children: <AudioManager vocabularyId={vocabularyId} word={vocabulary?.word} />,
+            },
+            {
+              key: 'image',
+              label: (
+                <span>
+                  <PictureOutlined /> 图片管理
+                </span>
+              ),
+              children: <ImageManager vocabularyId={vocabularyId} word={vocabulary?.word} />,
+            },
+            {
+              key: 'legacy',
+              label: '传统上传',
+              children: (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* 音频上传 */}
           <div>
@@ -630,6 +657,10 @@ export default function VocabularyDetailPage() {
             </div>
           </div>
         </Space>
+              ),
+            },
+          ]}
+        />
       </Card>
 
       <Card title="题目管理">
@@ -775,9 +806,26 @@ export default function VocabularyDetailPage() {
               <Tag color="blue" style={{ marginBottom: 8 }}>
                 {questionTypeNames[previewQuestion.type]}
               </Tag>
-              <div style={{ fontSize: 18, fontWeight: 500 }}>
-                {previewQuestion.content}
-              </div>
+              
+              {/* 听音选词题目显示音频播放器 */}
+              {previewQuestion.type === 'LISTENING' && vocabulary?.audios && vocabulary.audios.length > 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <AudioPlayer
+                    audioUrl={vocabulary.audios[0].audioUrl}
+                    accent={vocabulary.audios[0].accent}
+                    word={vocabulary.word}
+                    size="large"
+                    showAccent={false}
+                  />
+                  <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                    点击播放按钮听发音
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 18, fontWeight: 500 }}>
+                  {previewQuestion.content}
+                </div>
+              )}
             </div>
 
             <div>
