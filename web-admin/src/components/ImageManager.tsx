@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, List, Modal, Form, Input, message, Popconfirm, Card, Image, Space } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, PictureOutlined } from '@ant-design/icons';
+import { Button, List, Modal, Form, Input, message, Popconfirm, Card, Image, Space, Upload, Radio } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined, PictureOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd';
 
 interface WordImage {
   id: string;
@@ -25,6 +26,9 @@ export default function ImageManager({ vocabularyId, word }: ImageManagerProps) 
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingImage, setEditingImage] = useState<WordImage | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('file');
+  const [uploading, setUploading] = useState(false);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [form] = Form.useForm();
 
   // 加载图片列表
@@ -56,17 +60,69 @@ export default function ImageManager({ vocabularyId, word }: ImageManagerProps) 
     if (image) {
       setEditingImage(image);
       form.setFieldsValue(image);
+      setUploadMethod('url');
     } else {
       setEditingImage(null);
       form.resetFields();
+      setUploadMethod('file');
+      setFileList([]);
     }
     setModalVisible(true);
+  };
+
+  // 上传图片文件
+  const handleUploadFile = async () => {
+    if (fileList.length === 0) {
+      message.error('请选择图片文件');
+      return null;
+    }
+
+    const file = fileList[0].originFileObj;
+    if (!file) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'image');
+
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        message.success('文件上传成功');
+        return data.data.url;
+      } else {
+        message.error(data.error || '上传失败');
+        return null;
+      }
+    } catch (error) {
+      console.error('上传失败:', error);
+      message.error('上传失败');
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   // 保存图片
   const handleSave = async () => {
     try {
-      const values = await form.validateFields();
+      let values = await form.validateFields();
+      
+      // 如果是文件上传模式,先上传文件
+      if (uploadMethod === 'file' && !editingImage) {
+        const imageUrl = await handleUploadFile();
+        if (!imageUrl) return;
+        values.imageUrl = imageUrl;
+      }
       
       const url = editingImage
         ? `/api/vocabularies/${vocabularyId}/images/${editingImage.id}`
@@ -85,6 +141,7 @@ export default function ImageManager({ vocabularyId, word }: ImageManagerProps) 
       if (data.success) {
         message.success(editingImage ? '更新成功' : '添加成功');
         setModalVisible(false);
+        setFileList([]);
         loadImages();
       } else {
         message.error(data.error || '操作失败');
@@ -178,25 +235,69 @@ export default function ImageManager({ vocabularyId, word }: ImageManagerProps) 
         title={editingImage ? '编辑图片' : '添加图片'}
         open={modalVisible}
         onOk={handleSave}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          setModalVisible(false);
+          setFileList([]);
+        }}
         okText="保存"
         cancelText="取消"
+        confirmLoading={uploading}
       >
         <Form
           form={form}
           layout="vertical"
         >
-          <Form.Item
-            label="图片URL"
-            name="imageUrl"
-            rules={[
-              { required: true, message: '请输入图片URL' },
-              { type: 'url', message: '请输入有效的URL' }
-            ]}
-            extra="支持jpg, png, gif等格式"
-          >
-            <Input placeholder="https://example.com/image.jpg" />
-          </Form.Item>
+          {!editingImage && (
+            <Form.Item label="上传方式">
+              <Radio.Group
+                value={uploadMethod}
+                onChange={(e) => setUploadMethod(e.target.value)}
+              >
+                <Radio.Button value="file">
+                  <UploadOutlined /> 上传文件
+                </Radio.Button>
+                <Radio.Button value="url">
+                  <LinkOutlined /> 输入URL
+                </Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+          )}
+
+          {uploadMethod === 'file' && !editingImage ? (
+            <Form.Item
+              label="选择图片文件"
+              required
+              extra="支持 JPG, PNG, GIF, WEBP 格式,最大10MB"
+            >
+              <Upload
+                accept="image/*"
+                maxCount={1}
+                fileList={fileList}
+                listType="picture-card"
+                onChange={({ fileList }) => setFileList(fileList)}
+                beforeUpload={() => false}
+              >
+                {fileList.length === 0 && (
+                  <div>
+                    <PlusOutlined />
+                    <div style={{ marginTop: 8 }}>选择图片</div>
+                  </div>
+                )}
+              </Upload>
+            </Form.Item>
+          ) : (
+            <Form.Item
+              label="图片URL"
+              name="imageUrl"
+              rules={[
+                { required: true, message: '请输入图片URL' },
+                { type: 'url', message: '请输入有效的URL' }
+              ]}
+              extra="支持jpg, png, gif等格式"
+            >
+              <Input placeholder="https://example.com/image.jpg" />
+            </Form.Item>
+          )}
 
           <Form.Item
             label="图片描述"

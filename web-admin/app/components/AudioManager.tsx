@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, List, Space, Modal, Form, Input, Select, message, Popconfirm, Card } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, List, Space, Modal, Form, Input, Select, message, Popconfirm, Card, Upload, Radio, Tabs } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd';
 import AudioPlayer from './AudioPlayer';
 
 interface Audio {
@@ -27,6 +28,9 @@ export default function AudioManager({ vocabularyId, word }: AudioManagerProps) 
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAudio, setEditingAudio] = useState<Audio | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('file');
+  const [uploading, setUploading] = useState(false);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [form] = Form.useForm();
 
   // 加载音频列表
@@ -58,17 +62,69 @@ export default function AudioManager({ vocabularyId, word }: AudioManagerProps) 
     if (audio) {
       setEditingAudio(audio);
       form.setFieldsValue(audio);
+      setUploadMethod('url');
     } else {
       setEditingAudio(null);
       form.resetFields();
+      setUploadMethod('file');
+      setFileList([]);
     }
     setModalVisible(true);
+  };
+
+  // 上传音频文件
+  const handleUploadFile = async () => {
+    if (fileList.length === 0) {
+      message.error('请选择音频文件');
+      return null;
+    }
+
+    const file = fileList[0].originFileObj;
+    if (!file) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'audio');
+
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        message.success('文件上传成功');
+        return data.data.url;
+      } else {
+        message.error(data.error || '上传失败');
+        return null;
+      }
+    } catch (error) {
+      console.error('上传失败:', error);
+      message.error('上传失败');
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   // 保存音频
   const handleSave = async () => {
     try {
-      const values = await form.validateFields();
+      let values = await form.validateFields();
+      
+      // 如果是文件上传模式,先上传文件
+      if (uploadMethod === 'file' && !editingAudio) {
+        const audioUrl = await handleUploadFile();
+        if (!audioUrl) return;
+        values.audioUrl = audioUrl;
+      }
       
       const url = editingAudio
         ? `/api/vocabularies/${vocabularyId}/audios/${editingAudio.id}`
@@ -87,6 +143,7 @@ export default function AudioManager({ vocabularyId, word }: AudioManagerProps) 
       if (data.success) {
         message.success(editingAudio ? '更新成功' : '添加成功');
         setModalVisible(false);
+        setFileList([]);
         loadAudios();
       } else {
         message.error(data.error || '操作失败');
@@ -177,22 +234,60 @@ export default function AudioManager({ vocabularyId, word }: AudioManagerProps) 
         title={editingAudio ? '编辑音频' : '添加音频'}
         open={modalVisible}
         onOk={handleSave}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          setModalVisible(false);
+          setFileList([]);
+        }}
         okText="保存"
         cancelText="取消"
+        confirmLoading={uploading}
       >
         <Form
           form={form}
           layout="vertical"
           initialValues={{ accent: 'US' }}
         >
-          <Form.Item
-            label="音频URL"
-            name="audioUrl"
-            rules={[{ required: true, message: '请输入音频URL' }]}
-          >
-            <Input placeholder="https://example.com/audio.mp3" />
-          </Form.Item>
+          {!editingAudio && (
+            <Form.Item label="上传方式">
+              <Radio.Group
+                value={uploadMethod}
+                onChange={(e) => setUploadMethod(e.target.value)}
+              >
+                <Radio.Button value="file">
+                  <UploadOutlined /> 上传文件
+                </Radio.Button>
+                <Radio.Button value="url">
+                  <LinkOutlined /> 输入URL
+                </Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+          )}
+
+          {uploadMethod === 'file' && !editingAudio ? (
+            <Form.Item
+              label="选择音频文件"
+              required
+              extra="支持 MP3, WAV, OGG 格式,最大10MB"
+            >
+              <Upload
+                accept="audio/*"
+                maxCount={1}
+                fileList={fileList}
+                onChange={({ fileList }) => setFileList(fileList)}
+                beforeUpload={() => false}
+              >
+                <Button icon={<UploadOutlined />}>选择文件</Button>
+              </Upload>
+            </Form.Item>
+          ) : (
+            <Form.Item
+              label="音频URL"
+              name="audioUrl"
+              rules={[{ required: true, message: '请输入音频URL' }]}
+            >
+              <Input placeholder="https://example.com/audio.mp3" />
+            </Form.Item>
+          )}
 
           <Form.Item
             label="口音"
