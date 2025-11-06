@@ -7,15 +7,25 @@ import { LoginRequest } from '@/types'
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json()
+    
+    // 详细日志：记录收到的请求体
+    console.log('=== 登录请求详情 ===')
+    console.log('请求体:', JSON.stringify(body, null, 2))
+    console.log('请求头:', Object.fromEntries(request.headers.entries()))
+    
     const { email, phone, password } = body
 
     if (!password) {
+      console.log('❌ 密码为空')
       return errorResponse('密码不能为空')
     }
 
     // email字段可以是邮箱或手机号
     const loginIdentifier = email || phone
+    console.log('登录标识符:', loginIdentifier)
+    
     if (!loginIdentifier) {
+      console.log('❌ 邮箱和手机号均为空')
       return errorResponse('邮箱或手机号不能为空')
     }
 

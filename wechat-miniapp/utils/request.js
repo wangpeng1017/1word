@@ -44,11 +44,15 @@ function request(options) {
           app.logout()
           reject('未授权')
         } else {
+          // 显示服务器返回的具体错误信息
+          const errorMsg = res.data?.error || res.data?.message || `请求失败(${res.statusCode})`
+          console.error('请求错误:', res.statusCode, res.data)
           wx.showToast({
-            title: '网络错误',
+            title: errorMsg,
             icon: 'none',
+            duration: 2500
           })
-          reject('网络错误')
+          reject(errorMsg)
         }
       },
       fail: (err) => {

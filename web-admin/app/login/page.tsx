@@ -22,6 +22,13 @@ export default function LoginPage() {
 
       const data = await response.json()
 
+      if (!response.ok) {
+        // 详细显示服务器返回的错误信息
+        console.error('登录失败:', data)
+        message.error(data.error || data.message || `登录失败 (${response.status})`)
+        return
+      }
+
       if (data.success) {
         message.success('登录成功！')
         // 保存token
@@ -33,6 +40,7 @@ export default function LoginPage() {
         message.error(data.error || '登录失败')
       }
     } catch (error) {
+      console.error('登录异常:', error)
       message.error('网络错误，请稍后重试')
     } finally {
       setLoading(false)
