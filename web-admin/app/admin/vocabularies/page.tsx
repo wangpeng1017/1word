@@ -24,12 +24,21 @@ import {
   DownloadOutlined,
   FilterOutlined,
   UploadOutlined,
+  SoundOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/navigation'
+import AudioPlayer from '../../components/AudioPlayer'
 
 const { TextArea } = Input
 const { Option } = Select
+
+interface WordAudio {
+  id: string
+  audioUrl: string
+  accent: 'US' | 'UK'
+  duration: number | null
+}
 
 interface Vocabulary {
   id: string
@@ -43,6 +52,7 @@ interface Vocabulary {
   isHighFrequency: boolean
   difficulty: string
   createdAt: string
+  audios?: WordAudio[]
 }
 
 export default function VocabulariesPage() {
@@ -66,7 +76,7 @@ export default function VocabulariesPage() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/vocabularies', {
+      const response = await fetch('/api/vocabularies?includeAudios=true', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
@@ -214,11 +224,25 @@ export default function VocabulariesPage() {
       title: '单词',
       dataIndex: 'word',
       key: 'word',
-      width: 150,
+      width: 200,
       fixed: 'left',
       filteredValue: searchText ? [searchText] : null,
       onFilter: (value, record) =>
         record.word.toLowerCase().includes((value as string).toLowerCase()),
+      render: (word: string, record: Vocabulary) => (
+        <Space>
+          <span style={{ fontWeight: 500 }}>{word}</span>
+          {record.audios && record.audios.length > 0 && (
+            <AudioPlayer
+              audioUrl={record.audios[0].audioUrl}
+              accent={record.audios[0].accent}
+              word={word}
+              size="small"
+              showAccent={false}
+            />
+          )}
+        </Space>
+      ),
     },
     {
       title: '词性',
