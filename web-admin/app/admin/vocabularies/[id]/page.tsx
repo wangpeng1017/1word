@@ -40,9 +40,9 @@ import {
 } from '@ant-design/icons'
 import { Popconfirm } from 'antd'
 import type { UploadFile, UploadProps } from 'antd'
-import AudioManager from '@/components/AudioManager'
-import ImageManager from '@/components/ImageManager'
-import AudioPlayer from '@/components/AudioPlayer'
+import AudioManager from '../../../components/AudioManager'
+import ImageManager from '../../../components/ImageManager'
+import AudioPlayer from '../../../components/AudioPlayer'
 
 const { TextArea } = Input
 const { Option } = Select
