@@ -224,68 +224,97 @@ export default function VocabulariesPage() {
       title: '单词',
       dataIndex: 'word',
       key: 'word',
-      width: 200,
+      width: 150,
       fixed: 'left',
       filteredValue: searchText ? [searchText] : null,
       onFilter: (value, record) =>
         record.word.toLowerCase().includes((value as string).toLowerCase()),
-      render: (word: string, record: Vocabulary) => (
-        <Space>
-          <span style={{ fontWeight: 500 }}>{word}</span>
-          {record.audios && record.audios.length > 0 && (
-            <AudioPlayer
-              audioUrl={record.audios[0].audioUrl}
-              accent={record.audios[0].accent}
-              word={word}
-              size="small"
-              showAccent={false}
-            />
-          )}
-        </Space>
+      render: (word: string) => (
+        <span style={{ fontWeight: 500, fontSize: 15 }}>{word}</span>
       ),
+    },
+    {
+      title: '发音',
+      key: 'audio',
+      width: 180,
+      render: (_, record: Vocabulary) => {
+        const usAudio = record.audios?.find((a) => a.accent === 'US')
+        const ukAudio = record.audios?.find((a) => a.accent === 'UK')
+        
+        return (
+          <Space size="small">
+            {usAudio && (
+              <AudioPlayer
+                audioUrl={usAudio.audioUrl}
+                accent="US"
+                word={record.word}
+                size="small"
+                showAccent={true}
+              />
+            )}
+            {ukAudio && (
+              <AudioPlayer
+                audioUrl={ukAudio.audioUrl}
+                accent="UK"
+                word={record.word}
+                size="small"
+                showAccent={true}
+              />
+            )}
+            {!usAudio && !ukAudio && (
+              <span style={{ color: '#999', fontSize: 12 }}>暂无音频</span>
+            )}
+          </Space>
+        )
+      },
     },
     {
       title: '词性',
       dataIndex: 'partOfSpeech',
       key: 'partOfSpeech',
-      width: 120,
+      width: 140,
       render: (pos: string[]) => (
-        <>
+        <Space size={[0, 4]} wrap>
           {pos?.map((p, i) => (
-            <Tag key={i} color="blue">
+            <Tag key={i} color="blue" style={{ fontSize: 11, margin: 0 }}>
               {p}
             </Tag>
           ))}
-        </>
+        </Space>
       ),
     },
     {
       title: '核心释义',
       dataIndex: 'primaryMeaning',
       key: 'primaryMeaning',
-      width: 200,
-      ellipsis: true,
+      width: 220,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (meaning: string) => (
+        <span title={meaning} style={{ fontSize: 13 }}>{meaning}</span>
+      ),
     },
     {
       title: '音标',
       key: 'phonetic',
       width: 200,
-      render: (record: Vocabulary) => (
-        <Space direction="vertical" size="small" style={{ fontSize: 12 }}>
+      render: (_, record: Vocabulary) => (
+        <Space direction="vertical" size={2} style={{ fontSize: 13, lineHeight: 1.4 }}>
           {record.phoneticUS && (
-            <div>
-              <Tag color="blue" style={{ fontSize: 11 }}>美</Tag>
-              <span>{record.phoneticUS}</span>
+            <div style={{ whiteSpace: 'nowrap' }}>
+              <Tag color="blue" style={{ fontSize: 10, padding: '0 4px', marginRight: 6 }}>美</Tag>
+              <span style={{ fontFamily: 'Arial, sans-serif' }}>{record.phoneticUS}</span>
             </div>
           )}
           {record.phoneticUK && (
-            <div>
-              <Tag color="green" style={{ fontSize: 11 }}>英</Tag>
-              <span>{record.phoneticUK}</span>
+            <div style={{ whiteSpace: 'nowrap' }}>
+              <Tag color="green" style={{ fontSize: 10, padding: '0 4px', marginRight: 6 }}>英</Tag>
+              <span style={{ fontFamily: 'Arial, sans-serif' }}>{record.phoneticUK}</span>
             </div>
           )}
           {!record.phoneticUS && !record.phoneticUK && record.phonetic && (
-            <span>{record.phonetic}</span>
+            <span style={{ fontFamily: 'Arial, sans-serif' }}>{record.phonetic}</span>
           )}
           {!record.phoneticUS && !record.phoneticUK && !record.phonetic && (
             <span style={{ color: '#999' }}>-</span>
@@ -434,7 +463,7 @@ export default function VocabulariesPage() {
           })}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1300 }}
           rowSelection={{
             selectedRowKeys,
             onChange: setSelectedRowKeys,
