@@ -48,17 +48,16 @@ export async function POST(request: NextRequest) {
       errors: [] as string[],
     }
 
-    // 使用事务批量导入
-    await prisma.$transaction(async (tx) => {
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i]
-        const rowNum = i + 2 // Excel行号（从2开始，1是标题行）
+    // 逐个处理避免事务超时
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i]
+      const rowNum = i + 2 // Excel行号（从2开始，1是标题行）
 
-        try {
-          // 查找或创建词汇
-          let vocabulary = await tx.vocabularies.findFirst({
-            where: { word: row.word?.trim() },
-          })
+      try {
+        // 查找或创建词汇
+        let vocabulary = await prisma.vocabularies.findFirst({
+          where: { word: row.word?.trim() },
+        })
 
           if (!vocabulary) {
             // 自动创建词汇
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
               primaryMeaning = row.content?.trim() || ''
             }
 
-            vocabulary = await tx.vocabularies.create({
+            vocabulary = await prisma.vocabularies.create({
               data: {
                 id: `vocab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 word: row.word?.trim(),
@@ -114,8 +113,8 @@ export async function POST(request: NextRequest) {
             })
           }
 
-          // 检查是否已存在相同题目（幂等性）
-          const existingQuestion = await tx.questions.findFirst({
+        // 检查是否已存在相同题目（幂等性）
+        const existingQuestion = await prisma.questions.findFirst({
             where: {
               vocabularyId: vocabulary.id,
               type: row.type,
@@ -123,13 +122,13 @@ export async function POST(request: NextRequest) {
             },
           })
 
-          if (existingQuestion) {
-            // 更新现有题目
-            await tx.question_options.deleteMany({
-              where: { questionId: existingQuestion.id },
-            })
+        if (existingQuestion) {
+          // 更新现有题目
+          await prisma.question_options.deleteMany({
+            where: { questionId: existingQuestion.id },
+          })
 
-            await tx.questions.update({
+          await prisma.questions.update({
               where: { id: existingQuestion.id },
               data: {
                 sentence: row.sentence?.trim() || null,
@@ -141,9 +140,9 @@ export async function POST(request: NextRequest) {
                 },
               },
             })
-          } else {
-            // 创建新题目
-            await tx.questions.create({
+        } else {
+          // 创建新题目
+          await prisma.questions.create({
               data: {
                 id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 vocabularyId: vocabulary.id,
@@ -163,15 +162,14 @@ export async function POST(request: NextRequest) {
                 },
               },
             })
-          }
-
-          results.success++
-        } catch (error: any) {
-          results.failed++
-          results.errors.push(`行${rowNum}: ${error.message}`)
         }
+
+        results.success++
+      } catch (error: any) {
+        results.failed++
+        results.errors.push(`行${rowNum}: ${error.message}`)
       }
-    })
+    }
 
     return successResponse(
       {
