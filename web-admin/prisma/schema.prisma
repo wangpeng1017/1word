@@ -90,7 +90,7 @@ model students {
   updated_at      DateTime
   daily_tasks     daily_tasks[]
   classes         classes           @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  users           users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user            user              @relation(fields: [user_id], references: [id], onDelete: Cascade)
   study_plans     study_plans[]
   study_records   study_records[]
   word_masteries  word_masteries[]
@@ -153,10 +153,10 @@ model teachers {
   created_at DateTime  @default(now())
   updated_at DateTime
   classes    classes[]
-  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user       user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model users {
+model user {
   id         String    @id
   email      String?   @unique
   phone      String?   @unique
@@ -168,6 +168,8 @@ model users {
   updated_at DateTime
   students   students?
   teachers   teachers?
+  
+  @@map("users")
 }
 
 model vocabularies {
