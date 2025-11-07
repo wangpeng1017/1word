@@ -14,7 +14,8 @@
     "data:fetch-ecdict": "node scripts/fetch-ecdict-data.js",
     "data:fetch-audio": "node scripts/fetch-audio-data.js",
     "data:import-all": "node scripts/import-phonetic-and-audio.js",
-    "data:quick-import": "node scripts/quick-import-data.js"
+    "data:quick-import": "node scripts/quick-import-data.js",
+    "audio:upload-to-blob": "node scripts/upload-audio-to-blob.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
