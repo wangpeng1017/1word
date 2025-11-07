@@ -16,10 +16,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const limit = parseInt(searchParams.get('limit') || '100')
     const search = searchParams.get('search') || ''
     const isHighFrequency = searchParams.get('isHighFrequency')
     const difficulty = searchParams.get('difficulty')
+    const includeAudios = searchParams.get('includeAudios') === 'true'
 
     const skip = (page - 1) * limit
 
@@ -46,17 +47,39 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
+        include: includeAudios ? {
+          word_audios: {
+            orderBy: {
+              created_at: 'asc'
+            }
+          }
+        } : undefined,
       }),
       prisma.vocabularies.count({ where }),
     ])
 
     // 将 snake_case 映射为前端预期的 camelCase 字段
-    const mapped = vocabularies.map(({ audio_url, created_at, updated_at, ...rest }: any) => ({
-      ...rest,
-      audioUrl: audio_url ?? null,
-      createdAt: created_at,
-      updatedAt: updated_at,
-    }))
+    const mapped = vocabularies.map(({ audio_url, created_at, updated_at, word_audios, ...rest }: any) => {
+      const result: any = {
+        ...rest,
+        audioUrl: audio_url ?? null,
+        createdAt: created_at,
+        updatedAt: updated_at,
+      }
+      
+      // 映射音频数据
+      if (word_audios) {
+        result.audios = word_audios.map((audio: any) => ({
+          id: audio.id,
+          audioUrl: audio.audio_url,
+          accent: audio.accent,
+          duration: audio.duration,
+          createdAt: audio.created_at,
+        }))
+      }
+      
+      return result
+    })
 
     return successResponse({
       vocabularies: mapped,
