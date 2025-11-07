@@ -59,17 +59,26 @@ export async function GET(request: NextRequest) {
     ])
 
     // 将 snake_case 映射为前端预期的 camelCase 字段
-    const mapped = vocabularies.map(({ audio_url, created_at, updated_at, word_audios, ...rest }: any) => {
+    const mapped = vocabularies.map((vocab: any) => {
       const result: any = {
-        ...rest,
-        audioUrl: audio_url ?? null,
-        createdAt: created_at,
-        updatedAt: updated_at,
+        id: vocab.id,
+        word: vocab.word,
+        partOfSpeech: vocab.part_of_speech || [],
+        primaryMeaning: vocab.primary_meaning || '',
+        secondaryMeaning: vocab.secondary_meaning || null,
+        phonetic: vocab.phonetic || null,
+        phoneticUS: vocab.phonetic_us || null,
+        phoneticUK: vocab.phonetic_uk || null,
+        audioUrl: vocab.audio_url || null,
+        isHighFrequency: vocab.is_high_frequency || false,
+        difficulty: vocab.difficulty || 'MEDIUM',
+        createdAt: vocab.created_at,
+        updatedAt: vocab.updated_at,
       }
       
       // 映射音频数据
-      if (word_audios) {
-        result.audios = word_audios.map((audio: any) => ({
+      if (vocab.word_audios) {
+        result.audios = vocab.word_audios.map((audio: any) => ({
           id: audio.id,
           audioUrl: audio.audio_url,
           accent: audio.accent,
