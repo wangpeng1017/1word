@@ -134,6 +134,12 @@ export default function ClassesPage() {
       render: (count: any) => count?.students || 0,
     },
     {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => date ? new Date(date).toLocaleString('zh-CN') : '-',
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_: any, record: any) => (

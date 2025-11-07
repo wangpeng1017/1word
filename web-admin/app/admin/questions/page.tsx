@@ -327,6 +327,13 @@ export default function QuestionsPage() {
       width: 150,
     },
     {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 160,
+      render: (date: string) => date ? new Date(date).toLocaleString('zh-CN') : '-',
+    },
+    {
       title: '操作',
       key: 'action',
       width: 150,

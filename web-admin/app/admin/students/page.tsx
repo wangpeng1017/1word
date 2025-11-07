@@ -182,6 +182,12 @@ export default function StudentsPage() {
       render: (text: string, record: any) => record.class?.name || '未分配',
     },
     {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => date ? new Date(date).toLocaleString('zh-CN') : '-',
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_: any, record: any) => (

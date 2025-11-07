@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // 转换数据格式
     const formattedClasses = classes.map(formatClassData)
 
-    return successResponse(formattedClasses)
+    return successResponse({ classes: formattedClasses })
   } catch (error) {
     console.error('获取班级列表错误:', error)
     return errorResponse('获取班级列表失败', 500)

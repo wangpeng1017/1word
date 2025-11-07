@@ -324,6 +324,12 @@ export default function StudyPlansPage() {
       render: (date) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
     },
     {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
+    },
+    {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
