@@ -19,17 +19,6 @@ export async function GET(
 
     const vocabulary = await prisma.vocabulary.findUnique({
       where: { id: params.id },
-      include: {
-        audios: true,
-        images: true,
-        questions: {
-          include: {
-            options: {
-              orderBy: { order: 'asc' },
-            },
-          },
-        },
-      },
     })
 
     if (!vocabulary) {
@@ -85,15 +74,6 @@ export async function PUT(
         audioUrl,
         isHighFrequency,
         difficulty,
-      },
-      include: {
-        audios: true,
-        images: true,
-        questions: {
-          include: {
-            options: true,
-          },
-        },
       },
     })
 
