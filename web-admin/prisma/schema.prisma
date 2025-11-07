@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,223 +7,259 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============ 用户与权限 ============
-
-enum UserRole {
-  TEACHER
-  STUDENT
+model classes {
+  id           String         @id
+  name         String
+  grade        String
+  teacher_id   String
+  is_active    Boolean        @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime
+  teachers     teachers       @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  plan_classes plan_classes[]
+  students     students[]
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String?  @unique
-  phone     String?  @unique
-  password  String
-  name      String
-  role      String   @default("STUDENT")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+model daily_tasks {
+  id           String       @id
+  studentId    String
+  vocabularyId String
+  taskDate     DateTime     @db.Date
+  status       TaskStatus   @default(PENDING)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  students     students     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vocabularies vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
-  teacher Teacher?
-  student Student?
-
-  @@map("users")
+  @@unique([studentId, vocabularyId, taskDate])
+  @@index([studentId, taskDate])
 }
 
-model Teacher {
-  id        String   @id @default(cuid())
-  userId    String   @unique @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  school    String?
-  subject   String?  @default("英语")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+model plan_classes {
+  id            String          @id
+  class_id      String
+  vocabulary_id String
+  status        StudyPlanStatus @default(PENDING)
+  start_date    DateTime        @db.Date
+  end_date      DateTime?       @db.Date
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  classes       classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  vocabularies  vocabularies    @relation(fields: [vocabulary_id], references: [id], onDelete: Cascade)
 
-  classes Class[]
-
-  @@map("teachers")
+  @@unique([class_id, vocabulary_id])
+  @@index([class_id])
+  @@index([status])
 }
 
-model Student {
-  id          String   @id @default(cuid())
-  userId      String   @unique @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studentNo   String   @unique @map("student_no")
-  classId     String   @map("class_id")
-  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  grade       String   // 冗余字段，方便查询（与 class.grade 一致）
-  wechatId    String?  @unique @map("wechat_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model question_options {
+  id         String    @id
+  questionId String
+  content    String
+  isCorrect  Boolean   @default(false)
+  order      Int
+  createdAt  DateTime  @default(now())
+  questions  questions @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
 
-  studyPlans     StudyPlan[]
-  dailyTasks     DailyTask[]
-  studyRecords   StudyRecord[]
-  wrongQuestions WrongQuestion[]
-  wordMasteries  WordMastery[]
+model questions {
+  id               String             @id
+  vocabularyId     String
+  type             QuestionType
+  content          String
+  sentence         String?
+  audioUrl         String?
+  correctAnswer    String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  question_options question_options[]
+  vocabularies     vocabularies       @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  wrong_questions  wrong_questions[]
+}
 
-  @@index([classId])
+model students {
+  id              String            @id
+  user_id         String            @unique
+  student_no      String            @unique
+  class_id        String
+  grade           String
+  wechat_id       String?           @unique
+  created_at      DateTime          @default(now())
+  updated_at      DateTime
+  daily_tasks     daily_tasks[]
+  classes         classes           @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  users           users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  study_plans     study_plans[]
+  study_records   study_records[]
+  word_masteries  word_masteries[]
+  wrong_questions wrong_questions[]
+
+  @@index([class_id])
   @@index([grade])
-  @@map("students")
 }
 
-model Class {
-  id        String   @id @default(cuid())
-  name      String
-  grade     String
-  teacherId String   @map("teacher_id")
-  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  students    Student[]
-  planClasses PlanClass[]
-
-  @@map("classes")
-}
-
-// ============ 词库系统 ============
-
-enum WordDifficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-model Vocabulary {
-  id              String         @id @default(cuid())
-  word            String         @unique
-  partOfSpeech    String[]       @map("part_of_speech") // 词性数组，如 ["n.", "v."]
-  primaryMeaning  String         @map("primary_meaning") // 核心释义
-  secondaryMeaning String?       @map("secondary_meaning") // 延伸释义
-  phonetic        String?        // 音标
-  phoneticUS      String?        @map("phonetic_us") // 美式音标
-  phoneticUK      String?        @map("phonetic_uk") // 英式音标
-  audioUrl        String?        @map("audio_url") // 音频URL（用于听力题）
-  isHighFrequency Boolean        @default(false) @map("is_high_frequency") // 是否高考高频
-  difficulty      String         @default("MEDIUM")
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
-
-  audios         WordAudio[]
-  images         WordImage[]
-  questions      Question[]
-  studyPlans     StudyPlan[]
-  planClasses    PlanClass[]
-  dailyTasks     DailyTask[]
-  wrongQuestions WrongQuestion[]
-  wordMasteries  WordMastery[]
-
-  @@map("vocabularies")
-}
-
-model WordAudio {
-  id           String     @id @default(cuid())
+model study_plans {
+  id           String          @id
+  studentId    String
   vocabularyId String
-  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  audioUrl     String     // 音频文件URL
-  accent       String     @default("US") // US/UK
-  duration     Int?       // 音频时长（秒）
-  createdAt    DateTime   @default(now())
+  status       StudyPlanStatus @default(PENDING)
+  reviewCount  Int             @default(0)
+  lastReviewAt DateTime?
+  nextReviewAt DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime
+  students     students        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vocabularies vocabularies    @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
-  @@map("word_audios")
+  @@unique([studentId, vocabularyId])
 }
 
-model WordImage {
-  id           String     @id @default(cuid())
+model study_records {
+  id             String    @id
+  studentId      String
+  taskDate       DateTime  @db.Date
+  totalWords     Int
+  completedWords Int
+  correctCount   Int
+  wrongCount     Int
+  accuracy       Float
+  totalTime      Int
+  startedAt      DateTime
+  completedAt    DateTime?
+  isCompleted    Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  students       students  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, taskDate])
+}
+
+model system_configs {
+  id          String   @id
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model teachers {
+  id         String    @id
+  user_id    String    @unique
+  school     String?
+  subject    String?   @default("英语")
+  created_at DateTime  @default(now())
+  updated_at DateTime
+  classes    classes[]
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id         String    @id
+  email      String?   @unique
+  phone      String?   @unique
+  password   String
+  name       String
+  role       String    @default("STUDENT")
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime
+  students   students?
+  teachers   teachers?
+}
+
+model vocabularies {
+  id                String            @id
+  word              String            @unique
+  part_of_speech    String[]
+  primary_meaning   String
+  secondary_meaning String?
+  phonetic          String?
+  phonetic_us       String?
+  phonetic_uk       String?
+  audio_url         String?
+  is_high_frequency Boolean           @default(false)
+  difficulty        String            @default("MEDIUM")
+  created_at        DateTime          @default(now())
+  updated_at        DateTime
+  daily_tasks       daily_tasks[]
+  plan_classes      plan_classes[]
+  questions         questions[]
+  study_plans       study_plans[]
+  word_audios       word_audios[]
+  word_images       word_images[]
+  word_masteries    word_masteries[]
+  wrong_questions   wrong_questions[]
+}
+
+model word_audios {
+  id           String       @id
   vocabularyId String
-  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  imageUrl     String     // 图片URL
-  description  String?    // 图片描述
-  createdAt    DateTime   @default(now())
-
-  @@map("word_images")
+  audioUrl     String
+  accent       String       @default("US")
+  duration     Int?
+  createdAt    DateTime     @default(now())
+  vocabularies vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 }
 
-// ============ 题目系统 ============
+model word_images {
+  id           String       @id
+  vocabularyId String
+  imageUrl     String
+  description  String?
+  createdAt    DateTime     @default(now())
+  vocabularies vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+}
+
+model word_masteries {
+  id                 String       @id
+  studentId          String
+  vocabularyId       String
+  totalWrongCount    Int          @default(0)
+  recentAccuracy     Float?
+  consecutiveCorrect Int          @default(0)
+  isMastered         Boolean      @default(false)
+  isDifficult        Boolean      @default(false)
+  lastPracticeAt     DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime
+  students           students     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vocabularies       vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, vocabularyId])
+  @@index([studentId, isDifficult])
+  @@index([studentId, isMastered])
+}
+
+model wrong_questions {
+  id            String       @id
+  studentId     String
+  vocabularyId  String
+  questionId    String
+  wrongAnswer   String
+  correctAnswer String
+  wrongAt       DateTime     @default(now())
+  questions     questions    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  students      students     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vocabularies  vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, vocabularyId])
+}
 
 enum QuestionType {
-  ENGLISH_TO_CHINESE  // 英选汉
-  CHINESE_TO_ENGLISH  // 汉选英
-  LISTENING           // 听音选词
-  FILL_IN_BLANK       // 选词填空
+  ENGLISH_TO_CHINESE
+  CHINESE_TO_ENGLISH
+  LISTENING
+  FILL_IN_BLANK
 }
-
-model Question {
-  id           String       @id @default(cuid())
-  vocabularyId String
-  vocabulary   Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  type         QuestionType
-  content      String       // 题目内容（如句子、单词等）
-  sentence     String?      // 填空题的完整句子（FILL_IN_BLANK题型使用）
-  audioUrl     String?      // 听力题音频URL
-  correctAnswer String      // 正确答案
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  options        QuestionOption[]
-  wrongQuestions WrongQuestion[]
-
-  @@map("questions")
-}
-
-model QuestionOption {
-  id         String   @id @default(cuid())
-  questionId String
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  content    String   // 选项内容
-  isCorrect  Boolean  @default(false)
-  order      Int      // 选项顺序
-  createdAt  DateTime @default(now())
-
-  @@map("question_options")
-}
-
-// ============ 学习计划与任务 ============
 
 enum StudyPlanStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
   MASTERED
-}
-
-model StudyPlan {
-  id           String           @id @default(cuid())
-  studentId    String
-  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  vocabularyId String
-  vocabulary   Vocabulary       @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  status       StudyPlanStatus  @default(PENDING)
-  reviewCount  Int              @default(0) // 复习次数
-  lastReviewAt DateTime?        // 最后复习时间
-  nextReviewAt DateTime?        // 下次复习时间
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  @@unique([studentId, vocabularyId])
-  @@map("study_plans")
-}
-
-// 班级学习计划（批量下发给班级）
-model PlanClass {
-  id           String           @id @default(cuid())
-  classId      String           @map("class_id")
-  class        Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
-  vocabularyId String           @map("vocabulary_id")
-  vocabulary   Vocabulary       @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  status       StudyPlanStatus  @default(PENDING)
-  startDate    DateTime         @map("start_date") @db.Date // 计划开始日期
-  endDate      DateTime?        @map("end_date") @db.Date   // 计划结束日期
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
-
-  @@unique([classId, vocabularyId])
-  @@index([classId])
-  @@index([status])
-  @@map("plan_classes")
 }
 
 enum TaskStatus {
@@ -236,93 +269,13 @@ enum TaskStatus {
   INTERRUPTED
 }
 
-model DailyTask {
-  id           String     @id @default(cuid())
-  studentId    String
-  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  vocabularyId String
-  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  taskDate     DateTime   @db.Date // 任务日期
-  status       TaskStatus @default(PENDING)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@unique([studentId, vocabularyId, taskDate])
-  @@index([studentId, taskDate])
-  @@map("daily_tasks")
+enum UserRole {
+  TEACHER
+  STUDENT
 }
 
-// ============ 学习数据记录 ============
-
-model StudyRecord {
-  id             String   @id @default(cuid())
-  studentId      String
-  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  taskDate       DateTime @db.Date
-  totalWords     Int      // 总单词数
-  completedWords Int      // 完成单词数
-  correctCount   Int      // 正确数
-  wrongCount     Int      // 错误数
-  accuracy       Float    // 正确率
-  totalTime      Int      // 总耗时（秒）
-  startedAt      DateTime
-  completedAt    DateTime?
-  isCompleted    Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([studentId, taskDate])
-  @@map("study_records")
-}
-
-model WrongQuestion {
-  id             String     @id @default(cuid())
-  studentId      String
-  student        Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  vocabularyId   String
-  vocabulary     Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  questionId     String
-  question       Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  wrongAnswer    String     // 错误答案
-  correctAnswer  String     // 正确答案
-  wrongAt        DateTime   @default(now())
-  
-  @@index([studentId, vocabularyId])
-  @@map("wrong_questions")
-}
-
-model WordMastery {
-  id                  String     @id @default(cuid())
-  studentId           String
-  student             Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  vocabularyId        String
-  vocabulary          Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  totalWrongCount     Int        @default(0) // 累计错误次数
-  recentAccuracy      Float?     // 最近3次正确率
-  consecutiveCorrect  Int        @default(0) // 连续正确次数
-  isMastered          Boolean    @default(false) // 是否已掌握
-  isDifficult         Boolean    @default(false) // 是否为重点难点
-  lastPracticeAt      DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-
-  @@unique([studentId, vocabularyId])
-  @@index([studentId, isMastered])
-  @@index([studentId, isDifficult])
-  @@map("word_masteries")
-}
-
-// ============ 系统配置 ============
-
-model SystemConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_configs")
+enum WordDifficulty {
+  EASY
+  MEDIUM
+  HARD
 }
