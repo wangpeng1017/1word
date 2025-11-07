@@ -67,6 +67,7 @@ export async function PUT(
       phonetic,
       phoneticUS,
       phoneticUK,
+      audioUrl,
       isHighFrequency,
       difficulty,
     } = body
@@ -81,6 +82,7 @@ export async function PUT(
         phonetic,
         phoneticUS,
         phoneticUK,
+        audioUrl,
         isHighFrequency,
         difficulty,
       },
