@@ -41,13 +41,13 @@ export async function GET(request: NextRequest) {
     }
 
     const [vocabularies, total] = await Promise.all([
-      prisma.vocabulary.findMany({
+      prisma.vocabularies.findMany({
         where,
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
       }),
-      prisma.vocabulary.count({ where }),
+      prisma.vocabularies.count({ where }),
     ])
 
     return successResponse({
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查单词是否已存在
-    const existing = await prisma.vocabulary.findUnique({
+    const existing = await prisma.vocabularies.findUnique({
       where: { word: word.toLowerCase() },
     })
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('该单词已存在')
     }
 
-    const vocabulary = await prisma.vocabulary.create({
+    const vocabulary = await prisma.vocabularies.create({
       data: {
         word: word.toLowerCase(),
         partOfSpeech,

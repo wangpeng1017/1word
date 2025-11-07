@@ -17,7 +17,7 @@ export async function GET(
       return unauthorizedResponse()
     }
 
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: params.id },
     })
 
@@ -66,7 +66,7 @@ export async function PUT(
       updateData.audio_url = audioUrl
     }
 
-    const vocabulary = await prisma.vocabulary.update({
+    const vocabulary = await prisma.vocabularies.update({
       where: { id: params.id },
       data: updateData,
     })
