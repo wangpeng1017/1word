@@ -32,24 +32,24 @@ export async function GET(request: NextRequest) {
     }
 
     const [questions, total] = await Promise.all([
-      prisma.question.findMany({
+      prisma.questions.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          vocabulary: {
+          vocabularies: {
             select: {
               word: true,
-              primaryMeaning: true,
+              primary_meaning: true,
             },
           },
-          options: {
+          question_options: {
             orderBy: { order: 'asc' },
           },
         },
       }),
-      prisma.question.count({ where }),
+      prisma.questions.count({ where }),
     ])
 
     return successResponse({
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证词汇是否存在
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: vocabularyId },
     })
 
@@ -95,30 +95,35 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建题目和选项
-    const question = await prisma.question.create({
+    const question = await prisma.questions.create({
       data: {
+        id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         vocabularyId,
         type,
         content,
         sentence,
         audioUrl,
         correctAnswer,
-        options: {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        question_options: {
           create: options?.map((opt: any, index: number) => ({
+            id: `qo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             content: opt.content,
             isCorrect: opt.isCorrect,
             order: opt.order ?? index,
+            createdAt: new Date(),
           })) || [],
         },
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
           },
         },
-        options: {
+        question_options: {
           orderBy: { order: 'asc' },
         },
       },
@@ -150,40 +155,41 @@ export async function PUT(request: NextRequest) {
     }
 
     // 更新题目（先删除旧选项再创建新选项）
-    await prisma.$transaction(async (tx) => {
-      await tx.questionOption.deleteMany({
-        where: { questionId: id },
-      })
-
-      await tx.question.update({
-        where: { id },
-        data: {
-          type,
-          content,
-          sentence,
-          audioUrl,
-          correctAnswer,
-          options: {
-            create: options?.map((opt: any, index: number) => ({
-              content: opt.content,
-              isCorrect: opt.isCorrect,
-              order: opt.order ?? index,
-            })) || [],
-          },
-        },
-      })
+    await prisma.question_options.deleteMany({
+      where: { questionId: id },
     })
 
-    const question = await prisma.question.findUnique({
+    await prisma.questions.update({
+      where: { id },
+      data: {
+        type,
+        content,
+        sentence,
+        audioUrl,
+        correctAnswer,
+        updatedAt: new Date(),
+        question_options: {
+          create: options?.map((opt: any, index: number) => ({
+            id: `qo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            content: opt.content,
+            isCorrect: opt.isCorrect,
+            order: opt.order ?? index,
+            createdAt: new Date(),
+          })) || [],
+        },
+      },
+    })
+
+    const question = await prisma.questions.findUnique({
       where: { id },
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
           },
         },
-        options: {
+        question_options: {
           orderBy: { order: 'asc' },
         },
       },
@@ -214,7 +220,7 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少题目ID')
     }
 
-    await prisma.question.deleteMany({
+    await prisma.questions.deleteMany({
       where: {
         id: {
           in: ids,
