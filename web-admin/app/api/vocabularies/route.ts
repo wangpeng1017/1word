@@ -45,14 +45,7 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          audios: true,
-          images: true,
-          _count: {
-            select: { questions: true },
-          },
-        },
+        orderBy: { created_at: 'desc' },
       }),
       prisma.vocabulary.count({ where }),
     ])
@@ -125,10 +118,6 @@ export async function POST(request: NextRequest) {
         phoneticUK,
         isHighFrequency: isHighFrequency || false,
         difficulty: difficulty || 'MEDIUM',
-      },
-      include: {
-        audios: true,
-        images: true,
       },
     })
 
