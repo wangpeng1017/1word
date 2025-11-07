@@ -25,7 +25,8 @@ export async function GET(
       return notFoundResponse('词汇不存在')
     }
 
-    return successResponse(vocabulary)
+    const { audio_url, created_at, updated_at, ...rest } = vocabulary as any
+    return successResponse({ ...rest, audioUrl: audio_url ?? null, createdAt: created_at, updatedAt: updated_at })
   } catch (error) {
     console.error('获取词汇详情错误:', error)
     return errorResponse('获取词汇详情失败', 500)
@@ -71,7 +72,8 @@ export async function PUT(
       data: updateData,
     })
 
-    return successResponse(vocabulary, '词汇更新成功')
+    const { audio_url, created_at, updated_at, ...rest } = vocabulary as any
+    return successResponse({ ...rest, audioUrl: audio_url ?? null, createdAt: created_at, updatedAt: updated_at }, '词汇更新成功')
   } catch (error) {
     console.error('更新词汇错误:', error)
     return errorResponse('更新词汇失败', 500)

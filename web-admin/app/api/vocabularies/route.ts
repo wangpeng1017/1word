@@ -50,8 +50,16 @@ export async function GET(request: NextRequest) {
       prisma.vocabularies.count({ where }),
     ])
 
+    // 将 snake_case 映射为前端预期的 camelCase 字段
+    const mapped = vocabularies.map(({ audio_url, created_at, updated_at, ...rest }: any) => ({
+      ...rest,
+      audioUrl: audio_url ?? null,
+      createdAt: created_at,
+      updatedAt: updated_at,
+    }))
+
     return successResponse({
-      vocabularies,
+      vocabularies: mapped,
       pagination: {
         page,
         limit,
@@ -121,7 +129,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return successResponse(vocabulary, '词汇创建成功')
+    const { audio_url, created_at, updated_at, ...rest } = vocabulary as any
+    return successResponse({ ...rest, audioUrl: audio_url ?? null, createdAt: created_at, updatedAt: updated_at }, '词汇创建成功')
   } catch (error) {
     console.error('创建词汇错误:', error)
     return errorResponse('创建词汇失败', 500)
