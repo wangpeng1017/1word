@@ -5,7 +5,7 @@ import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Popc
 import { PlusOutlined, UploadOutlined, DownloadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
-import { useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 const { TextArea } = Input
 
@@ -37,7 +37,7 @@ const questionTypeMap: Record<string, { label: string; color: string }> = {
 }
 
 export default function QuestionsPage() {
-  const searchParams = useSearchParams()
+  const router = useRouter()
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
@@ -57,15 +57,18 @@ export default function QuestionsPage() {
 
   // 从URL参数中读取初始筛选条件
   useEffect(() => {
-    const vocabularyId = searchParams?.get('vocabularyId')
-    const word = searchParams?.get('word')
-    if (vocabularyId) {
-      setFilters(prev => ({ ...prev, vocabularyId }))
-      if (word) {
-        message.info(`已筛选词汇: ${word}`)
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const vocabularyId = urlParams.get('vocabularyId')
+      const word = urlParams.get('word')
+      if (vocabularyId) {
+        setFilters(prev => ({ ...prev, vocabularyId }))
+        if (word) {
+          message.info(`已筛选词汇: ${word}`)
+        }
       }
     }
-  }, [searchParams])
+  }, [])
 
   useEffect(() => {
     fetchQuestions()
