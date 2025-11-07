@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 检查学号是否已存在
-        const existing = await prisma.student.findUnique({
+        const existing = await prisma.students.findUnique({
           where: { studentNo },
         })
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         let classGrade: string
         
         if (className) {
-          const classData = await prisma.class.findFirst({
+          const classData = await prisma.classes.findFirst({
             where: { name: className },
           })
           if (classData) {
@@ -68,16 +68,16 @@ export async function POST(request: NextRequest) {
             classGrade = classData.grade
           } else {
             // 班级不存在，使用默认班级
-            let defaultClass = await prisma.class.findFirst({
+            let defaultClass = await prisma.classes.findFirst({
               where: { name: '未分配班级' },
             })
             
             if (!defaultClass) {
-              const defaultTeacher = await prisma.teacher.findFirst()
+              const defaultTeacher = await prisma.teachers.findFirst()
               if (!defaultTeacher) {
                 throw new Error('系统未配置，请联系管理员')
               }
-              defaultClass = await prisma.class.create({
+              defaultClass = await prisma.classes.create({
                 data: {
                   name: '未分配班级',
                   grade: '待分配',
@@ -90,16 +90,16 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // 没有指定班级，使用默认班级
-          let defaultClass = await prisma.class.findFirst({
+          let defaultClass = await prisma.classes.findFirst({
             where: { name: '未分配班级' },
           })
           
           if (!defaultClass) {
-            const defaultTeacher = await prisma.teacher.findFirst()
+            const defaultTeacher = await prisma.teachers.findFirst()
             if (!defaultTeacher) {
               throw new Error('系统未配置，请联系管理员')
             }
-            defaultClass = await prisma.class.create({
+            defaultClass = await prisma.classes.create({
               data: {
                 name: '未分配班级',
                 grade: '待分配',
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             name,
             password: hashedPassword,
             role: 'STUDENT',
-            student: {
+            students: {
               create: {
                 studentNo,
                 classId,

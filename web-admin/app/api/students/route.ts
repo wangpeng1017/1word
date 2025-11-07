@@ -8,7 +8,7 @@ import { nanoid } from 'nanoid'
 // 数据转换函数
 function formatStudentData(student: any) {
   return {
-    ...student,
+    ...students,
     userId: student.user_id,
     studentNo: student.student_no,
     classId: student.class_id,
@@ -16,13 +16,13 @@ function formatStudentData(student: any) {
     createdAt: student.created_at,
     updatedAt: student.updated_at,
     user: student.user ? {
-      ...student.user,
+      ...students.user,
       isActive: student.user.is_active,
       createdAt: student.user.created_at,
       updatedAt: student.user.updated_at,
     } : undefined,
     class: student.classes ? {
-      ...student.classes,
+      ...students.classes,
       teacherId: student.classes.teacher_id,
       isActive: student.classes.is_active,
       createdAt: student.classes.created_at,

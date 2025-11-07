@@ -24,7 +24,7 @@ export async function DELETE(
     const { fileId } = await params
 
     // 尝试查找音频文件
-    let file: any = await prisma.wordAudio.findUnique({
+    let file: any = await prisma.word_audios.findUnique({
       where: { id: fileId },
     })
 
@@ -32,7 +32,7 @@ export async function DELETE(
 
     // 如果不是音频,尝试查找图片文件
     if (!file) {
-      file = await prisma.wordImage.findUnique({
+      file = await prisma.word_images.findUnique({
         where: { id: fileId },
       })
       fileType = 'image'
@@ -52,11 +52,11 @@ export async function DELETE(
 
     // 从数据库删除记录
     if (fileType === 'audio') {
-      await prisma.wordAudio.delete({
+      await prisma.word_audios.delete({
         where: { id: fileId },
       })
     } else {
-      await prisma.wordImage.delete({
+      await prisma.word_images.delete({
         where: { id: fileId },
       })
     }

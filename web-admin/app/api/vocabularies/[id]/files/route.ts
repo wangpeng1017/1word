@@ -27,7 +27,7 @@ export async function GET(
     let files: any[] = []
 
     if (type === 'audio' || type === 'all') {
-      const audioFiles = await prisma.wordAudio.findMany({
+      const audioFiles = await prisma.word_audios.findMany({
         where: { vocabularyId },
         orderBy: { createdAt: 'desc' },
       })
@@ -35,7 +35,7 @@ export async function GET(
     }
 
     if (type === 'image' || type === 'all') {
-      const imageFiles = await prisma.wordImage.findMany({
+      const imageFiles = await prisma.word_images.findMany({
         where: { vocabularyId },
         orderBy: { createdAt: 'desc' },
       })
@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // 验证词汇是否存在
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: vocabularyId },
     })
 
@@ -85,14 +85,14 @@ export async function POST(
     let file: any
 
     if (type === 'audio') {
-      file = await prisma.wordAudio.create({
+      file = await prisma.word_audios.create({
         data: {
           vocabularyId,
           audioUrl: url,
         },
       })
     } else if (type === 'image') {
-      file = await prisma.wordImage.create({
+      file = await prisma.word_images.create({
         data: {
           vocabularyId,
           imageUrl: url,

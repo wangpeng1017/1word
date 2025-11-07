@@ -27,7 +27,7 @@ export async function POST(
     }
 
     // 验证词汇是否存在
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: params.id },
     })
 
@@ -36,14 +36,14 @@ export async function POST(
     }
 
     // 创建题目和选项
-    const question = await prisma.question.create({
+    const question = await prisma.questions.create({
       data: {
         vocabularyId: params.id,
         type,
         content,
         audioUrl,
         correctAnswer,
-        options: {
+        question_options: {
           create: options.map((opt, index) => ({
             content: opt.content,
             isCorrect: opt.isCorrect,
@@ -52,7 +52,7 @@ export async function POST(
         },
       },
       include: {
-        options: {
+        question_options: {
           orderBy: { order: 'asc' },
         },
       },
@@ -79,10 +79,10 @@ export async function GET(
       return unauthorizedResponse()
     }
 
-    const questions = await prisma.question.findMany({
+    const questions = await prisma.questions.findMany({
       where: { vocabularyId: params.id },
       include: {
-        options: {
+        question_options: {
           orderBy: { order: 'asc' },
         },
       },

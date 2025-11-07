@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取学生信息
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id: studentId },
       include: {
         user: true,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     if (endDate) dateFilter.lte = new Date(endDate)
 
     // 获取学习记录
-    const studyRecords = await prisma.studyRecord.findMany({
+    const studyRecords = await prisma.study_records.findMany({
       where: {
         studentId,
         ...(Object.keys(dateFilter).length > 0 ? { taskDate: dateFilter } : {}),
@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
     })
 
     // 获取词汇掌握情况
-    const wordMasteries = await prisma.wordMastery.findMany({
+    const wordMasteries = await prisma.word_masteries.findMany({
       where: { studentId },
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
             primaryMeaning: true,
@@ -71,13 +71,13 @@ export async function GET(request: NextRequest) {
     })
 
     // 获取错题记录
-    const wrongQuestions = await prisma.wrongQuestion.findMany({
+    const wrongQuestions = await prisma.wrong_questions.findMany({
       where: {
         studentId,
         ...(Object.keys(dateFilter).length > 0 ? { wrongAt: dateFilter } : {}),
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
             primaryMeaning: true,
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       ['姓名', student.user.name],
       ['学号', student.studentNo],
       ['年级', student.grade || '-'],
-      ['班级', student.class?.name || '-'],
+      ['班级', student.classes.name || '-'],
       ['统计日期', `${startDate || '开始'} 至 ${endDate || '今天'}`],
     ]
 
@@ -225,8 +225,8 @@ export async function GET(request: NextRequest) {
     wrongQuestions.forEach((wq) => {
       wrongSheet.addRow({
         date: wq.wrongAt.toISOString().split('T')[0],
-        word: wq.vocabulary.word,
-        meaning: wq.vocabulary.primaryMeaning,
+        word: wq.vocabularies.word,
+        meaning: wq.vocabularies.primaryMeaning,
         wrongAnswer: wq.wrongAnswer,
         correctAnswer: wq.correctAnswer,
       })
@@ -258,9 +258,9 @@ export async function GET(request: NextRequest) {
       }
       
       masterySheet.addRow({
-        word: mastery.vocabulary.word,
-        meaning: mastery.vocabulary.primaryMeaning,
-        difficulty: difficultyMap[mastery.vocabulary.difficulty],
+        word: mastery.vocabularies.word,
+        meaning: mastery.vocabularies.primaryMeaning,
+        difficulty: difficultyMap[mastery.vocabularies.difficulty],
         wrongCount: mastery.totalWrongCount,
         consecutiveCorrect: mastery.consecutiveCorrect,
         status: mastery.isMastered ? '已掌握' : mastery.isDifficult ? '重点难点' : '学习中',

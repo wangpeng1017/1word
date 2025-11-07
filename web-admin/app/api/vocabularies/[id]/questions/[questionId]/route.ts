@@ -22,7 +22,7 @@ export async function DELETE(
     }
 
     // 删除题目（级联删除选项）
-    await prisma.question.delete({
+    await prisma.questions.delete({
       where: { id: questionId },
     })
 

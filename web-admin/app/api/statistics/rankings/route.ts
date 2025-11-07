@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const studentFilter = classId ? { classId } : {}
 
     // 获取所有学生基本信息
-    const students = await prisma.student.findMany({
+    const students = await prisma.students.findMany({
       where: studentFilter,
       include: {
         user: {
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        class: {
+        classes: {
           select: {
             name: true,
           },
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         // 掌握词汇数量排行
         const masteryStats = await Promise.all(
           students.map(async (student) => {
-            const wordMasteries = await prisma.wordMastery.findMany({
+            const wordMasteries = await prisma.word_masteries.findMany({
               where: { studentId: student.id },
             })
             
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
               studentId: student.id,
               studentName: student.user.name,
               studentNo: student.studentNo,
-              className: student.class?.name,
+              className: student.classes.name,
               masteredCount,
               totalLearning,
               masteryRate: masteryRate.toFixed(1),
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
         const accuracyStats = await Promise.all(
           students.map(async (student) => {
-            const studyRecords = await prisma.studyRecord.findMany({
+            const studyRecords = await prisma.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
               studentId: student.id,
               studentName: student.user.name,
               studentNo: student.studentNo,
-              className: student.class?.name,
+              className: student.classes.name,
               totalAnswered,
               totalCorrect,
               totalWrong,
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         const progressStats = await Promise.all(
           students.map(async (student) => {
             // 最近7天
-            const recentRecords = await prisma.studyRecord.findMany({
+            const recentRecords = await prisma.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
             })
 
             // 之前7天
-            const previousRecords = await prisma.studyRecord.findMany({
+            const previousRecords = await prisma.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
               studentId: student.id,
               studentName: student.user.name,
               studentNo: student.studentNo,
-              className: student.class?.name,
+              className: student.classes.name,
               recentAccuracy: recentAccuracy.toFixed(1),
               previousAccuracy: previousAccuracy.toFixed(1),
               improvement: improvement.toFixed(1),
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
             let checkDate = new Date(today)
             
             while (consecutiveDays < 365) {
-              const record = await prisma.studyRecord.findFirst({
+              const record = await prisma.study_records.findFirst({
                 where: {
                   studentId: student.id,
                   taskDate: checkDate,
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
             }
 
             // 总学习天数
-            const totalDays = await prisma.studyRecord.count({
+            const totalDays = await prisma.study_records.count({
               where: {
                 studentId: student.id,
                 isCompleted: true,
@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
               studentId: student.id,
               studentName: student.user.name,
               studentNo: student.studentNo,
-              className: student.class?.name,
+              className: student.classes.name,
               consecutiveDays,
               totalDays,
               score: consecutiveDays, // 用于排序

@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
     targetDate.setHours(0, 0, 0, 0)
 
     // 查找该日期的任务
-    let dailyTasks = await prisma.dailyTask.findMany({
+    let dailyTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: targetDate,
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           include: {
             audios: true,
             images: true,
@@ -76,10 +76,10 @@ export async function GET(request: NextRequest) {
       const targetType = questionTypeAllocation.get(task.vocabularyId)
       const selectedQuestionId = targetType 
         ? selectQuestionByType(
-            task.vocabulary.questions.map(q => ({ id: q.id, type: q.type })),
+            task.vocabularies.questions.map(q => ({ id: q.id, type: q.type })),
             targetType
           )
-        : task.vocabulary.questions[0]?.id || null
+        : task.vocabularies.questions[0]?.id || null
 
       return {
         ...task,
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
  */
 async function generateDailyTasks(studentId: string, targetDate: Date) {
   // 获取学生的所有学习计划
-  const studyPlans = await prisma.studyPlan.findMany({
+  const studyPlans = await prisma.study_plans.findMany({
     where: {
       studentId,
       status: {
@@ -113,7 +113,7 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
       },
     },
     include: {
-      vocabulary: {
+      vocabularies: {
         select: {
           id: true,
           difficulty: true,
@@ -124,7 +124,7 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
 
   // 获取单词掌握度信息
   const vocabularyIds = studyPlans.map(p => p.vocabularyId)
-  const masteries = await prisma.wordMastery.findMany({
+  const masteries = await prisma.word_masteries.findMany({
     where: {
       studentId,
       vocabularyId: {
@@ -178,19 +178,19 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
   }))
 
   if (tasksToCreate.length > 0) {
-    await prisma.dailyTask.createMany({
+    await prisma.daily_tasks.createMany({
       data: tasksToCreate,
       skipDuplicates: true,
     })
 
     // 重新查询创建的任务
-    return await prisma.dailyTask.findMany({
+    return await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: targetDate,
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           include: {
             audios: true,
             images: true,
@@ -243,7 +243,7 @@ export async function PUT(request: NextRequest) {
       updateData.completedAt = new Date(completedAt)
     }
 
-    const task = await prisma.dailyTask.update({
+    const task = await prisma.daily_tasks.update({
       where: { id: taskId },
       data: updateData,
     })

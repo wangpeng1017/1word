@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     // 转换数据格式以匹配前端
     const formattedQuestions = questions.map((q: any) => ({
       ...q,
-      vocabulary: {
+      vocabularies: {
         word: q.vocabularies?.word,
         primaryMeaning: q.vocabularies?.primary_meaning,
       },
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
     // 转换数据格式以匹配前端
     const formattedQuestion = {
       ...question,
-      vocabulary: {
+      vocabularies: {
         word: question.vocabularies?.word,
         primaryMeaning: question.vocabularies?.primary_meaning,
       },
@@ -218,7 +218,7 @@ export async function PUT(request: NextRequest) {
     // 转换数据格式以匹配前端
     const formattedQuestion = question ? {
       ...question,
-      vocabulary: {
+      vocabularies: {
         word: question.vocabularies?.word,
         primaryMeaning: question.vocabularies?.primary_meaning,
       },

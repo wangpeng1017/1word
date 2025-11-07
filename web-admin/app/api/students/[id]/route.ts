@@ -7,7 +7,7 @@ import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse 
 // 数据转换函数
 function formatStudentData(student: any) {
   return {
-    ...student,
+    ...students,
     userId: student.user_id,
     studentNo: student.student_no,
     classId: student.class_id,

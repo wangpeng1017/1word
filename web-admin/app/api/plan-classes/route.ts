@@ -32,19 +32,19 @@ export async function GET(request: NextRequest) {
     }
 
     const [planClasses, total] = await Promise.all([
-      prisma.planClass.findMany({
+      prisma.plan_classes.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          class: {
+          classes: {
             select: {
               name: true,
               grade: true,
             },
           },
-          vocabulary: {
+          vocabularies: {
             select: {
               word: true,
               primaryMeaning: true,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.planClass.count({ where }),
+      prisma.plan_classes.count({ where }),
     ])
 
     return successResponse({
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证班级是否存在
-    const classes = await prisma.class.findMany({
+    const classes = await prisma.classes.findMany({
       where: {
         id: { in: classIds },
       },
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证词汇是否存在
-    const vocabularies = await prisma.vocabulary.findMany({
+    const vocabularies = await prisma.vocabularies.findMany({
       where: {
         id: { in: vocabularyIds },
       },
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 使用 createMany 批量插入，skipDuplicates 实现幂等
-    const result = await prisma.planClass.createMany({
+    const result = await prisma.plan_classes.createMany({
       data: planClassData,
       skipDuplicates: true,
     })
@@ -183,17 +183,17 @@ export async function PUT(request: NextRequest) {
       updateData.endDate = endDate ? new Date(endDate) : null
     }
 
-    const planClass = await prisma.planClass.update({
+    const planClass = await prisma.plan_classes.update({
       where: { id },
       data: updateData,
       include: {
-        class: {
+        classes: {
           select: {
             name: true,
             grade: true,
           },
         },
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
             primaryMeaning: true,
@@ -227,7 +227,7 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少计划ID')
     }
 
-    await prisma.planClass.deleteMany({
+    await prisma.plan_classes.deleteMany({
       where: {
         id: {
           in: ids,

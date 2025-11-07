@@ -35,15 +35,15 @@ export async function GET(request: NextRequest) {
     const studentFilter = classId ? { classId } : {}
 
     // 1. 学生总数统计
-    const totalStudents = await prisma.student.count({
+    const totalStudents = await prisma.students.count({
       where: studentFilter,
     })
 
     // 2. 词汇总数
-    const totalVocabularies = await prisma.vocabulary.count()
+    const totalVocabularies = await prisma.vocabularies.count()
 
     // 3. 学习记录统计
-    const studyRecords = await prisma.studyRecord.findMany({
+    const studyRecords = await prisma.study_records.findMany({
       where: {
         student: studentFilter,
         taskDate: {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(today)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     
-    const activeStudentIds = await prisma.studyRecord.findMany({
+    const activeStudentIds = await prisma.study_records.findMany({
       where: {
         student: studentFilter,
         taskDate: {
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     })
 
     // 5. 掌握度统计
-    const wordMasteries = await prisma.wordMastery.findMany({
+    const wordMasteries = await prisma.word_masteries.findMany({
       where: {
         student: studentFilter,
       },
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     const fourteenDaysAgo = new Date(today)
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
-    const dailyStats = await prisma.studyRecord.groupBy({
+    const dailyStats = await prisma.study_records.groupBy({
       by: ['taskDate'],
       where: {
         student: studentFilter,
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // 7. 错题统计
-    const wrongQuestions = await prisma.wrongQuestion.findMany({
+    const wrongQuestions = await prisma.wrong_questions.findMany({
       where: {
         student: studentFilter,
         wrongAt: {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
             primaryMeaning: true,
@@ -146,14 +146,14 @@ export async function GET(request: NextRequest) {
     // 按单词分组统计错误次数
     const wrongWordsMap = new Map<string, any>()
     wrongQuestions.forEach(wq => {
-      const word = wq.vocabulary.word
+      const word = wq.vocabularies.word
       if (wrongWordsMap.has(word)) {
         wrongWordsMap.get(word).count++
       } else {
         wrongWordsMap.set(word, {
           word,
-          meaning: wq.vocabulary.primaryMeaning,
-          difficulty: wq.vocabulary.difficulty,
+          meaning: wq.vocabularies.primaryMeaning,
+          difficulty: wq.vocabularies.difficulty,
           count: 1,
         })
       }

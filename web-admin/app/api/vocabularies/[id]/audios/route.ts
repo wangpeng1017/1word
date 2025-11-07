@@ -16,7 +16,7 @@ export async function GET(
     const vocabularyId = params.id;
 
     // 检查词汇是否存在
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: vocabularyId }
     });
 
@@ -28,7 +28,7 @@ export async function GET(
     }
 
     // 获取该词汇的所有音频
-    const audios = await prisma.wordAudio.findMany({
+    const audios = await prisma.word_audios.findMany({
       where: { vocabularyId },
       orderBy: { createdAt: 'desc' }
     });
@@ -78,7 +78,7 @@ export async function POST(
     }
 
     // 检查词汇是否存在
-    const vocabulary = await prisma.vocabulary.findUnique({
+    const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: vocabularyId }
     });
 
@@ -90,7 +90,7 @@ export async function POST(
     }
 
     // 创建音频记录
-    const audio = await prisma.wordAudio.create({
+    const audio = await prisma.word_audios.create({
       data: {
         vocabularyId,
         audioUrl,

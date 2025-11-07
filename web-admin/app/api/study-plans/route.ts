@@ -32,13 +32,13 @@ export async function GET(request: NextRequest) {
     }
 
     const [studyPlans, total] = await Promise.all([
-      prisma.studyPlan.findMany({
+      prisma.study_plans.findMany({
         where,
         skip,
         take: limit,
         orderBy: { nextReviewAt: 'asc' },
         include: {
-          student: {
+          students: {
             include: {
               user: {
                 select: {
@@ -46,14 +46,14 @@ export async function GET(request: NextRequest) {
                   email: true,
                 },
               },
-              class: {
+              classes: {
                 select: {
                   name: true,
                 },
               },
             },
           },
-          vocabulary: {
+          vocabularies: {
             select: {
               word: true,
               primaryMeaning: true,
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.studyPlan.count({ where }),
+      prisma.study_plans.count({ where }),
     ])
 
     return successResponse({
@@ -109,11 +109,11 @@ export async function PUT(request: NextRequest) {
       updateData.nextReviewAt = new Date(nextReviewAt)
     }
 
-    const studyPlan = await prisma.studyPlan.update({
+    const studyPlan = await prisma.study_plans.update({
       where: { id: planId },
       data: updateData,
       include: {
-        vocabulary: {
+        vocabularies: {
           select: {
             word: true,
             primaryMeaning: true,
@@ -147,7 +147,7 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少计划ID')
     }
 
-    await prisma.studyPlan.deleteMany({
+    await prisma.study_plans.deleteMany({
       where: {
         id: {
           in: planIds,

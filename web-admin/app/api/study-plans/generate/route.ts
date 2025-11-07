@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     
     if (classId) {
       // 按班级获取学生
-      const students = await prisma.student.findMany({
+      const students = await prisma.students.findMany({
         where: { classId, user: { isActive: true } },
         select: { id: true },
       })
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       where.id = { in: vocabularyIds }
     }
 
-    const vocabularies = await prisma.vocabulary.findMany({
+    const vocabularies = await prisma.vocabularies.findMany({
       where,
       select: { 
         id: true,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     for (const studentId of targetStudents) {
       for (const vocab of vocabularies) {
         // 检查是否已存在
-        const existing = await prisma.studyPlan.findUnique({
+        const existing = await prisma.study_plans.findUnique({
           where: {
             studentId_vocabularyId: {
               studentId,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     // 批量插入
     if (studyPlansToCreate.length > 0) {
-      await prisma.studyPlan.createMany({
+      await prisma.study_plans.createMany({
         data: studyPlansToCreate,
         skipDuplicates: true, // 跳过重复的
       })
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       const masteryToCreate = []
       for (const studentId of targetStudents) {
         for (const vocab of vocabularies) {
-          const existingMastery = await prisma.wordMastery.findUnique({
+          const existingMastery = await prisma.word_masteries.findUnique({
             where: {
               studentId_vocabularyId: {
                 studentId,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (masteryToCreate.length > 0) {
-        await prisma.wordMastery.createMany({
+        await prisma.word_masteries.createMany({
           data: masteryToCreate,
           skipDuplicates: true,
         })

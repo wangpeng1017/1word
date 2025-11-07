@@ -33,13 +33,13 @@ export async function GET(
     }
 
     // 查询错题
-    const wrongQuestions = await prisma.wrongQuestion.findMany({
+    const wrongQuestions = await prisma.wrong_questions.findMany({
       where,
       include: {
         vocabulary: true,
-        question: {
+        questions: {
           include: {
-            options: {
+            question_options: {
               orderBy: {
                 order: 'asc',
               },

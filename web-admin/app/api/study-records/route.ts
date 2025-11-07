@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const totalTime = answers.reduce((sum: number, a: any) => sum + (a.timeSpent || 0), 0)
 
     // 1. 创建学习记录
-    const studyRecord = await prisma.studyRecord.create({
+    const studyRecord = await prisma.study_records.create({
       data: {
         studentId,
         taskDate: today,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       const { vocabularyId, questionId, answer: userAnswer, isCorrect, timeSpent } = answer
 
       // 2.1 更新每日任务状态
-      await prisma.dailyTask.updateMany({
+      await prisma.daily_tasks.updateMany({
         where: {
           studentId,
           vocabularyId,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       })
 
       // 2.2 更新学习计划
-      const studyPlan = await prisma.studyPlan.findFirst({
+      const studyPlan = await prisma.study_plans.findFirst({
         where: {
           studentId,
           vocabularyId,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         const newReviewCount = studyPlan.reviewCount + 1
         const nextReviewDate = calculateNextReviewDate(now, newReviewCount)
 
-        await prisma.studyPlan.update({
+        await prisma.study_plans.update({
           where: { id: studyPlan.id },
           data: {
             status: 'IN_PROGRESS',
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
 
       // 2.3 记录错题
       if (!isCorrect) {
-        const question = await prisma.question.findUnique({
+        const question = await prisma.questions.findUnique({
           where: { id: questionId },
         })
 
         if (question) {
-          await prisma.wrongQuestion.create({
+          await prisma.wrong_questions.create({
             data: {
               studentId,
               vocabularyId,
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 2.4 更新单词掌握度
-      let wordMastery = await prisma.wordMastery.findFirst({
+      let wordMastery = await prisma.word_masteries.findFirst({
         where: {
           studentId,
           vocabularyId,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
       if (!wordMastery) {
         // 创建新的掌握度记录
-        wordMastery = await prisma.wordMastery.create({
+        wordMastery = await prisma.word_masteries.create({
           data: {
             studentId,
             vocabularyId,
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
         const newIsMastered = isMastered(newConsecutiveCorrect)
         const newIsDifficult = isDifficult(newTotalWrongCount)
 
-        await prisma.wordMastery.update({
+        await prisma.word_masteries.update({
           where: { id: wordMastery.id },
           data: {
             totalWrongCount: newTotalWrongCount,
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
         // 如果已掌握，更新学习计划状态
         if (newIsMastered) {
-          await prisma.studyPlan.updateMany({
+          await prisma.study_plans.updateMany({
             where: {
               studentId,
               vocabularyId,
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       return apiResponse.error('缺少studentId参数', 400)
     }
 
-    const records = await prisma.studyRecord.findMany({
+    const records = await prisma.study_records.findMany({
       where: { studentId },
       orderBy: { createdAt: 'desc' },
       take: limit,

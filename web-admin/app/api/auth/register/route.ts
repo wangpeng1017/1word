@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // 根据角色创建对应的扩展信息
     if (role === 'TEACHER') {
-      await prisma.teacher.create({
+      await prisma.teachers.create({
         data: {
           userId: user.id,
         },
@@ -56,15 +56,15 @@ export async function POST(request: NextRequest) {
     } else if (role === 'STUDENT') {
       // 学生需要学号和班级，先分配到默认班级
       // 获取或创建默认班级
-      let defaultClass = await prisma.class.findFirst({
+      let defaultClass = await prisma.classes.findFirst({
         where: { name: '未分配班级' },
       })
 
       if (!defaultClass) {
         // 创建默认班级（需要一个教师）
-        const defaultTeacher = await prisma.teacher.findFirst()
+        const defaultTeacher = await prisma.teachers.findFirst()
         if (defaultTeacher) {
-          defaultClass = await prisma.class.create({
+          defaultClass = await prisma.classes.create({
             data: {
               name: '未分配班级',
               grade: '待分配',
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      await prisma.student.create({
+      await prisma.students.create({
         data: {
           userId: user.id,
           studentNo: `STU${Date.now()}`,

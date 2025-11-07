@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. 获取或创建词汇掌握度记录
-    let wordMastery = await prisma.wordMastery.findUnique({
+    let wordMastery = await prisma.word_masteries.findUnique({
       where: {
         studentId_vocabularyId: {
           studentId,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!wordMastery) {
       // 首次练习该词汇，创建记录
-      wordMastery = await prisma.wordMastery.create({
+      wordMastery = await prisma.word_masteries.create({
         data: {
           studentId,
           vocabularyId,
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       newTotalWrongCount += 1
       
       // 记录错题
-      await prisma.wrongQuestion.create({
+      await prisma.wrong_questions.create({
         data: {
           studentId,
           vocabularyId,
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const difficult = checkDifficult(newTotalWrongCount)
 
     // 4. 获取最近的答题记录计算正确率
-    const recentWrongQuestions = await prisma.wrongQuestion.findMany({
+    const recentWrongQuestions = await prisma.wrong_questions.findMany({
       where: {
         studentId,
         vocabularyId,
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     const recentAccuracy = calculateRecentAccuracy(recentRecords)
 
     // 5. 更新词汇掌握度
-    const updatedMastery = await prisma.wordMastery.update({
+    const updatedMastery = await prisma.word_masteries.update({
       where: {
         studentId_vocabularyId: {
           studentId,
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 6. 更新学习计划
-    let studyPlan = await prisma.studyPlan.findUnique({
+    let studyPlan = await prisma.study_plans.findUnique({
       where: {
         studentId_vocabularyId: {
           studentId,
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     if (!studyPlan) {
       // 创建学习计划
-      studyPlan = await prisma.studyPlan.create({
+      studyPlan = await prisma.study_plans.create({
         data: {
           studentId,
           vocabularyId,
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
             new Date(),
             0,
             recentAccuracy,
-            wordMastery.vocabulary.difficulty as any
+            wordMastery.vocabularies.difficulty as any
           ),
         },
       })
@@ -158,10 +158,10 @@ export async function POST(request: NextRequest) {
             new Date(),
             newReviewCount,
             recentAccuracy,
-            wordMastery.vocabulary.difficulty as any
+            wordMastery.vocabularies.difficulty as any
           )
 
-      await prisma.studyPlan.update({
+      await prisma.study_plans.update({
         where: {
           studentId_vocabularyId: {
             studentId,

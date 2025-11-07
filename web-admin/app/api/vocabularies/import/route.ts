@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     for (const vocab of vocabularies) {
       try {
         // 检查是否已存在
-        const existing = await prisma.vocabulary.findUnique({
+        const existing = await prisma.vocabularies.findUnique({
           where: { word: vocab.word },
         })
 
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        await prisma.vocabulary.create({
+        await prisma.vocabularies.create({
           data: vocab,
         })
         successCount++

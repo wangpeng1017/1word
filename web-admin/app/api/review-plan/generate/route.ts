@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证学生存在
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id: studentId },
     })
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const targetDate = date ? new Date(date) : getTodayDate()
     
     // 1. 获取学生的所有词汇掌握情况
-    const wordMasteries = await prisma.wordMastery.findMany({
+    const wordMasteries = await prisma.word_masteries.findMany({
       where: {
         studentId,
         isMastered: false, // 排除已掌握的词汇
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 2. 获取学生的学习计划
-    const studyPlans = await prisma.studyPlan.findMany({
+    const studyPlans = await prisma.study_plans.findMany({
       where: {
         studentId,
         status: { not: 'MASTERED' },
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       
       // 获取还未加入学习计划的词汇
       const existingVocabIds = studyPlans.map(p => p.vocabularyId)
-      const newVocabularies = await prisma.vocabulary.findMany({
+      const newVocabularies = await prisma.vocabularies.findMany({
         where: {
           id: { notIn: existingVocabIds },
         },
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     // 7. 为新词创建学习计划和掌握度记录
     for (const vocab of newWords) {
       // 创建学习计划
-      await prisma.studyPlan.upsert({
+      await prisma.study_plans.upsert({
         where: {
           studentId_vocabularyId: {
             studentId,
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       })
 
       // 创建掌握度记录
-      await prisma.wordMastery.upsert({
+      await prisma.word_masteries.upsert({
         where: {
           studentId_vocabularyId: {
             studentId,
@@ -161,12 +161,12 @@ export async function POST(request: NextRequest) {
 
     // 8. 创建每日任务
     const allWords = [
-      ...todayReviewWords.map(w => w.vocabulary),
+      ...todayReviewWords.map(w => w.vocabularies),
       ...newWords,
     ]
 
     for (const vocab of allWords) {
-      await prisma.dailyTask.upsert({
+      await prisma.daily_tasks.upsert({
         where: {
           studentId_vocabularyId_taskDate: {
             studentId,

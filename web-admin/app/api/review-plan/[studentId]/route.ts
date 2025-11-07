@@ -27,7 +27,7 @@ export async function GET(
     const targetDate = date ? new Date(date) : getTodayDate()
 
     // 1. 获取学生信息
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id: studentId },
       include: {
         user: {
@@ -36,7 +36,7 @@ export async function GET(
             email: true,
           },
         },
-        class: {
+        classes: {
           select: {
             name: true,
             grade: true,
@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // 2. 获取今日任务
-    const todayTasks = await prisma.dailyTask.findMany({
+    const todayTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: targetDate,
@@ -64,7 +64,7 @@ export async function GET(
     })
 
     // 3. 获取学习计划统计
-    const studyPlans = await prisma.studyPlan.findMany({
+    const studyPlans = await prisma.study_plans.findMany({
       where: {
         studentId,
       },
@@ -82,7 +82,7 @@ export async function GET(
     }).length
 
     // 5. 获取掌握度统计
-    const wordMasteries = await prisma.wordMastery.findMany({
+    const wordMasteries = await prisma.word_masteries.findMany({
       where: {
         studentId,
       },
@@ -97,7 +97,7 @@ export async function GET(
     const sevenDaysAgo = new Date(targetDate)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const recentStudyRecords = await prisma.studyRecord.findMany({
+    const recentStudyRecords = await prisma.study_records.findMany({
       where: {
         studentId,
         taskDate: {
@@ -116,7 +116,7 @@ export async function GET(
     let checkDate = new Date(today)
     
     while (true) {
-      const record = await prisma.studyRecord.findFirst({
+      const record = await prisma.study_records.findFirst({
         where: {
           studentId,
           taskDate: checkDate,
@@ -135,12 +135,12 @@ export async function GET(
     }
 
     return successResponse({
-      student: {
+      students: {
         id: student.id,
         name: student.user.name,
         studentNo: student.studentNo,
         grade: student.grade,
-        className: student.class?.name,
+        className: student.classes.name,
       },
       todayTasks: {
         total: todayTasks.length,
@@ -148,9 +148,9 @@ export async function GET(
         pending: todayTasks.filter(t => t.status === 'PENDING').length,
         tasks: todayTasks.map(t => ({
           id: t.id,
-          word: t.vocabulary.word,
-          primaryMeaning: t.vocabulary.primaryMeaning,
-          difficulty: t.vocabulary.difficulty,
+          word: t.vocabularies.word,
+          primaryMeaning: t.vocabularies.primaryMeaning,
+          difficulty: t.vocabularies.difficulty,
           status: t.status,
         })),
       },

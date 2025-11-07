@@ -26,17 +26,17 @@ export async function GET(
     today.setHours(0, 0, 0, 0)
 
     // 获取今日任务
-    const dailyTasks = await prisma.dailyTask.findMany({
+    const dailyTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: today,
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           include: {
             questions: {
               include: {
-                options: {
+                question_options: {
                   orderBy: {
                     order: 'asc',
                   },
@@ -80,7 +80,7 @@ export async function POST(
     today.setHours(0, 0, 0, 0)
 
     // 检查今日是否已有任务
-    const existingTasks = await prisma.dailyTask.findMany({
+    const existingTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: today,
@@ -92,7 +92,7 @@ export async function POST(
     }
 
     // 1. 查找需要复习的单词（基于艾宾浩斯曲线）
-    const reviewPlans = await prisma.studyPlan.findMany({
+    const reviewPlans = await prisma.study_plans.findMany({
       where: {
         studentId,
         status: {
@@ -109,14 +109,14 @@ export async function POST(
     })
 
     // 2. 查找新词（还没有学习计划的词）
-    const existingVocabIds = await prisma.studyPlan.findMany({
+    const existingVocabIds = await prisma.study_plans.findMany({
       where: { studentId },
       select: { vocabularyId: true },
     })
 
     const existingIds = existingVocabIds.map(p => p.vocabularyId)
 
-    const newVocabularies = await prisma.vocabulary.findMany({
+    const newVocabularies = await prisma.vocabularies.findMany({
       where: {
         id: {
           notIn: existingIds,
@@ -130,7 +130,7 @@ export async function POST(
 
     // 3. 为新词创建学习计划
     for (const vocab of newVocabularies) {
-      await prisma.studyPlan.create({
+      await prisma.study_plans.create({
         data: {
           studentId,
           vocabularyId: vocab.id,
@@ -161,22 +161,22 @@ export async function POST(
       return apiResponse.success({ message: '暂无任务', tasks: [] })
     }
 
-    await prisma.dailyTask.createMany({
+    await prisma.daily_tasks.createMany({
       data: tasksToCreate,
     })
 
     // 5. 返回创建的任务（带词汇和题目信息）
-    const createdTasks = await prisma.dailyTask.findMany({
+    const createdTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: today,
       },
       include: {
-        vocabulary: {
+        vocabularies: {
           include: {
             questions: {
               include: {
-                options: {
+                question_options: {
                   orderBy: {
                     order: 'asc',
                   },
