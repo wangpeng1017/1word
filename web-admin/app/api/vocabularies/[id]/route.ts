@@ -70,6 +70,14 @@ export async function PUT(
       where: { id: params.id },
       data: updateData,
     })
+
+    return successResponse(vocabulary, '词汇更新成功')
+  } catch (error) {
+    console.error('更新词汇错误:', error)
+    return errorResponse('更新词汇失败', 500)
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -84,7 +92,7 @@ export async function DELETE(
       return unauthorizedResponse('只有教师可以删除词汇')
     }
 
-    await prisma.vocabulary.delete({
+    await prisma.vocabularies.delete({
       where: { id: params.id },
     })
 
