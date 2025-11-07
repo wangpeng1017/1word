@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         include: includeAudios ? {
           word_audios: {
             orderBy: {
-              created_at: 'asc'
+              createdAt: 'asc'
             }
           }
         } : undefined,
