@@ -60,10 +60,19 @@ export default function ClassesPage() {
         message.success('删除成功')
         loadData()
       } else {
-        message.error(result.error || '删除失败')
+        // 使用 Modal 弹窗显示错误信息
+        Modal.error({
+          title: '无法删除班级',
+          content: result.error || '删除失败',
+          okText: '我知道了',
+        })
       }
     } catch (error) {
-      message.error('删除失败')
+      Modal.error({
+        title: '删除失败',
+        content: '网络请求失败，请稍后重试',
+        okText: '我知道了',
+      })
     }
   }
 
