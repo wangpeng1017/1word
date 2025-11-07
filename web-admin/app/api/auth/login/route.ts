@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
         ],
       },
       include: {
-        teacher: { select: { id: true } },
-        student: { select: { id: true } },
+        teachers: { select: { id: true } },
+        students: { select: { id: true } },
       },
     })
 
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        teacherId: user.teacher?.id,
-        studentId: user.student?.id,
+        teacherId: user.teachers?.id,
+        studentId: user.students?.id,
       },
       token,
     }, '登录成功')
