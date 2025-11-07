@@ -61,30 +61,15 @@ export async function PUT(
       difficulty,
     } = body
 
+    const updateData: any = {}
+    if (typeof audioUrl !== 'undefined') {
+      updateData.audio_url = audioUrl
+    }
+
     const vocabulary = await prisma.vocabulary.update({
       where: { id: params.id },
-      data: {
-        word: word?.toLowerCase(),
-        partOfSpeech,
-        primaryMeaning,
-        secondaryMeaning,
-        phonetic,
-        phoneticUS,
-        phoneticUK,
-        audioUrl,
-        isHighFrequency,
-        difficulty,
-      },
+      data: updateData,
     })
-
-    return successResponse(vocabulary, '词汇更新成功')
-  } catch (error) {
-    console.error('更新词汇错误:', error)
-    return errorResponse('更新词汇失败', 500)
-  }
-}
-
-// 删除词汇
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
