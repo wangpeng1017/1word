@@ -360,7 +360,7 @@ export default function VocabulariesPage() {
           <Button
             type="link"
             size="small"
-            onClick={() => router.push(`/admin/vocabularies/${record.id}`)}
+            onClick={() => router.push(`/admin/questions?vocabularyId=${record.id}&word=${encodeURIComponent(record.word)}`)}
           >
             题目
           </Button>

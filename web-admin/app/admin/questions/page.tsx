@@ -5,6 +5,7 @@ import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Popc
 import { PlusOutlined, UploadOutlined, DownloadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
+import { useSearchParams } from 'next/navigation'
 
 const { TextArea } = Input
 
@@ -36,6 +37,7 @@ const questionTypeMap: Record<string, { label: string; color: string }> = {
 }
 
 export default function QuestionsPage() {
+  const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
@@ -52,6 +54,18 @@ export default function QuestionsPage() {
     pageSize: 20,
     total: 0,
   })
+
+  // 从URL参数中读取初始筛选条件
+  useEffect(() => {
+    const vocabularyId = searchParams?.get('vocabularyId')
+    const word = searchParams?.get('word')
+    if (vocabularyId) {
+      setFilters(prev => ({ ...prev, vocabularyId }))
+      if (word) {
+        message.info(`已筛选词汇: ${word}`)
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     fetchQuestions()
