@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('用户不存在')
     }
 
-    if (!user.isActive) {
+    if (!user.is_active) {
       return errorResponse('账号已被禁用')
     }
 
