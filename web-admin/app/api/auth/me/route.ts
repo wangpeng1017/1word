@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       include: {
-        teacher: true,
-        student: {
+        teachers: true,
+        students: {
           include: {
-            class: true,
+            classes: true,
           },
         },
       },
@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
       email: user.email,
       phone: user.phone,
       role: user.role,
-      isActive: user.isActive,
-      teacher: user.teacher,
-      student: user.student,
+      isActive: user.is_active,
+      teacher: user.teachers,
+      student: user.students,
     })
   } catch (error) {
     console.error('获取用户信息错误:', error)
