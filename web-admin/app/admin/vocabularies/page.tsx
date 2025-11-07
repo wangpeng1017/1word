@@ -98,12 +98,40 @@ export default function VocabulariesPage() {
     setModalVisible(true)
   }
 
-  const handleEdit = (record: Vocabulary) => {
+  const handleEdit = async (record: Vocabulary) => {
     setEditingRecord(record)
-    form.setFieldsValue({
-      ...record,
-      partOfSpeech: record.partOfSpeech || [],
-    })
+    
+    // 加载完整数据包括音频和图片
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/vocabularies/${record.id}?includeAudios=true&includeImages=true`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const result = await response.json()
+      
+      if (result.success) {
+        const fullRecord = result.data
+        const usAudio = fullRecord.audios?.find((a: any) => a.accent === 'US')
+        const ukAudio = fullRecord.audios?.find((a: any) => a.accent === 'UK')
+        const image = fullRecord.images?.[0]
+        
+        form.setFieldsValue({
+          ...fullRecord,
+          partOfSpeech: fullRecord.partOfSpeech || [],
+          audioUrlUS: usAudio?.audioUrl || '',
+          audioUrlUK: ukAudio?.audioUrl || '',
+          imageUrl: image?.imageUrl || '',
+          imageDescription: image?.description || '',
+        })
+      }
+    } catch (error) {
+      // 如果加载失败，使用基本数据
+      form.setFieldsValue({
+        ...record,
+        partOfSpeech: record.partOfSpeech || [],
+      })
+    }
+    
     setModalVisible(true)
   }
 
@@ -567,6 +595,58 @@ export default function VocabulariesPage() {
               <Option value={true}>是</Option>
               <Option value={false}>否</Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item label="美式音频URL" name="audioUrlUS">
+            <Input 
+              placeholder="美式发音音频链接（可选）" 
+              addonAfter={
+                <Button 
+                  type="link" 
+                  size="small" 
+                  icon={<UploadOutlined />}
+                  onClick={() => message.info('请先上传音频文件到Vercel Blob，然后粘贴URL')}
+                >
+                  上传
+                </Button>
+              }
+            />
+          </Form.Item>
+
+          <Form.Item label="英式音频URL" name="audioUrlUK">
+            <Input 
+              placeholder="英式发音音频链接（可选）" 
+              addonAfter={
+                <Button 
+                  type="link" 
+                  size="small" 
+                  icon={<UploadOutlined />}
+                  onClick={() => message.info('请先上传音频文件到Vercel Blob，然后粘贴URL')}
+                >
+                  上传
+                </Button>
+              }
+            />
+          </Form.Item>
+
+          <Form.Item label="图片URL" name="imageUrl">
+            <Input 
+              placeholder="词汇图片链接（可选）" 
+              addonAfter={
+                <Button 
+                  type="link" 
+                  size="small" 
+                  icon={<UploadOutlined />}
+                  onClick={() => message.info('请先上传图片文件到Vercel Blob，然后粘贴URL')}
+                >
+                  上传
+                </Button>
+              }
+            />
+          </Form.Item>
+
+          <Form.Item label="图片描述" name="imageDescription">
+            <Input placeholder="图片描述文字（可选）" />
           </Form.Item>
         </Form>
       </Modal>
