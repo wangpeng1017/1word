@@ -2,6 +2,24 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
+import { nanoid } from 'nanoid'
+
+// 数据转换函数：将数据库字段转换为前端期望的格式
+function formatClassData(classData: any) {
+  return {
+    ...classData,
+    isActive: classData.is_active,
+    teacherId: classData.teacher_id,
+    createdAt: classData.created_at,
+    updatedAt: classData.updated_at,
+    teacher: classData.teachers ? {
+      ...classData.teachers,
+      userId: classData.teachers.user_id,
+      createdAt: classData.teachers.created_at,
+      updatedAt: classData.teachers.updated_at,
+    } : undefined,
+  }
+}
 
 // 获取班级列表
 export async function GET(request: NextRequest) {
@@ -14,10 +32,10 @@ export async function GET(request: NextRequest) {
       return unauthorizedResponse('只有教师可以查看班级')
     }
 
-    const classes = await prisma.class.findMany({
-      where: { isActive: true },
+    const classes = await prisma.classes.findMany({
+      where: { is_active: true },
       include: {
-        teacher: {
+        teachers: {
           include: {
             user: {
               select: {
@@ -30,10 +48,13 @@ export async function GET(request: NextRequest) {
           select: { students: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     })
 
-    return successResponse(classes)
+    // 转换数据格式
+    const formattedClasses = classes.map(formatClassData)
+
+    return successResponse(formattedClasses)
   } catch (error) {
     console.error('获取班级列表错误:', error)
     return errorResponse('获取班级列表失败', 500)
@@ -61,21 +82,23 @@ export async function POST(request: NextRequest) {
     // 获取教师ID
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      include: { teacher: true },
+      include: { teachers: true },
     })
 
-    if (!user?.teacher) {
+    if (!user?.teachers) {
       return errorResponse('教师信息不存在', 404)
     }
 
-    const classData = await prisma.class.create({
+    const classData = await prisma.classes.create({
       data: {
+        id: nanoid(),
         name,
         grade,
-        teacherId: user.teacher.id,
+        teacher_id: user.teachers.id,
+        updated_at: new Date(),
       },
       include: {
-        teacher: {
+        teachers: {
           include: {
             user: {
               select: {
@@ -87,7 +110,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return successResponse(classData, '班级创建成功')
+    // 转换数据格式
+    const formattedClass = formatClassData(classData)
+
+    return successResponse(formattedClass, '班级创建成功')
   } catch (error) {
     console.error('创建班级错误:', error)
     return errorResponse('创建班级失败', 500)
