@@ -55,15 +55,38 @@ export async function POST(request: NextRequest) {
         const rowNum = i + 2 // Excel行号（从2开始，1是标题行）
 
         try {
-          // 查找词汇
-          const vocabulary = await tx.vocabulary.findFirst({
+          // 查找或创建词汇
+          let vocabulary = await tx.vocabulary.findFirst({
             where: { word: row.word?.trim() },
           })
 
           if (!vocabulary) {
-            results.failed++
-            results.errors.push(`行${rowNum}: 词汇 "${row.word}" 不存在`)
-            continue
+            // 自动创建词汇
+            let primaryMeaning = ''
+            let phonetic = ''
+
+            // 从英译中题目中提取释义和音标
+            if (row.type === 'ENGLISH_TO_CHINESE') {
+              const phoneticMatch = row.content?.match(/\/(.+?)\//)  
+              if (phoneticMatch) {
+                phonetic = `/${phoneticMatch[1]}/`
+              }
+              primaryMeaning = row.correctAnswer?.trim() || ''
+            } else if (row.type === 'CHINESE_TO_ENGLISH') {
+              // 从中译英题目中提取释义
+              primaryMeaning = row.content?.trim() || ''
+            }
+
+            vocabulary = await tx.vocabulary.create({
+              data: {
+                word: row.word?.trim(),
+                partOfSpeech: 'n.,v.,adj.',
+                primaryMeaning: primaryMeaning || row.word?.trim(),
+                phonetic: phonetic || '',
+                isHighFrequency: true,
+                difficulty: 'MEDIUM'
+              }
+            })
           }
 
           // 验证题型

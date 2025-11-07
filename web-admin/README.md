@@ -99,6 +99,34 @@ npm run dev
 
 访问 http://localhost:3000
 
+## 📚 文档索引
+
+### 核心功能文档
+
+- [**题目管理功能文档**](./docs/testword.md) - 题目系统完整文档，包含4种题型设计、API接口、数据模型、批量导入等
+- [**测试数据创建报告**](./测试数据创建完成-testword版.md) - 基于testword.md的200个题目初始化说明
+
+### Vercel Blob集成文档
+
+- [**Vercel Blob集成总览**](./docs/VERCEL_BLOB_INTEGRATION_SUMMARY.md) - Vercel Blob存储集成完整方案
+- [**Vercel Blob设置指南**](./docs/VERCEL_BLOB_SETUP.md) - 详细配置步骤
+- [**音频上传指南**](./docs/AUDIO_UPLOAD_TO_BLOB.md) - 音频文件上传到Blob的实现
+- [**上传功能指南**](./docs/UPLOAD_GUIDE.md) - 通用文件上传功能说明
+- [**上传测试清单**](./docs/UPLOAD_TEST_CHECKLIST.md) - 上传功能测试检查项
+
+### 数据初始化脚本
+
+```bash
+# 基于testword.md初始化数据（50词汇+200题目）
+node scripts/init-from-testword.js
+
+# 验证数据完整性
+node scripts/verify-current-data.js
+
+# 检查题目详情
+node scripts/check-questions.js
+```
+
 ## API文档
 
 详见主项目README.md
