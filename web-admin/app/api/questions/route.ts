@@ -52,8 +52,18 @@ export async function GET(request: NextRequest) {
       prisma.questions.count({ where }),
     ])
 
+    // 转换数据格式以匹配前端
+    const formattedQuestions = questions.map((q: any) => ({
+      ...q,
+      vocabulary: {
+        word: q.vocabularies?.word,
+        primaryMeaning: q.vocabularies?.primary_meaning,
+      },
+      options: q.question_options || [],
+    }))
+
     return successResponse({
-      questions,
+      questions: formattedQuestions,
       pagination: {
         page,
         limit,
@@ -129,7 +139,17 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return successResponse(question, '题目创建成功')
+    // 转换数据格式以匹配前端
+    const formattedQuestion = {
+      ...question,
+      vocabulary: {
+        word: question.vocabularies?.word,
+        primaryMeaning: question.vocabularies?.primary_meaning,
+      },
+      options: question.question_options || [],
+    }
+
+    return successResponse(formattedQuestion, '题目创建成功')
   } catch (error: any) {
     console.error('创建题目错误:', error)
     return errorResponse(`创建题目失败: ${error?.message || '未知错误'}`, 500)
@@ -195,7 +215,17 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    return successResponse(question, '题目更新成功')
+    // 转换数据格式以匹配前端
+    const formattedQuestion = question ? {
+      ...question,
+      vocabulary: {
+        word: question.vocabularies?.word,
+        primaryMeaning: question.vocabularies?.primary_meaning,
+      },
+      options: question.question_options || [],
+    } : null
+
+    return successResponse(formattedQuestion, '题目更新成功')
   } catch (error: any) {
     console.error('更新题目错误:', error)
     return errorResponse(`更新题目失败: ${error?.message || '未知错误'}`, 500)
