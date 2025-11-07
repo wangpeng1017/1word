@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
         try {
           // 查找或创建词汇
-          let vocabulary = await tx.vocabulary.findFirst({
+          let vocabulary = await tx.vocabularies.findFirst({
             where: { word: row.word?.trim() },
           })
 
@@ -77,14 +77,17 @@ export async function POST(request: NextRequest) {
               primaryMeaning = row.content?.trim() || ''
             }
 
-            vocabulary = await tx.vocabulary.create({
+            vocabulary = await tx.vocabularies.create({
               data: {
+                id: `vocab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 word: row.word?.trim(),
-                partOfSpeech: 'n.,v.,adj.',
-                primaryMeaning: primaryMeaning || row.word?.trim(),
+                part_of_speech: ['n.', 'v.', 'adj.'],
+                primary_meaning: primaryMeaning || row.word?.trim(),
                 phonetic: phonetic || '',
-                isHighFrequency: true,
-                difficulty: 'MEDIUM'
+                is_high_frequency: true,
+                difficulty: 'MEDIUM',
+                created_at: new Date(),
+                updated_at: new Date()
               }
             })
           }
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest) {
           }
 
           // 检查是否已存在相同题目（幂等性）
-          const existingQuestion = await tx.question.findFirst({
+          const existingQuestion = await tx.questions.findFirst({
             where: {
               vocabularyId: vocabulary.id,
               type: row.type,
@@ -122,33 +125,41 @@ export async function POST(request: NextRequest) {
 
           if (existingQuestion) {
             // 更新现有题目
-            await tx.questionOption.deleteMany({
+            await tx.question_options.deleteMany({
               where: { questionId: existingQuestion.id },
             })
 
-            await tx.question.update({
+            await tx.questions.update({
               where: { id: existingQuestion.id },
               data: {
                 sentence: row.sentence?.trim() || null,
                 audioUrl: row.audioUrl?.trim() || null,
                 correctAnswer: row.correctAnswer?.trim(),
-                options: {
+                updatedAt: new Date(),
+                question_options: {
                   create: options,
                 },
               },
             })
           } else {
             // 创建新题目
-            await tx.question.create({
+            await tx.questions.create({
               data: {
+                id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 vocabularyId: vocabulary.id,
                 type: row.type,
                 content: row.content?.trim(),
                 sentence: row.sentence?.trim() || null,
                 audioUrl: row.audioUrl?.trim() || null,
                 correctAnswer: row.correctAnswer?.trim(),
-                options: {
-                  create: options,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                question_options: {
+                  create: options.map(opt => ({
+                    id: `qo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    ...opt,
+                    createdAt: new Date()
+                  })),
                 },
               },
             })
