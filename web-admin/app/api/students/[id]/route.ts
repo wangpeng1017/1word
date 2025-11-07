@@ -4,6 +4,19 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from '@/lib/response'
 
+// 数据转换函数
+function formatStudentData(student: any) {
+  return {
+    ...student,
+    userId: student.user_id,
+    studentNo: student.student_no,
+    classId: student.class_id,
+    wechatId: student.wechat_id,
+    createdAt: student.created_at,
+    updatedAt: student.updated_at,
+  }
+}
+
 // GET /api/students/[id] - 获取单个学生信息
 export async function GET(
   request: NextRequest,
@@ -22,7 +35,7 @@ export async function GET(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id },
       include: {
         user: {
@@ -32,7 +45,7 @@ export async function GET(
             phone: true,
           },
         },
-        class: true,
+        classes: true,
       },
     })
 
@@ -43,9 +56,9 @@ export async function GET(
     const result = {
       id: student.id,
       name: student.user.name,
-      studentNo: student.studentNo,
+      studentNo: student.student_no,
       grade: student.grade,
-      class: student.class,
+      class: student.classes,
       email: student.user.email,
       phone: student.user.phone,
     }
@@ -80,7 +93,7 @@ export async function PUT(
     }
 
     // 获取学生信息
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id: params.id },
       include: { user: true },
     })
@@ -90,9 +103,9 @@ export async function PUT(
     }
 
     // 检查学号是否被其他学生使用
-    if (studentNo !== student.studentNo) {
-      const existing = await prisma.student.findUnique({
-        where: { studentNo },
+    if (studentNo !== student.student_no) {
+      const existing = await prisma.students.findUnique({
+        where: { student_no: studentNo },
       })
       if (existing) {
         return errorResponse('学号已被使用')
@@ -101,17 +114,21 @@ export async function PUT(
 
     // 更新用户信息
     await prisma.user.update({
-      where: { id: student.userId },
-      data: { name },
+      where: { id: student.user_id },
+      data: { 
+        name,
+        updated_at: new Date(),
+      },
     })
 
     // 更新学生信息
-    const updatedStudent = await prisma.student.update({
+    const updatedStudent = await prisma.students.update({
       where: { id: params.id },
       data: {
-        studentNo,
-        classId: classId || null,
+        student_no: studentNo,
+        class_id: classId || null,
         grade,
+        updated_at: new Date(),
       },
       include: {
         user: {
@@ -121,7 +138,7 @@ export async function PUT(
             phone: true,
           },
         },
-        class: {
+        classes: {
           select: {
             name: true,
             grade: true,
@@ -130,7 +147,10 @@ export async function PUT(
       },
     })
 
-    return successResponse(updatedStudent, '学生信息更新成功')
+    // 转换数据格式
+    const formattedStudent = formatStudentData(updatedStudent)
+
+    return successResponse(formattedStudent, '学生信息更新成功')
   } catch (error) {
     console.error('更新学生信息错误:', error)
     return errorResponse('更新学生信息失败', 500)
@@ -153,11 +173,11 @@ export async function DELETE(
     }
 
     // 获取学生信息
-    const student = await prisma.student.findUnique({
+    const student = await prisma.students.findUnique({
       where: { id: params.id },
       include: {
-        studyRecords: true,
-        wrongQuestions: true,
+        study_records: true,
+        wrong_questions: true,
       },
     })
 
@@ -166,18 +186,21 @@ export async function DELETE(
     }
 
     // 检查是否有学习记录
-    if (student.studyRecords.length > 0 || student.wrongQuestions.length > 0) {
+    if (student.study_records.length > 0 || student.wrong_questions.length > 0) {
       // 软删除：停用账号而不是物理删除
       await prisma.user.update({
-        where: { id: student.userId },
-        data: { isActive: false },
+        where: { id: student.user_id },
+        data: { 
+          is_active: false,
+          updated_at: new Date(),
+        },
       })
       return successResponse(null, '学生账号已停用（保留学习数据）')
     }
 
     // 没有学习记录，可以完全删除
     await prisma.user.delete({
-      where: { id: student.userId },
+      where: { id: student.user_id },
     })
 
     return successResponse(null, '学生删除成功')

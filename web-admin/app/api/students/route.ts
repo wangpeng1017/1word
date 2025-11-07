@@ -3,6 +3,33 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader, hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { StudentCreateInput } from '@/types'
+import { nanoid } from 'nanoid'
+
+// 数据转换函数
+function formatStudentData(student: any) {
+  return {
+    ...student,
+    userId: student.user_id,
+    studentNo: student.student_no,
+    classId: student.class_id,
+    wechatId: student.wechat_id,
+    createdAt: student.created_at,
+    updatedAt: student.updated_at,
+    user: student.user ? {
+      ...student.user,
+      isActive: student.user.is_active,
+      createdAt: student.user.created_at,
+      updatedAt: student.user.updated_at,
+    } : undefined,
+    class: student.classes ? {
+      ...student.classes,
+      teacherId: student.classes.teacher_id,
+      isActive: student.classes.is_active,
+      createdAt: student.classes.created_at,
+      updatedAt: student.classes.updated_at,
+    } : undefined,
+  }
+}
 
 // 获取学生列表
 export async function GET(request: NextRequest) {
@@ -26,18 +53,18 @@ export async function GET(request: NextRequest) {
     const where: any = {}
     
     if (classId) {
-      where.classId = classId
+      where.class_id = classId
     }
 
     if (search) {
       where.OR = [
         { user: { name: { contains: search } } },
-        { studentNo: { contains: search } },
+        { student_no: { contains: search } },
       ]
     }
 
     const [students, total] = await Promise.all([
-      prisma.student.findMany({
+      prisma.students.findMany({
         where,
         skip,
         take: limit,
@@ -48,10 +75,10 @@ export async function GET(request: NextRequest) {
               name: true,
               email: true,
               phone: true,
-              isActive: true,
+              is_active: true,
             },
           },
-          class: {
+          classes: {
             select: {
               id: true,
               name: true,
@@ -59,13 +86,16 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
       }),
-      prisma.student.count({ where }),
+      prisma.students.count({ where }),
     ])
 
+    // 转换数据格式
+    const formattedStudents = students.map(formatStudentData)
+
     return successResponse({
-      students,
+      students: formattedStudents,
       pagination: {
         page,
         limit,
@@ -102,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证班级是否存在并获取 grade
-    const classData = await prisma.class.findUnique({
+    const classData = await prisma.classes.findUnique({
       where: { id: classId },
     })
 
@@ -111,8 +141,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查学号是否已存在
-    const existingStudent = await prisma.student.findUnique({
-      where: { studentNo },
+    const existingStudent = await prisma.students.findUnique({
+      where: { student_no: studentNo },
     })
 
     if (existingStudent) {
@@ -139,31 +169,48 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password)
 
     // 创建用户和学生
+    const userId = nanoid()
+    const studentId = nanoid()
+    const now = new Date()
+
     const user = await prisma.user.create({
       data: {
+        id: userId,
         name,
         email,
         phone,
         password: hashedPassword,
         role: 'STUDENT',
-        student: {
+        updated_at: now,
+        students: {
           create: {
-            studentNo,
-            classId,
+            id: studentId,
+            student_no: studentNo,
+            class_id: classId,
             grade: grade || classData.grade,
+            updated_at: now,
           },
         },
       },
       include: {
-        student: {
+        students: {
           include: {
-            class: true,
+            classes: true,
           },
         },
       },
     })
 
-    return successResponse(user, '学生创建成功')
+    // 转换数据格式
+    const formattedUser = {
+      ...user,
+      isActive: user.is_active,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+      student: user.students ? formatStudentData(user.students) : undefined,
+    }
+
+    return successResponse(formattedUser, '学生创建成功')
   } catch (error) {
     console.error('创建学生错误:', error)
     return errorResponse('创建学生失败', 500)
