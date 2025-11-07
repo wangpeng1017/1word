@@ -80,10 +80,10 @@ export async function GET(request: NextRequest) {
       if (vocab.word_audios) {
         result.audios = vocab.word_audios.map((audio: any) => ({
           id: audio.id,
-          audioUrl: audio.audio_url,
+          audioUrl: audio.audioUrl || audio.audio_url,
           accent: audio.accent,
           duration: audio.duration,
-          createdAt: audio.created_at,
+          createdAt: audio.createdAt || audio.created_at,
         }))
       }
       
