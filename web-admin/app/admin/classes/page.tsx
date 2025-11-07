@@ -55,7 +55,21 @@ export default function ClassesPage() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
-      const result = await response.json()
+      
+      // 确保能解析 JSON，不管状态码是什么
+      let result
+      try {
+        result = await response.json()
+      } catch (jsonError) {
+        console.error('JSON 解析错误:', jsonError)
+        Modal.error({
+          title: '删除失败',
+          content: '服务器响应异常，请稍后重试',
+          okText: '我知道了',
+        })
+        return
+      }
+      
       if (result.success) {
         message.success('删除成功')
         loadData()
@@ -68,6 +82,7 @@ export default function ClassesPage() {
         })
       }
     } catch (error) {
+      console.error('删除班级错误:', error)
       Modal.error({
         title: '删除失败',
         content: '网络请求失败，请稍后重试',
