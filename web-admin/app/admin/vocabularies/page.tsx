@@ -7,18 +7,15 @@ import {
   Input,
   Space,
   message,
-  Popconfirm,
   Tag,
   Modal,
   Form,
   Select,
-  InputNumber,
   Card,
 } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   ReloadOutlined,
   DownloadOutlined,
@@ -407,16 +404,6 @@ export default function VocabulariesPage() {
           >
             编辑
           </Button>
-          <Popconfirm
-            title="确认删除？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确认"
-            cancelText="取消"
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },

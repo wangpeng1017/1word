@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Popconfirm, Tag } from 'antd'
-import { PlusOutlined, UploadOutlined, DownloadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Tag } from 'antd'
+import { PlusOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
 import { useRouter } from 'next/navigation'
@@ -54,6 +54,7 @@ export default function QuestionsPage() {
     pageSize: 20,
     total: 0,
   })
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   // 从URL参数中读取初始筛选条件
   useEffect(() => {
@@ -174,6 +175,12 @@ export default function QuestionsPage() {
     } catch (error) {
       message.error('删除失败')
     }
+  }
+
+  const handleBatchDelete = async () => {
+    if (selectedRowKeys.length === 0) return
+    await handleDelete(selectedRowKeys as string[])
+    setSelectedRowKeys([])
   }
 
   const handleSubmit = async () => {
@@ -342,16 +349,6 @@ export default function QuestionsPage() {
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
             编辑
           </Button>
-          <Popconfirm
-            title="确定要删除吗?"
-            onConfirm={() => handleDelete([record.id])}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -372,6 +369,11 @@ export default function QuestionsPage() {
             <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
               新增题目
             </Button>
+            {selectedRowKeys.length > 0 && (
+              <Button danger onClick={handleBatchDelete}>
+                批量删除 ({selectedRowKeys.length})
+              </Button>
+            )}
           </Space>
         </div>
         
@@ -434,6 +436,10 @@ export default function QuestionsPage() {
         dataSource={questions}
         rowKey="id"
         loading={loading}
+        rowSelection={{
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+        }}
         pagination={{
           ...pagination,
           onChange: (page, pageSize) => {

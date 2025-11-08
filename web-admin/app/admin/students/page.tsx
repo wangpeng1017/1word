@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload, Popconfirm } from 'antd'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload } from 'antd'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import type { UploadProps } from 'antd'
 
@@ -16,6 +16,7 @@ export default function StudentsPage() {
   const [importModalVisible, setImportModalVisible] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [form] = Form.useForm()
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   useEffect(() => {
     loadData()
@@ -88,6 +89,25 @@ export default function StudentsPage() {
       }
     } catch (error) {
       message.error('删除失败')
+    }
+  }
+
+  const handleBatchDelete = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      await Promise.all(
+        selectedRowKeys.map((id) =>
+          fetch(`/api/students/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      )
+      message.success('批量删除成功')
+      setSelectedRowKeys([])
+      loadData()
+    } catch (error) {
+      message.error('批量删除失败')
     }
   }
 
@@ -199,18 +219,6 @@ export default function StudentsPage() {
           >
             编辑
           </Button>
-          <Popconfirm
-            title="确认删除这个学生？"
-            description="如有学习记录将被停用，否则将被完全删除"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确认删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -226,8 +234,19 @@ export default function StudentsPage() {
         <Button icon={<UploadOutlined />} onClick={() => setImportModalVisible(true)}>
           批量导入
         </Button>
+        {selectedRowKeys.length > 0 && (
+          <Button danger onClick={handleBatchDelete}>
+            批量删除 ({selectedRowKeys.length})
+          </Button>
+        )}
       </Space>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} />
+      <Table 
+        columns={columns} 
+        dataSource={data} 
+        rowKey="id" 
+        loading={loading}
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+      />
       <Modal
         title={editingRecord ? '编辑学生' : '添加学生'}
         open={modalVisible}

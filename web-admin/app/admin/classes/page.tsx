@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Table, Button, Space, message, Card, Modal, Form, Input, Popconfirm } from 'antd'
-import { PlusOutlined, ReloadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table, Button, Space, message, Card, Modal, Form, Input } from 'antd'
+import { PlusOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons'
 
 export default function ClassesPage() {
   const [data, setData] = useState([])
@@ -10,6 +10,7 @@ export default function ClassesPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<any>(null)
   const [form] = Form.useForm()
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   useEffect(() => {
     loadData()
@@ -151,18 +152,6 @@ export default function ClassesPage() {
           >
             编辑
           </Button>
-          <Popconfirm
-            title="确认删除这个班级？"
-            description="删除后无法恢复"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确认删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -175,8 +164,23 @@ export default function ClassesPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           创建班级
         </Button>
+        {selectedRowKeys.length > 0 && (
+          <Button danger onClick={async () => {
+            const token = localStorage.getItem('token')
+            try {
+              await Promise.all(selectedRowKeys.map((id) => fetch(`/api/classes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })))
+              message.success('批量删除成功')
+              setSelectedRowKeys([])
+              loadData()
+            } catch {
+              message.error('批量删除失败')
+            }
+          }}>
+            批量删除 ({selectedRowKeys.length})
+          </Button>
+        )}
       </Space>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} />
+      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }} />
       <Modal
         title={editingRecord ? '编辑班级' : '创建班级'}
         open={modalVisible}

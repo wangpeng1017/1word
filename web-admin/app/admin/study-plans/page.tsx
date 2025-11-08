@@ -15,14 +15,12 @@ import {
   Statistic,
   Row,
   Col,
-  Popconfirm,
   Input,
 } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
   EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -77,6 +75,7 @@ export default function StudyPlansPage() {
   const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
   const [form] = Form.useForm()
   const [generateForm] = Form.useForm()
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   // 加载数据
   useEffect(() => {
@@ -365,19 +364,6 @@ export default function StudyPlansPage() {
           >
             编辑
           </Button>
-          <Popconfirm
-            title="确定删除吗？"
-            onConfirm={() => handleDelete([record.id])}
-          >
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-            >
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -495,6 +481,14 @@ export default function StudyPlansPage() {
           <Button icon={<ReloadOutlined />} onClick={fetchData}>
             刷新
           </Button>
+          {selectedRowKeys.length > 0 && (
+            <Button danger onClick={async () => {
+              await handleDelete(selectedRowKeys as string[])
+              setSelectedRowKeys([])
+            }}>
+              批量删除 ({selectedRowKeys.length})
+            </Button>
+          )}
         </Space>
       </div>
 
@@ -505,6 +499,7 @@ export default function StudyPlansPage() {
         rowKey="id"
         loading={loading}
         scroll={{ x: 1200 }}
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         pagination={{
           ...pagination,
           showSizeChanger: true,

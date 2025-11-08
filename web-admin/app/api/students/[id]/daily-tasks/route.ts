@@ -117,9 +117,6 @@ export async function POST(
           lte: today,
         },
       },
-      include: {
-        vocabulary: true,
-      },
       take: 20, // 每天最多20个复习词
     })
 
