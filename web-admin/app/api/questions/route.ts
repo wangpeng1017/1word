@@ -54,12 +54,25 @@ export async function GET(request: NextRequest) {
 
     // 转换数据格式以匹配前端
     const formattedQuestions = questions.map((q: any) => ({
-      ...q,
-      vocabularies: {
-        word: q.vocabularies?.word,
-        primaryMeaning: q.vocabularies?.primary_meaning,
+      id: q.id,
+      type: q.type,
+      content: q.content,
+      sentence: q.sentence,
+      audioUrl: q.audioUrl,
+      correctAnswer: q.correctAnswer,
+      createdAt: q.createdAt,
+      updatedAt: q.updatedAt,
+      vocabularyId: q.vocabularyId,
+      vocabulary: {
+        word: q.vocabularies?.word || '',
+        primaryMeaning: q.vocabularies?.primary_meaning || '',
       },
-      options: q.question_options || [],
+      options: q.question_options?.map((opt: any) => ({
+        id: opt.id,
+        content: opt.content,
+        isCorrect: opt.isCorrect,
+        order: opt.order,
+      })) || [],
     }))
 
     return successResponse({
@@ -141,12 +154,25 @@ export async function POST(request: NextRequest) {
 
     // 转换数据格式以匹配前端
     const formattedQuestion = {
-      ...question,
-      vocabularies: {
-        word: question.vocabularies?.word,
-        primaryMeaning: question.vocabularies?.primary_meaning,
+      id: question.id,
+      type: question.type,
+      content: question.content,
+      sentence: question.sentence,
+      audioUrl: question.audioUrl,
+      correctAnswer: question.correctAnswer,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+      vocabularyId: question.vocabularyId,
+      vocabulary: {
+        word: question.vocabularies?.word || '',
+        primaryMeaning: question.vocabularies?.primary_meaning || '',
       },
-      options: question.question_options || [],
+      options: question.question_options?.map((opt: any) => ({
+        id: opt.id,
+        content: opt.content,
+        isCorrect: opt.isCorrect,
+        order: opt.order,
+      })) || [],
     }
 
     return successResponse(formattedQuestion, '题目创建成功')
@@ -217,12 +243,25 @@ export async function PUT(request: NextRequest) {
 
     // 转换数据格式以匹配前端
     const formattedQuestion = question ? {
-      ...question,
-      vocabularies: {
-        word: question.vocabularies?.word,
-        primaryMeaning: question.vocabularies?.primary_meaning,
+      id: question.id,
+      type: question.type,
+      content: question.content,
+      sentence: question.sentence,
+      audioUrl: question.audioUrl,
+      correctAnswer: question.correctAnswer,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+      vocabularyId: question.vocabularyId,
+      vocabulary: {
+        word: question.vocabularies?.word || '',
+        primaryMeaning: question.vocabularies?.primary_meaning || '',
       },
-      options: question.question_options || [],
+      options: question.question_options?.map((opt: any) => ({
+        id: opt.id,
+        content: opt.content,
+        isCorrect: opt.isCorrect,
+        order: opt.order,
+      })) || [],
     } : null
 
     return successResponse(formattedQuestion, '题目更新成功')
