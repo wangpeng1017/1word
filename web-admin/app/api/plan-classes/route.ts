@@ -122,15 +122,20 @@ export async function POST(request: NextRequest) {
 
     // 批量创建计划（跳过已存在的）
     const planClassData: any[] = []
+    const timestamp = Date.now()
+    let counter = 0
     
     for (const classId of classIds) {
       for (const vocabularyId of vocabularyIds) {
         planClassData.push({
+          id: `pc_${timestamp}_${counter++}_${Math.random().toString(36).substr(2, 9)}`,
           classId,
           vocabularyId,
           startDate: new Date(startDate),
           endDate: endDate ? new Date(endDate) : null,
           status: 'PENDING',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
       }
     }
