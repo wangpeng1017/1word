@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       where.status = status
     }
 
-    const [studyPlans, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.study_plans.findMany({
         where,
         skip,
@@ -65,6 +65,26 @@ export async function GET(request: NextRequest) {
       }),
       prisma.study_plans.count({ where }),
     ])
+
+    // 统一前端需要的数据结构
+    const studyPlans = rows.map((sp: any) => ({
+      id: sp.id,
+      studentId: sp.studentId,
+      vocabularyId: sp.vocabularyId,
+      status: sp.status,
+      reviewCount: sp.reviewCount,
+      lastReviewAt: sp.lastReviewAt,
+      nextReviewAt: sp.nextReviewAt,
+      createdAt: sp.createdAt,
+      updatedAt: sp.updatedAt,
+      student: sp.students,
+      vocabulary: {
+        word: sp.vocabularies?.word,
+        primaryMeaning: sp.vocabularies?.primary_meaning,
+        difficulty: sp.vocabularies?.difficulty,
+        isHighFrequency: sp.vocabularies?.is_high_frequency,
+      },
+    }))
 
     return successResponse({
       studyPlans,
