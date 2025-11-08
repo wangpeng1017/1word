@@ -16,12 +16,14 @@ import {
   Row,
   Col,
   Popconfirm,
+  Input,
 } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
   EditOutlined,
   DeleteOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -72,6 +74,7 @@ export default function StudyPlansPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [generateModalVisible, setGenerateModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
+  const [filters, setFilters] = useState<{ studentName?: string; classId?: string }>({})
   const [form] = Form.useForm()
   const [generateForm] = Form.useForm()
 
@@ -87,8 +90,15 @@ export default function StudyPlansPage() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
+      const qs = new URLSearchParams({
+        page: String(pagination.current),
+        limit: String(pagination.pageSize),
+      })
+      if (filters.studentName) qs.append('studentName', filters.studentName)
+      if (filters.classId) qs.append('classId', filters.classId)
+
       const response = await fetch(
-        `/api/study-plans?page=${pagination.current}&limit=${pagination.pageSize}`,
+        `/api/study-plans?${qs.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -259,7 +269,7 @@ export default function StudyPlansPage() {
     {
       title: '班级',
       key: 'class',
-      render: (_, record) => record.student.class?.name || '-',
+      render: (_, record) => (record.student as any).class?.name || record.student?.classes?.name || '-',
     },
     {
       title: '单词',
@@ -422,7 +432,7 @@ export default function StudyPlansPage() {
 
       {/* 操作栏 */}
       <div style={{ marginBottom: 16 }}>
-        <Space>
+        <Space wrap>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -430,6 +440,29 @@ export default function StudyPlansPage() {
           >
             批量生成计划
           </Button>
+          <Input
+            placeholder="学生姓名"
+            prefix={<SearchOutlined />}
+            allowClear
+            style={{ width: 180 }}
+            value={filters.studentName}
+            onChange={(e) => setFilters({ ...filters, studentName: e.target.value })}
+          />
+          <Select
+            placeholder="选择班级"
+            allowClear
+            style={{ width: 180 }}
+            value={filters.classId}
+            onChange={(val) => setFilters({ ...filters, classId: val || undefined })}
+          >
+            {classes.map((c) => (
+              <Select.Option key={c.id} value={c.id}>
+                {c.name} ({c.grade})
+              </Select.Option>
+            ))}
+          </Select>
+          <Button type="primary" onClick={fetchData}>查询</Button>
+          <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData() }}>重置</Button>
           <Button icon={<ReloadOutlined />} onClick={fetchData}>
             刷新
           </Button>
