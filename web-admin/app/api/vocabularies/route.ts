@@ -29,12 +29,12 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { word: { contains: search, mode: 'insensitive' } },
-        { primaryMeaning: { contains: search } },
+        { primary_meaning: { contains: search } },
       ]
     }
 
     if (isHighFrequency !== null) {
-      where.isHighFrequency = isHighFrequency === 'true'
+      where.is_high_frequency = isHighFrequency === 'true'
     }
 
     if (difficulty) {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         include: includeAudios ? {
           word_audios: {
             orderBy: {
-              createdAt: 'asc'
+              created_at: 'asc'
             }
           }
         } : undefined,
@@ -149,15 +149,18 @@ export async function POST(request: NextRequest) {
 
     const vocabulary = await prisma.vocabularies.create({
       data: {
+        id: `v_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         word: word.toLowerCase(),
-        partOfSpeech,
-        primaryMeaning,
-        secondaryMeaning,
+        part_of_speech: partOfSpeech,
+        primary_meaning: primaryMeaning,
+        secondary_meaning: secondaryMeaning,
         phonetic,
-        phoneticUS,
-        phoneticUK,
-        isHighFrequency: isHighFrequency || false,
+        phonetic_us: phoneticUS,
+        phonetic_uk: phoneticUK,
+        is_high_frequency: isHighFrequency || false,
         difficulty: difficulty || 'MEDIUM',
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     })
 
