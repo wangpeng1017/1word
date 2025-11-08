@@ -15,9 +15,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const studentId = searchParams.get('studentId')
+    const classId = searchParams.get('classId')
+    const studentName = searchParams.get('studentName')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const status = searchParams.get('status')
+    const vocabularyId = searchParams.get('vocabularyId')
 
     const skip = (page - 1) * limit
 
@@ -26,9 +29,25 @@ export async function GET(request: NextRequest) {
     if (studentId) {
       where.studentId = studentId
     }
+
+    // 关联筛选：班级、学生姓名
+    const studentsWhere: any = {}
+    if (classId) {
+      studentsWhere.class_id = classId
+    }
+    if (studentName) {
+      studentsWhere.user = { name: { contains: studentName, mode: 'insensitive' } }
+    }
+    if (Object.keys(studentsWhere).length > 0) {
+      where.students = studentsWhere
+    }
     
     if (status) {
       where.status = status
+    }
+
+    if (vocabularyId) {
+      where.vocabularyId = vocabularyId
     }
 
     const [rows, total] = await Promise.all([
@@ -77,7 +96,7 @@ export async function GET(request: NextRequest) {
       nextReviewAt: sp.nextReviewAt,
       createdAt: sp.createdAt,
       updatedAt: sp.updatedAt,
-      student: sp.students,
+      student: { ...sp.students, class: sp.students?.classes },
       vocabulary: {
         word: sp.vocabularies?.word,
         primaryMeaning: sp.vocabularies?.primary_meaning,

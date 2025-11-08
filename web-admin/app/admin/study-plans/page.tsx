@@ -74,7 +74,7 @@ export default function StudyPlansPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [generateModalVisible, setGenerateModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
-  const [filters, setFilters] = useState<{ studentName?: string; classId?: string }>({})
+  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
   const [form] = Form.useForm()
   const [generateForm] = Form.useForm()
 
@@ -96,6 +96,8 @@ export default function StudyPlansPage() {
       })
       if (filters.studentName) qs.append('studentName', filters.studentName)
       if (filters.classId) qs.append('classId', filters.classId)
+      if (filters.vocabularyId) qs.append('vocabularyId', filters.vocabularyId)
+      if (filters.status) qs.append('status', filters.status)
 
       const response = await fetch(
         `/api/study-plans?${qs.toString()}`,
@@ -458,6 +460,33 @@ export default function StudyPlansPage() {
             {classes.map((c) => (
               <Select.Option key={c.id} value={c.id}>
                 {c.name} ({c.grade})
+              </Select.Option>
+            ))}
+          </Select>
+          <Select
+            placeholder="选择状态"
+            allowClear
+            style={{ width: 160 }}
+            value={filters.status}
+            onChange={(val) => setFilters({ ...filters, status: val || undefined })}
+          >
+            <Select.Option value="PENDING">待学习</Select.Option>
+            <Select.Option value="IN_PROGRESS">学习中</Select.Option>
+            <Select.Option value="COMPLETED">已完成</Select.Option>
+            <Select.Option value="MASTERED">已掌握</Select.Option>
+          </Select>
+          <Select
+            showSearch
+            placeholder="选择词汇"
+            allowClear
+            style={{ width: 220 }}
+            value={filters.vocabularyId}
+            onChange={(val) => setFilters({ ...filters, vocabularyId: val || undefined })}
+            optionFilterProp="children"
+          >
+            {vocabularies.map((v) => (
+              <Select.Option key={v.id} value={v.id}>
+                {v.word} - {v.primaryMeaning}
               </Select.Option>
             ))}
           </Select>
