@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         isMastered: false, // 排除已掌握的词汇
       },
       include: {
-        vocabulary: true,
+        vocabularies: true,
       },
     })
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         status: { not: 'MASTERED' },
       },
       include: {
-        vocabulary: true,
+        vocabularies: true,
       },
     })
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         },
         take: remainingSlots,
         orderBy: [
-          { isHighFrequency: 'desc' }, // 高频词优先
+          { is_high_frequency: 'desc' }, // 高频词优先
           { difficulty: 'asc' },       // 简单的优先
         ],
       })
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       words: allWords.map(w => ({
         id: w.id,
         word: w.word,
-        primaryMeaning: w.primaryMeaning,
+        primaryMeaning: (w as any).primary_meaning ?? (w as any).primaryMeaning ?? '',
       })),
     }, '复习计划生成成功')
   } catch (error) {

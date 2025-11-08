@@ -56,7 +56,7 @@ export async function GET(
         taskDate: targetDate,
       },
       include: {
-        vocabulary: true,
+        vocabularies: true,
       },
       orderBy: {
         createdAt: 'asc',
@@ -138,9 +138,9 @@ export async function GET(
       students: {
         id: student.id,
         name: student.user.name,
-        studentNo: student.studentNo,
+        studentNo: student.student_no,
         grade: student.grade,
-        className: student.classes.name,
+        className: student.classes?.name || '-',
       },
       todayTasks: {
         total: todayTasks.length,
@@ -149,7 +149,7 @@ export async function GET(
         tasks: todayTasks.map(t => ({
           id: t.id,
           word: t.vocabularies.word,
-          primaryMeaning: t.vocabularies.primaryMeaning,
+          primaryMeaning: (t.vocabularies as any).primary_meaning ?? (t.vocabularies as any).primaryMeaning,
           difficulty: t.vocabularies.difficulty,
           status: t.status,
         })),

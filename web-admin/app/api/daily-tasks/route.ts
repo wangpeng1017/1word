@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
       include: {
         vocabularies: {
           include: {
-            audios: true,
-            images: true,
+            word_audios: true,
+            word_images: true,
             questions: {
               include: {
-                options: true,
+                question_options: true,
               },
             },
           },

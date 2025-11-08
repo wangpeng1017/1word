@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const dateRangeEnd = endDate ? new Date(endDate) : today
 
     // 构建筛选条件
-    const studentFilter = classId ? { classId } : {}
+    const studentFilter = classId ? { class_id: classId } : {}
 
     // 1. 学生总数统计
     const totalStudents = await prisma.students.count({
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     // 3. 学习记录统计
     const studyRecords = await prisma.study_records.findMany({
       where: {
-        student: studentFilter,
+        students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
           gte: dateRangeStart,
           lte: dateRangeEnd,
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     
     const activeStudentIds = await prisma.study_records.findMany({
       where: {
-        student: studentFilter,
+        students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
           gte: sevenDaysAgo,
         },
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     // 5. 掌握度统计
     const wordMasteries = await prisma.word_masteries.findMany({
       where: {
-        student: studentFilter,
+        students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
       },
     })
 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     const dailyStats = await prisma.study_records.groupBy({
       by: ['taskDate'],
       where: {
-        student: studentFilter,
+        students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
           gte: fourteenDaysAgo,
           lte: today,
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
             difficulty: true,
           },
         },

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
 
     // 构建筛选条件
-    const studentFilter = classId ? { classId } : {}
+    const studentFilter = classId ? { class_id: classId } : {}
 
     // 获取所有学生基本信息
     const students = await prisma.students.findMany({
@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
             return {
               studentId: student.id,
               studentName: student.user.name,
-              studentNo: student.studentNo,
-              className: student.classes.name,
+              studentNo: student.student_no,
+              className: student.classes?.name || '-',
               masteredCount,
               totalLearning,
               masteryRate: masteryRate.toFixed(1),
@@ -108,8 +108,8 @@ export async function GET(request: NextRequest) {
             return {
               studentId: student.id,
               studentName: student.user.name,
-              studentNo: student.studentNo,
-              className: student.classes.name,
+              studentNo: student.student_no,
+              className: student.classes?.name || '-',
               totalAnswered,
               totalCorrect,
               totalWrong,
@@ -172,8 +172,8 @@ export async function GET(request: NextRequest) {
             return {
               studentId: student.id,
               studentName: student.user.name,
-              studentNo: student.studentNo,
-              className: student.classes.name,
+              studentNo: student.student_no,
+              className: student.classes?.name || '-',
               recentAccuracy: recentAccuracy.toFixed(1),
               previousAccuracy: previousAccuracy.toFixed(1),
               improvement: improvement.toFixed(1),

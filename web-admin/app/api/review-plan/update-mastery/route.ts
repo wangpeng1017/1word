@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        vocabulary: true,
+        vocabularies: true,
       },
     })
 

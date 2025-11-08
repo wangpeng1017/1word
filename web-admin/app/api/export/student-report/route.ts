@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       where: { id: studentId },
       include: {
         user: true,
-        class: true,
+        classes: true,
       },
     })
 
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
             difficulty: true,
           },
         },
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
           },
         },
       },
@@ -116,9 +116,9 @@ export async function GET(request: NextRequest) {
 
     const studentInfo = [
       ['姓名', student.user.name],
-      ['学号', student.studentNo],
+      ['学号', student.student_no],
       ['年级', student.grade || '-'],
-      ['班级', student.classes.name || '-'],
+      ['班级', student.classes?.name || '-'],
       ['统计日期', `${startDate || '开始'} 至 ${endDate || '今天'}`],
     ]
 
@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
       wrongSheet.addRow({
         date: wq.wrongAt.toISOString().split('T')[0],
         word: wq.vocabularies.word,
-        meaning: wq.vocabularies.primaryMeaning,
+        meaning: (wq.vocabularies as any).primary_meaning,
         wrongAnswer: wq.wrongAnswer,
         correctAnswer: wq.correctAnswer,
       })
@@ -259,7 +259,7 @@ export async function GET(request: NextRequest) {
       
       masterySheet.addRow({
         word: mastery.vocabularies.word,
-        meaning: mastery.vocabularies.primaryMeaning,
+        meaning: (mastery.vocabularies as any).primary_meaning,
         difficulty: difficultyMap[mastery.vocabularies.difficulty],
         wrongCount: mastery.totalWrongCount,
         consecutiveCorrect: mastery.consecutiveCorrect,
