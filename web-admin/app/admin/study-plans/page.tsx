@@ -138,7 +138,7 @@ export default function StudyPlansPage() {
       })
       const result = await response.json()
       if (result.success) {
-        setClasses(result.data?.classes || [])
+        setClasses(result.data || [])
       }
     } catch (error) {
       console.error('加载班级列表失败:', error)
