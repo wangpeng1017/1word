@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
           vocabularies: {
             select: {
               word: true,
-              primaryMeaning: true,
+              primary_meaning: true,
               difficulty: true,
-              isHighFrequency: true,
+              is_high_frequency: true,
             },
           },
         },
@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
           },
         },
       },
