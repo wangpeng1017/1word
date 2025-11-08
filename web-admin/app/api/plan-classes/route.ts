@@ -146,9 +146,41 @@ export async function POST(request: NextRequest) {
       skipDuplicates: true,
     })
 
+    // 同步为每个班级下的每位学生创建/更新个人学习计划（study_plans）
+    const studentsByClass = await prisma.students.findMany({
+      where: { class_id: { in: classIds } },
+      select: { id: true, class_id: true },
+    })
+
+    const spTimestamp = Date.now()
+    let spCounter = 0
+
+    for (const student of studentsByClass) {
+      for (const vocabularyId of vocabularyIds) {
+        // 使用复合唯一键进行幂等创建
+        await prisma.study_plans.upsert({
+          where: {
+            studentId_vocabularyId: {
+              studentId: student.id,
+              vocabularyId,
+            },
+          },
+          create: {
+            id: `sp_${spTimestamp}_${spCounter++}_${Math.random().toString(36).substr(2, 9)}`,
+            studentId: student.id,
+            vocabularyId,
+            status: 'PENDING',
+            reviewCount: 0,
+            nextReviewAt: new Date(startDate),
+          },
+          update: {},
+        })
+      }
+    }
+
     return successResponse(
       { count: result.count },
-      `成功创建 ${result.count} 条班级学习计划`
+      `成功创建 ${result.count} 条班级学习计划，并为 ${studentsByClass.length} 名学生同步学习计划`
     )
   } catch (error: any) {
     console.error('创建班级学习计划错误:', error)
