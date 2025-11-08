@@ -172,8 +172,11 @@ export async function POST(request: NextRequest) {
             status: 'PENDING',
             reviewCount: 0,
             nextReviewAt: new Date(startDate),
+            updatedAt: new Date(),
           },
-          update: {},
+          update: {
+            updatedAt: new Date(),
+          },
         })
       }
     }
