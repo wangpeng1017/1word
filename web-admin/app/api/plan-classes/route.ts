@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const where: any = {}
     
     if (classId) {
-      where.classId = classId
+      where.class_id = classId
     }
     
     if (status) {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         include: {
           classes: {
             select: {
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
           vocabularies: {
             select: {
               word: true,
-              primaryMeaning: true,
+              primary_meaning: true,
               difficulty: true,
-              isHighFrequency: true,
+              is_high_frequency: true,
             },
           },
         },
@@ -129,13 +129,13 @@ export async function POST(request: NextRequest) {
       for (const vocabularyId of vocabularyIds) {
         planClassData.push({
           id: `pc_${timestamp}_${counter++}_${Math.random().toString(36).substr(2, 9)}`,
-          classId,
-          vocabularyId,
-          startDate: new Date(startDate),
-          endDate: endDate ? new Date(endDate) : null,
+          class_id: classId,
+          vocabulary_id: vocabularyId,
+          start_date: new Date(startDate),
+          end_date: endDate ? new Date(endDate) : null,
           status: 'PENDING',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
         })
       }
     }
@@ -181,12 +181,14 @@ export async function PUT(request: NextRequest) {
     }
     
     if (startDate) {
-      updateData.startDate = new Date(startDate)
+      updateData.start_date = new Date(startDate)
     }
     
     if (endDate !== undefined) {
-      updateData.endDate = endDate ? new Date(endDate) : null
+      updateData.end_date = endDate ? new Date(endDate) : null
     }
+    
+    updateData.updated_at = new Date()
 
     const planClass = await prisma.plan_classes.update({
       where: { id },
@@ -201,7 +203,7 @@ export async function PUT(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primaryMeaning: true,
+            primary_meaning: true,
           },
         },
       },
