@@ -85,10 +85,25 @@ export async function POST(
         studentId,
         taskDate: today,
       },
+      include: {
+        vocabularies: {
+          include: {
+            questions: {
+              include: {
+                question_options: {
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
     })
 
     if (existingTasks.length > 0) {
-      return apiResponse.error('今日任务已生成', 400)
+      // 幂等：已有任务则直接返回成功
+      return apiResponse.success({ message: '今日任务已生成', tasks: existingTasks })
     }
 
     // 1. 查找需要复习的单词（基于艾宾浩斯曲线）
@@ -124,7 +139,7 @@ export async function POST(
       },
       take: 10, // 每天最多10个新词
       orderBy: {
-        createdAt: 'desc',
+        created_at: 'desc',
       },
     })
 
