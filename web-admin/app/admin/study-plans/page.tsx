@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import BatchGenerateDialog from '@/components/BatchGenerateDialog'
 
 interface Student {
   id: string
@@ -70,13 +71,11 @@ export default function StudyPlansPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [vocabularies, setVocabularies] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
-  const [generateModalVisible, setGenerateModalVisible] = useState(false)
-  const [submittingGenerate, setSubmittingGenerate] = useState(false)
-  const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
+const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
   const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
   const [form] = Form.useForm()
-  const [generateForm] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [batchOpen, setBatchOpen] = useState(false)
 
   // 加载数据
   useEffect(() => {
@@ -178,44 +177,7 @@ export default function StudyPlansPage() {
     }
   }
 
-  // 批量生成班级学习计划
-  const handleGenerate = async (values: any) => {
-    try {
-      setSubmittingGenerate(true)
-      const token = localStorage.getItem('token')
-      const payload = {
-        classIds: values.classIds,
-        vocabularyIds: values.vocabularyIds,
-        startDate: values.startDate ? dayjs(values.startDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-        endDate: values.endDate ? dayjs(values.endDate).format('YYYY-MM-DD') : null,
-      }
-
-      const response = await fetch('/api/plan-classes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(result.message || '班级学习计划生成成功')
-        setGenerateModalVisible(false)
-        generateForm.resetFields()
-        // 新增后强制跳到第1页并立即拉取第1页数据，避免状态竞态导致不刷新
-        setPagination((p) => ({ ...p, current: 1 }))
-        await fetchData({ page: 1, pageSize: pagination.pageSize })
-      } else {
-        message.error(result.message || '生成失败')
-      }
-    } catch (error) {
-      message.error('生成失败')
-    } finally {
-      setSubmittingGenerate(false)
-    }
-  }
+// 批量生成班级学习计划交互改由 BatchGenerateDialog 负责
 
   // 更新计划
   const handleUpdate = async (values: any) => {
@@ -436,7 +398,7 @@ export default function StudyPlansPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setGenerateModalVisible(true)}
+onClick={() => setBatchOpen(true)}
           >
             批量生成计划
           </Button>
@@ -522,76 +484,17 @@ export default function StudyPlansPage() {
         }}
       />
 
-      {/* 批量生成对话框 */}
-      <Modal
-        title="批量生成班级学习计划"
-        open={generateModalVisible}
-        onOk={() => generateForm.submit()}
-        okButtonProps={{ loading: submittingGenerate }}
-        onCancel={() => {
-          setGenerateModalVisible(false)
-          generateForm.resetFields()
+<BatchGenerateDialog
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        classes={classes}
+        vocabularies={vocabularies}
+        onCompleted={async () => {
+          setBatchOpen(false)
+          setPagination((p) => ({ ...p, current: 1 }))
+          await fetchData({ page: 1, pageSize: pagination.pageSize })
         }}
-        width={600}
-        destroyOnClose
-      >
-        <Form
-          form={generateForm}
-          layout="vertical"
-          onFinish={handleGenerate}
-        >
-          <Form.Item
-            label="选择班级"
-            name="classIds"
-            rules={[{ required: true, message: '请选择至少一个班级' }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="请选择班级（可多选）"
-              showSearch
-              optionFilterProp="children"
-            >
-              {classes.map((c) => (
-                <Select.Option key={c.id} value={c.id}>
-                  {c.name} ({c.grade})
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="选择词汇"
-            name="vocabularyIds"
-            rules={[{ required: true, message: '请选择至少一个词汇' }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="请选择词汇（可多选）"
-              showSearch
-              optionFilterProp="children"
-            >
-              {vocabularies.map((v) => (
-                <Select.Option key={v.id} value={v.id}>
-                  {v.word} - {v.primaryMeaning}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="计划开始日期"
-            name="startDate"
-            rules={[{ required: true, message: '请选择开始日期' }]}
-            initialValue={dayjs()}
-          >
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item label="计划结束日期" name="endDate">
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      />
 
       {/* 编辑对话框 */}
       <Modal
