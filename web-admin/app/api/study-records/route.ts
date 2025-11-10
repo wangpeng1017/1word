@@ -130,9 +130,10 @@ export async function POST(request: NextRequest) {
       })
 
       if (!wordMastery) {
-        // 创建新的掌握度记录
+        // 创建新的掌握度记录（显式提供id和updatedAt）
         wordMastery = await prisma.word_masteries.create({
           data: {
+            id: `wm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
             studentId,
             vocabularyId,
             totalWrongCount: isCorrect ? 0 : 1,
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
             isMastered: false,
             isDifficult: false,
             lastPracticeAt: now,
+            updatedAt: now,
           },
         })
       } else {
@@ -163,6 +165,7 @@ export async function POST(request: NextRequest) {
             isMastered: newIsMastered,
             isDifficult: newIsDifficult,
             lastPracticeAt: now,
+            updatedAt: now,
           },
         })
 
