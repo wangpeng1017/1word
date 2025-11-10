@@ -198,6 +198,8 @@ export default function StudyPlansPage() {
         message.success(result.message || '班级学习计划生成成功')
         setGenerateModalVisible(false)
         generateForm.resetFields()
+        // 新增计划后回到第1页并刷新（配合服务端按创建时间倒序，保证能看到最新）
+        setPagination((p) => ({ ...p, current: 1 }))
         fetchData()
       } else {
         message.error(result.message || '生成失败')

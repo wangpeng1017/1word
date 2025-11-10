@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { nextReviewAt: 'asc' },
+        // 默认按创建时间倒序，最新的在最上面
+        orderBy: { createdAt: 'desc' },
         include: {
           students: {
             include: {
