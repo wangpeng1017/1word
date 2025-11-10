@@ -40,8 +40,11 @@ export async function POST(request: NextRequest) {
     const totalTime = answers.reduce((sum: number, a: any) => sum + (a.timeSpent || 0), 0)
 
     // 1. 创建学习记录
+    // 生成显式ID，避免无默认值时报错
+    const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
     const studyRecord = await prisma.study_records.create({
       data: {
+        id: srId,
         studentId,
         taskDate: today,
         totalWords,
