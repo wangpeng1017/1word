@@ -98,13 +98,6 @@
   margin-bottom: 24rpx;
 }
 
-.word-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .word-text {
   font-size: 68rpx;
   font-weight: 700;
@@ -112,20 +105,6 @@
   letter-spacing: 2rpx;
   display: inline-block;
   animation: fadeIn 0.5s ease;
-}
-
-.speaker {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  color: #2563EB;
 }
 
 .chinese-text {

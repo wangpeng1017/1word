@@ -81,7 +81,7 @@ export async function GET(
     const dailyTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: today,
+        taskDate: { gte: today, lte: endOfToday },
       },
       include: {
         vocabularies: {
@@ -104,7 +104,24 @@ export async function GET(
       },
     })
 
-    const shaped = mapTasksForMiniapp(dailyTasks)
+    // 分配题型（80/20），无音频不分配 LISTENING
+    const vocabularyIds = dailyTasks.map(t => t.vocabularyId)
+    const hasAudioMap = new Map<string, boolean>(
+      dailyTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
+    )
+    const allocation = allocateQuestionTypes(vocabularyIds, hasAudioMap)
+
+    // 选择题目ID
+    const tasksWithSelection = dailyTasks.map(t => {
+      const targetType = allocation.get(t.vocabularyId)
+      const selected = selectQuestionByType(
+        ((t.vocabularies as any)?.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
+        targetType as any
+      )
+      return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
+    })
+
+    const shaped = mapTasksForMiniapp(tasksWithSelection)
     return apiResponse.success(shaped)
   } catch (error) {
     console.error('获取每日任务失败:', error)
@@ -255,11 +272,12 @@ export async function POST(
     const createdTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: { gte: today, lte: endOfToday },
+        taskDate: today,
       },
       include: {
         vocabularies: {
           include: {
+            word_audios: true,
             questions: {
               include: {
                 question_options: {
@@ -275,9 +293,25 @@ export async function POST(
       orderBy: { createdAt: 'asc' },
     })
 
-    const shaped = mapTasksForMiniapp(createdTasks)
+    // 分配题型并选择题目
+    const vocabularyIds2 = createdTasks.map(t => t.vocabularyId)
+    const hasAudioMap2 = new Map<string, boolean>(
+      createdTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
+    )
+    const allocation2 = allocateQuestionTypes(vocabularyIds2, hasAudioMap2)
+
+    const withSel = createdTasks.map(t => {
+      const targetType = allocation2.get(t.vocabularyId)
+      const selected = selectQuestionByType(
+        ((t.vocabularies as any)?.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
+        targetType as any
+      )
+      return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
+    })
+
+    const shaped = mapTasksForMiniapp(withSel)
     return apiResponse.success({
-      message: `已生成${createdTasks.length}个任务`,
+      message: `已生成${withSel.length}个任务`,
       tasks: shaped,
     })
   } catch (error: any) {

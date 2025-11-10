@@ -16,7 +16,8 @@ export enum QuestionTypeEnum {
  * @returns 词汇ID到题型的映射
  */
 export function allocateQuestionTypes(
-  vocabularyIds: string[]
+  vocabularyIds: string[],
+  hasAudioMap?: Map<string, boolean>
 ): Map<string, QuestionTypeEnum> {
   const allocation = new Map<string, QuestionTypeEnum>()
   
@@ -49,8 +50,12 @@ export function allocateQuestionTypes(
       // 前20%分配选词填空
       allocation.set(vocabId, QuestionTypeEnum.FILL_IN_BLANK)
     } else {
-      // 后80%随机分配选择题类型
-      const randomChoiceType = choiceTypes[Math.floor(Math.random() * choiceTypes.length)]
+      // 后80%随机分配选择题类型；若无音频则不分配 LISTENING
+      let pool = choiceTypes
+      if (hasAudioMap && hasAudioMap.get(vocabId) === false) {
+        pool = [QuestionTypeEnum.ENGLISH_TO_CHINESE, QuestionTypeEnum.CHINESE_TO_ENGLISH]
+      }
+      const randomChoiceType = pool[Math.floor(Math.random() * pool.length)]
       allocation.set(vocabId, randomChoiceType)
     }
   })
