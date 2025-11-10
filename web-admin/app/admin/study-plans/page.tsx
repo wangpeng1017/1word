@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Table,
   Button,
@@ -16,6 +16,7 @@ import {
   Row,
   Col,
   Input,
+  Segmented,
 } from 'antd'
 import {
   PlusOutlined,
@@ -76,6 +77,8 @@ export default function StudyPlansPage() {
   const [form] = Form.useForm()
   const [generateForm] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  // 视图模式：按计划(明细) 或 按班级汇总
+  const [viewMode, setViewMode] = useState<'plan' | 'class'>('class')
 
   // 加载数据
   useEffect(() => {
@@ -263,16 +266,17 @@ export default function StudyPlansPage() {
     }
   }
 
+  // 明细模式下的列（调整为 班级 在前，学生 在后）
   const columns: ColumnsType<StudyPlan> = [
-    {
-      title: '学生',
-      key: 'student',
-      render: (_, record) => record.student.user.name,
-    },
     {
       title: '班级',
       key: 'class',
       render: (_, record) => (record.student as any).class?.name || record.student?.classes?.name || '-',
+    },
+    {
+      title: '学生',
+      key: 'student',
+      render: (_, record) => record.student.user.name,
     },
     {
       title: '单词',
@@ -371,6 +375,28 @@ export default function StudyPlansPage() {
     },
   ]
 
+  // 班级维度数据
+  type ClassRow = { key: string; className: string; students: string }
+  const classRows: ClassRow[] = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    data.forEach((item) => {
+      const clsName = (item.student as any).class?.name || item.student?.classes?.name || '-'
+      const stuName = item.student?.user?.name || '-'
+      if (!map.has(clsName)) map.set(clsName, new Set<string>())
+      map.get(clsName)!.add(stuName)
+    })
+    return Array.from(map.entries()).map(([clsName, set], idx) => ({
+      key: `${clsName}-${idx}`,
+      className: clsName,
+      students: Array.from(set).join('，'),
+    }))
+  }, [data])
+
+  const classColumns: ColumnsType<ClassRow> = [
+    { title: '班级', dataIndex: 'className', key: 'className' },
+    { title: '学生', dataIndex: 'students', key: 'students' },
+  ]
+
   // 统计数据
   const stats = {
     total: data.length,
@@ -423,6 +449,14 @@ export default function StudyPlansPage() {
       {/* 操作栏 */}
       <div style={{ marginBottom: 16 }}>
         <Space wrap>
+          <Segmented
+            options={[
+              { label: '按班级汇总', value: 'class' },
+              { label: '按计划明细', value: 'plan' },
+            ]}
+            value={viewMode}
+            onChange={(v) => setViewMode(v as any)}
+          />
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -496,12 +530,12 @@ export default function StudyPlansPage() {
 
       {/* 表格 */}
       <Table
-        columns={columns}
-        dataSource={data}
-        rowKey="id"
+        columns={viewMode === 'class' ? (classColumns as any) : columns}
+        dataSource={viewMode === 'class' ? (classRows as any) : data}
+        rowKey={viewMode === 'class' ? 'key' : 'id'}
         loading={loading}
         scroll={{ x: 1200 }}
-        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+        rowSelection={viewMode === 'class' ? undefined : { selectedRowKeys, onChange: setSelectedRowKeys }}
         pagination={{
           ...pagination,
           showSizeChanger: true,
