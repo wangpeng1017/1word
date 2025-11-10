@@ -35,8 +35,13 @@ Page({
     this.setData({ state: 'loading', dateStr: this.formatDate(new Date()) })
     try {
       const ov = await this.getTodayOverview()
-      if (!ov || ov.dueCount === 0) {
+      if (!ov) {
         this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint() })
+        return
+      }
+      // 今日任务为0 或 已全部完成 => 显示完成态，按钮不可点
+      if (ov.dueCount === 0 || (ov.reviewedCount >= ov.dueCount && ov.dueCount > 0)) {
+        this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint(), overview: ov, progressPercent: 100 })
         return
       }
       const percent = Math.min(100, Math.floor((ov.reviewedCount / ov.dueCount) * 100))
