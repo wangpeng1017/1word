@@ -21,14 +21,14 @@ Page({
     })
   },
 
-  // 查看错题
+  // 查看错题（tab）
   viewWrongQuestions() {
     wx.switchTab({
       url: '/pages/wrong/wrong',
     })
   },
 
-  // 返回首页
+  // 返回首页（tab）
   backToHome() {
     wx.switchTab({
       url: '/pages/index/index',

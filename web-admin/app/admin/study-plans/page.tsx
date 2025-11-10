@@ -71,6 +71,7 @@ export default function StudyPlansPage() {
   const [vocabularies, setVocabularies] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [generateModalVisible, setGenerateModalVisible] = useState(false)
+  const [submittingGenerate, setSubmittingGenerate] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
   const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
   const [form] = Form.useForm()
@@ -85,13 +86,15 @@ export default function StudyPlansPage() {
     fetchVocabularies()
   }, [pagination.current, pagination.pageSize])
 
-  const fetchData = async () => {
+  const fetchData = async (override?: { page?: number; pageSize?: number }) => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
+      const page = override?.page ?? pagination.current
+      const limit = override?.pageSize ?? pagination.pageSize
       const qs = new URLSearchParams({
-        page: String(pagination.current),
-        limit: String(pagination.pageSize),
+        page: String(page),
+        limit: String(limit),
       })
       if (filters.studentName) qs.append('studentName', filters.studentName)
       if (filters.classId) qs.append('classId', filters.classId)
@@ -110,10 +113,12 @@ export default function StudyPlansPage() {
       const result = await response.json()
       if (result.success) {
         setData(result.data.studyPlans || [])
-        setPagination({
-          ...pagination,
+        setPagination((prev) => ({
+          ...prev,
+          current: page,
+          pageSize: limit,
           total: result.data.pagination?.total || 0,
-        })
+        }))
       }
     } catch (error) {
       message.error('加载失败')
@@ -176,6 +181,7 @@ export default function StudyPlansPage() {
   // 批量生成班级学习计划
   const handleGenerate = async (values: any) => {
     try {
+      setSubmittingGenerate(true)
       const token = localStorage.getItem('token')
       const payload = {
         classIds: values.classIds,
@@ -198,14 +204,16 @@ export default function StudyPlansPage() {
         message.success(result.message || '班级学习计划生成成功')
         setGenerateModalVisible(false)
         generateForm.resetFields()
-        // 新增计划后回到第1页并刷新（配合服务端按创建时间倒序，保证能看到最新）
+        // 新增后强制跳到第1页并立即拉取第1页数据，避免状态竞态导致不刷新
         setPagination((p) => ({ ...p, current: 1 }))
-        fetchData()
+        await fetchData({ page: 1, pageSize: pagination.pageSize })
       } else {
         message.error(result.message || '生成失败')
       }
     } catch (error) {
       message.error('生成失败')
+    } finally {
+      setSubmittingGenerate(false)
     }
   }
 
@@ -480,9 +488,9 @@ export default function StudyPlansPage() {
               </Select.Option>
             ))}
           </Select>
-          <Button type="primary" onClick={fetchData}>查询</Button>
-          <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData() }}>重置</Button>
-          <Button icon={<ReloadOutlined />} onClick={fetchData}>
+          <Button type="primary" onClick={() => { setPagination((p)=>({ ...p, current: 1 })); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>查询</Button>
+          <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>重置</Button>
+          <Button icon={<ReloadOutlined />} onClick={() => fetchData()}>
             刷新
           </Button>
           {selectedRowKeys.length > 0 && (
@@ -519,11 +527,13 @@ export default function StudyPlansPage() {
         title="批量生成班级学习计划"
         open={generateModalVisible}
         onOk={() => generateForm.submit()}
+        okButtonProps={{ loading: submittingGenerate }}
         onCancel={() => {
           setGenerateModalVisible(false)
           generateForm.resetFields()
         }}
         width={600}
+        destroyOnClose
       >
         <Form
           form={generateForm}

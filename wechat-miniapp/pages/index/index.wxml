@@ -1,61 +1,56 @@
 <!--pages/index/index.wxml-->
-<view class="container">
-  <!-- 欢迎区域 -->
-  <view class="welcome-section">
-    <text class="title-large">你好，{{userName}}</text>
-    <text class="subtitle">今天也要加油学习哦！</text>
-  </view>
-
-  <!-- 三个核心入口 -->
-  <view class="main-entries">
-    <!-- 今日复习 -->
-    <view class="entry-card primary-card" bindtap="goToStudy">
-      <view class="card-icon">📚</view>
-      <view class="card-content">
-        <text class="card-title">今日复习</text>
-        <text class="card-subtitle">温故知新</text>
-        <text class="card-info">{{todayWordCount}} 个单词待复习</text>
-        <view class="progress-mini">
-          <view class="progress-mini-fill" style="width: {{todayProgress}}%"></view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 错题本 -->
-    <view class="entry-card danger-card" bindtap="goToWrong">
-      <view class="card-icon">❌</view>
-      <view class="card-content">
-        <text class="card-title">错题本</text>
-        <text class="card-subtitle">强化记忆</text>
-        <text class="card-info">{{wrongCount}} 道错题需复习</text>
-      </view>
-    </view>
-
-    <!-- 学习数据 -->
-    <view class="entry-card success-card" bindtap="goToProfile">
-      <view class="card-icon">📊</view>
-      <view class="card-content">
-        <text class="card-title">学习数据</text>
-        <text class="card-subtitle">我的成果</text>
-        <view class="mini-stats">
-          <text class="mini-stat">已掌握 {{masteredCount}}</text>
-          <text class="mini-stat-divider">·</text>
-          <text class="mini-stat">学习 {{totalStudyDays}} 天</text>
-        </view>
-      </view>
+<view class="page">
+  <view class="header">
+    <view class="date">{{dateStr}}</view>
+    <view class="title">今日复习</view>
+    <view class="book" wx:if="{{overview.bookName}}">
+      <text class="book-name">{{overview.bookName}}</text>
     </view>
   </view>
 
-  <!-- 继续上次复习提示 -->
-  <view class="resume-modal" wx:if="{{showResumeModal}}">
-    <view class="modal-mask" bindtap="closeResumeModal"></view>
-    <view class="modal-content">
-      <text class="modal-title">检测到未完成的复习</text>
-      <text class="modal-text">是否继续上次的复习？</text>
-      <view class="modal-actions">
-        <button class="btn-secondary" bindtap="startNewStudy">重新开始</button>
-        <button class="btn-primary" bindtap="resumeStudy">继续复习</button>
+  <block wx:if="{{state==='ready'}}">
+    <view class="stats">
+      <view class="stat">
+        <view class="num">{{overview.dueCount}}</view>
+        <view class="label">今日应复习</view>
+      </view>
+      <view class="divider"></view>
+      <view class="stat">
+        <view class="num">{{overview.reviewedCount}}</view>
+        <view class="label">已复习</view>
+      </view>
+      <view class="divider"></view>
+      <view class="stat">
+        <view class="num">{{overview.elapsedMinutes}}</view>
+        <view class="label">今日用时(分)</view>
       </view>
     </view>
-  </view>
+
+    <view class="progress-wrap">
+      <progress percent="{{progressPercent}}" stroke-width="8" active activeColor="#2F6BFF" />
+      <text class="progress-text">{{progressPercent}}%</text>
+    </view>
+
+    <button class="cta" type="primary" bindtap="startReview">
+      {{overview.reviewedCount>0 && overview.reviewedCount<overview.dueCount ? '继续复习' : '开始复习'}}
+    </button>
+  </block>
+
+  <block wx:elif="{{state==='empty'}}">
+    <view class="empty">
+      <view class="done">今日复习已完成</view>
+      <view class="sub">下次复习预计：{{nextReviewHint}}</view>
+    </view>
+  </block>
+
+  <block wx:elif="{{state==='loading'}}">
+    <view class="skeleton"></view>
+  </block>
+
+  <block wx:elif="{{state==='error'}}">
+    <view class="error">
+      <text>加载失败</text>
+      <button size="mini" bindtap="reload">重试</button>
+    </view>
+  </block>
 </view>

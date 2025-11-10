@@ -57,7 +57,7 @@ Page({
         icon: 'success',
       })
 
-      // 跳转到首页
+      // 跳转到首页（tab）
       setTimeout(() => {
         wx.switchTab({
           url: '/pages/index/index',

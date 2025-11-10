@@ -1,4 +1,5 @@
 {
-  "navigationBarTitleText": "首页",
+  "navigationBarTitleText": "今日复习",
+  "enablePullDownRefresh": true,
   "usingComponents": {}
 }
