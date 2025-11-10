@@ -187,15 +187,23 @@ export async function POST(
       },
     })
 
-    // 3. 为新词创建学习计划
+    // 3. 为新词创建学习计划（使用 upsert 幂等并显式生成 id）
+    const spTimestamp = Date.now()
+    let spCounter = 0
     for (const vocab of newVocabularies) {
-      await prisma.study_plans.create({
-        data: {
+      await prisma.study_plans.upsert({
+        where: {
+          studentId_vocabularyId: { studentId, vocabularyId: vocab.id },
+        },
+        update: {},
+        create: {
+          id: `sp_${spTimestamp}_${spCounter++}_${Math.random().toString(36).slice(2, 10)}`,
           studentId,
           vocabularyId: vocab.id,
           status: 'PENDING',
           reviewCount: 0,
           nextReviewAt: today,
+          updatedAt: new Date(),
         },
       })
     }
