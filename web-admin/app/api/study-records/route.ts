@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
         startedAt: now,
         completedAt: now,
         isCompleted: true,
+        updatedAt: now,
       },
     })
 
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         where: {
           studentId,
           vocabularyId,
-          taskDate: today,
+          taskDate: { gte: today, lte: new Date(today.getTime() + 24*60*60*1000 - 1) },
         },
         data: {
           status: 'COMPLETED',
@@ -186,9 +187,9 @@ export async function POST(request: NextRequest) {
         accuracy: Math.round(accuracy * 100),
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('提交答题记录失败:', error)
-    return apiResponse.error('提交答题记录失败')
+    return apiResponse.error(`提交答题记录失败: ${error?.message || '未知错误'}`)
   }
 }
 
