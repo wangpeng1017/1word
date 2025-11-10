@@ -169,17 +169,20 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
   wordsToReview.sort((a, b) => b.priority - a.priority)
   const selectedWords = wordsToReview.slice(0, DEFAULT_CONFIG.DAILY_REVIEW_WORDS)
 
-  // 创建每日任务
-  const tasksToCreate = selectedWords.map(({ plan }) => ({
+  // 创建每日任务（生成显式 id，避免数据库未配置默认值时报错）
+  const dtTimestamp = Date.now()
+  let dtCounter = 0
+  const tasksToInsert = selectedWords.map(({ plan }) => ({
+    id: `dt_${dtTimestamp}_${dtCounter++}_${Math.random().toString(36).slice(2, 10)}`,
     studentId,
     vocabularyId: plan.vocabularyId,
     taskDate: targetDate,
     status: 'PENDING' as const,
   }))
 
-  if (tasksToCreate.length > 0) {
+  if (tasksToInsert.length > 0) {
     await prisma.daily_tasks.createMany({
-      data: tasksToCreate,
+      data: tasksToInsert,
       skipDuplicates: true,
     })
 
@@ -192,11 +195,11 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
       include: {
         vocabularies: {
           include: {
-            audios: true,
-            images: true,
+            word_audios: true,
+            word_images: true,
             questions: {
               include: {
-                options: true,
+                question_options: true,
               },
             },
           },

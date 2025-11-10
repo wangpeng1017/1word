@@ -228,8 +228,16 @@ export async function POST(
       return apiResponse.success({ message: '暂无任务', tasks: [] })
     }
 
+    // 为 createMany 生成显式 id，避免数据库未配置默认值时报错
+    const dtTs = Date.now()
+    let dtNum = 0
+    const tasksToInsert = tasksToCreate.map(t => ({
+      id: `dt_${dtTs}_${dtNum++}_${Math.random().toString(36).slice(2, 10)}`,
+      ...t,
+    }))
+
     await prisma.daily_tasks.createMany({
-      data: tasksToCreate,
+      data: tasksToInsert,
       skipDuplicates: true, // 防止并发/重复触发造成唯一键冲突
     })
 
