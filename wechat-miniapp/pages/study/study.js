@@ -91,7 +91,7 @@ Page({
     this.setData({ timer })
   },
 
-  // 加载每日任务
+  // 加载每日任务（优先使用 review-plan 概览）
   async loadTasks() {
     try {
       wx.showLoading({ title: '加载中...' })
@@ -101,14 +101,31 @@ Page({
         throw new Error('未找到学生ID')
       }
 
-      // 获取今日任务
-      const response = await get(`/students/${studentId}/daily-tasks`)
-      let tasks = response
+      // 1) 优先使用复习概览（miniapp.today.tasks 包含 vocabulary.questions）
+      let tasks = []
+      try {
+        const data = await get(`/review-plan/${studentId}`)
+        const mi = data && data.miniapp
+        if (mi && mi.today && Array.isArray(mi.today.tasks)) {
+          tasks = mi.today.tasks
+        }
+      } catch (e) {
+        console.warn('review-plan 获取失败，回退到每日任务接口', e)
+      }
 
-      // 如果没有任务，尝试生成
+      // 2) 若概览没有任务，回退到原有生成逻辑
       if (!tasks || tasks.length === 0) {
-        const generateResponse = await post(`/students/${studentId}/daily-tasks`)
-        tasks = generateResponse.tasks || []
+        let response = []
+        try {
+          response = await get(`/students/${studentId}/daily-tasks`)
+        } catch (_) { response = [] }
+
+        if (!response || response.length === 0) {
+          const generateResponse = await post(`/students/${studentId}/daily-tasks`)
+          tasks = generateResponse.tasks || []
+        } else {
+          tasks = response
+        }
       }
 
       if (!tasks || tasks.length === 0) {
@@ -117,9 +134,7 @@ Page({
           title: '提示',
           content: '暂无学习任务',
           showCancel: false,
-          success: () => {
-            wx.navigateBack()
-          },
+          success: () => { wx.navigateBack() },
         })
         return
       }
@@ -137,9 +152,7 @@ Page({
           title: '提示',
           content: '任务中没有可用的题目',
           showCancel: false,
-          success: () => {
-            wx.navigateBack()
-          },
+          success: () => { wx.navigateBack() },
         })
         return
       }
@@ -160,9 +173,7 @@ Page({
         title: '加载失败',
         content: error.message || '请检查网络连接',
         showCancel: false,
-        success: () => {
-          wx.navigateBack()
-        },
+        success: () => { wx.navigateBack() },
       })
     }
   },

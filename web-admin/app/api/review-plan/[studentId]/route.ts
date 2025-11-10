@@ -7,6 +7,17 @@ import { getTodayDate, shouldReviewToday } from '@/lib/ebbinghaus'
 // 小程序字段统一工具：将蛇形字段转换为驼峰，补充 vocabulary 包裹层
 function toCamelVocabulary(v: any) {
   if (!v) return null
+  const questions = (v.questions || []).map((q: any) => ({
+    id: q.id,
+    type: q.type,
+    content: q.content,
+    sentence: q.sentence,
+    audioUrl: q.audioUrl,
+    correctAnswer: q.correctAnswer,
+    options: (q.question_options || q.options || [])
+      .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+      .map((o: any) => ({ id: o.id, content: o.content, isCorrect: o.isCorrect, order: o.order })),
+  }))
   return {
     id: v.id,
     word: v.word,
@@ -15,6 +26,7 @@ function toCamelVocabulary(v: any) {
     audioUrl: v.audioUrl ?? v.audio_url,
     difficulty: v.difficulty,
     isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
+    questions,
   }
 }
 
@@ -70,7 +82,17 @@ export async function GET(
         taskDate: targetDate,
       },
       include: {
-        vocabularies: true,
+        vocabularies: {
+          include: {
+            questions: {
+              include: {
+                question_options: {
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'asc',

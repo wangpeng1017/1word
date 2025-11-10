@@ -1,127 +1,113 @@
 // pages/index/index.js
 const { get } = require('../../utils/request')
-const { getStudyProgress, clearStudyProgress } = require('../../utils/storage')
+const { getStudyProgress } = require('../../utils/storage')
 const app = getApp()
 
 Page({
   data: {
-    userName: '同学',
-    todayWordCount: 0,
-    completedCount: 0,
-    todayProgress: 0,
-    masteredCount: 0,
-    difficultCount: 0,
-    totalStudyDays: 0,
-    wrongCount: 0,
-    showResumeModal: false,
+    state: 'loading', // loading | ready | empty | error
+    dateStr: '',
+    overview: {},
+    progressPercent: 0,
+    nextReviewHint: '',
+    defaultCover: 'https://dummyimage.com/120x160/EEF3FF/2F6BFF.png&text=BOOK',
   },
 
   onLoad() {
-    // 检查登录状态
     if (!app.globalData.token) {
-      wx.reLaunch({
-        url: '/pages/login/login',
-      })
+      wx.reLaunch({ url: '/pages/login/login' })
       return
     }
-
-    this.loadUserInfo()
-    this.checkUnfinishedStudy()
+    this.init()
   },
 
   onShow() {
     if (app.globalData.token) {
-      this.loadStudyData()
+      this.init()
     }
   },
 
-  // 加载用户信息
-  loadUserInfo() {
-    const userInfo = app.globalData.userInfo
-    if (userInfo) {
-      this.setData({
-        userName: userInfo.name || '同学',
-      })
-    }
+  onPullDownRefresh() {
+    this.init().finally(() => wx.stopPullDownRefresh())
   },
 
-  // 加载学习数据
-  async loadStudyData() {
+  async init() {
+    this.setData({ state: 'loading', dateStr: this.formatDate(new Date()) })
     try {
-      // 这里应该调用实际的API
-      // 暂时使用模拟数据
-      this.setData({
-        todayWordCount: 20,
-        completedCount: 8,
-        todayProgress: 40,
-        masteredCount: 156,
-        difficultCount: 12,
-        totalStudyDays: 15,
-        wrongCount: 23,
-      })
-
-      // TODO: 实际API调用
-      // const stats = await get('/students/stats')
-      // this.setData({ ...stats })
-    } catch (error) {
-      console.error('加载学习数据失败:', error)
+      const ov = await this.getTodayOverview()
+      if (!ov || ov.dueCount === 0) {
+        this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint() })
+        return
+      }
+      const percent = Math.min(100, Math.floor((ov.reviewedCount / ov.dueCount) * 100))
+      this.setData({ overview: ov, progressPercent: percent, state: 'ready' })
+    } catch (e) {
+      console.error('加载首页信息失败', e)
+      this.setData({ state: 'error' })
     }
   },
 
-  // 检查未完成的复习
-  checkUnfinishedStudy() {
-    const progress = getStudyProgress()
-    if (progress) {
-      this.setData({
-        showResumeModal: true,
-      })
+  startReview() {
+    const progress = this.data.overview || {}
+    const needResume = progress.reviewedCount > 0 && progress.reviewedCount < progress.dueCount
+    wx.navigateTo({ url: `/pages/study/study${needResume ? '?resume=true' : ''}` })
+  },
+
+  reload() { this.init() },
+
+  async getTodayOverview() {
+    const studentId = app.globalData.userInfo && app.globalData.userInfo.studentId
+    if (!studentId) return null
+
+    // 直接从复习概览接口获取（小程序友好的 miniapp 段）
+    try {
+      const data = await get(`/review-plan/${studentId}`)
+      const mi = data && data.miniapp
+      if (mi && mi.today) {
+        // 若本地有进度，则让前端进度覆盖服务端统计的一部分（以便继续学习提示）
+        const saved = getStudyProgress()
+        const reviewedFromServer = mi.today.completedCount || 0
+        const due = mi.today.dueCount || 0
+        const reviewedFromLocal = saved ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
+
+        return {
+          bookName: '今日任务',
+          dueCount: due,
+          reviewedCount: Math.max(reviewedFromServer, reviewedFromLocal),
+          elapsedMinutes: 0, // 概览未返回用时，若需要可后续扩展
+        }
+      }
+    } catch (e) {
+      // 失败时回退到旧逻辑（不报错，保证首页可用）
+      console.warn('review-plan 获取失败，使用回退逻辑', e)
     }
+
+    // 回退逻辑：仍尝试旧的每日任务接口
+    let tasks = []
+    try {
+      tasks = await get(`/students/${studentId}/daily-tasks`)
+    } catch (e) {
+      tasks = []
+    }
+    const dueCount = Array.isArray(tasks) ? tasks.length : 0
+
+    const saved = getStudyProgress()
+    let reviewedCount = 0
+    if (saved) {
+      reviewedCount = Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, dueCount)
+    }
+
+    return { bookName: '今日任务', dueCount, reviewedCount, elapsedMinutes: 0 }
   },
 
-  // 关闭弹窗
-  closeResumeModal() {
-    this.setData({
-      showResumeModal: false,
-    })
+  calcNextReviewHint() {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return `${d.getMonth() + 1}月${d.getDate()}日`
   },
 
-  // 继续复习
-  resumeStudy() {
-    this.setData({
-      showResumeModal: false,
-    })
-    wx.navigateTo({
-      url: '/pages/study/study?resume=true',
-    })
-  },
-
-  // 重新开始
-  startNewStudy() {
-    clearStudyProgress()
-    this.setData({
-      showResumeModal: false,
-    })
-    this.goToStudy()
-  },
-
-  // 前往学习页面
-  goToStudy() {
-    wx.navigateTo({
-      url: '/pages/study/study',
-    })
-  },
-
-  // 前往错题本
-  goToWrong() {
-    wx.switchTab({
-      url: '/pages/wrong/wrong',
-    })
-  },
-
-  // 前往个人中心
-  goToProfile() {
-    wx.switchTab({
-      url: '/pages/profile/profile',
-    })
+  formatDate(d) {
+    const w = ['日','一','二','三','四','五','六'][d.getDay()]
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${w}`
   },
 })
