@@ -375,26 +375,75 @@ export default function StudyPlansPage() {
     },
   ]
 
-  // 班级维度数据
-  type ClassRow = { key: string; className: string; students: string }
+  // 班级维度数据（含统计）
+  type ClassRow = {
+    key: string
+    className: string
+    students: string
+    planCount: number
+    pendingCount: number
+    inProgressCount: number
+    masteredCount: number
+  }
   const classRows: ClassRow[] = useMemo(() => {
-    const map = new Map<string, Set<string>>()
+    type Agg = {
+      students: Set<string>
+      plan: number
+      pending: number
+      inProgress: number
+      completed: number
+      mastered: number
+    }
+    const map = new Map<string, Agg>()
     data.forEach((item) => {
       const clsName = (item.student as any).class?.name || item.student?.classes?.name || '-'
       const stuName = item.student?.user?.name || '-'
-      if (!map.has(clsName)) map.set(clsName, new Set<string>())
-      map.get(clsName)!.add(stuName)
+      if (!map.has(clsName)) {
+        map.set(clsName, {
+          students: new Set<string>(),
+          plan: 0,
+          pending: 0,
+          inProgress: 0,
+          completed: 0,
+          mastered: 0,
+        })
+      }
+      const agg = map.get(clsName)!
+      agg.students.add(stuName)
+      agg.plan += 1
+      switch (item.status) {
+        case 'PENDING':
+          agg.pending += 1
+          break
+        case 'IN_PROGRESS':
+          agg.inProgress += 1
+          break
+        case 'COMPLETED':
+          agg.completed += 1
+          break
+        case 'MASTERED':
+          agg.mastered += 1
+          break
+      }
     })
-    return Array.from(map.entries()).map(([clsName, set], idx) => ({
+    return Array.from(map.entries()).map(([clsName, agg], idx) => ({
       key: `${clsName}-${idx}`,
       className: clsName,
-      students: Array.from(set).join('，'),
+      students: Array.from(agg.students).join('，'),
+      planCount: agg.plan,
+      pendingCount: agg.pending,
+      inProgressCount: agg.inProgress,
+      masteredCount: agg.mastered,
     }))
   }, [data])
 
   const classColumns: ColumnsType<ClassRow> = [
     { title: '班级', dataIndex: 'className', key: 'className' },
     { title: '学生', dataIndex: 'students', key: 'students' },
+    { title: '计划数', dataIndex: 'planCount', key: 'planCount', align: 'center' as const },
+    { title: '待学习', dataIndex: 'pendingCount', key: 'pendingCount', align: 'center' as const },
+    { title: '学习中', dataIndex: 'inProgressCount', key: 'inProgressCount', align: 'center' as const },
+    { title: '已掌握', dataIndex: 'masteredCount', key: 'masteredCount', align: 'center' as const },
   ]
 
   // 统计数据
