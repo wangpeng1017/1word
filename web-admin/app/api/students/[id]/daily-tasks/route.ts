@@ -66,12 +66,14 @@ export async function GET(
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    const endOfToday = new Date(today)
+    endOfToday.setHours(23, 59, 59, 999)
 
     // 获取今日任务
     const dailyTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: today,
+        taskDate: { gte: today, lte: endOfToday },
       },
       include: {
         vocabularies: {
@@ -128,7 +130,7 @@ export async function POST(
     const existingTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: today,
+        taskDate: { gte: today, lte: endOfToday },
       },
       include: {
         vocabularies: {
@@ -220,13 +222,14 @@ export async function POST(
 
     await prisma.daily_tasks.createMany({
       data: tasksToCreate,
+      skipDuplicates: true, // 防止并发/重复触发造成唯一键冲突
     })
 
     // 5. 返回创建的任务（带词汇和题目信息）
     const createdTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: today,
+        taskDate: { gte: today, lte: endOfToday },
       },
       include: {
         vocabularies: {
@@ -251,8 +254,9 @@ export async function POST(
       message: `已生成${createdTasks.length}个任务`,
       tasks: shaped,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('生成每日任务失败:', error)
-    return apiResponse.error('生成每日任务失败')
+    // 向客户端返回错误详情，方便定位
+    return apiResponse.error(`生成每日任务失败: ${error?.message || '未知错误'}`)
   }
 }
