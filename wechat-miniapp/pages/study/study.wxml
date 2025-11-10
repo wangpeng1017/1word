@@ -27,7 +27,10 @@
   <view wx:else class="study-content">
     <!-- 选择题模式1: 英文单词 + 4个中文释义选项 -->
     <view wx:if="{{currentQuestion.type === 'ENGLISH_TO_CHINESE'}}" class="word-display">
-      <text class="word-text">{{currentTask.vocabulary.word}}</text>
+      <view class="word-row">
+        <text class="word-text">{{currentTask.vocabulary.word}}</text>
+        <view class="speaker" bindtap="playAudio">🔊</view>
+      </view>
       <text class="question-hint">请选择正确的中文释义</text>
     </view>
     
@@ -72,21 +75,13 @@
       </view>
     </view>
 
-    <!-- 结果反馈 -->
-    <view wx:if="{{showResult}}" class="result-feedback {{isCorrect ? 'correct-feedback' : 'wrong-feedback'}}">
-      <view class="feedback-icon">{{isCorrect ? '✓' : '✗'}}</view>
-      <view class="feedback-text">
-        {{isCorrect ? '回答正确！' : '答错了'}}
-      </view>
-      <view wx:if="{{!isCorrect}}" class="correct-answer">
-        正确答案：{{currentQuestion.correctAnswer}}
-      </view>
-      <view class="meaning-section">
-        <view class="meaning-label">释义：</view>
-        <view class="meaning-text">{{currentTask.vocabulary.primaryMeaning}}</view>
-        <view wx:if="{{currentTask.vocabulary.secondaryMeaning}}" class="meaning-secondary">
-          {{currentTask.vocabulary.secondaryMeaning}}
-        </view>
+    <!-- 结果反馈（压缩为底部小条） -->
+    <view wx:if="{{showResult}}" class="result-bar {{isCorrect ? 'ok' : 'bad'}}">
+      <view class="result-main">
+        <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
+        <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
+        <text wx:if="{{!isCorrect}}" class="result-extra">正确：{{currentQuestion.correctAnswer}}</text>
+        <text class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
       </view>
     </view>
 

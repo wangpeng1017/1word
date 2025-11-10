@@ -389,32 +389,21 @@ Page({
     })
   },
 
-  // 播放音频（听力题）
+  // 播放音频（优先美式，其次英式；若都无则不播放）
   playAudio() {
     const { currentTask } = this.data
-    
-    if (!currentTask || !currentTask.vocabulary) {
+    if (!currentTask || !currentTask.vocabulary) return
+
+    const v = currentTask.vocabulary
+    const url = v.audioUs || v.audioUS || v.audio_us || v.audioUrl || v.audioUk || v.audioUK || v.audio_uk || ''
+    if (!url) {
+      wx.showToast({ title: '暂无音频', icon: 'none' })
       return
     }
-
-    // 如果有音频URL，播放音频
-    if (currentTask.vocabulary.audioUrl) {
-      if (!this.data.audioContext) {
-        this.data.audioContext = wx.createInnerAudioContext()
-      }
-      
-      this.data.audioContext.src = currentTask.vocabulary.audioUrl
-      this.data.audioContext.play()
-    } else {
-      // 如果没有音频，使用TTS接口
-      wx.showToast({
-        title: '正在加载音频...',
-        icon: 'loading',
-        duration: 1000
-      })
-      
-      // TODO: 调用TTS接口或使用第三方服务
-      // 这里可以集成百度TTS、讯飞TTS或其他服务
+    if (!this.data.audioContext) {
+      this.data.audioContext = wx.createInnerAudioContext()
     }
+    this.data.audioContext.src = url
+    this.data.audioContext.play()
   },
 })

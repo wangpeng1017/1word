@@ -24,6 +24,11 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
       })),
     }))
 
+    const audios = v.word_audios || v.audios || []
+    const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
+    const audioUk = audios.find((a: any) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
+    const defaultAudio = v.audioUrl ?? v.audio_url ?? audioUs ?? audioUk ?? null
+
     return {
       id: t.id,
       studentId: t.studentId,
@@ -37,7 +42,9 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
         word: v.word,
         primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
         secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
-        audioUrl: v.audioUrl ?? v.audio_url,
+        audioUrl: defaultAudio,
+        audioUs,
+        audioUk,
         difficulty: v.difficulty,
         isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
         questions,
@@ -73,11 +80,12 @@ export async function GET(
     const dailyTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
-        taskDate: { gte: today, lte: endOfToday },
+        taskDate: today,
       },
       include: {
         vocabularies: {
           include: {
+            word_audios: true,
             questions: {
               include: {
                 question_options: {

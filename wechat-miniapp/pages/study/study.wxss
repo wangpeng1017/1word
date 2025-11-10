@@ -90,25 +90,42 @@
 }
 
 /* 答题内容 */
-.study-content {
-  padding: 60rpx 32rpx 32rpx;
-}
+.study-content { padding: 32rpx 24rpx 24rpx; }
 
 /* 单词展示（仅英文） */
 .word-display {
-  text-align: center;
-  padding: 100rpx 40rpx 80rpx;
-  margin-bottom: 60rpx;
+  padding: 60rpx 24rpx 40rpx;
+  margin-bottom: 24rpx;
+}
+
+.word-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .word-text {
-  font-size: 72rpx;
+  font-size: 68rpx;
   font-weight: 700;
   color: #111827;
   letter-spacing: 2rpx;
-  display: block;
-  margin-bottom: 24rpx;
+  display: inline-block;
   animation: fadeIn 0.5s ease;
+}
+
+.speaker {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #2563EB;
 }
 
 .chinese-text {
@@ -173,7 +190,7 @@
 
 /* 选项列表 */
 .options-list {
-  margin-bottom: 30rpx;
+  margin-bottom: 12rpx;
 }
 
 .option-item {
@@ -181,8 +198,8 @@
   align-items: center;
   background: #FFFFFF;
   border-radius: 12rpx;
-  padding: 30rpx 24rpx;
-  margin-bottom: 16rpx;
+  padding: 20rpx 20rpx;
+  margin-bottom: 12rpx;
   border: 2rpx solid #E5E7EB;
   transition: all 0.2s ease;
 }
@@ -203,8 +220,8 @@
 }
 
 .option-label {
-  width: 60rpx;
-  height: 60rpx;
+  width: 52rpx;
+  height: 52rpx;
   border-radius: 50%;
   background: #F3F4F6;
   display: flex;
@@ -234,7 +251,7 @@
 
 .option-content {
   flex: 1;
-  font-size: 30rpx;
+  font-size: 28rpx;
   color: #111827;
   line-height: 1.6;
 }
@@ -259,14 +276,23 @@
   color: #EF4444;
 }
 
-/* 结果反馈 */
-.result-feedback {
-  background: #FFFFFF;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+/* 结果反馈（底部条） */
+.result-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #111827;
+  color: #fff;
+  padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
 }
+.result-bar .result-main { display: flex; align-items: center; gap: 16rpx; }
+.result-bar .result-icon { font-size: 32rpx; }
+.result-bar .result-text { font-size: 28rpx; font-weight: 600; }
+.result-bar .result-extra { font-size: 24rpx; opacity: 0.9; }
+.result-bar .result-meaning { font-size: 24rpx; opacity: 0.8; margin-left: auto; }
+.result-bar.ok { background: #065F46; }
+.result-bar.bad { background: #7F1D1D; }
 
 .correct-feedback {
   border-left: 6rpx solid #10B981;
@@ -333,9 +359,7 @@
 }
 
 /* 提交按钮 */
-.submit-section {
-  margin-bottom: 30rpx;
-}
+.submit-section { margin-bottom: 120rpx; }
 
 .submit-btn {
   width: 100%;
