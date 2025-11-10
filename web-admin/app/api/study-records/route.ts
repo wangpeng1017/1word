@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
         if (question) {
           await prisma.wrong_questions.create({
             data: {
+              id: `wq_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
               studentId,
               vocabularyId,
               questionId,
