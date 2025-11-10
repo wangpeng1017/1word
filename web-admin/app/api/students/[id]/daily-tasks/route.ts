@@ -27,7 +27,8 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
     const audios = v.word_audios || v.audios || []
     const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
     const audioUk = audios.find((a: any) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
-    const defaultAudio = v.audioUrl ?? v.audio_url ?? audioUs ?? audioUk ?? null
+    // 默认优先使用我们库里的 US/UK 音频，外部 audioUrl 仅作为兜底
+    const defaultAudio = audioUs ?? audioUk ?? v.audioUrl ?? v.audio_url ?? null
 
     return {
       id: t.id,

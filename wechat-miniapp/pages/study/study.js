@@ -395,7 +395,8 @@ Page({
     if (!currentTask || !currentTask.vocabulary) return
 
     const v = currentTask.vocabulary
-    const url = v.audioUs || v.audioUS || v.audio_us || v.audioUrl || v.audioUk || v.audioUK || v.audio_uk || ''
+    // 优先 US -> UK -> 兜底 audioUrl
+    const url = v.audioUs || v.audioUS || v.audio_us || v.audioUk || v.audioUK || v.audio_uk || v.audioUrl || ''
     if (!url) {
       wx.showToast({ title: '暂无音频', icon: 'none' })
       return
@@ -403,7 +404,14 @@ Page({
     if (!this.data.audioContext) {
       this.data.audioContext = wx.createInnerAudioContext()
     }
-    this.data.audioContext.src = url
-    this.data.audioContext.play()
+    const ctx = this.data.audioContext
+    // 防止上一次错误回调残留
+    try { ctx.offError && ctx.offError() } catch {}
+    ctx.onError((err) => {
+      console.warn('音频播放失败:', err)
+      wx.showToast({ title: '音频不可用', icon: 'none' })
+    })
+    ctx.src = url
+    ctx.play()
   },
 })
