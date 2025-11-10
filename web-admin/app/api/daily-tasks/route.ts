@@ -178,6 +178,7 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
     vocabularyId: plan.vocabularyId,
     taskDate: targetDate,
     status: 'PENDING' as const,
+    updatedAt: new Date(),
   }))
 
   if (tasksToInsert.length > 0) {

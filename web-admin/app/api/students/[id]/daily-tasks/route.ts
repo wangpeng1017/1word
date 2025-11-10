@@ -233,6 +233,7 @@ export async function POST(
     let dtNum = 0
     const tasksToInsert = tasksToCreate.map(t => ({
       id: `dt_${dtTs}_${dtNum++}_${Math.random().toString(36).slice(2, 10)}`,
+      updatedAt: new Date(),
       ...t,
     }))
 
