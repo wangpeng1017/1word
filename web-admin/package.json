@@ -15,7 +15,8 @@
     "data:fetch-audio": "node scripts/fetch-audio-data.js",
     "data:import-all": "node scripts/import-phonetic-and-audio.js",
     "data:quick-import": "node scripts/quick-import-data.js",
-    "audio:upload-to-blob": "node scripts/upload-audio-to-blob.js"
+    "audio:upload-to-blob": "node scripts/upload-audio-to-blob.js",
+    "audio:fill-missing": "node scripts/batch-fill-missing-audio.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
