@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Table,
   Button,
@@ -16,7 +16,6 @@ import {
   Row,
   Col,
   Input,
-  Segmented,
 } from 'antd'
 import {
   PlusOutlined,
@@ -77,8 +76,6 @@ export default function StudyPlansPage() {
   const [form] = Form.useForm()
   const [generateForm] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  // 视图模式：按计划(明细) 或 按班级汇总
-  const [viewMode, setViewMode] = useState<'plan' | 'class'>('class')
 
   // 加载数据
   useEffect(() => {
@@ -375,76 +372,6 @@ export default function StudyPlansPage() {
     },
   ]
 
-  // 班级维度数据（含统计）
-  type ClassRow = {
-    key: string
-    className: string
-    students: string
-    planCount: number
-    pendingCount: number
-    inProgressCount: number
-    masteredCount: number
-  }
-  const classRows: ClassRow[] = useMemo(() => {
-    type Agg = {
-      students: Set<string>
-      plan: number
-      pending: number
-      inProgress: number
-      completed: number
-      mastered: number
-    }
-    const map = new Map<string, Agg>()
-    data.forEach((item) => {
-      const clsName = (item.student as any).class?.name || item.student?.classes?.name || '-'
-      const stuName = item.student?.user?.name || '-'
-      if (!map.has(clsName)) {
-        map.set(clsName, {
-          students: new Set<string>(),
-          plan: 0,
-          pending: 0,
-          inProgress: 0,
-          completed: 0,
-          mastered: 0,
-        })
-      }
-      const agg = map.get(clsName)!
-      agg.students.add(stuName)
-      agg.plan += 1
-      switch (item.status) {
-        case 'PENDING':
-          agg.pending += 1
-          break
-        case 'IN_PROGRESS':
-          agg.inProgress += 1
-          break
-        case 'COMPLETED':
-          agg.completed += 1
-          break
-        case 'MASTERED':
-          agg.mastered += 1
-          break
-      }
-    })
-    return Array.from(map.entries()).map(([clsName, agg], idx) => ({
-      key: `${clsName}-${idx}`,
-      className: clsName,
-      students: Array.from(agg.students).join('，'),
-      planCount: agg.plan,
-      pendingCount: agg.pending,
-      inProgressCount: agg.inProgress,
-      masteredCount: agg.mastered,
-    }))
-  }, [data])
-
-  const classColumns: ColumnsType<ClassRow> = [
-    { title: '班级', dataIndex: 'className', key: 'className' },
-    { title: '学生', dataIndex: 'students', key: 'students' },
-    { title: '计划数', dataIndex: 'planCount', key: 'planCount', align: 'center' as const },
-    { title: '待学习', dataIndex: 'pendingCount', key: 'pendingCount', align: 'center' as const },
-    { title: '学习中', dataIndex: 'inProgressCount', key: 'inProgressCount', align: 'center' as const },
-    { title: '已掌握', dataIndex: 'masteredCount', key: 'masteredCount', align: 'center' as const },
-  ]
 
   // 统计数据
   const stats = {
@@ -498,14 +425,6 @@ export default function StudyPlansPage() {
       {/* 操作栏 */}
       <div style={{ marginBottom: 16 }}>
         <Space wrap>
-          <Segmented
-            options={[
-              { label: '按班级汇总', value: 'class' },
-              { label: '按计划明细', value: 'plan' },
-            ]}
-            value={viewMode}
-            onChange={(v) => setViewMode(v as any)}
-          />
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -579,12 +498,12 @@ export default function StudyPlansPage() {
 
       {/* 表格 */}
       <Table
-        columns={viewMode === 'class' ? (classColumns as any) : columns}
-        dataSource={viewMode === 'class' ? (classRows as any) : data}
-        rowKey={viewMode === 'class' ? 'key' : 'id'}
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
         loading={loading}
         scroll={{ x: 1200 }}
-        rowSelection={viewMode === 'class' ? undefined : { selectedRowKeys, onChange: setSelectedRowKeys }}
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         pagination={{
           ...pagination,
           showSizeChanger: true,

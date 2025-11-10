@@ -109,7 +109,7 @@ export async function GET(
     const inProgressWords = studyPlans.filter(p => p.status === 'IN_PROGRESS').length
     const pendingWords = studyPlans.filter(p => p.status === 'PENDING').length
 
-    // 4. 获取需要复习的词汇（下次复习日期<=今天）
+    // 4. 获取需要复习的词汇（下次复习日期<=今天）；用于小程序概览的 dueCount 计算（不依赖已生成的每日任务）
     const needReview = studyPlans.filter(plan => {
       if (!plan.nextReviewAt || plan.status === 'MASTERED') return false
       return shouldReviewToday(plan.nextReviewAt, targetDate)
@@ -174,7 +174,8 @@ export async function GET(
         className: student.classes?.name || '-',
       },
       today: {
-        dueCount: todayTasks.length,
+        // 即使未生成每日任务，也以需复习的计划数作为应复习数
+        dueCount: Math.max(needReview, todayTasks.length),
         completedCount: todayTasks.filter(t => t.status === 'COMPLETED').length,
         pendingCount: todayTasks.filter(t => t.status === 'PENDING').length,
         tasks: todayTasks.map(t => ({
