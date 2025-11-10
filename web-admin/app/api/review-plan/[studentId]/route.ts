@@ -75,7 +75,7 @@ export async function GET(
       return errorResponse('学生不存在', 404)
     }
 
-    // 2. 获取今日任务
+    // 2. 获取今日任务（包含题目/选项）
     const todayTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
@@ -98,6 +98,9 @@ export async function GET(
         createdAt: 'asc',
       },
     })
+
+    // 仅统计/下发“有题目的任务”，用于小程序首页展示与学习页加载
+    const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0)
 
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
@@ -174,11 +177,11 @@ export async function GET(
         className: student.classes?.name || '-',
       },
       today: {
-        // 即使未生成每日任务，也以需复习的计划数作为应复习数
-        dueCount: Math.max(needReview, todayTasks.length),
-        completedCount: todayTasks.filter(t => t.status === 'COMPLETED').length,
-        pendingCount: todayTasks.filter(t => t.status === 'PENDING').length,
-        tasks: todayTasks.map(t => ({
+        // 统一为“今天实际可做的题数”（仅统计有题目的任务）
+        dueCount: validTasks.length,
+        completedCount: validTasks.filter(t => t.status === 'COMPLETED').length,
+        pendingCount: validTasks.filter(t => t.status === 'PENDING').length,
+        tasks: validTasks.map(t => ({
           id: t.id,
           status: t.status,
           vocabulary: toCamelVocabulary(t.vocabularies),
