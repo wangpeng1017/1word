@@ -4,6 +4,48 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { calculateNextReviewDate } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
 
+// 统一小程序所需的数据结构：
+// - 将 prisma 返回的 vocabularies/question_options 等字段映射为 vocabulary/options 等
+function mapTasksForMiniapp(dailyTasks: any[]) {
+  return dailyTasks.map((t: any) => {
+    const v = t.vocabularies || t.vocabulary || {}
+    const questions = (v.questions || []).map((q: any) => ({
+      id: q.id,
+      type: q.type,
+      content: q.content,
+      sentence: q.sentence,
+      audioUrl: q.audioUrl,
+      correctAnswer: q.correctAnswer,
+      options: (q.question_options || q.options || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)).map((o: any) => ({
+        id: o.id,
+        content: o.content,
+        isCorrect: o.isCorrect,
+        order: o.order,
+      })),
+    }))
+
+    return {
+      id: t.id,
+      studentId: t.studentId,
+      vocabularyId: t.vocabularyId,
+      taskDate: t.taskDate,
+      status: t.status,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      vocabulary: {
+        id: v.id,
+        word: v.word,
+        primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
+        secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
+        audioUrl: v.audioUrl ?? v.audio_url,
+        difficulty: v.difficulty,
+        isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
+        questions,
+      },
+    }
+  })
+}
+
 // GET /api/students/[id]/daily-tasks - 获取学生当日任务
 export async function GET(
   request: NextRequest,
@@ -51,7 +93,8 @@ export async function GET(
       },
     })
 
-    return apiResponse.success(dailyTasks)
+    const shaped = mapTasksForMiniapp(dailyTasks)
+    return apiResponse.success(shaped)
   } catch (error) {
     console.error('获取每日任务失败:', error)
     return apiResponse.error('获取每日任务失败')
@@ -78,6 +121,8 @@ export async function POST(
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    const endOfToday = new Date(today)
+    endOfToday.setHours(23, 59, 59, 999)
 
     // 检查今日是否已有任务
     const existingTasks = await prisma.daily_tasks.findMany({
@@ -114,7 +159,7 @@ export async function POST(
           in: ['IN_PROGRESS', 'PENDING'],
         },
         nextReviewAt: {
-          lte: today,
+          lte: endOfToday, // 允许当天任意时间的计划进入复习队列
         },
       },
       take: 20, // 每天最多20个复习词
@@ -198,11 +243,13 @@ export async function POST(
           },
         },
       },
+      orderBy: { createdAt: 'asc' },
     })
 
+    const shaped = mapTasksForMiniapp(createdTasks)
     return apiResponse.success({
       message: `已生成${createdTasks.length}个任务`,
-      tasks: createdTasks,
+      tasks: shaped,
     })
   } catch (error) {
     console.error('生成每日任务失败:', error)

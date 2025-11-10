@@ -4,6 +4,20 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayDate, shouldReviewToday } from '@/lib/ebbinghaus'
 
+// 小程序字段统一工具：将蛇形字段转换为驼峰，补充 vocabulary 包裹层
+function toCamelVocabulary(v: any) {
+  if (!v) return null
+  return {
+    id: v.id,
+    word: v.word,
+    primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
+    secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
+    audioUrl: v.audioUrl ?? v.audio_url,
+    difficulty: v.difficulty,
+    isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
+  }
+}
+
 /**
  * 获取学生的复习计划和学习进度
  * GET /api/review-plan/[studentId]
@@ -65,9 +79,7 @@ export async function GET(
 
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
-      where: {
-        studentId,
-      },
+      where: { studentId },
     })
 
     const totalWords = studyPlans.length
@@ -83,9 +95,7 @@ export async function GET(
 
     // 5. 获取掌握度统计
     const wordMasteries = await prisma.word_masteries.findMany({
-      where: {
-        studentId,
-      },
+      where: { studentId },
     })
 
     const difficultWords = wordMasteries.filter(m => m.isDifficult).length
@@ -105,9 +115,7 @@ export async function GET(
           lte: targetDate,
         },
       },
-      orderBy: {
-        taskDate: 'asc',
-      },
+      orderBy: { taskDate: 'asc' },
     })
 
     // 7. 计算连续学习天数
@@ -134,7 +142,47 @@ export async function GET(
       if (consecutiveDays >= 365) break // 最多查询一年
     }
 
+    // 小程序友好的结构（不破坏原有字段）：
+    const miniapp = {
+      student: {
+        id: student.id,
+        name: student.user.name,
+        studentNo: student.student_no,
+        grade: student.grade,
+        className: student.classes?.name || '-',
+      },
+      today: {
+        dueCount: todayTasks.length,
+        completedCount: todayTasks.filter(t => t.status === 'COMPLETED').length,
+        pendingCount: todayTasks.filter(t => t.status === 'PENDING').length,
+        tasks: todayTasks.map(t => ({
+          id: t.id,
+          status: t.status,
+          vocabulary: toCamelVocabulary(t.vocabularies),
+        })),
+      },
+      progress: {
+        totalWords,
+        masteredWords,
+        inProgressWords,
+        pendingWords,
+        needReview,
+        difficultWords,
+        masteryRate: totalWords > 0 ? Number(((masteredWords / totalWords) * 100).toFixed(1)) : 0,
+        avgAccuracy: Number((avgAccuracy * 100).toFixed(1)),
+        consecutiveDays,
+      },
+      recent: recentStudyRecords.map(r => ({
+        date: r.taskDate,
+        completed: r.completedWords,
+        total: r.totalWords,
+        accuracy: Number((r.accuracy * 100).toFixed(1)),
+        timeSpent: r.totalTime,
+      })),
+    }
+
     return successResponse({
+      // 兼容原响应
       students: {
         id: student.id,
         name: student.user.name,
@@ -172,6 +220,8 @@ export async function GET(
         accuracy: (r.accuracy * 100).toFixed(1),
         timeSpent: r.totalTime,
       })),
+      // 新增：小程序友好的 overview
+      miniapp,
     })
   } catch (error) {
     console.error('获取复习计划错误:', error)
