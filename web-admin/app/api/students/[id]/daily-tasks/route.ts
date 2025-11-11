@@ -156,7 +156,7 @@ export async function POST(
     const endOfToday = new Date(today)
     endOfToday.setHours(23, 59, 59, 999)
 
-    // 检查今日是否已有任务
+    // 读取今日已存在任务（可能是先前生成的）
     const existingTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
@@ -178,11 +178,6 @@ export async function POST(
       orderBy: { createdAt: 'asc' },
     })
 
-    if (existingTasks.length > 0) {
-      // 幂等：已有任务则直接返回成功
-      return apiResponse.success({ message: '今日任务已生成', tasks: existingTasks })
-    }
-
     // 1. 查找需要复习的单词（基于艾宾浩斯曲线）
     const reviewPlans = await prisma.study_plans.findMany({
       where: {
@@ -194,16 +189,25 @@ export async function POST(
           lte: endOfToday, // 允许当天任意时间的计划进入复习队列
         },
       },
-      take: 20, // 每天最多20个复习词
+      take: 30, // 每天最多30个复习词（与配置一致）
     })
 
-    // 2. 创建每日任务（仅复习词，不补充新词）
-    const tasksToCreate = reviewPlans.map(plan => ({
-      studentId,
-      vocabularyId: plan.vocabularyId,
-      taskDate: today,
-      status: 'PENDING' as const,
-    }))
+    // 2. 创建每日任务（仅复习词，不补充新词）。如果今天已有部分任务，则增量补齐未生成的任务。
+    const existedSet = new Set(existingTasks.map(t => t.vocabularyId))
+    const tasksToCreate = reviewPlans
+      .filter(plan => !existedSet.has(plan.vocabularyId))
+      .map(plan => ({
+        studentId,
+        vocabularyId: plan.vocabularyId,
+        taskDate: today,
+        status: 'PENDING' as const,
+      }))
+
+    // 若没有需要新增的任务且已存在任务，直接返回现有任务
+    if (tasksToCreate.length === 0 && existingTasks.length > 0) {
+      const shapedExisting = mapTasksForMiniapp(existingTasks)
+      return apiResponse.success({ message: '今日任务已存在（无新增）', tasks: shapedExisting })
+    }
 
     if (tasksToCreate.length === 0) {
       return apiResponse.success({ message: '暂无任务', tasks: [] })
@@ -223,8 +227,8 @@ export async function POST(
       skipDuplicates: true, // 防止并发/重复触发造成唯一键冲突
     })
 
-    // 5. 返回创建的任务（带词汇和题目信息）
-    const createdTasks = await prisma.daily_tasks.findMany({
+    // 5. 返回今天的全部任务（带词汇和题目信息）
+    const allTasks = await prisma.daily_tasks.findMany({
       where: {
         studentId,
         taskDate: today,
@@ -248,14 +252,14 @@ export async function POST(
       orderBy: { createdAt: 'asc' },
     })
 
-    // 分配题型并选择题目
-    const vocabularyIds2 = createdTasks.map(t => t.vocabularyId)
+    // 分配题型并选择题目（考虑有无音频）
+    const vocabularyIds2 = allTasks.map(t => t.vocabularyId)
     const hasAudioMap2 = new Map<string, boolean>(
-      createdTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
+      allTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
     )
     const allocation2 = allocateQuestionTypes(vocabularyIds2, hasAudioMap2)
 
-    const withSel = createdTasks.map(t => {
+    const withSel = allTasks.map(t => {
       const targetType = allocation2.get(t.vocabularyId)
       const selected = selectQuestionByType(
         ((t.vocabularies as any)?.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
@@ -266,7 +270,7 @@ export async function POST(
 
     const shaped = mapTasksForMiniapp(withSel)
     return apiResponse.success({
-      message: `已生成${withSel.length}个任务`,
+      message: `今日任务共 ${withSel.length} 个（其中新增 ${tasksToCreate.length} 个）`,
       tasks: shaped,
     })
   } catch (error: any) {
