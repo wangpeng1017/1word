@@ -113,8 +113,8 @@ Page({
         console.warn('review-plan 获取失败，回退到每日任务接口', e)
       }
 
-      // 2) 若概览没有任务，回退到原有生成逻辑
-      if (!tasks || tasks.length === 0) {
+      // 2) 若概览没有任务，或概览任务未附带后端选题信息，则回退到每日任务接口（该接口带选题分配）
+      if (!tasks || tasks.length === 0 || !tasks[0]?.selectedQuestionId) {
         let response = []
         try {
           response = await get(`/students/${studentId}/daily-tasks`)
