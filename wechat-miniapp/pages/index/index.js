@@ -73,7 +73,9 @@ Page({
         const saved = getStudyProgress()
         const reviewedFromServer = mi.today.completedCount || 0
         const due = mi.today.dueCount || 0
-        const reviewedFromLocal = saved ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
+        // 仅在同一天内才使用本地进度；跨天则忽略并清理，避免把昨天的进度当成今天已完成
+        const savedIsToday = saved && saved.startTime && (new Date(saved.startTime).toDateString() === new Date().toDateString())
+        const reviewedFromLocal = savedIsToday ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
 
         return {
           bookName: '今日任务',
