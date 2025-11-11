@@ -103,9 +103,10 @@ Page({
 
       // 1) 优先使用复习概览（miniapp.today.tasks 包含 vocabulary.questions）
       let tasks = []
+      let mi = null
       try {
         const data = await get(`/review-plan/${studentId}`)
-        const mi = data && data.miniapp
+        mi = data && data.miniapp
         if (mi && mi.today && Array.isArray(mi.today.tasks)) {
           tasks = mi.today.tasks
         }
