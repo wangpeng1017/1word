@@ -39,6 +39,9 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
       status: t.status,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
+      // 题型分配与选中题目（用于小程序端按服务端结果出题）
+      targetQuestionType: (t as any).targetQuestionType || null,
+      selectedQuestionId: (t as any).selectedQuestionId || null,
       vocabulary: {
         id: v.id,
         word: v.word,

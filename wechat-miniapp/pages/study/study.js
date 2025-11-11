@@ -191,12 +191,20 @@ Page({
     const currentTask = tasks[currentIndex]
     const vocabulary = currentTask.vocabulary
     
-    // 优先选择英选汉题型
-    let question = vocabulary.questions.find(q => q.type === 'ENGLISH_TO_CHINESE')
-    
-    // 如果没有英选汉，选择其他题型
-    if (!question && vocabulary.questions.length > 0) {
-      question = vocabulary.questions[0]
+    // 1) 若后端已选定题目，优先按 selectedQuestionId 取题
+    let question = null
+    if (currentTask.selectedQuestionId) {
+      question = vocabulary.questions.find(q => q.id === currentTask.selectedQuestionId)
+    }
+
+    // 2) 否则按目标题型选择
+    if (!question && currentTask.targetQuestionType) {
+      question = vocabulary.questions.find(q => q.type === currentTask.targetQuestionType)
+    }
+
+    // 3) 仍未命中则回退到英选汉；再不行取第一题
+    if (!question) {
+      question = vocabulary.questions.find(q => q.type === 'ENGLISH_TO_CHINESE') || vocabulary.questions[0]
     }
 
     if (!question) {
