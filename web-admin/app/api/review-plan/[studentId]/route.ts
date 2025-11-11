@@ -136,7 +136,8 @@ export async function GET(
     }).length
 
     // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
-    const estimatedDueCount = validTasks.length > 0 ? validTasks.length : needReview
+    // 取两者最大值：已生成任务数 vs 学习计划应复习数（支持当天临时新增计划）
+    const estimatedDueCount = Math.max(validTasks.length, needReview)
 
     // 诊断日志（观察首页显示问题）
     console.log('[review-plan] miniapp overview', {

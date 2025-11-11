@@ -113,14 +113,16 @@ Page({
         console.warn('review-plan 获取失败，回退到每日任务接口', e)
       }
 
-      // 2) 若概览没有任务，或概览任务未附带后端选题信息，则回退到每日任务接口（该接口带选题分配）
-      if (!tasks || tasks.length === 0 || !tasks[0]?.selectedQuestionId) {
+      // 2) 若概览没有任务，或概览任务未附带后端选题信息，或“应复习数 > 当前任务数”（当天新增了计划），则回退/触发生成接口
+      const dueFromOverview = (mi && mi.today && mi.today.dueCount) ? mi.today.dueCount : 0
+      if (!tasks || tasks.length === 0 || !tasks[0]?.selectedQuestionId || dueFromOverview > tasks.length) {
         let response = []
         try {
           response = await get(`/students/${studentId}/daily-tasks`)
         } catch (_) { response = [] }
 
-        if (!response || response.length === 0) {
+        // 若GET无数据或数量不足，则POST触发增量生成
+        if (!response || response.length === 0 || dueFromOverview > response.length) {
           const generateResponse = await post(`/students/${studentId}/daily-tasks`)
           tasks = generateResponse.tasks || []
         } else {
