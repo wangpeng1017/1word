@@ -13,24 +13,24 @@ export async function POST(request: NextRequest) {
     console.log('请求体:', JSON.stringify(body, null, 2))
     console.log('请求头:', Object.fromEntries(request.headers.entries()))
     
-    const { email, phone, password } = body
+    const { email, phone, studentNo, password } = body
 
     if (!password) {
       console.log('❌ 密码为空')
       return errorResponse('密码不能为空')
     }
 
-    // email字段可以是邮箱或手机号
-    const loginIdentifier = email || phone
+    // 支持邮箱/手机号/学号登录
+    const loginIdentifier = email || phone || studentNo
     console.log('登录标识符:', loginIdentifier)
     
     if (!loginIdentifier) {
-      console.log('❌ 邮箱和手机号均为空')
-      return errorResponse('邮箱或手机号不能为空')
+      console.log('❌ 缺少登录标识符')
+      return errorResponse('请输入账号（邮箱/手机号/学号）')
     }
 
-    // 查找用户（支持邮箱或手机号登录）
-    const user = await prisma.user.findFirst({
+    // 1) 先按邮箱或手机号查用户
+    let user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: loginIdentifier },
@@ -42,6 +42,23 @@ export async function POST(request: NextRequest) {
         students: { select: { id: true } },
       },
     })
+
+    // 2) 如果没查到，再按学号查学生→用户
+    if (!user) {
+      const stu = await prisma.students.findUnique({
+        where: { student_no: loginIdentifier },
+        select: { user_id: true },
+      })
+      if (stu) {
+        user = await prisma.user.findUnique({
+          where: { id: stu.user_id },
+          include: {
+            teachers: { select: { id: true } },
+            students: { select: { id: true } },
+          },
+        })
+      }
+    }
 
     if (!user) {
       return errorResponse('用户不存在')
