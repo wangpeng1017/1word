@@ -129,11 +129,17 @@ export async function GET(
     const inProgressWords = studyPlans.filter(p => p.status === 'IN_PROGRESS').length
     const pendingWords = studyPlans.filter(p => p.status === 'PENDING').length
 
-    // 4. 获取需要复习的词汇（下次复习日期<=今天）；用于小程序概览的 dueCount 计算（不依赖已生成的每日任务）
-    const needReview = studyPlans.filter(plan => {
-      if (!plan.nextReviewAt || plan.status === 'MASTERED') return false
-      return shouldReviewToday(plan.nextReviewAt, targetDate)
-    }).length
+    // 4. 获取需要复习的词汇
+    // 使用数据库端计数，按 <= 当天23:59:59 统计，避免时区/内存过滤误差
+    const endOfToday = new Date(targetDate)
+    endOfToday.setHours(23, 59, 59, 999)
+    const needReview = await prisma.study_plans.count({
+      where: {
+        studentId,
+        status: { in: ['IN_PROGRESS', 'PENDING'] },
+        nextReviewAt: { lte: endOfToday },
+      },
+    })
 
     // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
     // 取两者最大值：已生成任务数 vs 学习计划应复习数（支持当天临时新增计划）
