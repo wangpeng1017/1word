@@ -102,19 +102,6 @@ export async function GET(
     // 仅统计/下发“有题目的任务”，用于小程序首页展示与学习页加载
     const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0)
 
-    // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
-    const estimatedDueCount = validTasks.length > 0 ? validTasks.length : needReview
-    
-    // 诊断日志（观察首页显示问题）：
-    console.log('[review-plan] miniapp overview', {
-      studentId,
-      date: targetDate.toISOString().slice(0, 10),
-      todayTasks: todayTasks.length,
-      validTasks: validTasks.length,
-      needReview,
-      estimatedDueCount,
-    })
-
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
       where: { studentId },
@@ -130,6 +117,19 @@ export async function GET(
       if (!plan.nextReviewAt || plan.status === 'MASTERED') return false
       return shouldReviewToday(plan.nextReviewAt, targetDate)
     }).length
+
+    // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
+    const estimatedDueCount = validTasks.length > 0 ? validTasks.length : needReview
+
+    // 诊断日志（观察首页显示问题）
+    console.log('[review-plan] miniapp overview', {
+      studentId,
+      date: targetDate.toISOString().slice(0, 10),
+      todayTasks: todayTasks.length,
+      validTasks: validTasks.length,
+      needReview,
+      estimatedDueCount,
+    })
 
     // 5. 获取掌握度统计
     const wordMasteries = await prisma.word_masteries.findMany({

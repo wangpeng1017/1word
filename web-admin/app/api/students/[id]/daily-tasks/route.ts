@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { calculateNextReviewDate } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
+import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
 
 // 统一小程序所需的数据结构：
 // - 将 prisma 返回的 vocabularies/question_options 等字段映射为 vocabulary/options 等
