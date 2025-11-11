@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayDate, shouldReviewToday } from '@/lib/ebbinghaus'
+import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
 
 // 小程序字段统一工具：将蛇形字段转换为驼峰，补充 vocabulary 包裹层
 function toCamelVocabulary(v: any) {
@@ -84,6 +85,7 @@ export async function GET(
       include: {
         vocabularies: {
           include: {
+            word_audios: true,
             questions: {
               include: {
                 question_options: {
@@ -101,6 +103,21 @@ export async function GET(
 
     // 仅统计/下发“有题目的任务”，用于小程序首页展示与学习页加载
     const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0)
+
+    // 为 validTasks 分配题型与选题（80/20；有音频才分配LISTENING）
+    const vocabularyIds = validTasks.map(t => t.vocabularyId)
+    const hasAudioMap = new Map<string, boolean>(
+      validTasks.map(t => [t.vocabularyId, ((t.vocabularies as any)?.word_audios || []).length > 0])
+    )
+    const allocation = allocateQuestionTypes(vocabularyIds, hasAudioMap)
+    const tasksWithSelection = validTasks.map(t => {
+      const targetType = allocation.get(t.vocabularyId)
+      const selected = selectQuestionByType(
+        (((t.vocabularies as any)?.questions) || []).map((q: any) => ({ id: q.id, type: q.type })),
+        targetType as any
+      )
+      return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
+    })
 
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
@@ -194,9 +211,11 @@ export async function GET(
         dueCount: estimatedDueCount,
         completedCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'COMPLETED').length : 0,
         pendingCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'PENDING').length : estimatedDueCount,
-        tasks: validTasks.map(t => ({
+        tasks: tasksWithSelection.map((t: any) => ({
           id: t.id,
           status: t.status,
+          targetQuestionType: t.targetQuestionType,
+          selectedQuestionId: t.selectedQuestionId,
           vocabulary: toCamelVocabulary(t.vocabularies),
         })),
       },
