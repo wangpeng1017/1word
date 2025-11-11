@@ -230,10 +230,10 @@ export async function GET(
         className: student.classes?.name || '-',
       },
       today: {
-        // 优先使用已生成的每日任务；若未生成，则用学习计划估算（用于展示“开始复习”按钮）
+        // today.dueCount 定义为“仍需完成”的任务量（已生成未完成 + 尚未生成的应复习计划）
         dueCount: estimatedDueCount,
-        completedCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'COMPLETED').length : 0,
-        pendingCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'PENDING').length : estimatedDueCount,
+        completedCount: 0, // 与 dueCount 对应的已完成进度，新增计划当天应为0，由学习页实时推进
+        pendingCount: estimatedDueCount,
         tasks: tasksWithSelection.map((t: any) => ({
           id: t.id,
           status: t.status,
