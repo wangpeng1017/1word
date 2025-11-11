@@ -119,6 +119,19 @@ export async function GET(
       return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
     })
 
+    // 计算“今天应复习数”：已生成的未完成任务 + 还未生成的应复习计划数量
+    const existingPendingCount = validTasks.filter((t: any) => t.status !== 'COMPLETED').length
+    const existingVocabIdSet = new Set(vocabularyIds)
+    const duePlans = await prisma.study_plans.findMany({
+      where: {
+        studentId,
+        status: { in: ['IN_PROGRESS', 'PENDING'] },
+        nextReviewAt: { lte: endOfToday },
+      },
+      select: { vocabularyId: true },
+    })
+    const missingCount = duePlans.filter(p => !existingVocabIdSet.has(p.vocabularyId)).length
+
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
       where: { studentId },
@@ -142,8 +155,8 @@ export async function GET(
     })
 
     // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
-    // 取两者最大值：已生成任务数 vs 学习计划应复习数（支持当天临时新增计划）
-    const estimatedDueCount = Math.max(validTasks.length, needReview)
+    // 最终 today.dueCount：已生成的未完成任务 + 还未生成的应复习计划
+    const estimatedDueCount = existingPendingCount + missingCount
 
     // 诊断日志（观察首页显示问题）
     console.log('[review-plan] miniapp overview', {

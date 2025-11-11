@@ -71,8 +71,9 @@ Page({
       if (mi && mi.today) {
         // 若本地有进度，则让前端进度覆盖服务端统计的一部分（以便继续学习提示）
         const saved = getStudyProgress()
-        const reviewedFromServer = mi.today.completedCount || 0
         const due = mi.today.dueCount || 0
+        // 将服务端已完成数限制在 <= due，避免“历史已完成数”压过新增任务
+        const reviewedFromServer = Math.min(mi.today.completedCount || 0, due)
         // 仅在同一天内才使用本地进度；跨天则忽略并清理，避免把昨天的进度当成今天已完成
         const savedIsToday = saved && saved.startTime && (new Date(saved.startTime).toDateString() === new Date().toDateString())
         const reviewedFromLocal = savedIsToday ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
