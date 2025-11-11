@@ -194,62 +194,13 @@ export async function POST(
       take: 20, // 每天最多20个复习词
     })
 
-    // 2. 查找新词（还没有学习计划的词）
-    const existingVocabIds = await prisma.study_plans.findMany({
-      where: { studentId },
-      select: { vocabularyId: true },
-    })
-
-    const existingIds = existingVocabIds.map(p => p.vocabularyId)
-
-    const newVocabularies = await prisma.vocabularies.findMany({
-      where: {
-        id: {
-          notIn: existingIds,
-        },
-      },
-      take: 10, // 每天最多10个新词
-      orderBy: {
-        created_at: 'desc',
-      },
-    })
-
-    // 3. 为新词创建学习计划（使用 upsert 幂等并显式生成 id）
-    const spTimestamp = Date.now()
-    let spCounter = 0
-    for (const vocab of newVocabularies) {
-      await prisma.study_plans.upsert({
-        where: {
-          studentId_vocabularyId: { studentId, vocabularyId: vocab.id },
-        },
-        update: {},
-        create: {
-          id: `sp_${spTimestamp}_${spCounter++}_${Math.random().toString(36).slice(2, 10)}`,
-          studentId,
-          vocabularyId: vocab.id,
-          status: 'PENDING',
-          reviewCount: 0,
-          nextReviewAt: today,
-          updatedAt: new Date(),
-        },
-      })
-    }
-
-    // 4. 创建每日任务
-    const tasksToCreate = [
-      ...reviewPlans.map(plan => ({
-        studentId,
-        vocabularyId: plan.vocabularyId,
-        taskDate: today,
-        status: 'PENDING' as const,
-      })),
-      ...newVocabularies.map(vocab => ({
-        studentId,
-        vocabularyId: vocab.id,
-        taskDate: today,
-        status: 'PENDING' as const,
-      })),
-    ]
+    // 2. 创建每日任务（仅复习词，不补充新词）
+    const tasksToCreate = reviewPlans.map(plan => ({
+      studentId,
+      vocabularyId: plan.vocabularyId,
+      taskDate: today,
+      status: 'PENDING' as const,
+    }))
 
     if (tasksToCreate.length === 0) {
       return apiResponse.success({ message: '暂无任务', tasks: [] })
