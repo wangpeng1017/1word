@@ -126,8 +126,8 @@ export default function ClassesPage() {
   }
 
   const columns = [
-    { title: '班级名称', dataIndex: 'name', key: 'name' },
     { title: '年级', dataIndex: 'grade', key: 'grade' },
+    { title: '班级', dataIndex: 'name', key: 'name' },
     {
       title: '学生数',
       dataIndex: '_count',
@@ -192,11 +192,11 @@ export default function ClassesPage() {
         }}
       >
         <Form form={form} layout="vertical">
-          <Form.Item label="班级名称" name="name" rules={[{ required: true, message: '请输入班级名称' }]}>
-            <Input placeholder="例如: 高一(1)班" />
-          </Form.Item>
           <Form.Item label="年级" name="grade" rules={[{ required: true, message: '请输入年级' }]}>
             <Input placeholder="例如: 高一" />
+          </Form.Item>
+          <Form.Item label="班级" name="name" rules={[{ required: true, message: '请输入班级' }]}>
+            <Input placeholder="例如: 高一(1)班" />
           </Form.Item>
         </Form>
       </Modal>

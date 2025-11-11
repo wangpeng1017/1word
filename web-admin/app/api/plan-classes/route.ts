@@ -239,15 +239,20 @@ const existingPlans = await prisma.study_plans.findMany({
       }
     }
 
-    // 3) 批量插入新的study_plans
+    // 3) 批量插入新的study_plans（需要提供必填字段：id、updatedAt）
     if (toCreatePairs.length > 0) {
+      const ts = Date.now()
+      let idx = 0
       await prisma.study_plans.createMany({
         data: toCreatePairs.map(({ studentId, vocabularyId }) => ({
+          id: `sp_${ts}_${idx++}_${Math.random().toString(36).substr(2, 9)}`,
           studentId,
           vocabularyId,
           status: 'PENDING' as const,
           reviewCount: 0,
           nextReviewAt: new Date(startDate),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })),
         skipDuplicates: true,
       })
