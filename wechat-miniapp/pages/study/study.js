@@ -146,7 +146,8 @@ Page({
       const validTasks = tasks.filter(task => 
         task.vocabulary && 
         task.vocabulary.questions && 
-        task.vocabulary.questions.length > 0
+        task.vocabulary.questions.length > 0 &&
+        (task.status !== 'COMPLETED')
       )
 
       if (validTasks.length === 0) {

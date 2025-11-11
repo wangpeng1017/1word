@@ -21,8 +21,8 @@
       </view>
       <view class="divider"></view>
       <view class="stat">
-        <view class="num">{{overview.elapsedMinutes}}</view>
-        <view class="label">今日用时(分)</view>
+        <view class="num">{{overview.elapsedSeconds}}</view>
+        <view class="label">今日用时(秒)</view>
       </view>
     </view>
 

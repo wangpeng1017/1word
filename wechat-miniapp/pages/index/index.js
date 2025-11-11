@@ -82,7 +82,7 @@ Page({
           bookName: '今日任务',
           dueCount: due,
           reviewedCount: Math.max(reviewedFromServer, reviewedFromLocal),
-          elapsedMinutes: 0, // 概览未返回用时，若需要可后续扩展
+          elapsedSeconds: mi.today.timeSpentSeconds || 0,
         }
       }
     } catch (e) {

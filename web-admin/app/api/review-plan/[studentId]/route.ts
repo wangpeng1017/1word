@@ -101,8 +101,8 @@ export async function GET(
       },
     })
 
-    // 仅统计/下发“有题目的任务”，用于小程序首页展示与学习页加载
-    const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0)
+    // 仅统计/下发“有题目的任务”（且未完成），用于小程序首页展示与学习页加载
+    const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0 && t.status !== 'COMPLETED')
 
     // 为 validTasks 分配题型与选题（80/20；有音频才分配LISTENING）
     const vocabularyIds = validTasks.map(t => t.vocabularyId)
@@ -196,6 +196,12 @@ export async function GET(
       orderBy: { taskDate: 'asc' },
     })
 
+    // 今日用时（秒）
+    const todayRecord = await prisma.study_records.findFirst({
+      where: { studentId, taskDate: targetDate },
+    })
+    const timeSpentSeconds = todayRecord?.totalTime || 0
+
     // 7. 计算连续学习天数
     let consecutiveDays = 0
     const today = getTodayDate()
@@ -241,6 +247,7 @@ export async function GET(
           selectedQuestionId: t.selectedQuestionId,
           vocabulary: toCamelVocabulary(t.vocabularies),
         })),
+        timeSpentSeconds,
       },
       progress: {
         totalWords,
