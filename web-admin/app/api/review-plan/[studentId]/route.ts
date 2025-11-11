@@ -102,6 +102,18 @@ export async function GET(
     // 仅统计/下发“有题目的任务”，用于小程序首页展示与学习页加载
     const validTasks = todayTasks.filter(t => (t.vocabularies as any)?.questions?.length > 0)
 
+    // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量
+    const estimatedDueCount = validTasks.length > 0 ? validTasks.length : ((): number => {
+      try {
+        return studyPlans.filter(plan => {
+          if (!plan.nextReviewAt || plan.status === 'MASTERED') return false
+          return shouldReviewToday(plan.nextReviewAt, targetDate)
+        }).length
+      } catch (_) {
+        return 0
+      }
+    })()
+
     // 3. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
       where: { studentId },
@@ -177,10 +189,10 @@ export async function GET(
         className: student.classes?.name || '-',
       },
       today: {
-        // 统一为“今天实际可做的题数”（仅统计有题目的任务）
-        dueCount: validTasks.length,
-        completedCount: validTasks.filter(t => t.status === 'COMPLETED').length,
-        pendingCount: validTasks.filter(t => t.status === 'PENDING').length,
+        // 优先使用已生成的每日任务；若未生成，则用学习计划估算（用于展示“开始复习”按钮）
+        dueCount: estimatedDueCount,
+        completedCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'COMPLETED').length : 0,
+        pendingCount: validTasks.length > 0 ? validTasks.filter(t => t.status === 'PENDING').length : estimatedDueCount,
         tasks: validTasks.map(t => ({
           id: t.id,
           status: t.status,
