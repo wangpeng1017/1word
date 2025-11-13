@@ -1,13 +1,16 @@
 // pages/study/result.js
+const { get } = require('../../utils/request')
+const app = getApp()
 Page({
   data: {
     correct: 0,
     wrong: 0,
     total: 0,
     accuracy: 0,
+    timeSeconds: 0,
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     const correct = parseInt(options.correct || 0)
     const wrong = parseInt(options.wrong || 0)
     const total = parseInt(options.total || 0)
@@ -19,6 +22,16 @@ Page({
       total,
       accuracy,
     })
+
+    // 与首页保持一致：从概览获取今日累计用时
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (studentId) {
+        const data = await get(`/review-plan/${studentId}`)
+        const ts = data?.miniapp?.today?.timeSpentSeconds || 0
+        this.setData({ timeSeconds: ts })
+      }
+    } catch (e) {}
   },
 
   // 查看错题（tab）

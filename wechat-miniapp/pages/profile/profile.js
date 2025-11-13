@@ -35,12 +35,33 @@ Page({
   },
 
   // 加载用户信息
-  loadUserInfo() {
+  async loadUserInfo() {
+    try {
+      const me = await get('/auth/me')
+      if (me) {
+        const merged = {
+          ...(app.globalData.userInfo || {}),
+          id: me.id,
+          name: me.name,
+          email: me.email,
+          phone: me.phone,
+          role: me.role,
+          studentId: me.student?.id || app.globalData.userInfo?.studentId,
+          teacherId: me.teacher?.id || app.globalData.userInfo?.teacherId,
+          studentNo: me.student?.student_no || app.globalData.userInfo?.studentNo,
+        }
+        app.globalData.userInfo = merged
+        this.setData({ userInfo: merged })
+        return
+      }
+    } catch (e) {
+      // ignore
+    }
     const userInfo = app.globalData.userInfo
     this.setData({ userInfo })
   },
 
-  // 加载统计数据
+  // 加载统计数据（来自 overview + 近7天记录）
   async loadStats() {
     try {
       const studentId = app.globalData.userInfo?.studentId
@@ -48,17 +69,19 @@ Page({
         return
       }
 
-      // TODO: 实际API调用获取统计数据
-      // const stats = await get(`/students/${studentId}/stats`)
-      
-      // 暂时使用模拟数据
+      const overview = await get(`/review-plan/${studentId}`)
+      const progress = overview?.miniapp?.progress || {}
+
+      const records = await get(`/study-records?studentId=${studentId}&limit=7`)
+      const wrongCount = Array.isArray(records) ? records.reduce((sum, r) => sum + (r.wrongCount || 0), 0) : 0
+
       this.setData({
         stats: {
-          totalWords: 156,
-          masteredWords: 89,
-          difficultWords: 12,
-          studyDays: 15,
-          wrongCount: 23,
+          totalWords: progress.totalWords || 0,
+          masteredWords: progress.masteredWords || 0,
+          difficultWords: progress.difficultWords || 0,
+          studyDays: progress.consecutiveDays || 0,
+          wrongCount,
         },
         isLoading: false,
       })

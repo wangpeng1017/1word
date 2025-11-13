@@ -9,14 +9,14 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#4F46E5",
+    "navigationBarBackgroundColor": "#10B981",
     "navigationBarTitleText": "今日复习",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#F3F4F6"
   },
   "tabBar": {
     "color": "#6B7280",
-    "selectedColor": "#4F46E5",
+    "selectedColor": "#10B981",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [

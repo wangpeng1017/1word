@@ -33,6 +33,10 @@
         <text class="stat-value">{{wrong}}</text>
         <text class="stat-label">错误</text>
       </view>
+      <view class="stat-item">
+        <text class="stat-value">{{timeSeconds}}</text>
+        <text class="stat-label">今日用时(秒)</text>
+      </view>
     </view>
 
     <!-- 操作按钮 -->
