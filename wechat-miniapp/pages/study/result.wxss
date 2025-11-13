@@ -1,8 +1,8 @@
 /* pages/study/result.wxss */
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
-  padding: 60rpx 30rpx;
+  background: #F3F4F6; /* 与全局一致的浅灰背景 */
+  padding: 40rpx 30rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11,9 +11,9 @@
 .result-card {
   width: 100%;
   background: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 60rpx 40rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  border-radius: 20rpx;
+  padding: 48rpx 32rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05); /* 轻投影，与全局 card 一致 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,36 +32,36 @@
 }
 
 .accuracy-circle {
-  width: 260rpx;
-  height: 260rpx;
+  width: 220rpx;
+  height: 220rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: #FFFFFF;
+  border: 10rpx solid #E5E7EB; /* 柔和描边环 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 50rpx;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.4);
+  margin-bottom: 40rpx;
 }
 
 .accuracy-value {
-  font-size: 72rpx;
+  font-size: 64rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #111827;
   line-height: 1;
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
 }
 
 .accuracy-label {
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.9);
+  color: #6B7280;
 }
 
 .stats-grid {
   display: flex;
   width: 100%;
-  margin-bottom: 50rpx;
-  gap: 20rpx;
+  margin-bottom: 40rpx;
+  gap: 16rpx;
 }
 
 .stat-item {
@@ -112,47 +112,19 @@
 .btn-secondary {
   flex: 1;
   height: 88rpx;
-  border-radius: 12rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
-  /* 重置 button 组件默认样式 */
-  margin: 0;
-  box-sizing: border-box;
 }
-
-/* 重置 button 伪元素样式 */
-.btn-primary::after,
-.btn-secondary::after {
-  border: none;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
-  color: #FFFFFF;
-}
-
-.btn-secondary {
-  background: #FFFFFF;
-  color: #667EEA;
-  border: 2rpx solid #667EEA;
-}
+/* 使用全局 app.wxss 中的按钮样式，保持一致 */
 
 .encouragement {
-  margin-top: 40rpx;
-  padding: 30rpx 40rpx;
-  background: rgba(255, 255, 255, 0.2);
+  margin-top: 32rpx;
+  padding: 24rpx 32rpx;
+  background: #FFFFFF;
   border-radius: 16rpx;
-  backdrop-filter: blur(10rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
 }
 
 .encouragement text {
   font-size: 28rpx;
-  color: #FFFFFF;
+  color: #374151;
   line-height: 1.6;
 }
