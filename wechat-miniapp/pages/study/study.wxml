@@ -81,7 +81,7 @@
         <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
         <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
         <text wx:if="{{!isCorrect}}" class="result-extra">正确：{{currentQuestion.correctAnswer}}</text>
-        <text class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
+        <text wx:if="{{currentQuestion.correctAnswer != currentTask.vocabulary.primaryMeaning}}" class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
       </view>
     </view>
 
