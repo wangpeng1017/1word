@@ -261,8 +261,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #111827;
-  color: #fff;
   padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
 }
 .result-bar .result-main { display: flex; align-items: center; gap: 16rpx; }
@@ -270,8 +268,13 @@
 .result-bar .result-text { font-size: 28rpx; font-weight: 600; }
 .result-bar .result-extra { font-size: 24rpx; opacity: 0.9; }
 .result-bar .result-meaning { font-size: 24rpx; opacity: 0.8; margin-left: auto; }
-.result-bar.ok { background: #065F46; }
-.result-bar.bad { background: #7F1D1D; }
+/* 正确：柔和浅绿背景，深色文字确保清晰 */
+.result-bar.ok { background: #D9FFC4; color: #1F2937; }
+/* 错误：柔和浅粉背景，深色文字确保清晰 */
+.result-bar.bad { background: #FFE1E1; color: #1F2937; }
+/* 图标颜色与语义一致 */
+.result-bar.ok .result-icon { color: #16A34A; }
+.result-bar.bad .result-icon { color: #DC2626; }
 
 .correct-feedback {
   border-left: 6rpx solid #10B981;
