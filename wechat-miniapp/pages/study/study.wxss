@@ -15,6 +15,35 @@
   border-bottom: 1rpx solid #F3F4F6;
 }
 
+/* 正确答题时，顶部轻微波浪抖动 */
+.study-page.celebrate .study-header,
+.study-page.celebrate .fun-progress {
+  animation: header-wave 0.6s ease-out;
+  transform-origin: center bottom;
+}
+
+.study-page.celebrate .word-display {
+  animation: header-wave 0.6s ease-out 0.05s;
+}
+
+@keyframes header-wave {
+  0% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-8rpx);
+  }
+  40% {
+    transform: translateY(4rpx);
+  }
+  60% {
+    transform: translateY(-4rpx);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
 .header-info {
   flex: 1;
 }
@@ -262,6 +291,8 @@
   right: 0;
   bottom: 0;
   padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
+  z-index: 20;
+  overflow: visible;
 }
 .result-bar .result-main { display: flex; align-items: center; gap: 16rpx; }
 .result-bar .result-icon { font-size: 32rpx; }
@@ -275,6 +306,79 @@
 /* 图标颜色与语义一致 */
 .result-bar.ok .result-icon { color: #16A34A; }
 .result-bar.bad .result-icon { color: #DC2626; }
+
+/* 正确答题时，在底部结果条上方放烟花动画 */
+.fireworks {
+  position: absolute;
+  left: 50%;
+  top: -40rpx;
+  transform: translateX(-50%);
+  width: 260rpx;
+  height: 140rpx;
+  pointer-events: none;
+}
+
+.firework {
+  position: absolute;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #FDBA74;
+  box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.8);
+  opacity: 0;
+  animation: firework-burst 0.8s ease-out forwards;
+}
+
+.firework-1 {
+  left: 5%;
+  bottom: 0;
+}
+
+.firework-2 {
+  left: 30%;
+  bottom: 0;
+  background: #A5B4FC;
+  animation-delay: 0.06s;
+}
+
+.firework-3 {
+  left: 55%;
+  bottom: 0;
+  background: #6EE7B7;
+  animation-delay: 0.12s;
+}
+
+.firework-4 {
+  left: 80%;
+  bottom: 0;
+  background: #FDE68A;
+  animation-delay: 0.18s;
+}
+
+.firework-5 {
+  right: 0;
+  bottom: 0;
+  background: #F9A8D4;
+  animation-delay: 0.24s;
+}
+
+@keyframes firework-burst {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.8);
+  }
+  50% {
+    transform: translateY(-80rpx) scale(1.1);
+    opacity: 1;
+    box-shadow: 0 0 0 12rpx rgba(251, 146, 60, 0);
+  }
+  100% {
+    transform: translateY(-120rpx) scale(0.9);
+    opacity: 0;
+    box-shadow: 0 0 0 18rpx rgba(251, 146, 60, 0);
+  }
+}
 
 .correct-feedback {
   border-left: 6rpx solid #10B981;
