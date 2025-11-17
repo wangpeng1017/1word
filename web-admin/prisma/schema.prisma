@@ -193,6 +193,7 @@ model vocabularies {
   word_audios       word_audios[]
   word_images       word_images[]
   word_masteries    word_masteries[]
+  word_meanings     word_meanings[]    // 新增: 多词性多释义
   wrong_questions   wrong_questions[]
 }
 
@@ -213,6 +214,22 @@ model word_images {
   description  String?
   createdAt    DateTime     @default(now())
   vocabularies vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+}
+
+model word_meanings {
+  id             String       @id
+  vocabularyId   String
+  partOfSpeech   String       // 词性: n., v., adj., adv., prep., conj., pron., etc.
+  meaning        String       // 该词性下的释义
+  orderIndex     Int          @default(0) // 显示顺序
+  examples       String[]     @default([]) // 例句数组
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  vocabularies   vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([vocabularyId])
+  @@index([partOfSpeech])
+  @@index([vocabularyId, orderIndex])
 }
 
 model word_masteries {
