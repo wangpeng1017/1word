@@ -17,7 +17,10 @@
     "data:quick-import": "node scripts/quick-import-data.js",
     "audio:upload-to-blob": "node scripts/upload-audio-to-blob.js",
     "audio:fill-missing": "node scripts/batch-fill-missing-audio.js",
-    "audio:migrate-blob": "node scripts/migrate-audio-to-blob.js"
+    "audio:migrate-blob": "node scripts/migrate-audio-to-blob.js",
+    "perf:generate-test-data": "node scripts/generate-test-data.js",
+    "perf:benchmark": "node scripts/benchmark-pagination.js",
+    "perf:test-all": "npm run perf:generate-test-data && npm run perf:benchmark"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",

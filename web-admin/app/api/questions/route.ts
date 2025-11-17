@@ -31,13 +31,24 @@ export async function GET(request: NextRequest) {
       where.type = type
     }
 
+    // 性能优化: 使用 select 替代 include 减少数据传输
+    // 索引使用: idx_questions_vocabulary_type, idx_questions_created_at_desc
     const [questions, total] = await Promise.all([
       prisma.questions.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          type: true,
+          content: true,
+          sentence: true,
+          audioUrl: true,
+          correctAnswer: true,
+          createdAt: true,
+          updatedAt: true,
+          vocabularyId: true,
           vocabularies: {
             select: {
               word: true,
@@ -45,6 +56,12 @@ export async function GET(request: NextRequest) {
             },
           },
           question_options: {
+            select: {
+              id: true,
+              content: true,
+              isCorrect: true,
+              order: true,
+            },
             orderBy: { order: 'asc' },
           },
         },

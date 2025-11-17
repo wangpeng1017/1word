@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10000')
+    // 性能优化: 默认limit从10000降低到50，减少内存占用
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
     const search = searchParams.get('search') || ''
     const isHighFrequency = searchParams.get('isHighFrequency')
     const difficulty = searchParams.get('difficulty')
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
       where.difficulty = difficulty
     }
 
+    // 索引使用: idx_vocabularies_frequency_difficulty, idx_vocabularies_created_at_desc
     const [vocabularies, total] = await Promise.all([
       prisma.vocabularies.findMany({
         where,
