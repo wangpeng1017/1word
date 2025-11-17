@@ -20,7 +20,8 @@
     "audio:migrate-blob": "node scripts/migrate-audio-to-blob.js",
     "perf:generate-test-data": "node scripts/generate-test-data.js",
     "perf:benchmark": "node scripts/benchmark-pagination.js",
-    "perf:test-all": "npm run perf:generate-test-data && npm run perf:benchmark"
+    "perf:test-all": "npm run perf:generate-test-data && npm run perf:benchmark",
+    "db:add-indexes": "node scripts/add-indexes.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
