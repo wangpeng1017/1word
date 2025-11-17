@@ -22,6 +22,7 @@ import {
   FilterOutlined,
   UploadOutlined,
   SoundOutlined,
+  MinusCircleOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/navigation'
@@ -37,6 +38,14 @@ interface WordAudio {
   duration: number | null
 }
 
+interface WordMeaning {
+  id: string
+  partOfSpeech: string
+  meaning: string
+  orderIndex: number
+  examples: string[]
+}
+
 interface Vocabulary {
   id: string
   word: string
@@ -50,6 +59,7 @@ interface Vocabulary {
   difficulty: string
   createdAt: string
   audios?: WordAudio[]
+  meanings?: WordMeaning[] // 新增: 多词性多释义
 }
 
 export default function VocabulariesPage() {
@@ -73,7 +83,8 @@ export default function VocabulariesPage() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/vocabularies?includeAudios=true', {
+      // 加载音频和多词性释义
+      const response = await fetch('/api/vocabularies?includeAudios=true&includeMeanings=true', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
@@ -112,9 +123,22 @@ export default function VocabulariesPage() {
         const ukAudio = fullRecord.audios?.find((a: any) => a.accent === 'UK')
         const image = fullRecord.images?.[0]
         
+        // 准备 meanings 数据
+        const meanings = fullRecord.meanings && fullRecord.meanings.length > 0
+          ? fullRecord.meanings.map((m: WordMeaning) => ({
+              partOfSpeech: m.partOfSpeech,
+              meaning: m.meaning,
+            }))
+          : [] // 如果没有 meanings，用户可手动添加
+        
         form.setFieldsValue({
-          ...fullRecord,
-          partOfSpeech: fullRecord.partOfSpeech || [],
+          word: fullRecord.word,
+          meanings,
+          phoneticUS: fullRecord.phoneticUS || '',
+          phoneticUK: fullRecord.phoneticUK || '',
+          phonetic: fullRecord.phonetic || '',
+          difficulty: fullRecord.difficulty || 'MEDIUM',
+          isHighFrequency: fullRecord.isHighFrequency || false,
           audioUrlUS: usAudio?.audioUrl || '',
           audioUrlUK: ukAudio?.audioUrl || '',
           imageUrl: image?.imageUrl || '',
@@ -123,9 +147,16 @@ export default function VocabulariesPage() {
       }
     } catch (error) {
       // 如果加载失败，使用基本数据
+      const meanings = record.meanings && record.meanings.length > 0
+        ? record.meanings.map((m: WordMeaning) => ({
+            partOfSpeech: m.partOfSpeech,
+            meaning: m.meaning,
+          }))
+        : []
+      
       form.setFieldsValue({
         ...record,
-        partOfSpeech: record.partOfSpeech || [],
+        meanings,
       })
     }
     
@@ -294,31 +325,43 @@ export default function VocabulariesPage() {
       },
     },
     {
-      title: '词性',
-      dataIndex: 'partOfSpeech',
-      key: 'partOfSpeech',
-      width: 140,
-      render: (pos: string[]) => (
-        <Space size={[0, 4]} wrap>
-          {pos?.map((p, i) => (
-            <Tag key={i} color="blue" style={{ fontSize: 11, margin: 0 }}>
-              {p}
-            </Tag>
-          ))}
-        </Space>
-      ),
-    },
-    {
-      title: '核心释义',
-      dataIndex: 'primaryMeaning',
-      key: 'primaryMeaning',
-      width: 220,
-      ellipsis: {
-        showTitle: false,
+      title: '释义',
+      key: 'meanings',
+      width: 300,
+      render: (_, record: Vocabulary) => {
+        // 优先展示多词性释义，否则备用主要释义
+        if (record.meanings && record.meanings.length > 0) {
+          return (
+            <Space direction="vertical" size={2} style={{ width: '100%' }}>
+              {record.meanings.map((m, idx) => (
+                <div key={m.id || idx} style={{ fontSize: 12, lineHeight: 1.5 }}>
+                  <Tag 
+                    color="blue" 
+                    style={{ 
+                      fontSize: 10, 
+                      padding: '0 4px',
+                      marginRight: 6,
+                      minWidth: 30,
+                      textAlign: 'center'
+                    }}
+                  >
+                    {m.partOfSpeech}
+                  </Tag>
+                  <span title={m.meaning}>
+                    {m.meaning.length > 40 ? m.meaning.substring(0, 40) + '...' : m.meaning}
+                  </span>
+                </div>
+              ))}
+            </Space>
+          )
+        }
+        // 备用：显示主要释义
+        return (
+          <span title={record.primaryMeaning} style={{ fontSize: 13 }}>
+            {record.primaryMeaning}
+          </span>
+        )
       },
-      render: (meaning: string) => (
-        <span title={meaning} style={{ fontSize: 13 }}>{meaning}</span>
-      ),
     },
     {
       title: '音标',
@@ -516,34 +559,68 @@ export default function VocabulariesPage() {
             <Input placeholder="例如: hello" />
           </Form.Item>
 
-          <Form.Item
-            label="词性"
-            name="partOfSpeech"
-            rules={[{ required: true, message: '请选择词性' }]}
-          >
-            <Select mode="multiple" placeholder="选择词性">
-              <Option value="n.">n. 名词</Option>
-              <Option value="v.">v. 动词</Option>
-              <Option value="adj.">adj. 形容词</Option>
-              <Option value="adv.">adv. 副词</Option>
-              <Option value="prep.">prep. 介词</Option>
-              <Option value="pron.">pron. 代词</Option>
-              <Option value="conj.">conj. 连词</Option>
-              <Option value="interj.">interj. 感叹词</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="核心释义"
-            name="primaryMeaning"
-            rules={[{ required: true, message: '请输入核心释义' }]}
-          >
-            <TextArea rows={2} placeholder="例如: 你好；问候" />
-          </Form.Item>
-
-          <Form.Item label="延伸释义" name="secondaryMeaning">
-            <TextArea rows={2} placeholder="其他释义（可选）" />
-          </Form.Item>
+          <Form.List name="meanings">
+            {(fields, { add, remove }) => (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label style={{ fontWeight: 500 }}>词性与释义</label>
+                  <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} size="small">
+                    添加释义
+                  </Button>
+                </div>
+                {fields.length === 0 && (
+                  <Button type="dashed" onClick={() => add()} block style={{ marginBottom: 8 }}>
+                    <PlusOutlined /> 添加第一个释义
+                  </Button>
+                )}
+                {fields.map((field, index) => (
+                  <Card 
+                    key={field.key} 
+                    size="small" 
+                    style={{ marginBottom: 8 }}
+                    title={`释义 ${index + 1}`}
+                    extra={
+                      <Button 
+                        type="link" 
+                        danger 
+                        size="small" 
+                        onClick={() => remove(field.name)}
+                        icon={<MinusCircleOutlined />}
+                      >
+                        删除
+                      </Button>
+                    }
+                  >
+                    <Form.Item
+                      {...field}
+                      name={[field.name, 'partOfSpeech']}
+                      rules={[{ required: true, message: '请选择词性' }]}
+                      label="词性"
+                    >
+                      <Select placeholder="选择词性">
+                        <Option value="n.">名词on. </Option>
+                        <Option value="v.">动词on. </Option>
+                        <Option value="adj.">形容词on.adj. </Option>
+                        <Option value="adv.">副词on.adv. </Option>
+                        <Option value="prep.">介词on.prep. </Option>
+                        <Option value="pron.">代词on.pron. </Option>
+                        <Option value="conj.">连词on.conj. </Option>
+                        <Option value="interj.">感叹词on.interj. </Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      {...field}
+                      name={[field.name, 'meaning']}
+                      rules={[{ required: true, message: '请输入释义' }]}
+                      label="释义"
+                    >
+                      <TextArea rows={2} placeholder="输入该词性下的释义" />
+                    </Form.Item>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </Form.List>
 
           <Space.Compact style={{ width: '100%' }}>
             <Form.Item
