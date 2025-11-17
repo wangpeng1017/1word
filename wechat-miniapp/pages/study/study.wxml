@@ -36,7 +36,13 @@
     
     <!-- 选择题模式2: 汉语 + 4个英文单词选项 -->
     <view wx:elif="{{currentQuestion.type === 'CHINESE_TO_ENGLISH'}}" class="word-display">
-      <text class="word-text chinese-text">{{currentTask.vocabulary.primaryMeaning}}</text>
+      <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="meanings-display">
+        <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="meaning-item">
+          <text class="pos-tag">{{item.partOfSpeech}}</text>
+          <text class="meaning-text">{{item.meaning}}</text>
+        </view>
+      </view>
+      <text wx:else class="word-text chinese-text">{{currentTask.vocabulary.primaryMeaning}}</text>
       <text class="question-hint">请选择正确的英文单词</text>
     </view>
     
@@ -81,7 +87,14 @@
         <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
         <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
         <text wx:if="{{!isCorrect}}" class="result-extra">正确：{{currentQuestion.correctAnswer}}</text>
-        <text wx:if="{{currentQuestion.correctAnswer != currentTask.vocabulary.primaryMeaning}}" class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
+        <!-- 显示多释义或主要释义 -->
+        <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="result-meanings">
+          <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="result-meaning-item">
+            <text class="meaning-pos">{{item.partOfSpeech}}</text>
+            <text class="meaning-content">{{item.meaning}}</text>
+          </view>
+        </view>
+        <text wx:elif="{{currentQuestion.correctAnswer != currentTask.vocabulary.primaryMeaning}}" class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
       </view>
       <view wx:if="{{isCorrect}}" class="fireworks">
         <view class="firework firework-1"></view>

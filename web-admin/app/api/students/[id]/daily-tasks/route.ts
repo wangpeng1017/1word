@@ -31,6 +31,15 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
     // 默认优先使用我们库里的 US/UK 音频，外部 audioUrl 仅作为兜底
     const defaultAudio = audioUs ?? audioUk ?? v.audioUrl ?? v.audio_url ?? null
 
+    // 映射多词性多释义
+    const meanings = (v.word_meanings || []).map((m: any) => ({
+      id: m.id,
+      partOfSpeech: m.partOfSpeech ?? m.part_of_speech,
+      meaning: m.meaning,
+      orderIndex: m.orderIndex ?? m.order_index,
+      examples: m.examples || [],
+    }))
+
     return {
       id: t.id,
       studentId: t.studentId,
@@ -47,6 +56,7 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
         word: v.word,
         primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
         secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
+        meanings, // 新增: 多词性多释义
         audioUrl: defaultAudio,
         audioUs,
         audioUk,
@@ -91,6 +101,11 @@ export async function GET(
         vocabularies: {
           include: {
             word_audios: true,
+            word_meanings: {
+              orderBy: {
+                orderIndex: 'asc',
+              },
+            },
             questions: {
               include: {
                 question_options: {
@@ -165,6 +180,12 @@ export async function POST(
       include: {
         vocabularies: {
           include: {
+            word_audios: true,
+            word_meanings: {
+              orderBy: {
+                orderIndex: 'asc',
+              },
+            },
             questions: {
               include: {
                 question_options: {
@@ -237,6 +258,11 @@ export async function POST(
         vocabularies: {
           include: {
             word_audios: true,
+            word_meanings: {
+              orderBy: {
+                orderIndex: 'asc',
+              },
+            },
             questions: {
               include: {
                 question_options: {

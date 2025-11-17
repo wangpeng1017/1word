@@ -290,41 +290,6 @@ export default function VocabulariesPage() {
       ),
     },
     {
-      title: '发音',
-      key: 'audio',
-      width: 180,
-      render: (_, record: Vocabulary) => {
-        const usAudio = record.audios?.find((a) => a.accent === 'US')
-        const ukAudio = record.audios?.find((a) => a.accent === 'UK')
-        
-        return (
-          <Space size="small">
-            {usAudio && (
-              <AudioPlayer
-                audioUrl={usAudio.audioUrl}
-                accent="US"
-                word={record.word}
-                size="small"
-                showAccent={true}
-              />
-            )}
-            {ukAudio && (
-              <AudioPlayer
-                audioUrl={ukAudio.audioUrl}
-                accent="UK"
-                word={record.word}
-                size="small"
-                showAccent={true}
-              />
-            )}
-            {!usAudio && !ukAudio && (
-              <span style={{ color: '#999', fontSize: 12 }}>暂无音频</span>
-            )}
-          </Space>
-        )
-      },
-    },
-    {
       title: '释义',
       key: 'meanings',
       width: 300,
@@ -389,6 +354,41 @@ export default function VocabulariesPage() {
           )}
         </Space>
       ),
+    },
+    {
+      title: '发音',
+      key: 'audio',
+      width: 180,
+      render: (_, record: Vocabulary) => {
+        const usAudio = record.audios?.find((a) => a.accent === 'US')
+        const ukAudio = record.audios?.find((a) => a.accent === 'UK')
+        
+        return (
+          <Space size="small">
+            {usAudio && (
+              <AudioPlayer
+                audioUrl={usAudio.audioUrl}
+                accent="US"
+                word={record.word}
+                size="small"
+                showAccent={true}
+              />
+            )}
+            {ukAudio && (
+              <AudioPlayer
+                audioUrl={ukAudio.audioUrl}
+                accent="UK"
+                word={record.word}
+                size="small"
+                showAccent={true}
+              />
+            )}
+            {!usAudio && !ukAudio && (
+              <span style={{ color: '#999', fontSize: 12 }}>暂无音频</span>
+            )}
+          </Space>
+        )
+      },
     },
     {
       title: '难度',

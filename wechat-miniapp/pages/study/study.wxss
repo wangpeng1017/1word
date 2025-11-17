@@ -127,6 +127,23 @@
   margin-bottom: 24rpx;
 }
 
+.word-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.speaker {
+  font-size: 48rpx;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.speaker:active {
+  transform: scale(0.9);
+}
+
 .word-text {
   font-size: 68rpx;
   font-weight: 700;
@@ -510,4 +527,67 @@
   height: 60rpx;
   background: #E5E7EB;
   margin: 0 60rpx;
+}
+
+/* 多词性多释义显示 */
+.meanings-display {
+  text-align: center;
+  padding: 20rpx 0;
+}
+
+.meaning-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16rpx;
+  line-height: 1.6;
+}
+
+.pos-tag {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  background: #DBEAFE;
+  color: #1E40AF;
+  font-size: 22rpx;
+  font-weight: 600;
+  border-radius: 6rpx;
+  margin-right: 12rpx;
+  min-width: 60rpx;
+  text-align: center;
+}
+
+.meaning-text {
+  font-size: 52rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* 结果反馈中的多释义 */
+.result-meanings {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-left: 16rpx;
+  flex: 1;
+}
+
+.result-meaning-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.meaning-pos {
+  padding: 2rpx 8rpx;
+  background: rgba(30, 64, 175, 0.1);
+  color: #1E40AF;
+  font-size: 20rpx;
+  border-radius: 4rpx;
+  font-weight: 600;
+}
+
+.meaning-content {
+  font-size: 22rpx;
+  color: inherit;
+  opacity: 0.9;
 }
