@@ -8,6 +8,7 @@ Page({
     total: 0,
     accuracy: 0,
     timeSeconds: 0,
+    timeString: '00:00',
   },
 
   async onLoad(options) {
@@ -29,9 +30,18 @@ Page({
       if (studentId) {
         const data = await get(`/review-plan/${studentId}`)
         const ts = data?.miniapp?.today?.timeSpentSeconds || 0
-        this.setData({ timeSeconds: ts })
+        this.setData({
+          timeSeconds: ts,
+          timeString: this.formatTime(ts)
+        })
       }
-    } catch (e) {}
+    } catch (e) { }
+  },
+
+  formatTime(seconds) {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   },
 
   // 查看错题（tab）

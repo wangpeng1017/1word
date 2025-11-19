@@ -32,8 +32,8 @@
         <text class="stat-label">错误</text>
       </view>
       <view class="stat-item">
-        <text class="stat-value">{{timeSeconds}}</text>
-        <text class="stat-label">今日用时(秒)</text>
+        <text class="stat-value">{{timeString}}</text>
+        <text class="stat-label">今日用时</text>
       </view>
     </view>
 
