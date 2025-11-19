@@ -21,8 +21,8 @@
       </view>
       <view class="divider"></view>
       <view class="stat">
-        <view class="num">{{overview.elapsedSeconds}}</view>
-        <view class="label">今日用时(秒)</view>
+        <view class="num">{{overview.timeString}}</view>
+        <view class="label">今日用时</view>
       </view>
     </view>
 
@@ -39,6 +39,20 @@
   <block wx:elif="{{state==='empty'}}">
     <view class="empty">
       <view class="done">今日复习已完成</view>
+      
+      <!-- 完成态也显示统计数据 -->
+      <view class="stats" style="margin-top: 40rpx; margin-bottom: 40rpx;">
+        <view class="stat">
+          <view class="num">{{overview.dueCount}}</view>
+          <view class="label">已完成</view>
+        </view>
+        <view class="divider"></view>
+        <view class="stat">
+          <view class="num">{{overview.timeString}}</view>
+          <view class="label">今日用时</view>
+        </view>
+      </view>
+
       <view class="sub">下次复习预计：{{nextReviewHint}}</view>
     </view>
   </block>

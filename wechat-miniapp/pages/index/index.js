@@ -83,6 +83,7 @@ Page({
           dueCount: due,
           reviewedCount: Math.max(reviewedFromServer, reviewedFromLocal),
           elapsedSeconds: mi.today.timeSpentSeconds || 0,
+          timeString: this.formatTime(mi.today.timeSpentSeconds || 0),
         }
       }
     } catch (e) {
@@ -105,7 +106,7 @@ Page({
       reviewedCount = Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, dueCount)
     }
 
-    return { bookName: '今日任务', dueCount, reviewedCount, elapsedMinutes: 0 }
+    return { bookName: '今日任务', dueCount, reviewedCount, elapsedMinutes: 0, timeString: '00:00' }
   },
 
   calcNextReviewHint() {
@@ -115,7 +116,13 @@ Page({
   },
 
   formatDate(d) {
-    const w = ['日','一','二','三','四','五','六'][d.getDay()]
+    const w = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
     return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${w}`
+  },
+
+  formatTime(seconds) {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   },
 })
