@@ -5,14 +5,14 @@
 .book { margin-top:16rpx; display:flex; align-items:center; }
 .cover { width:72rpx; height:72rpx; border-radius:8rpx; background:#eef3ff; }
 .book-name { margin-left:16rpx; color:#2B2F36; font-size:28rpx; }
-.stats { margin-top:36rpx; padding:24rpx; border-radius:16rpx; background:#ECFDF5; display:flex; align-items:center; }
+.stats { margin-top:36rpx; padding:24rpx; border-radius:16rpx; background:#FFF1F1; display:flex; align-items:center; }
 .stat { flex:1; text-align:center; }
-.num { font-size:44rpx; font-weight:700; color:#10B981; }
+.num { font-size:44rpx; font-weight:700; color:#FF7A7A; }
 .label { margin-top:6rpx; color:#6B7280; font-size:24rpx; }
 .divider { width:1px; height:48rpx; background:#E5E7EB; }
 .progress-wrap { margin:28rpx 8rpx 0; position:relative; }
 .progress-text { position:absolute; right:0; top:-8rpx; color:#6B7280; font-size:24rpx; }
-.cta { margin-top:40rpx; height:96rpx; line-height:96rpx; background:#10B981; border-radius:16rpx; color:#fff; }
+.cta { margin-top:40rpx; height:96rpx; line-height:96rpx; background:#FF7A7A; border-radius:16rpx; color:#fff; }
 .empty { margin-top:120rpx; text-align:center; color:#2B2F36; }
 .empty .done { font-size:36rpx; font-weight:600; }
 .empty .sub { margin-top:10rpx; color:#6B7280; font-size:26rpx; }

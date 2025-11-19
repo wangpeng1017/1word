@@ -78,7 +78,7 @@
 }
 
 .filter-item.active {
-  background: #10B981;
+  background: #FF7A7A;
   color: #FFFFFF;
 }
 
@@ -109,8 +109,8 @@
 
 .type-badge {
   padding: 8rpx 16rpx;
-  background: #ECFDF5;
-  color: #10B981;
+  background: #FFF1F1;
+  color: #FF7A7A;
   font-size: 22rpx;
   border-radius: 8rpx;
 }

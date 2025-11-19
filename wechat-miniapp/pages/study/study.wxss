@@ -93,7 +93,7 @@
 .progress-fill {
   position: relative;
   height: 100%;
-  background: linear-gradient(90deg, #10B981 0%, #34D399 50%, #6EE7B7 100%);
+  background: linear-gradient(90deg, #FF7A7A 0%, #FF9E9E 50%, #FFC1C1 100%);
   border-radius: 8rpx;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -173,16 +173,16 @@
   align-items: center;
   justify-content: center;
   font-size: 96rpx;
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   border-radius: 50%;
   margin: 0 auto 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8rpx 24rpx rgba(255, 122, 122, 0.3);
   transition: all 0.3s ease;
 }
 
 .audio-icon:active {
   transform: scale(0.95);
-  box-shadow: 0 4rpx 16rpx rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(255, 122, 122, 0.3);
 }
 
 /* 句子展示（填空题） */
@@ -230,8 +230,8 @@
 }
 
 .option-item.selected {
-  border-color: #10B981;
-  background: #ECFDF5;
+  border-color: #FF7A7A;
+  background: #FFF1F1;
 }
 
 .option-item.correct {
@@ -260,7 +260,7 @@
 }
 
 .option-item.selected .option-label {
-  background: #10B981;
+  background: #FF7A7A;
   color: #FFFFFF;
 }
 
@@ -467,13 +467,13 @@
 .submit-btn {
   width: 100%;
   height: 88rpx;
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   color: #FFFFFF;
   font-size: 32rpx;
   font-weight: 600;
   border-radius: 12rpx;
   border: none;
-  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(255, 122, 122, 0.3);
 }
 
 .submit-btn[disabled] {
@@ -483,8 +483,8 @@
 }
 
 .continue-btn {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 122, 122, 0.3);
 }
 
 /* 统计信息 */
