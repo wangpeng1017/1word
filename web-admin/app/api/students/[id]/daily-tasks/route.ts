@@ -213,40 +213,64 @@ export async function POST(
       take: 30, // 每天最多30个复习词（与配置一致）
     })
 
-    // 2. 创建每日任务（仅复习词，不补充新词）。如果今天已有部分任务，则增量补齐未生成的任务。
-    const existedSet = new Set(existingTasks.map(t => t.vocabularyId))
-    const tasksToCreate = reviewPlans
-      .filter(plan => !existedSet.has(plan.vocabularyId))
-      .map(plan => ({
-        studentId,
-        vocabularyId: plan.vocabularyId,
-        taskDate: today,
-        status: 'PENDING' as const,
-      }))
+    // 2. 区分需创建的任务和需重置状态的任务
+    // 如果 plan 在 reviewPlans 中（说明今日需复习），但对应的 daily_task 已是 COMPLETED，
+    // 说明可能是用户重置了计划（Overwrite），此时应将 daily_task 重置为 PENDING。
+    const existingMap = new Map(existingTasks.map(t => [t.vocabularyId, t]))
 
-    // 若没有需要新增的任务且已存在任务，直接返回现有任务
-    if (tasksToCreate.length === 0 && existingTasks.length > 0) {
+    const tasksToCreate: any[] = []
+    const taskIdsToReset: string[] = []
+
+    for (const plan of reviewPlans) {
+      const existingTask = existingMap.get(plan.vocabularyId)
+      if (existingTask) {
+        if (existingTask.status === 'COMPLETED') {
+          taskIdsToReset.push(existingTask.id)
+        }
+      } else {
+        tasksToCreate.push({
+          studentId,
+          vocabularyId: plan.vocabularyId,
+          taskDate: today,
+          status: 'PENDING' as const,
+        })
+      }
+    }
+
+    // 3. 执行更新（重置状态）
+    if (taskIdsToReset.length > 0) {
+      await prisma.daily_tasks.updateMany({
+        where: { id: { in: taskIdsToReset } },
+        data: { status: 'PENDING', updatedAt: new Date() },
+      })
+    }
+
+    // 4. 执行创建
+    // 若没有需要新增或重置的任务且已存在任务，直接返回现有任务
+    if (tasksToCreate.length === 0 && taskIdsToReset.length === 0 && existingTasks.length > 0) {
       const shapedExisting = mapTasksForMiniapp(existingTasks)
       return apiResponse.success({ message: '今日任务已存在（无新增）', tasks: shapedExisting })
     }
 
-    if (tasksToCreate.length === 0) {
+    if (tasksToCreate.length === 0 && taskIdsToReset.length === 0) {
       return apiResponse.success({ message: '暂无任务', tasks: [] })
     }
 
-    // 为 createMany 生成显式 id，避免数据库未配置默认值时报错
-    const dtTs = Date.now()
-    let dtNum = 0
-    const tasksToInsert = tasksToCreate.map(t => ({
-      id: `dt_${dtTs}_${dtNum++}_${Math.random().toString(36).slice(2, 10)}`,
-      updatedAt: new Date(),
-      ...t,
-    }))
+    if (tasksToCreate.length > 0) {
+      // 为 createMany 生成显式 id
+      const dtTs = Date.now()
+      let dtNum = 0
+      const tasksToInsert = tasksToCreate.map(t => ({
+        id: `dt_${dtTs}_${dtNum++}_${Math.random().toString(36).slice(2, 10)}`,
+        updatedAt: new Date(),
+        ...t,
+      }))
 
-    await prisma.daily_tasks.createMany({
-      data: tasksToInsert,
-      skipDuplicates: true, // 防止并发/重复触发造成唯一键冲突
-    })
+      await prisma.daily_tasks.createMany({
+        data: tasksToInsert,
+        skipDuplicates: true,
+      })
+    }
 
     // 5. 返回今天的全部任务（带词汇和题目信息）
     const allTasks = await prisma.daily_tasks.findMany({
