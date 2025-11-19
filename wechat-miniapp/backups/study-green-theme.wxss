@@ -321,7 +321,7 @@
 /* 错误：柔和浅粉背景，深色文字确保清晰 */
 .result-bar.bad { background: #FFE1E1; color: #1F2937; }
 /* 图标颜色与语义一致 */
-.result-bar.ok .result-icon { color: #10B981; }
+.result-bar.ok .result-icon { color: #16A34A; }
 .result-bar.bad .result-icon { color: #DC2626; }
 
 /* 正确答题时，在底部结果条上方放烟花动画 */
@@ -429,11 +429,11 @@
 
 .correct-answer {
   font-size: 28rpx;
-  color: #10B981;
+  color: #EF4444;
   text-align: center;
   margin-bottom: 20rpx;
   padding: 16rpx;
-  background: #ECFDF5;
+  background: #FEF2F2;
   border-radius: 8rpx;
 }
 

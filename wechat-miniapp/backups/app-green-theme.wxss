@@ -1,0 +1,154 @@
+/**app.wxss**/
+page {
+  background-color: #F3F4F6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.container {
+  min-height: 100vh;
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+
+/* 通用按钮样式 */
+/* 重置 button 组件默认样式，符合微信小程序规范 */
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* 重置 button 伪元素样式 */
+button::after {
+  border: none;
+}
+
+.btn-primary {
+  background-color: #10B981;
+  color: #FFFFFF;
+  border-radius: 12rpx;
+  padding: 24rpx 48rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: none;
+}
+
+.btn-primary:active {
+  background-color: #059669;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #10B981;
+  border: 2rpx solid #10B981;
+  border-radius: 12rpx;
+  padding: 24rpx 48rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.btn-secondary:active {
+  background-color: #F3F4F6;
+}
+
+/* 卡片样式 */
+.card {
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 文本样式 */
+.text-primary {
+  color: #111827;
+}
+
+.text-secondary {
+  color: #6B7280;
+}
+
+.text-muted {
+  color: #9CA3AF;
+}
+
+.text-success {
+  color: #10B981;
+}
+
+.text-error {
+  color: #EF4444;
+}
+
+.text-warning {
+  color: #F59E0B;
+}
+
+/* 标题样式 */
+.title-large {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.title-medium {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.title-small {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* 间距工具类 */
+.mt-1 { margin-top: 8rpx; }
+.mt-2 { margin-top: 16rpx; }
+.mt-3 { margin-top: 24rpx; }
+.mt-4 { margin-top: 32rpx; }
+.mt-5 { margin-top: 40rpx; }
+
+.mb-1 { margin-bottom: 8rpx; }
+.mb-2 { margin-bottom: 16rpx; }
+.mb-3 { margin-bottom: 24rpx; }
+.mb-4 { margin-bottom: 32rpx; }
+.mb-5 { margin-bottom: 40rpx; }
+
+.p-1 { padding: 8rpx; }
+.p-2 { padding: 16rpx; }
+.p-3 { padding: 24rpx; }
+.p-4 { padding: 32rpx; }
+.p-5 { padding: 40rpx; }
+
+/* 布局工具类 */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.text-center {
+  text-align: center;
+}

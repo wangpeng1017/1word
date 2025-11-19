@@ -3,9 +3,7 @@
   <!-- 结果卡片 -->
   <view class="result-card">
     <view class="result-icon">
-      <text wx:if="{{accuracy >= 80}}">🎉</text>
-      <text wx:elif="{{accuracy >= 60}}">👍</text>
-      <text wx:else>💪</text>
+      <image class="success-horse" src="/images/success_horse.png" mode="aspectFit"></image>
     </view>
     
     <view class="result-title">
