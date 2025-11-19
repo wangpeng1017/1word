@@ -27,7 +27,7 @@
     </view>
 
     <view class="progress-wrap">
-      <progress percent="{{progressPercent}}" stroke-width="8" active activeColor="#2F6BFF" />
+      <progress percent="{{progressPercent}}" stroke-width="8" active activeColor="#FF7A7A" />
       <text class="progress-text">{{progressPercent}}%</text>
     </view>
 

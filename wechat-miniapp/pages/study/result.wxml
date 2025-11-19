@@ -3,7 +3,7 @@
   <!-- 结果卡片 -->
   <view class="result-card">
     <view class="result-icon">
-      <image class="success-horse" src="/images/success_horse.png" mode="aspectFit"></image>
+      <image class="success-horse" src="/images/success_horse_red_v2.png" mode="aspectFit"></image>
     </view>
     
     <view class="result-title">
