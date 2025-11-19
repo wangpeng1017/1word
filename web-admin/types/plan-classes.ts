@@ -22,8 +22,10 @@ export interface PlanClassesResponse {
   duplicateCount: number
   updatedCount: number
   failedCount: number
+  invalidCount: number
   created: PlanItem[]
   duplicates: PlanItem[]
   updated: PlanItem[]
   failed: FailedItem[]
+  invalid: PlanItem[]
 }

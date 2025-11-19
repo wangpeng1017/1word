@@ -22,17 +22,21 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   const columns: ColumnsType<PlanItem> = useMemo(() => ([
     { title: '学生', dataIndex: 'studentName', key: 'studentName' },
     { title: '班级ID', dataIndex: 'classId', key: 'classId' },
-    { title: '单词', dataIndex: 'word', key: 'word', render: (w, r) => (
-      <Space direction="vertical" size={0}>
-        <span style={{ fontWeight: 'bold' }}>{w}</span>
-        <span style={{ fontSize: 12, color: '#666' }}>{r.primaryMeaning}</span>
-      </Space>
-    ) },
-    { title: '状态', dataIndex: 'status', key: 'status', render: (s?: string) => {
-      const colorMap: any = { PENDING: 'default', IN_PROGRESS: 'processing', COMPLETED: 'success', MASTERED: 'purple' }
-      const textMap: any = { PENDING: '待学习', IN_PROGRESS: '学习中', COMPLETED: '已完成', MASTERED: '已掌握' }
-      return s ? <Tag color={colorMap[s]}>{textMap[s]}</Tag> : '-'
-    } },
+    {
+      title: '单词', dataIndex: 'word', key: 'word', render: (w, r) => (
+        <Space direction="vertical" size={0}>
+          <span style={{ fontWeight: 'bold' }}>{w}</span>
+          <span style={{ fontSize: 12, color: '#666' }}>{r.primaryMeaning}</span>
+        </Space>
+      )
+    },
+    {
+      title: '状态', dataIndex: 'status', key: 'status', render: (s?: string) => {
+        const colorMap: any = { PENDING: 'default', IN_PROGRESS: 'processing', COMPLETED: 'success', MASTERED: 'purple', INVALID: 'error' }
+        const textMap: any = { PENDING: '待学习', IN_PROGRESS: '学习中', COMPLETED: '已完成', MASTERED: '已掌握', INVALID: '无效' }
+        return s ? <Tag color={colorMap[s]}>{textMap[s]}</Tag> : '-'
+      }
+    },
     { title: '下次复习', dataIndex: 'nextReviewAt', key: 'nextReviewAt', render: (d) => d ? dayjs(d).format('YYYY-MM-DD') : '-' },
     { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: (d) => d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-' },
   ]), [])
@@ -140,7 +144,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
             <Form.Item label="计划结束日期" name="endDate">
               <DatePicker />
             </Form.Item>
-<Form.Item name="overwrite" label={null} style={{ marginTop: 30 }}>
+            <Form.Item name="overwrite" label={null} style={{ marginTop: 30 }}>
               <Select
                 placeholder="生成策略"
                 style={{ width: 160 }}
@@ -160,7 +164,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
 
         {result && (
           <Tabs
-            defaultActiveKey={result.createdCount > 0 ? 'created' : (result.duplicateCount > 0 ? 'duplicates' : 'updated')}
+            defaultActiveKey={result.invalidCount > 0 ? 'invalid' : (result.createdCount > 0 ? 'created' : (result.duplicateCount > 0 ? 'duplicates' : 'updated'))}
             items={[
               {
                 key: 'created',
@@ -176,6 +180,20 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
                 key: 'updated',
                 label: `重置/更新 (${result.updatedCount})`,
                 children: <Table rowKey={(r) => `${r.studentId}-${r.vocabularyId}`} dataSource={result.updated} columns={columns} size="small" pagination={{ pageSize: 10 }} />,
+              },
+              {
+                key: 'invalid',
+                label: <span style={{ color: '#ff4d4f' }}>单词无题目 ({result.invalidCount})</span>,
+                children: (
+                  <>
+                    {result.invalidCount > 0 && (
+                      <div style={{ marginBottom: 16, color: '#ff4d4f', background: '#fff2f0', padding: '8px 12px', borderRadius: 4, border: '1px solid #ffccc7' }}>
+                        以下单词因缺失题目无法生成任务，请先在题目管理中补充题目。
+                      </div>
+                    )}
+                    <Table rowKey={(r) => `${r.studentId}-${r.vocabularyId}`} dataSource={result.invalid} columns={columns} size="small" pagination={{ pageSize: 10 }} />
+                  </>
+                ),
               },
             ]}
           />

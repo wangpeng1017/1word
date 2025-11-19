@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     if (!token || !verifyToken(token)) {
       return unauthorizedResponse()
     }
@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {}
-    
+
     if (classId) {
       where.class_id = classId
     }
-    
+
     if (status) {
       where.status = status
     }
@@ -107,14 +107,24 @@ export async function POST(request: NextRequest) {
       return errorResponse('部分班级不存在')
     }
 
-    // 验证词汇是否存在
+    // 验证词汇是否存在，并检查是否有题目
     const vocabularies = await prisma.vocabularies.findMany({
       where: { id: { in: vocabularyIds } },
-      select: { id: true, word: true, primary_meaning: true },
+      select: {
+        id: true,
+        word: true,
+        primary_meaning: true,
+        questions: { select: { id: true } } // 检查题目数量
+      },
     })
     if (vocabularies.length !== vocabularyIds.length) {
       return errorResponse('部分词汇不存在')
     }
+
+    // 筛选出无题目的单词
+    const validVocabularies = vocabularies.filter(v => v.questions && v.questions.length > 0)
+    const invalidVocabularies = vocabularies.filter(v => !v.questions || v.questions.length === 0)
+    const validVocabularyIds = validVocabularies.map(v => v.id)
 
     // 查目标学生
     const studentsByClass = await prisma.students.findMany({
@@ -135,10 +145,11 @@ export async function POST(request: NextRequest) {
     const studentMap = new Map(studentsByClass.map(s => [s.id, s]))
 
     // 预取已存在的学习计划（用于判重与明细返回）
-const existingPlans = await prisma.study_plans.findMany({
+    // 注意：这里只查询有效单词的计划，无效单词直接归类为 invalid
+    const existingPlans = await prisma.study_plans.findMany({
       where: {
         studentId: { in: studentIds },
-        vocabularyId: { in: vocabularyIds },
+        vocabularyId: { in: validVocabularyIds },
       },
       include: {
         students: { select: { user: { select: { name: true } }, class_id: true } },
@@ -148,14 +159,33 @@ const existingPlans = await prisma.study_plans.findMany({
 
     const existingKeySet = new Set(existingPlans.map(p => `${p.studentId}|${p.vocabularyId}`))
 
-    // 计算将要创建的组合（学生×词汇）
+    // 计算将要创建的组合（学生×有效词汇）
     const toCreatePairs: Array<{ studentId: string; vocabularyId: string }> = []
     for (const sid of studentIds) {
-      for (const vid of vocabularyIds) {
+      for (const vid of validVocabularyIds) {
         const key = `${sid}|${vid}`
         if (!existingKeySet.has(key)) {
           toCreatePairs.push({ studentId: sid, vocabularyId: vid })
         }
+      }
+    }
+
+    // 构建无效列表（每个学生 x 每个无效单词）
+    const invalidItems: any[] = []
+    for (const sid of studentIds) {
+      for (const v of invalidVocabularies) {
+        invalidItems.push({
+          studentId: sid,
+          studentName: studentMap.get(sid)?.user?.name,
+          classId: studentMap.get(sid)?.class_id,
+          vocabularyId: v.id,
+          word: v.word,
+          primaryMeaning: v.primary_meaning,
+          status: 'INVALID', // 自定义状态
+          reviewCount: 0,
+          nextReviewAt: null,
+          createdAt: null,
+        })
       }
     }
 
@@ -191,21 +221,24 @@ const existingPlans = await prisma.study_plans.findMany({
         duplicateCount: duplicates.length,
         updatedCount: 0,
         failedCount: 0,
+        invalidCount: invalidItems.length,
         created,
         duplicates,
         updated: [],
         failed: [],
+        invalid: invalidItems,
       })
     }
 
     // 写库：1) 班级计划去重写入 2) 处理overwrite 3) 插入新的study_plans
     // 1) 班级计划 createMany（幂等）
-    if (classIds.length > 0 && vocabularyIds.length > 0) {
+    // 注意：只写入有效单词的班级计划
+    if (classIds.length > 0 && validVocabularyIds.length > 0) {
       const planClassData: any[] = []
       const timestamp = Date.now()
       let counter = 0
       for (const classId of classIds) {
-        for (const vocabularyId of vocabularyIds) {
+        for (const vocabularyId of validVocabularyIds) {
           planClassData.push({
             id: `pc_${timestamp}_${counter++}_${Math.random().toString(36).substr(2, 9)}`,
             class_id: classId,
@@ -259,10 +292,10 @@ const existingPlans = await prisma.study_plans.findMany({
     }
 
     // 回查一遍，构建返回的 created/duplicates/updated 明细列表（含 createdAt）
-const latest = await prisma.study_plans.findMany({
+    const latest = await prisma.study_plans.findMany({
       where: {
         studentId: { in: studentIds },
-        vocabularyId: { in: vocabularyIds },
+        vocabularyId: { in: validVocabularyIds },
       },
       include: {
         students: { select: { user: { select: { name: true } }, class_id: true } },
@@ -324,11 +357,13 @@ const latest = await prisma.study_plans.findMany({
       duplicateCount: duplicates.length,
       updatedCount: updated.length,
       failedCount: 0,
+      invalidCount: invalidItems.length,
       created,
       duplicates,
       updated,
       failed: [],
-    }, `生成完成：新增 ${created.length} 条，已存在 ${duplicates.length} 条${overwrite ? `，重置 ${updated.length} 条` : ''}`)
+      invalid: invalidItems,
+    }, `生成完成：新增 ${created.length} 条，已存在 ${duplicates.length} 条${overwrite ? `，重置 ${updated.length} 条` : ''}${invalidItems.length > 0 ? `，${invalidItems.length} 条因无题目被跳过` : ''}`)
   } catch (error: any) {
     console.error('创建班级学习计划错误:', error)
     return errorResponse(`创建班级学习计划失败: ${error?.message || '未知错误'}`, 500)
@@ -340,7 +375,7 @@ export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以更新班级学习计划')
@@ -354,19 +389,19 @@ export async function PUT(request: NextRequest) {
     }
 
     const updateData: any = {}
-    
+
     if (status) {
       updateData.status = status
     }
-    
+
     if (startDate) {
       updateData.start_date = new Date(startDate)
     }
-    
+
     if (endDate !== undefined) {
       updateData.end_date = endDate ? new Date(endDate) : null
     }
-    
+
     updateData.updated_at = new Date()
 
     const planClass = await prisma.plan_classes.update({
@@ -400,7 +435,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以删除班级学习计划')
