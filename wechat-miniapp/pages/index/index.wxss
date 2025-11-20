@@ -1,21 +1,154 @@
 /* pages/index/index.wxss */
-.page { padding: 24rpx 28rpx 40rpx; background:#fff; min-height:100vh; }
-.header .date { color:#7A7F89; font-size:24rpx; }
-.header .title { margin-top:8rpx; font-size:40rpx; font-weight:600; }
-.book { margin-top:16rpx; display:flex; align-items:center; }
-.cover { width:72rpx; height:72rpx; border-radius:8rpx; background:#eef3ff; }
-.book-name { margin-left:16rpx; color:#2B2F36; font-size:28rpx; }
-.stats { margin-top:36rpx; padding:24rpx; border-radius:16rpx; background:#FFF1F1; display:flex; align-items:center; }
-.stat { flex:1; text-align:center; }
-.num { font-size:44rpx; font-weight:700; color:#FF7A7A; }
-.label { margin-top:6rpx; color:#6B7280; font-size:24rpx; }
-.divider { width:1px; height:48rpx; background:#E5E7EB; }
-.progress-wrap { margin:28rpx 8rpx 0; position:relative; }
-.progress-text { position:absolute; right:0; top:-8rpx; color:#6B7280; font-size:24rpx; }
-.cta { margin-top:40rpx; height:96rpx; line-height:96rpx; background:#FF7A7A; border-radius:16rpx; color:#fff; }
-.empty { margin-top:120rpx; text-align:center; color:#2B2F36; }
-.empty .done { font-size:36rpx; font-weight:600; }
-.empty .sub { margin-top:10rpx; color:#6B7280; font-size:26rpx; }
-.skeleton { margin-top:48rpx; height:260rpx; border-radius:16rpx; background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%); animation:shine 1.4s infinite; }
-@keyframes shine { 0%{background-position:-200px 0} 100%{background-position:calc(200px + 100%) 0} }
-.error { margin-top:120rpx; text-align:center; color:#EF4444; }
+.page {
+  padding: 24rpx 32rpx 40rpx;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 40rpx;
+}
+
+.header .date {
+  color: #9CA3AF;
+  font-size: 26rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+}
+
+.header .title {
+  margin-top: 12rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.book {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  width: fit-content;
+}
+
+.cover {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 8rpx;
+  background: #EEF2FF;
+}
+
+.book-name {
+  margin-left: 16rpx;
+  color: #374151;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.stats {
+  margin-top: 40rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(255, 122, 122, 0.08);
+  display: flex;
+  align-items: center;
+  border: 2rpx solid #FFF1F1;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.num {
+  font-size: 48rpx;
+  font-weight: 800;
+  color: #FF7A7A;
+  line-height: 1;
+}
+
+.label {
+  margin-top: 12rpx;
+  color: #6B7280;
+  font-size: 24rpx;
+}
+
+.divider {
+  width: 2rpx;
+  height: 48rpx;
+  background: #F3F4F6;
+}
+
+.progress-wrap {
+  margin: 48rpx 8rpx 0;
+  position: relative;
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: -36rpx;
+  color: #6B7280;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.cta {
+  margin-top: 60rpx;
+  height: 108rpx;
+  line-height: 108rpx;
+  background: linear-gradient(135deg, #FF7A7A 0%, #FF6B6B 100%);
+  border-radius: 54rpx;
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 600;
+  box-shadow: 0 12rpx 32rpx rgba(255, 122, 122, 0.3);
+  transition: all 0.2s;
+}
+
+.cta:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 16rpx rgba(255, 122, 122, 0.3);
+}
+
+.empty {
+  margin-top: 160rpx;
+  text-align: center;
+  color: #374151;
+}
+
+.empty .done {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.empty .sub {
+  margin-top: 16rpx;
+  color: #9CA3AF;
+  font-size: 28rpx;
+}
+
+.skeleton {
+  margin-top: 48rpx;
+  height: 260rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 37%, #F3F4F6 63%);
+  background-size: 400% 100%;
+  animation: shine 1.4s ease infinite;
+}
+
+@keyframes shine {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.error {
+  margin-top: 120rpx;
+  text-align: center;
+  color: #EF4444;
+}

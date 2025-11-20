@@ -81,13 +81,19 @@
       </view>
     </view>
 
-    <!-- 结果反馈（压缩为底部小条） -->
+    <!-- 结果反馈（固定底部） -->
     <view wx:if="{{showResult}}" class="result-bar {{isCorrect ? 'ok' : 'bad'}}">
       <view class="result-main">
         <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
         <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
-        <text wx:if="{{!isCorrect}}" class="result-extra">正确：{{currentQuestion.correctAnswer}}</text>
-        <!-- 显示多释义或主要释义 -->
+        
+        <!-- 错误时显示正确答案 -->
+        <view wx:if="{{!isCorrect}}" class="result-detail">
+          <text class="result-label">正确答案：</text>
+          <text class="result-value">{{currentQuestion.correctAnswer}}</text>
+        </view>
+        
+        <!-- 释义展示 -->
         <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="result-meanings">
           <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="result-meaning-item">
             <text class="meaning-pos">{{item.partOfSpeech}}</text>
@@ -96,6 +102,7 @@
         </view>
         <text wx:elif="{{currentQuestion.correctAnswer != currentTask.vocabulary.primaryMeaning}}" class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
       </view>
+
       <view wx:if="{{isCorrect}}" class="fireworks">
         <view class="firework firework-1"></view>
         <view class="firework firework-2"></view>
@@ -124,8 +131,8 @@
       </button>
     </view>
 
-    <!-- 统计信息 -->
-    <view class="stats-section">
+    <!-- 统计信息 (结果显示时隐藏，避免遮挡) -->
+    <view class="stats-section" wx:if="{{!showResult}}">
       <view class="stat-item">
         <text class="stat-value correct-color">{{correctCount}}</text>
         <text class="stat-label">正确</text>

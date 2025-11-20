@@ -43,7 +43,7 @@ export async function GET(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     if (!token || !verifyToken(token)) {
       return unauthorizedResponse()
     }
@@ -161,14 +161,89 @@ export async function GET(
     // 最终 today.dueCount：已生成的未完成任务 + 还未生成的应复习计划
     const estimatedDueCount = existingPendingCount + missingCount
 
+    // 🔧 修复：如果存在缺失的任务（即 dueCount > tasks.length），自动生成
+    if (missingCount > 0) {
+      console.log(`[review-plan] 检测到 ${missingCount} 个缺失任务，自动生成中...`)
+
+      const missingPlans = duePlans.filter(p => !existingVocabIdSet.has(p.vocabularyId))
+      const tasksToCreate = missingPlans.map(plan => ({
+        id: `dt_${Date.now()}_${plan.vocabularyId}_${Math.random().toString(36).slice(2, 10)}`,
+        studentId,
+        vocabularyId: plan.vocabularyId,
+        taskDate: targetDate,
+        status: 'PENDING' as const,
+        updatedAt: new Date(),
+      }))
+
+      if (tasksToCreate.length > 0) {
+        await prisma.daily_tasks.createMany({
+          data: tasksToCreate,
+          skipDuplicates: true,
+        })
+        console.log(`[review-plan] 成功生成 ${tasksToCreate.length} 个任务`)
+
+        // 重新获取今日任务（包含新生成的）
+        const refreshedTasks = await prisma.daily_tasks.findMany({
+          where: {
+            studentId,
+            taskDate: targetDate,
+          },
+          include: {
+            vocabularies: {
+              include: {
+                word_audios: true,
+                word_meanings: {
+                  orderBy: { orderIndex: 'asc' },
+                },
+                questions: {
+                  include: {
+                    question_options: {
+                      orderBy: { order: 'asc' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        })
+
+        // 更新 validTasks 和相关变量
+        const refreshedValidTasks = refreshedTasks.filter(
+          t => (t.vocabularies as any)?.questions?.length > 0 && t.status !== 'COMPLETED'
+        )
+
+        const refreshedVocabularyIds = refreshedValidTasks.map(t => t.vocabularyId)
+        const refreshedHasAudioMap = new Map<string, boolean>(
+          refreshedValidTasks.map(t => [t.vocabularyId, ((t.vocabularies as any)?.word_audios || []).length > 0])
+        )
+        const refreshedAllocation = allocateQuestionTypes(refreshedVocabularyIds, refreshedHasAudioMap)
+        const refreshedTasksWithSelection = refreshedValidTasks.map(t => {
+          const targetType = refreshedAllocation.get(t.vocabularyId)
+          const selected = selectQuestionByType(
+            (((t.vocabularies as any)?.questions) || []).map((q: any) => ({ id: q.id, type: q.type })),
+            targetType as any
+          )
+          return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
+        })
+
+        // 替换原来的 tasksWithSelection
+        tasksWithSelection.splice(0, tasksWithSelection.length, ...refreshedTasksWithSelection)
+      }
+    }
+
     // 诊断日志（观察首页显示问题）
     console.log('[review-plan] miniapp overview', {
       studentId,
       date: targetDate.toISOString().slice(0, 10),
       todayTasks: todayTasks.length,
       validTasks: validTasks.length,
+      tasksWithSelection: tasksWithSelection.length,
       needReview,
       estimatedDueCount,
+      missingCount,
     })
 
     // 5. 获取掌握度统计
@@ -206,7 +281,7 @@ export async function GET(
     let consecutiveDays = 0
     const today = getTodayDate()
     let checkDate = new Date(today)
-    
+
     while (true) {
       const record = await prisma.study_records.findFirst({
         where: {
@@ -215,14 +290,14 @@ export async function GET(
           isCompleted: true,
         },
       })
-      
+
       if (record) {
         consecutiveDays++
         checkDate.setDate(checkDate.getDate() - 1)
       } else {
         break
       }
-      
+
       if (consecutiveDays >= 365) break // 最多查询一年
     }
 

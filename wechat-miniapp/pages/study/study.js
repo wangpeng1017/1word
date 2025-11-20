@@ -9,17 +9,17 @@ Page({
     tasks: [],
     currentIndex: 0,
     totalCount: 0,
-
+    
     // 当前题目
     currentTask: null,
     currentQuestion: null,
-
+    
     // 答题状态
     selectedAnswer: '',
     isAnswered: false,
     isCorrect: false,
     showResult: false,
-
+    
     // 统计数据
     answers: [], // 答题记录
     correctCount: 0,
@@ -28,14 +28,14 @@ Page({
     sessionStartTime: null, // 总开始时间
     elapsedTime: '00:00', // 已用时
     timer: null, // 计时器
-
+    
     // 进度
     progress: 0,
-
+    
     // 加载状态
     isLoading: true,
     loadError: false,
-
+    
     // 音频播放
     audioContext: null,
   },
@@ -70,7 +70,7 @@ Page({
     if (this.data.timer) {
       clearInterval(this.data.timer)
     }
-
+    
     // 页面卸载时保存进度（如果未完成）
     if (this.data.currentIndex < this.data.totalCount) {
       this.saveProgress()
@@ -87,60 +87,28 @@ Page({
         elapsedTime: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
       })
     }, 1000)
-
+    
     this.setData({ timer })
   },
 
-  // 加载每日任务（优先使用 review-plan 概览）
+  // 加载每日任务
   async loadTasks() {
     try {
       wx.showLoading({ title: '加载中...' })
-
+      
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) {
         throw new Error('未找到学生ID')
       }
 
-      // 1) 优先使用复习概览（miniapp.today.tasks 包含 vocabulary.questions）
-      let tasks = []
-      let mi = null
-      try {
-        const data = await get(`/review-plan/${studentId}`)
-        mi = data && data.miniapp
-        if (mi && mi.today && Array.isArray(mi.today.tasks)) {
-          tasks = mi.today.tasks
-        }
-      } catch (e) {
-        console.warn('review-plan 获取失败，回退到每日任务接口', e)
-      }
+      // 获取今日任务
+      const response = await get(`/students/${studentId}/daily-tasks`)
+      let tasks = response
 
-      // 2) 若概览没有任务，或概览任务未附带题目详情，或“应复习数 > 当前任务数”，则回退/触发生成接口
-      const dueFromOverview = (mi && mi.today && mi.today.dueCount) ? mi.today.dueCount : 0
-
-      // 检查任务数据是否包含题目详情
-      const hasQuestions = tasks.length > 0 && tasks[0].vocabulary && tasks[0].vocabulary.questions && tasks[0].vocabulary.questions.length > 0
-
-      if (!tasks || tasks.length === 0 || !hasQuestions || dueFromOverview > tasks.length) {
-        console.log('review-plan 数据不完整或需要增量获取，尝试获取 daily-tasks')
-        let response = []
-        try {
-          response = await get(`/students/${studentId}/daily-tasks`)
-        } catch (e) {
-          console.warn('获取 daily-tasks 失败', e)
-          response = []
-        }
-
-        // 若GET无数据或数量不足，则POST触发增量生成
-        if (!response || response.length === 0 || dueFromOverview > response.length) {
-          try {
-            const generateResponse = await post(`/students/${studentId}/daily-tasks`)
-            tasks = generateResponse.tasks || []
-          } catch (e) {
-            console.error('生成任务失败', e)
-          }
-        } else {
-          tasks = response
-        }
+      // 如果没有任务，尝试生成
+      if (!tasks || tasks.length === 0) {
+        const generateResponse = await post(`/students/${studentId}/daily-tasks`)
+        tasks = generateResponse.tasks || []
       }
 
       if (!tasks || tasks.length === 0) {
@@ -149,28 +117,17 @@ Page({
           title: '提示',
           content: '暂无学习任务',
           showCancel: false,
-          success: () => { wx.navigateBack() },
-        })
-        return
-      }
-
-      // 检查是否所有任务都已完成
-      const uncompletedTasks = tasks.filter(task => task.status !== 'COMPLETED')
-      if (uncompletedTasks.length === 0) {
-        wx.hideLoading()
-        wx.showModal({
-          title: '提示',
-          content: '今日任务已全部完成！',
-          showCancel: false,
-          success: () => { wx.navigateBack() },
+          success: () => {
+            wx.navigateBack()
+          },
         })
         return
       }
 
       // 过滤出有题目的任务
-      const validTasks = uncompletedTasks.filter(task =>
-        task.vocabulary &&
-        task.vocabulary.questions &&
+      const validTasks = tasks.filter(task => 
+        task.vocabulary && 
+        task.vocabulary.questions && 
         task.vocabulary.questions.length > 0
       )
 
@@ -180,7 +137,9 @@ Page({
           title: '提示',
           content: '任务中没有可用的题目',
           showCancel: false,
-          success: () => { wx.navigateBack() },
+          success: () => {
+            wx.navigateBack()
+          },
         })
         return
       }
@@ -196,12 +155,14 @@ Page({
     } catch (error) {
       wx.hideLoading()
       console.error('加载任务失败:', error)
-
+      
       wx.showModal({
         title: '加载失败',
         content: error.message || '请检查网络连接',
         showCancel: false,
-        success: () => { wx.navigateBack() },
+        success: () => {
+          wx.navigateBack()
+        },
       })
     }
   },
@@ -218,21 +179,13 @@ Page({
 
     const currentTask = tasks[currentIndex]
     const vocabulary = currentTask.vocabulary
-
-    // 1) 若后端已选定题目，优先按 selectedQuestionId 取题
-    let question = null
-    if (currentTask.selectedQuestionId) {
-      question = vocabulary.questions.find(q => q.id === currentTask.selectedQuestionId)
-    }
-
-    // 2) 否则按目标题型选择
-    if (!question && currentTask.targetQuestionType) {
-      question = vocabulary.questions.find(q => q.type === currentTask.targetQuestionType)
-    }
-
-    // 3) 仍未命中则回退到英选汉；再不行取第一题
-    if (!question) {
-      question = vocabulary.questions.find(q => q.type === 'ENGLISH_TO_CHINESE') || vocabulary.questions[0]
+    
+    // 优先选择英选汉题型
+    let question = vocabulary.questions.find(q => q.type === 'ENGLISH_TO_CHINESE')
+    
+    // 如果没有英选汉，选择其他题型
+    if (!question && vocabulary.questions.length > 0) {
+      question = vocabulary.questions[0]
     }
 
     if (!question) {
@@ -339,7 +292,7 @@ Page({
       wx.showLoading({ title: '提交中...' })
 
       const studentId = app.globalData.userInfo?.studentId
-
+      
       // 提交答题记录
       await post('/study-records', {
         studentId,
@@ -358,7 +311,7 @@ Page({
     } catch (error) {
       wx.hideLoading()
       console.error('提交失败:', error)
-
+      
       wx.showModal({
         title: '提交失败',
         content: '答题记录提交失败，请重试',
@@ -377,7 +330,7 @@ Page({
   // 保存进度
   saveProgress() {
     const { tasks, currentIndex, answers, correctCount, wrongCount } = this.data
-
+    
     saveStudyProgress({
       tasks,
       currentIndex,
@@ -391,7 +344,7 @@ Page({
   // 恢复进度
   resumeProgress() {
     const progress = getStudyProgress()
-
+    
     if (progress) {
       this.setData({
         tasks: progress.tasks,
@@ -402,7 +355,7 @@ Page({
         totalCount: progress.tasks.length,
         isLoading: false,
       })
-
+      
       this.loadCurrentQuestion()
     } else {
       // 没有保存的进度，正常加载
@@ -425,29 +378,32 @@ Page({
     })
   },
 
-  // 播放音频（优先美式，其次英式；若都无则不播放）
+  // 播放音频（听力题）
   playAudio() {
     const { currentTask } = this.data
-    if (!currentTask || !currentTask.vocabulary) return
-
-    const v = currentTask.vocabulary
-    // 优先 US -> UK -> 兜底 audioUrl
-    const url = v.audioUs || v.audioUS || v.audio_us || v.audioUk || v.audioUK || v.audio_uk || v.audioUrl || ''
-    if (!url) {
-      wx.showToast({ title: '暂无音频', icon: 'none' })
+    
+    if (!currentTask || !currentTask.vocabulary) {
       return
     }
-    if (!this.data.audioContext) {
-      this.data.audioContext = wx.createInnerAudioContext()
+
+    // 如果有音频URL，播放音频
+    if (currentTask.vocabulary.audioUrl) {
+      if (!this.data.audioContext) {
+        this.data.audioContext = wx.createInnerAudioContext()
+      }
+      
+      this.data.audioContext.src = currentTask.vocabulary.audioUrl
+      this.data.audioContext.play()
+    } else {
+      // 如果没有音频，使用TTS接口
+      wx.showToast({
+        title: '正在加载音频...',
+        icon: 'loading',
+        duration: 1000
+      })
+      
+      // TODO: 调用TTS接口或使用第三方服务
+      // 这里可以集成百度TTS、讯飞TTS或其他服务
     }
-    const ctx = this.data.audioContext
-    // 防止上一次错误回调残留
-    try { ctx.offError && ctx.offError() } catch { }
-    ctx.onError((err) => {
-      console.warn('音频播放失败:', err)
-      wx.showToast({ title: '音频不可用', icon: 'none' })
-    })
-    ctx.src = url
-    ctx.play()
   },
 })

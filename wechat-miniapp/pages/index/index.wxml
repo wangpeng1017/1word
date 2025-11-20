@@ -40,11 +40,16 @@
     <view class="empty">
       <view class="done">今日复习已完成</view>
       
-      <!-- 完成态也显示统计数据 -->
+      <!-- 完成态也显示完整统计数据 -->
       <view class="stats" style="margin-top: 40rpx; margin-bottom: 40rpx;">
         <view class="stat">
           <view class="num">{{overview.dueCount}}</view>
-          <view class="label">已完成</view>
+          <view class="label">今日应复习</view>
+        </view>
+        <view class="divider"></view>
+        <view class="stat">
+          <view class="num">{{overview.reviewedCount}}</view>
+          <view class="label">已复习</view>
         </view>
         <view class="divider"></view>
         <view class="stat">
