@@ -9,9 +9,97 @@
     </view>
   </view>
 
-  <!-- 学习统计 -->
+  <!-- 时间段选择 -->
+  <view class="period-selector">
+    <picker mode="selector" range="{{periodTabs}}" value="{{currentPeriod}}" bindchange="onPeriodChange">
+      <view class="period-picker">
+        <text class="period-text">📊 {{periodTabs[currentPeriod]}}</text>
+        <text class="period-arrow">▼</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 学习概况 -->
   <view class="stats-section">
-    <view class="section-title">学习统计</view>
+    <view class="section-title">学习概况</view>
+    <view class="overview-grid">
+      <view class="overview-item">
+        <text class="overview-value">{{detailedStats.totalQuestions}}</text>
+        <text class="overview-label">总题数</text>
+      </view>
+      <view class="overview-item">
+        <text class="overview-value">{{detailedStats.correctCount}}</text>
+        <text class="overview-label">正确数</text>
+      </view>
+      <view class="overview-item">
+        <text class="overview-value">{{detailedStats.wrongCount}}</text>
+        <text class="overview-label">错误数</text>
+      </view>
+      <view class="overview-item accent">
+        <text class="overview-value">{{detailedStats.accuracy}}%</text>
+        <text class="overview-label">正确率</text>
+      </view>
+    </view>
+    
+    <view class="time-info">
+      <text class="time-icon">⏱</text>
+      <text class="time-text">累计用时: {{detailedStats.totalTimeSeconds > 0 ? (detailedStats.totalTimeSeconds / 60).toFixed(0) : 0}} 分钟</text>
+    </view>
+  </view>
+
+  <!-- 错题词性分布 -->
+  <view class="stats-section" wx:if="{{partOfSpeechStats.length > 0}}">
+    <view class="section-title">错题词性分布</view>
+    <view class="pos-list">
+      <view class="pos-item" wx:for="{{partOfSpeechStats}}" wx:key="pos">
+        <view class="pos-bar-container">
+          <view class="pos-bar" style="width: {{(item.count / partOfSpeechStats[0].count) * 100}}%"></view>
+        </view>
+        <view class="pos-info">
+          <text class="pos-name">{{item.pos}}</text>
+          <text class="pos-count">{{item.count}}次</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 高频错词 -->
+  <view class="stats-section" wx:if="{{topWrongWords.length > 0}}">
+    <view class="section-title">高频错词 Top {{topWrongWords.length}}</view>
+    <view class="wrong-words-list">
+      <view class="wrong-word-item" wx:for="{{topWrongWords}}" wx:key="word" wx:for-index="idx">
+        <view class="word-rank">{{idx + 1}}</view>
+        <view class="word-content">
+          <text class="word-text">{{item.word}}</text>
+          <text class="word-meaning">{{item.meaning}}</text>
+        </view>
+        <view class="word-stats">
+          <text class="word-pos">{{item.partOfSpeech}}</text>
+          <text class="word-count">错{{item.wrongCount}}次</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 导出报告 -->
+  <view class="export-section">
+    <view class="section-title">导出学习报告</view>
+    <view class="export-buttons">
+      <button class="export-btn pdf" bindtap="exportPDF" disabled="{{isExporting}}">
+        <text class="btn-icon">📄</text>
+        <text class="btn-text">导出PDF</text>
+      </button>
+      <button class="export-btn word" bindtap="exportWord" disabled="{{isExporting}}">
+        <text class="btn-icon">📝</text>
+        <text class="btn-text">导出Word</text>
+      </button>
+    </view>
+    <text class="export-tip">📱 报告将生成下载链接，请在浏览器中打开</text>
+  </view>
+
+  <!-- 基础统计 -->
+  <view class="stats-section">
+    <view class="section-title">学习进度</view>
     <view class="stats-grid">
       <view class="stat-card">
         <text class="stat-value">{{stats.totalWords}}</text>

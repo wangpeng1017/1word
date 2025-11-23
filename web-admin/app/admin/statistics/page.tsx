@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, DatePicker, Select, Tabs, Table, Tag, Space, message } from 'antd'
+import { Card, Row, Col, Statistic, DatePicker, Select, Tabs, Table, Tag, Space, message, Button } from 'antd'
+import { Pie } from '@ant-design/plots'
 import {
   UserOutlined,
+  DownloadOutlined,
   BookOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -49,6 +51,7 @@ interface OverviewData {
     difficulty: string
     count: number
   }>
+  partOfSpeechDistribution?: Array<{ pos: string; count: number }>
 }
 
 interface RankingData {
@@ -66,6 +69,8 @@ export default function StatisticsPage() {
   const [rankingType, setRankingType] = useState('mastery')
   const [classFilter, setClassFilter] = useState<string | undefined>()
   const [classes, setClasses] = useState<any[]>([])
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
+  const [exporting, setExporting] = useState(false)
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().subtract(30, 'day'),
     dayjs(),
@@ -145,6 +150,45 @@ export default function StatisticsPage() {
       }
     } catch (error) {
       console.error('加载排名数据失败:', error)
+    }
+  }
+
+  const handleBatchExport = async (format: 'pdf' | 'word') => {
+    if (selectedStudents.length === 0) {
+      message.warning('请先选择要导出的学生')
+      return
+    }
+
+    setExporting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/statistics/batch-export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          studentIds: selectedStudents,
+          format,
+          period: 'week',
+          classId: classFilter,
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(`成功导出 ${result.data.successCount} 个学生的报告！`)
+        // 下载ZIP文件
+        window.open(result.data.downloadUrl, '_blank')
+        setSelectedStudents([])
+      } else {
+        message.error('批量导出失败')
+      }
+    } catch (error) {
+      message.error('批量导出失败')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -329,6 +373,31 @@ export default function StatisticsPage() {
           width: 120,
         },
       ],
+      studyTime: [
+        {
+          title: '学习时长',
+          dataIndex: 'totalTimeMinutes',
+          key: 'totalTimeMinutes',
+          width: 120,
+          render: (minutes: number) => (
+            <span style={{ color: '#1890ff', fontWeight: 600 }}>{minutes}分钟</span>
+          ),
+        },
+        {
+          title: '学习天数',
+          dataIndex: 'studyDays',
+          key: 'studyDays',
+          width: 100,
+          render: (days: number) => `${days}天`,
+        },
+        {
+          title: '平均日学习',
+          dataIndex: 'avgDailyMinutes',
+          key: 'avgDailyMinutes',
+          width: 120,
+          render: (minutes: number) => `${minutes.toFixed(0)}分钟/天`,
+        },
+      ],
     }
 
     return [...baseColumns, ...typeSpecificColumns[rankingType]] as ColumnsType<RankingData>
@@ -357,6 +426,23 @@ export default function StatisticsPage() {
               </Select.Option>
             ))}
           </Select>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={() => handleBatchExport('pdf')}
+            loading={exporting}
+            disabled={selectedStudents.length === 0}
+          >
+            批量PDF ({selectedStudents.length})
+          </Button>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={() => handleBatchExport('word')}
+            loading={exporting}
+            disabled={selectedStudents.length === 0}
+          >
+            批量Word ({selectedStudents.length})
+          </Button>
         </Space>
       </div>
 
@@ -445,6 +531,34 @@ export default function StatisticsPage() {
         </Col>
       </Row>
 
+      {/* 词性分布图 */}
+      {overview?.partOfSpeechDistribution && overview.partOfSpeechDistribution.length > 0 && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col span={24}>
+            <Card title="错题词性分布" loading={loading}>
+              <Pie
+                data={overview.partOfSpeechDistribution.map(item => ({
+                  type: item.pos,
+                  value: item.count,
+                }))}
+                angleField="value"
+                colorField="type"
+                radius={0.8}
+                label={{
+                  type: 'outer',
+                  content: '{name} {percentage}',
+                }}
+                interactions={[{ type: 'element-active' }]}
+                legend={{
+                  position: 'bottom',
+                }}
+                height={300}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
+
       {/* 排行榜和错题 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
@@ -458,6 +572,10 @@ export default function StatisticsPage() {
                   label: '掌握排行',
                   children: (
                     <Table
+                      rowSelection={{
+                        selectedRowKeys: selectedStudents,
+                        onChange: (keys) => setSelectedStudents(keys as string[]),
+                      }}
                       columns={getRankingColumns()}
                       dataSource={rankings}
                       rowKey="studentId"
@@ -471,6 +589,10 @@ export default function StatisticsPage() {
                   label: '正确率排行',
                   children: (
                     <Table
+                      rowSelection={{
+                        selectedRowKeys: selectedStudents,
+                        onChange: (keys) => setSelectedStudents(keys as string[]),
+                      }}
                       columns={getRankingColumns()}
                       dataSource={rankings}
                       rowKey="studentId"
@@ -484,6 +606,10 @@ export default function StatisticsPage() {
                   label: '进步榜',
                   children: (
                     <Table
+                      rowSelection={{
+                        selectedRowKeys: selectedStudents,
+                        onChange: (keys) => setSelectedStudents(keys as string[]),
+                      }}
                       columns={getRankingColumns()}
                       dataSource={rankings}
                       rowKey="studentId"
@@ -497,6 +623,27 @@ export default function StatisticsPage() {
                   label: '连续学习',
                   children: (
                     <Table
+                      rowSelection={{
+                        selectedRowKeys: selectedStudents,
+                        onChange: (keys) => setSelectedStudents(keys as string[]),
+                      }}
+                      columns={getRankingColumns()}
+                      dataSource={rankings}
+                      rowKey="studentId"
+                      pagination={{ pageSize: 10 }}
+                      size="small"
+                    />
+                  ),
+                },
+                {
+                  key: 'studyTime',
+                  label: '学习时长排行',
+                  children: (
+                    <Table
+                      rowSelection={{
+                        selectedRowKeys: selectedStudents,
+                        onChange: (keys) => setSelectedStudents(keys as string[]),
+                      }}
                       columns={getRankingColumns()}
                       dataSource={rankings}
                       rowKey="studentId"

@@ -1,5 +1,5 @@
 // pages/profile/profile.js
-const { get } = require('../../utils/request')
+const { get, post } = require('../../utils/request')
 const app = getApp()
 
 Page({
@@ -12,7 +12,22 @@ Page({
       studyDays: 0,
       wrongCount: 0,
     },
+    // 详细统计数据
+    detailedStats: {
+      totalQuestions: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      accuracy: 0,
+      totalTimeSeconds: 0,
+    },
+    partOfSpeechStats: [],
+    topWrongWords: [],
+    // 时间段选择
+    periodTabs: ['今日', '本周', '本月', '全部'],
+    currentPeriod: 1, // 默认本周
+    periodMap: ['today', 'week', 'month', 'all'],
     isLoading: true,
+    isExporting: false,
   },
 
   onLoad() {
@@ -26,12 +41,21 @@ Page({
 
     this.loadUserInfo()
     this.loadStats()
+    this.loadDetailedStats()
   },
 
   onShow() {
     if (app.globalData.token) {
       this.loadStats()
+      this.loadDetailedStats()
     }
+  },
+
+  // 切换时间段
+  onPeriodChange(e) {
+    const index = parseInt(e.detail.value)
+    this.setData({ currentPeriod: index })
+    this.loadDetailedStats()
   },
 
   // 加载用户信息
@@ -61,7 +85,7 @@ Page({
     this.setData({ userInfo })
   },
 
-  // 加载统计数据（来自 overview + 近7天记录）
+  // 加载基础统计数据（来自 overview）
   async loadStats() {
     try {
       const studentId = app.globalData.userInfo?.studentId
@@ -83,11 +107,92 @@ Page({
           studyDays: progress.consecutiveDays || 0,
           wrongCount,
         },
-        isLoading: false,
       })
     } catch (error) {
       console.error('加载统计数据失败:', error)
+    }
+  },
+
+  // 加载详细统计数据（新接口）
+  async loadDetailedStats() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) {
+        this.setData({ isLoading: false })
+        return
+      }
+
+      const period = this.data.periodMap[this.data.currentPeriod]
+      const data = await get(`/statistics/${studentId}?period=${period}`)
+
+      if (data) {
+        // 处理词性统计数据
+        const posStats = Object.entries(data.partOfSpeechStats || {})
+          .map(([pos, count]) => ({ pos, count }))
+          .sort((a, b) => b.count - a.count)
+
+        this.setData({
+          detailedStats: data.overview || {},
+          partOfSpeechStats: posStats,
+          topWrongWords: data.topWrongWords || [],
+          isLoading: false,
+        })
+      }
+    } catch (error) {
+      console.error('加载详细统计数据失败:', error)
       this.setData({ isLoading: false })
+    }
+  },
+
+  // 导出PDF报告
+  async exportPDF() {
+    await this.exportReport('pdf')
+  },
+
+  // 导出Word报告
+  async exportWord() {
+    await this.exportReport('word')
+  },
+
+  // 导出报告通用方法
+  async exportReport(format) {
+    const studentId = app.globalData.userInfo?.studentId
+    if (!studentId) {
+      wx.showToast({ title: '未找到学生信息', icon: 'none' })
+      return
+    }
+
+    this.setData({ isExporting: true })
+
+    try {
+      const period = this.data.periodMap[this.data.currentPeriod]
+      const result = await post(`/statistics/${studentId}/export`, {
+        format,
+        period,
+      })
+
+      if (result && result.downloadUrl) {
+        // 复制下载链接到剪贴板
+        wx.setClipboardData({
+          data: `${app.globalData.baseUrl}${result.downloadUrl}`,
+          success: () => {
+            wx.showModal({
+              title: '报告生成成功',
+              content: `下载链接已复制到剪贴板，请在浏览器中打开下载。\n\n文件名: ${result.fileName}`,
+              confirmText: '好的',
+              showCancel: false,
+            })
+          },
+        })
+      }
+    } catch (error) {
+      console.error('导出报告失败:', error)
+      wx.showToast({
+        title: '导出失败',
+        icon: 'none',
+      })
+    } finally {
+      this.setData({ isExporting: false })
     }
   },
 
@@ -102,7 +207,7 @@ Page({
           app.globalData.userInfo = null
           wx.removeStorageSync('token')
           wx.removeStorageSync('userInfo')
-          
+
           wx.reLaunch({
             url: '/pages/login/login',
           })
