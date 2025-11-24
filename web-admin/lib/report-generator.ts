@@ -376,7 +376,8 @@ function getPosName(pos: string): string {
 }
 
 export function ensureExportDir(): string {
-    const exportDir = path.join(process.cwd(), 'public', 'exports')
+    // 在Vercel等无服务器环境中，只有/tmp目录是可写的
+    const exportDir = path.join('/tmp', 'exports')
     if (!fs.existsSync(exportDir)) {
         fs.mkdirSync(exportDir, { recursive: true })
     }

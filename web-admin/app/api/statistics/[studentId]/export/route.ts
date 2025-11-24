@@ -61,7 +61,7 @@ export async function POST(
         }
 
         // 返回下载链接
-        const downloadUrl = `/exports/${fileName}`
+        const downloadUrl = `/api/exports/${fileName}`
         const stats = require('fs').statSync(filepath)
 
         return successResponse({

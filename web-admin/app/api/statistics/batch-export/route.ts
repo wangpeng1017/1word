@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         const stats = fs.statSync(zipPath)
 
         return successResponse({
-            downloadUrl: `/exports/${zipFileName}`,
+            downloadUrl: `/api/exports/${zipFileName}`,
             fileName: zipFileName,
             fileSize: stats.size,
             successCount,
