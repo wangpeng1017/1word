@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Card, Row, Col, Statistic, DatePicker, Select, Tabs, Table, Tag, Space, message, Button } from 'antd'
-import { Pie } from '@ant-design/plots'
 import {
   UserOutlined,
   DownloadOutlined,
@@ -395,7 +394,7 @@ export default function StatisticsPage() {
           dataIndex: 'avgDailyMinutes',
           key: 'avgDailyMinutes',
           width: 120,
-          render: (minutes: number) => `${minutes.toFixed(0)}分钟/天`,
+          render: (minutes: number) => `${minutes ? minutes.toFixed(0) : 0}分钟/天`,
         },
       ],
     }
@@ -530,34 +529,6 @@ export default function StatisticsPage() {
           </Card>
         </Col>
       </Row>
-
-      {/* 词性分布图 */}
-      {overview?.partOfSpeechDistribution && overview.partOfSpeechDistribution.length > 0 && (
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col span={24}>
-            <Card title="错题词性分布" loading={loading}>
-              <Pie
-                data={overview.partOfSpeechDistribution.map(item => ({
-                  type: item.pos,
-                  value: item.count,
-                }))}
-                angleField="value"
-                colorField="type"
-                radius={0.8}
-                label={{
-                  type: 'outer',
-                  content: '{name} {percentage}',
-                }}
-                interactions={[{ type: 'element-active' }]}
-                legend={{
-                  position: 'bottom',
-                }}
-                height={300}
-              />
-            </Card>
-          </Col>
-        </Row>
-      )}
 
       {/* 排行榜和错题 */}
       <Row gutter={[16, 16]}>
