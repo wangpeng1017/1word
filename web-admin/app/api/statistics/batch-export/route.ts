@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
             return errorResponse('无效的导出格式', 400)
         }
 
+        // Vercel环境不支持PDF生成，因为pdfkit需要文件系统字体
+        if (format === 'pdf') {
+            return errorResponse('当前环境不支持PDF导出，请使用Word格式', 400)
+        }
+
         // 确保导出目录存在
         const exportDir = ensureExportDir()
         const timestamp = Date.now()
