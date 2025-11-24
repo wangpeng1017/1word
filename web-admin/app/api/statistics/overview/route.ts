@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以查看统计数据')
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     // 4. 活跃学生统计（最近7天有学习记录）
     const sevenDaysAgo = new Date(today)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    
+
     const activeStudentIds = await prisma.study_records.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       words: stat._sum.completedWords || 0,
       correct: stat._sum.correctCount || 0,
       wrong: stat._sum.wrongCount || 0,
-      accuracy: stat._sum.completedWords 
+      accuracy: stat._sum.completedWords
         ? ((stat._sum.correctCount || 0) / ((stat._sum.correctCount || 0) + (stat._sum.wrongCount || 0)) * 100).toFixed(1)
         : 0,
     }))
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     // 7. 错题统计
     const wrongQuestions = await prisma.wrong_questions.findMany({
       where: {
-        student: studentFilter,
+        students: studentFilter,
         wrongAt: {
           gte: dateRangeStart,
           lte: dateRangeEnd,
@@ -134,34 +134,53 @@ export async function GET(request: NextRequest) {
       },
       include: {
         vocabularies: {
-          select: {
-            word: true,
-            primary_meaning: true,
-            difficulty: true,
+          include: {
+            word_meanings: {
+              where: { orderIndex: 0 },
+              take: 1,
+            },
           },
         },
       },
     })
 
-    // 按单词分组统计错误次数
+    // 按单词分组统计错误次数 & 统计词性分布
     const wrongWordsMap = new Map<string, any>()
+    const posStats: Record<string, number> = {}
+
     wrongQuestions.forEach(wq => {
-      const word = wq.vocabularies.word
+      const vocab = wq.vocabularies as any
+      const word = vocab.word
+
+      // 统计错词 Top 20
       if (wrongWordsMap.has(word)) {
         wrongWordsMap.get(word).count++
       } else {
         wrongWordsMap.set(word, {
           word,
-          meaning: wq.vocabularies.primaryMeaning,
-          difficulty: wq.vocabularies.difficulty,
+          meaning: vocab.primary_meaning,
+          difficulty: vocab.difficulty,
           count: 1,
         })
       }
+
+      // 统计词性
+      let pos = 'unknown'
+      if (vocab.word_meanings && vocab.word_meanings.length > 0) {
+        pos = vocab.word_meanings[0].partOfSpeech
+      } else if (vocab.part_of_speech && vocab.part_of_speech.length > 0) {
+        pos = vocab.part_of_speech[0]
+      }
+      posStats[pos] = (posStats[pos] || 0) + 1
     })
 
     const topWrongWords = Array.from(wrongWordsMap.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 20)
+
+    const partOfSpeechDistribution = Object.entries(posStats)
+      .map(([pos, count]) => ({ pos, count }))
+      .sort((a, b) => b.count - a.count)
 
     return successResponse({
       overview: {
@@ -178,12 +197,13 @@ export async function GET(request: NextRequest) {
         masteredWords,
         learningWords,
         difficultWords,
-        masteryRate: wordMasteries.length > 0 
+        masteryRate: wordMasteries.length > 0
           ? ((masteredWords / wordMasteries.length) * 100).toFixed(1)
           : 0,
       },
       dailyTrend,
       topWrongWords,
+      partOfSpeechDistribution,
       dateRange: {
         start: dateRangeStart,
         end: dateRangeEnd,

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以查看统计数据')
@@ -54,10 +54,10 @@ export async function GET(request: NextRequest) {
             const wordMasteries = await prisma.word_masteries.findMany({
               where: { studentId: student.id },
             })
-            
+
             const masteredCount = wordMasteries.filter(m => m.isMastered).length
             const totalLearning = wordMasteries.length
-            const masteryRate = totalLearning > 0 
+            const masteryRate = totalLearning > 0
               ? (masteredCount / totalLearning * 100)
               : 0
 
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
             const totalCorrect = studyRecords.reduce((sum, r) => sum + r.correctCount, 0)
             const totalWrong = studyRecords.reduce((sum, r) => sum + r.wrongCount, 0)
             const totalAnswered = totalCorrect + totalWrong
-            const accuracy = totalAnswered > 0 
+            const accuracy = totalAnswered > 0
               ? (totalCorrect / totalAnswered * 100)
               : 0
 
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
             let consecutiveDays = 0
             const today = getTodayDate()
             let checkDate = new Date(today)
-            
+
             while (consecutiveDays < 365) {
               const record = await prisma.study_records.findFirst({
                 where: {
@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
                   isCompleted: true,
                 },
               })
-              
+
               if (record) {
                 consecutiveDays++
                 checkDate.setDate(checkDate.getDate() - 1)
@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
             return {
               studentId: student.id,
               studentName: student.user.name,
-              studentNo: student.studentNo,
+              studentNo: student.student_no,
               className: student.classes.name,
               consecutiveDays,
               totalDays,
@@ -236,6 +236,42 @@ export async function GET(request: NextRequest) {
         )
 
         rankings = streakStats
+          .sort((a, b) => b.score - a.score)
+          .slice(0, limit)
+          .map((item, index) => ({ ...item, rank: index + 1 }))
+        break
+      }
+
+      case 'studyTime': {
+        // 学习时长排行
+        const studyTimeStats = await Promise.all(
+          students.map(async (student) => {
+            const studyRecords = await prisma.study_records.findMany({
+              where: {
+                studentId: student.id,
+              },
+            })
+
+            const totalTimeSeconds = studyRecords.reduce((sum, r) => sum + (r.totalTime || 0), 0)
+            const totalTimeMinutes = Math.round(totalTimeSeconds / 60)
+            const studyDays = studyRecords.length
+            const avgDailyMinutes = studyDays > 0 ? totalTimeMinutes / studyDays : 0
+
+            return {
+              studentId: student.id,
+              studentName: student.user.name,
+              studentNo: student.student_no,
+              className: student.classes?.name || '-',
+              totalTimeMinutes,
+              studyDays,
+              avgDailyMinutes,
+              score: totalTimeMinutes, // 用于排序
+            }
+          })
+        )
+
+        rankings = studyTimeStats
+          .filter(item => item.totalTimeMinutes > 0) // 过滤没有学习记录的学生
           .sort((a, b) => b.score - a.score)
           .slice(0, limit)
           .map((item, index) => ({ ...item, rank: index + 1 }))
