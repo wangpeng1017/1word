@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
+    "@ant-design/plots": "^2.3.2",
     "@prisma/client": "^5.20.0",
     "@types/archiver": "^7.0.0",
     "@vercel/blob": "^2.0.0",
