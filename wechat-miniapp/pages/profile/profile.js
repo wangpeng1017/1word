@@ -253,6 +253,13 @@ Page({
     }
   },
 
+  // 跳转到学习历史页面
+  goToStudyHistory() {
+    wx.navigateTo({
+      url: '/pages/study-history/study-history'
+    })
+  },
+
   // 跳转到成就页面
   goToAchievements() {
     wx.navigateTo({

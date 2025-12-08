@@ -47,6 +47,14 @@
 
   <!-- 成就和排行榜入口 -->
   <view class="quick-links">
+    <view class="quick-link-item" bindtap="goToStudyHistory">
+      <view class="link-icon">📚</view>
+      <view class="link-content">
+        <text class="link-title">学习历史</text>
+        <text class="link-desc">查看学习记录</text>
+      </view>
+      <text class="link-arrow">›</text>
+    </view>
     <view class="quick-link-item" bindtap="goToAchievements">
       <view class="link-icon">🏆</view>
       <view class="link-content">
