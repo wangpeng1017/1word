@@ -22,10 +22,13 @@ import {
   ReloadOutlined,
   EditOutlined,
   SearchOutlined,
+  DeleteOutlined,
+  UndoOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import BatchGenerateDialog from '@/components/BatchGenerateDialog'
+import AddWordsDialog from '@/components/AddWordsDialog'
 
 interface Student {
   id: string
@@ -76,6 +79,8 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
+  const [addWordsOpen, setAddWordsOpen] = useState(false)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>()
 
   // 加载数据
   useEffect(() => {
@@ -224,6 +229,7 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
       const result = await response.json()
       if (result.success) {
         message.success('删除成功')
+        setSelectedRowKeys([])
         fetchData()
       } else {
         message.error(result.error || '删除失败')
@@ -232,6 +238,80 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
       message.error('删除失败')
     }
   }
+
+  // 重置学习进度
+  const handleReset = async (planIds: string[]) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/study-plans/reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ planIds }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(result.message || '重置成功')
+        setSelectedRowKeys([])
+        fetchData()
+      } else {
+        message.error(result.error || '重置失败')
+      }
+    } catch (error) {
+      message.error('重置失败')
+    }
+  }
+
+  // 添加词汇
+  const handleAddWords = async (vocabularyIds: string[]) => {
+    if (!selectedStudentId) {
+      message.error('请先选择学生')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/study-plans/add-words', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          studentId: selectedStudentId,
+          vocabularyIds,
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(result.message || '添加成功')
+        setAddWordsOpen(false)
+        fetchData()
+      } else {
+        message.error(result.error || '添加失败')
+      }
+    } catch (error) {
+      message.error('添加失败')
+    }
+  }
+
+  // 检测是否选择了单个学生
+  useEffect(() => {
+    if (data.length > 0) {
+      const studentIds = new Set(data.map(d => d.studentId))
+      if (studentIds.size === 1) {
+        setSelectedStudentId(Array.from(studentIds)[0])
+      } else {
+        setSelectedStudentId(undefined)
+      }
+    } else {
+      setSelectedStudentId(undefined)
+    }
+  }, [data])
 
   // 明细模式下的列（调整为 班级 在前，学生 在后）
   const columns: ColumnsType<StudyPlan> = [
@@ -317,7 +397,7 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 150,
+      width: 220,
       render: (_, record) => (
         <Space>
           <Button
@@ -336,6 +416,35 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
             }}
           >
             编辑
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<UndoOutlined />}
+            onClick={() => {
+              Modal.confirm({
+                title: '确认重置',
+                content: '确定要重置该学习计划吗？将清空复习记录和进度。',
+                onOk: () => handleReset([record.id]),
+              })
+            }}
+          >
+            重置
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              Modal.confirm({
+                title: '确认删除',
+                content: '确定要删除该学习计划吗？',
+                onOk: () => handleDelete([record.id]),
+              })
+            }}
+          >
+            删除
           </Button>
         </Space>
       ),
@@ -402,6 +511,14 @@ onClick={() => setBatchOpen(true)}
           >
             批量生成计划
           </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            disabled={!selectedStudentId}
+            onClick={() => setAddWordsOpen(true)}
+          >
+            添加词汇
+          </Button>
           <Input
             placeholder="学生姓名"
             prefix={<SearchOutlined />}
@@ -456,12 +573,32 @@ onClick={() => setBatchOpen(true)}
             刷新
           </Button>
           {selectedRowKeys.length > 0 && (
-            <Button danger onClick={async () => {
-              await handleDelete(selectedRowKeys as string[])
-              setSelectedRowKeys([])
-            }}>
-              批量删除 ({selectedRowKeys.length})
-            </Button>
+            <>
+              <Button
+                icon={<UndoOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: '确认批量重置',
+                    content: `确定要重置选中的 ${selectedRowKeys.length} 条学习计划吗？`,
+                    onOk: () => handleReset(selectedRowKeys as string[]),
+                  })
+                }}
+              >
+                批量重置 ({selectedRowKeys.length})
+              </Button>
+              <Button
+                danger
+                onClick={() => {
+                  Modal.confirm({
+                    title: '确认批量删除',
+                    content: `确定要删除选中的 ${selectedRowKeys.length} 条学习计划吗？`,
+                    onOk: () => handleDelete(selectedRowKeys as string[]),
+                  })
+                }}
+              >
+                批量删除 ({selectedRowKeys.length})
+              </Button>
+            </>
           )}
         </Space>
       </div>
@@ -494,6 +631,14 @@ onClick={() => setBatchOpen(true)}
           setPagination((p) => ({ ...p, current: 1 }))
           await fetchData({ page: 1, pageSize: pagination.pageSize })
         }}
+      />
+
+      {/* 添加词汇对话框 */}
+      <AddWordsDialog
+        open={addWordsOpen}
+        onClose={() => setAddWordsOpen(false)}
+        studentId={selectedStudentId}
+        onCompleted={handleAddWords}
       />
 
       {/* 编辑对话框 */}
