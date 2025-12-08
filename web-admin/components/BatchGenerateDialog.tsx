@@ -18,6 +18,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<PlanClassesResponse | null>(null)
+  const [isPreviewed, setIsPreviewed] = useState(false)
 
   const columns: ColumnsType<PlanItem> = useMemo(() => ([
     { title: '学生', dataIndex: 'studentName', key: 'studentName' },
@@ -61,7 +62,8 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
       const json = await res.json()
       if (json.success) {
         setResult(json.data as PlanClassesResponse)
-        message.success('预估完成')
+        setIsPreviewed(true)
+        message.success('预估完成，可以直接点击"确定生成"按钮')
       } else {
         message.error(json.error || '预估失败')
       }
@@ -74,7 +76,42 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
     try {
       const token = localStorage.getItem('token')
       const values = await form.validateFields()
-      setLoading(true)
+
+      // 如果选择了重置模式，需要二次确认
+      if (values.overwrite === true) {
+        Modal.confirm({
+          title: '确认重置已存在的学习计划？',
+          content: (
+            <div>
+              <p style={{ color: '#ff4d4f', marginBottom: 8 }}>
+                ⚠️ 此操作将清空以下数据，且无法恢复：
+              </p>
+              <ul style={{ marginLeft: 20, color: '#666' }}>
+                <li>学习进度（状态、复习次数）</li>
+                <li>掌握度数据（错误次数、正确率）</li>
+                <li>难点标记和已掌握标记</li>
+              </ul>
+              <p style={{ marginTop: 8 }}>确定要继续吗？</p>
+            </div>
+          ),
+          okText: '确定重置',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk: async () => {
+            await executeGenerate(values, token)
+          },
+        })
+      } else {
+        await executeGenerate(values, token)
+      }
+    } catch (error) {
+      // 表单验证失败
+    }
+  }
+
+  const executeGenerate = async (values: any, token: string | null) => {
+    setLoading(true)
+    try {
       const payload = {
         classIds: values.classIds,
         vocabularyIds: values.vocabularyIds,
@@ -104,6 +141,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   const resetAll = () => {
     form.resetFields()
     setResult(null)
+    setIsPreviewed(false)
   }
 
   return (
@@ -116,7 +154,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
       destroyOnClose
     >
       <Space direction="vertical" style={{ width: '100%' }} size={16}>
-        <Form form={form} layout="vertical" disabled={loading}>
+        <Form form={form} layout="vertical" disabled={loading || isPreviewed}>
           <Form.Item label="选择班级" name="classIds" rules={[{ required: true, message: '请选择至少一个班级' }]}>
             <Select mode="multiple" placeholder="请选择班级（可多选）" showSearch optionFilterProp="children">
               {classes.map((c: any) => (
@@ -144,21 +182,39 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
             <Form.Item label="计划结束日期" name="endDate">
               <DatePicker />
             </Form.Item>
-            <Form.Item name="overwrite" label={null} style={{ marginTop: 30 }}>
+            <Form.Item
+              name="overwrite"
+              label="生成策略"
+              tooltip="重置模式会清空学生的学习进度和掌握度数据，请谨慎使用"
+              initialValue={false}
+            >
               <Select
-                placeholder="生成策略"
-                style={{ width: 160 }}
+                style={{ width: 220 }}
                 options={[
                   { label: '默认（跳过已存在）', value: false },
-                  { label: '重置已存在计划', value: true },
+                  { label: '⚠️ 重置已存在计划', value: true },
                 ]}
               />
             </Form.Item>
           </Space>
 
           <Space>
-            <Button onClick={doPreview} loading={loading}>预估</Button>
-            <Button type="primary" onClick={doGenerate} loading={loading}>确定生成</Button>
+            <Button onClick={doPreview} loading={loading} disabled={isPreviewed}>
+              预估
+            </Button>
+            <Button
+              type="primary"
+              onClick={doGenerate}
+              loading={loading}
+              style={isPreviewed ? { animation: 'pulse 1.5s ease-in-out infinite' } : {}}
+            >
+              确定生成
+            </Button>
+            {isPreviewed && (
+              <Button onClick={resetAll} disabled={loading}>
+                重新配置
+              </Button>
+            )}
           </Space>
         </Form>
 

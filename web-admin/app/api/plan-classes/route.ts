@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
+import { resetStudyPlansByPairs } from '@/lib/study-plan-helpers'
 
 // 获取班级学习计划列表
 export async function GET(request: NextRequest) {
@@ -255,20 +256,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 2) overwrite：重置已存在计划的状态/时间
+    // 使用公共函数确保同步重置 study_plans 和 word_masteries 表
     let updatedKeys = new Set<string>()
     if (overwrite && existingPlans.length > 0) {
-      // 批量更新可能需要分批，这里简单写法逐个更新以保证兼容性和明确性
-      for (const p of existingPlans) {
-        await prisma.study_plans.update({
-          where: { id: p.id },
-          data: {
-            status: 'PENDING',
-            reviewCount: 0,
-            nextReviewAt: new Date(startDate),
-            updatedAt: new Date(),
-          },
-        })
-        updatedKeys.add(`${p.studentId}|${p.vocabularyId}`)
+      const pairsToReset = existingPlans.map(p => ({
+        studentId: p.studentId,
+        vocabularyId: p.vocabularyId,
+      }))
+
+      // 调用公共重置函数
+      const resetResults = await resetStudyPlansByPairs(pairsToReset)
+
+      // 记录已重置的键
+      for (const result of resetResults) {
+        updatedKeys.add(`${result.studentId}|${result.vocabularyId}`)
       }
     }
 
