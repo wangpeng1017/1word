@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
+import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 
 // GET /api/test-records - 获取测试记录列表
 export async function GET(request: NextRequest) {
@@ -162,6 +163,67 @@ export async function POST(request: NextRequest) {
     // 判断是否通过
     const isPassed = score >= test.passScore
 
+    // 添加积分奖励
+    const basePoints = Math.floor(score * 0.5) // 分数的一半作为基础积分
+    const passBonus = isPassed ? 20 : 0 // 通过奖励20分
+    const perfectBonus = score === 100 ? 20 : 0 // 满分额外奖励20分
+    const totalPoints = basePoints + passBonus + perfectBonus
+
+    // 获取或创建积分记录
+    let studentPoints = await prisma.student_points.findUnique({
+      where: { studentId }
+    })
+
+    if (!studentPoints) {
+      const pointsId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+      studentPoints = await prisma.student_points.create({
+        data: {
+          id: pointsId,
+          studentId,
+          totalPoints: 0,
+          dailyPoints: 0,
+          weeklyPoints: 0,
+          monthlyPoints: 0,
+          level: 1,
+          updatedAt: new Date()
+        }
+      })
+    }
+
+    // 更新积分
+    const newTotalPoints = studentPoints.totalPoints + totalPoints
+    const newLevel = Math.floor(newTotalPoints / 100) + 1
+
+    await prisma.student_points.update({
+      where: { studentId },
+      data: {
+        totalPoints: newTotalPoints,
+        dailyPoints: studentPoints.dailyPoints + totalPoints,
+        weeklyPoints: studentPoints.weeklyPoints + totalPoints,
+        monthlyPoints: studentPoints.monthlyPoints + totalPoints,
+        level: newLevel,
+        updatedAt: new Date()
+      }
+    })
+
+    // 记录积分历史
+    const historyId = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    await prisma.point_history.create({
+      data: {
+        id: historyId,
+        studentId,
+        points: totalPoints,
+        reason: `完成测试：${test.name}（${score}分）`,
+        relatedType: 'test_record',
+        relatedId: recordId
+      }
+    })
+
+    // 检查并解锁成就（异步执行，不阻塞响应）
+    checkAndUnlockAchievements(studentId).catch(err => {
+      console.error('检查成就失败:', err)
+    })
+
     return apiResponse.success({
       message: '测试记录提交成功',
       record,
@@ -174,6 +236,16 @@ export async function POST(request: NextRequest) {
         accuracy: Math.round(accuracy * 100),
         totalTime,
         passScore: test.passScore
+      },
+      points: {
+        earned: totalPoints,
+        breakdown: {
+          base: basePoints,
+          passBonus,
+          perfectBonus
+        },
+        total: newTotalPoints,
+        level: newLevel
       }
     })
   } catch (error: any) {
