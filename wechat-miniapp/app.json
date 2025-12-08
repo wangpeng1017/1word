@@ -6,6 +6,9 @@
     "pages/wrong/wrong",
     "pages/test/test",
     "pages/profile/profile",
+    "pages/achievements/achievements",
+    "pages/leaderboard/leaderboard",
+    "pages/points-history/points-history",
     "pages/login/login"
   ],
   "window": {

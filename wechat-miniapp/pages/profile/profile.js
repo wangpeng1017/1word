@@ -28,6 +28,17 @@ Page({
     periodMap: ['today', 'week', 'month', 'all'],
     isLoading: true,
     isExporting: false,
+    // 游戏化数据
+    pointsInfo: {
+      totalPoints: 0,
+      dailyPoints: 0,
+      weeklyPoints: 0,
+      monthlyPoints: 0,
+      level: 1
+    },
+    levelProgress: 0,
+    pointsToNextLevel: 100,
+    achievementCount: 0,
   },
 
   onLoad() {
@@ -42,12 +53,16 @@ Page({
     this.loadUserInfo()
     this.loadStats()
     this.loadDetailedStats()
+    this.loadPointsInfo()
+    this.loadAchievementCount()
   },
 
   onShow() {
     if (app.globalData.token) {
       this.loadStats()
       this.loadDetailedStats()
+      this.loadPointsInfo()
+      this.loadAchievementCount()
     }
   },
 
@@ -194,6 +209,69 @@ Page({
     } finally {
       this.setData({ isExporting: false })
     }
+  },
+
+  // 加载积分信息
+  async loadPointsInfo() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const res = await get(`/points?studentId=${studentId}`)
+      if (res && res.points) {
+        const points = res.points
+        const currentLevelPoints = (points.level - 1) * 100
+        const nextLevelPoints = points.level * 100
+        const progressPoints = points.totalPoints - currentLevelPoints
+        const levelProgress = (progressPoints / 100) * 100
+        const pointsToNextLevel = nextLevelPoints - points.totalPoints
+
+        this.setData({
+          pointsInfo: points,
+          levelProgress: Math.min(levelProgress, 100),
+          pointsToNextLevel: Math.max(pointsToNextLevel, 0)
+        })
+      }
+    } catch (error) {
+      console.error('加载积分信息失败:', error)
+    }
+  },
+
+  // 加载成就数量
+  async loadAchievementCount() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const achievements = await get(`/achievements?studentId=${studentId}`)
+      if (Array.isArray(achievements)) {
+        const unlockedCount = achievements.filter(a => a.isUnlocked).length
+        this.setData({ achievementCount: unlockedCount })
+      }
+    } catch (error) {
+      console.error('加载成就数量失败:', error)
+    }
+  },
+
+  // 跳转到成就页面
+  goToAchievements() {
+    wx.navigateTo({
+      url: '/pages/achievements/achievements'
+    })
+  },
+
+  // 跳转到排行榜页面
+  goToLeaderboard() {
+    wx.navigateTo({
+      url: '/pages/leaderboard/leaderboard'
+    })
+  },
+
+  // 跳转到积分历史页面
+  goToPointsHistory() {
+    wx.navigateTo({
+      url: '/pages/points-history/points-history'
+    })
   },
 
   // 退出登录

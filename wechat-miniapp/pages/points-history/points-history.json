@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "积分历史",
+  "navigationBarBackgroundColor": "#FF7A7A",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#F3F4F6",
+  "enablePullDownRefresh": true
+}

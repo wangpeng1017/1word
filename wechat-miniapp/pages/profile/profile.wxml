@@ -9,6 +9,70 @@
     </view>
   </view>
 
+  <!-- 积分等级卡片 -->
+  <view class="points-card">
+    <view class="points-header">
+      <view class="level-badge">
+        <text class="level-icon">⭐</text>
+        <text class="level-text">Lv.{{pointsInfo.level || 1}}</text>
+      </view>
+      <view class="points-total">
+        <text class="points-value">{{pointsInfo.totalPoints || 0}}</text>
+        <text class="points-label">总积分</text>
+      </view>
+    </view>
+
+    <view class="level-progress">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{levelProgress}}%"></view>
+      </view>
+      <text class="progress-text">距离下一级还需 {{pointsToNextLevel}} 积分</text>
+    </view>
+
+    <view class="points-stats">
+      <view class="points-stat-item">
+        <text class="stat-value">{{pointsInfo.dailyPoints || 0}}</text>
+        <text class="stat-label">今日</text>
+      </view>
+      <view class="points-stat-item">
+        <text class="stat-value">{{pointsInfo.weeklyPoints || 0}}</text>
+        <text class="stat-label">本周</text>
+      </view>
+      <view class="points-stat-item">
+        <text class="stat-value">{{pointsInfo.monthlyPoints || 0}}</text>
+        <text class="stat-label">本月</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成就和排行榜入口 -->
+  <view class="quick-links">
+    <view class="quick-link-item" bindtap="goToAchievements">
+      <view class="link-icon">🏆</view>
+      <view class="link-content">
+        <text class="link-title">我的成就</text>
+        <text class="link-desc">已解锁 {{achievementCount}} 个</text>
+      </view>
+      <text class="link-arrow">›</text>
+    </view>
+    <view class="quick-link-item" bindtap="goToLeaderboard">
+      <view class="link-icon">📊</view>
+      <view class="link-content">
+        <text class="link-title">排行榜</text>
+        <text class="link-desc">查看我的排名</text>
+      </view>
+      <text class="link-arrow">›</text>
+    </view>
+    <view class="quick-link-item" bindtap="goToPointsHistory">
+      <view class="link-icon">📝</view>
+      <view class="link-content">
+        <text class="link-title">积分历史</text>
+        <text class="link-desc">查看积分变动</text>
+      </view>
+      <text class="link-arrow">›</text>
+    </view>
+  </view>
+
   <!-- 时间段选择 -->
   <view class="period-selector">
     <picker mode="selector" range="{{periodTabs}}" value="{{currentPeriod}}" bindchange="onPeriodChange">

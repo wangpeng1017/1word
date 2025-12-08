@@ -1,0 +1,272 @@
+/* pages/achievements/achievements.wxss */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF5F5 0%, #FFFFFF 100%);
+  padding-bottom: 40rpx;
+}
+
+.header {
+  padding: 60rpx 40rpx 40rpx;
+  text-align: center;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #1F2937;
+  margin-bottom: 16rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #6B7280;
+}
+
+/* 统计卡片 */
+.stats-card {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin: 0 32rpx 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FF7A7A;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #9CA3AF;
+}
+
+.stat-divider {
+  width: 1rpx;
+  background: #E5E7EB;
+  margin: 0 24rpx;
+}
+
+/* 筛选标签 */
+.filter-tabs {
+  display: flex;
+  padding: 0 32rpx 24rpx;
+  gap: 16rpx;
+  overflow-x: auto;
+}
+
+.filter-tab {
+  padding: 16rpx 32rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  font-size: 28rpx;
+  color: #6B7280;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, #FF7A7A 0%, #FF5A5A 100%);
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+/* 成就列表 */
+.achievements-list {
+  padding: 0 32rpx;
+}
+
+.achievement-item {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s;
+}
+
+.achievement-item.locked {
+  opacity: 0.6;
+}
+
+.achievement-icon {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.icon-text {
+  font-size: 64rpx;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+}
+
+.achievement-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.achievement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.achievement-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1F2937;
+}
+
+.achievement-points {
+  padding: 4rpx 16rpx;
+  background: #FFF5F5;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  color: #FF7A7A;
+  font-weight: bold;
+}
+
+.achievement-desc {
+  font-size: 26rpx;
+  color: #6B7280;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+}
+
+.achievement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.achievement-type {
+  font-size: 24rpx;
+  color: #9CA3AF;
+  padding: 4rpx 12rpx;
+  background: #F3F4F6;
+  border-radius: 8rpx;
+}
+
+.achievement-date {
+  font-size: 24rpx;
+  color: #10B981;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 120rpx 40rpx;
+  color: #9CA3AF;
+  font-size: 28rpx;
+}
+
+/* 解锁动画 */
+.unlock-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animation-content {
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 80rpx 60rpx;
+  text-align: center;
+  animation: scaleIn 0.5s;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animation-icon {
+  font-size: 120rpx;
+  margin-bottom: 32rpx;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20rpx);
+  }
+}
+
+.animation-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FF7A7A;
+  margin-bottom: 16rpx;
+}
+
+.animation-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1F2937;
+  margin-bottom: 16rpx;
+}
+
+.animation-points {
+  font-size: 28rpx;
+  color: #FFD700;
+  font-weight: bold;
+}

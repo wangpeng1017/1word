@@ -1,0 +1,102 @@
+<!--pages/leaderboard/leaderboard.wxml-->
+<view class="page">
+  <view class="header">
+    <view class="title">排行榜</view>
+    <view class="subtitle">与同学一起进步</view>
+  </view>
+
+  <!-- 榜单类型切换 -->
+  <view class="type-tabs">
+    <view
+      class="type-tab {{currentType === item.value ? 'active' : ''}}"
+      wx:for="{{typeFilters}}"
+      wx:key="value"
+      bindtap="onTypeChange"
+      data-type="{{item.value}}"
+    >
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 我的排名 -->
+  <view class="my-rank-card" wx:if="{{myRank}}">
+    <view class="rank-badge my">
+      <text>{{myRank.rank}}</text>
+    </view>
+    <view class="rank-info">
+      <text class="rank-name">{{myRank.studentName}}</text>
+      <text class="rank-class">{{myRank.className}}</text>
+    </view>
+    <view class="rank-points">
+      <text class="points-value">{{myRank.points}}</text>
+      <text class="points-label">积分</text>
+    </view>
+    <view class="rank-level">
+      <text>Lv.{{myRank.level}}</text>
+    </view>
+  </view>
+
+  <!-- 前三名 -->
+  <view class="top-three" wx:if="{{leaderboard.length >= 3}}">
+    <!-- 第二名 -->
+    <view class="top-item second" wx:if="{{leaderboard[1]}}">
+      <view class="top-rank">2</view>
+      <view class="top-avatar">👤</view>
+      <view class="top-name">{{leaderboard[1].studentName}}</view>
+      <view class="top-points">{{leaderboard[1].points}}</view>
+    </view>
+
+    <!-- 第一名 -->
+    <view class="top-item first" wx:if="{{leaderboard[0]}}">
+      <view class="top-crown">👑</view>
+      <view class="top-rank">1</view>
+      <view class="top-avatar">👤</view>
+      <view class="top-name">{{leaderboard[0].studentName}}</view>
+      <view class="top-points">{{leaderboard[0].points}}</view>
+    </view>
+
+    <!-- 第三名 -->
+    <view class="top-item third" wx:if="{{leaderboard[2]}}">
+      <view class="top-rank">3</view>
+      <view class="top-avatar">👤</view>
+      <view class="top-name">{{leaderboard[2].studentName}}</view>
+      <view class="top-points">{{leaderboard[2].points}}</view>
+    </view>
+  </view>
+
+  <!-- 排行榜列表 -->
+  <view class="leaderboard-list">
+    <view class="list-header">
+      <text>排名</text>
+      <text>姓名</text>
+      <text>积分</text>
+    </view>
+
+    <view
+      class="rank-item {{item.studentId === myStudentId ? 'highlight' : ''}}"
+      wx:for="{{leaderboard}}"
+      wx:key="studentId"
+      wx:if="{{index >= 3}}"
+    >
+      <view class="rank-badge {{getRankClass(item.rank)}}">
+        <text>{{item.rank}}</text>
+      </view>
+      <view class="rank-info">
+        <text class="rank-name">{{item.studentName}}</text>
+        <text class="rank-class">{{item.className}}</text>
+      </view>
+      <view class="rank-points">
+        <text class="points-value">{{item.points}}</text>
+        <text class="points-label">积分</text>
+      </view>
+      <view class="rank-level">
+        <text>Lv.{{item.level}}</text>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{leaderboard.length === 0}}">
+      <text>暂无排名数据</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,86 @@
+<!--pages/achievements/achievements.wxml-->
+<view class="page">
+  <view class="header">
+    <view class="title">我的成就</view>
+    <view class="subtitle">已解锁 {{unlockedCount}} / {{totalCount}} 个成就</view>
+  </view>
+
+  <!-- 成就统计 -->
+  <view class="stats-card">
+    <view class="stat-item">
+      <text class="stat-value">{{unlockedCount}}</text>
+      <text class="stat-label">已解锁</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">{{totalPoints}}</text>
+      <text class="stat-label">获得积分</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">{{(unlockedCount / totalCount * 100).toFixed(0)}}%</text>
+      <text class="stat-label">完成度</text>
+    </view>
+  </view>
+
+  <!-- 成就类型筛选 -->
+  <view class="filter-tabs">
+    <view
+      class="filter-tab {{currentType === item.value ? 'active' : ''}}"
+      wx:for="{{typeFilters}}"
+      wx:key="value"
+      bindtap="onTypeChange"
+      data-type="{{item.value}}"
+    >
+      <text>{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 成就列表 -->
+  <view class="achievements-list">
+    <view
+      class="achievement-item {{item.isUnlocked ? 'unlocked' : 'locked'}}"
+      wx:for="{{filteredAchievements}}"
+      wx:key="id"
+      bindtap="showDetail"
+      data-achievement="{{item}}"
+    >
+      <view class="achievement-icon">
+        <text class="icon-text">{{item.icon}}</text>
+        <view class="lock-overlay" wx:if="{{!item.isUnlocked}}">🔒</view>
+      </view>
+
+      <view class="achievement-content">
+        <view class="achievement-header">
+          <text class="achievement-name">{{item.name}}</text>
+          <view class="achievement-points" wx:if="{{item.points > 0}}">
+            <text>+{{item.points}}</text>
+          </view>
+        </view>
+        <text class="achievement-desc">{{item.description}}</text>
+        <view class="achievement-footer">
+          <text class="achievement-type">{{getTypeLabel(item.type)}}</text>
+          <text class="achievement-date" wx:if="{{item.isUnlocked}}">
+            {{formatDate(item.unlockedAt)}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{filteredAchievements.length === 0}}">
+      <text>暂无成就</text>
+    </view>
+  </view>
+
+  <!-- 解锁动画 -->
+  <view class="unlock-animation" wx:if="{{showUnlockAnimation}}">
+    <view class="animation-content">
+      <view class="animation-icon">{{unlockedAchievement.icon}}</view>
+      <view class="animation-title">🎉 成就解锁！</view>
+      <view class="animation-name">{{unlockedAchievement.name}}</view>
+      <view class="animation-points" wx:if="{{unlockedAchievement.points > 0}}">
+        +{{unlockedAchievement.points}} 积分
+      </view>
+    </view>
+  </view>
+</view>
