@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx tsc --noEmit)",
+      "mcp__serena__list_dir",
+      "Bash(cat:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npx prisma db push:*)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__activate_project",
+      "Bash(mkdir:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
