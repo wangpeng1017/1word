@@ -141,8 +141,8 @@ export default function AudioPlayer({
         src={fullAudioUrl}
         onEnded={handleEnded}
         onError={handleError}
-        preload="metadata"
-        crossOrigin="anonymous"
+        preload="none"
+        
       />
       
       <Button
