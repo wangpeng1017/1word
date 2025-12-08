@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { calculateNextReviewDate, isMastered, isDifficult } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
+import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 
 // POST /api/study-records - 提交答题记录
 export async function POST(request: NextRequest) {
@@ -184,6 +185,66 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 3. 添加积分奖励
+    const basePoints = totalWords // 每个单词1分
+    const accuracyBonus = Math.floor(accuracy * totalWords * 0.5) // 正确率奖励
+    const totalPoints = basePoints + accuracyBonus
+
+    // 获取或创建积分记录
+    let studentPoints = await prisma.student_points.findUnique({
+      where: { studentId }
+    })
+
+    if (!studentPoints) {
+      const pointsId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+      studentPoints = await prisma.student_points.create({
+        data: {
+          id: pointsId,
+          studentId,
+          totalPoints: 0,
+          dailyPoints: 0,
+          weeklyPoints: 0,
+          monthlyPoints: 0,
+          level: 1,
+          updatedAt: new Date()
+        }
+      })
+    }
+
+    // 更新积分
+    const newTotalPoints = studentPoints.totalPoints + totalPoints
+    const newLevel = Math.floor(newTotalPoints / 100) + 1
+
+    await prisma.student_points.update({
+      where: { studentId },
+      data: {
+        totalPoints: newTotalPoints,
+        dailyPoints: studentPoints.dailyPoints + totalPoints,
+        weeklyPoints: studentPoints.weeklyPoints + totalPoints,
+        monthlyPoints: studentPoints.monthlyPoints + totalPoints,
+        level: newLevel,
+        updatedAt: new Date()
+      }
+    })
+
+    // 记录积分历史
+    const historyId = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    await prisma.point_history.create({
+      data: {
+        id: historyId,
+        studentId,
+        points: totalPoints,
+        reason: `完成学习：${totalWords}个单词`,
+        relatedType: 'study_record',
+        relatedId: srId
+      }
+    })
+
+    // 4. 检查并解锁成就（异步执行，不阻塞响应）
+    checkAndUnlockAchievements(studentId).catch(err => {
+      console.error('检查成就失败:', err)
+    })
+
     return apiResponse.success({
       message: '答题记录已提交',
       studyRecord,
@@ -193,6 +254,11 @@ export async function POST(request: NextRequest) {
         wrongCount,
         accuracy: Math.round(accuracy * 100),
       },
+      points: {
+        earned: totalPoints,
+        total: newTotalPoints,
+        level: newLevel
+      }
     })
   } catch (error: any) {
     console.error('提交答题记录失败:', error)

@@ -96,6 +96,10 @@ model students {
   test_records    test_records[]
   word_masteries  word_masteries[]
   wrong_questions wrong_questions[]
+  student_points  student_points?
+  point_history   point_history[]
+  student_achievements student_achievements[]
+  study_streaks   study_streaks?
 
   @@index([class_id])
   @@index([grade])
@@ -343,4 +347,84 @@ enum WordDifficulty {
   EASY
   MEDIUM
   HARD
+}
+
+// 学生积分记录表
+model student_points {
+  id          String   @id
+  studentId   String
+  totalPoints Int      @default(0) // 总积分
+  dailyPoints Int      @default(0) // 今日积分
+  weeklyPoints Int     @default(0) // 本周积分
+  monthlyPoints Int    @default(0) // 本月积分
+  level       Int      @default(1) // 等级
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  students    students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId])
+  @@index([totalPoints])
+  @@index([level])
+}
+
+// 积分历史记录表
+model point_history {
+  id          String   @id
+  studentId   String
+  points      Int      // 积分变化（正数为增加，负数为减少）
+  reason      String   // 原因（如：完成学习、连续签到、测试通过等）
+  relatedType String?  // 关联类型（study_record, test_record, achievement等）
+  relatedId   String?  // 关联ID
+  createdAt   DateTime @default(now())
+  students    students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+// 成就定义表
+model achievements {
+  id          String   @id
+  name        String   // 成就名称
+  description String   // 成就描述
+  icon        String   // 成就图标
+  type        String   // 成就类型（study, test, streak, mastery等）
+  condition   Json     // 达成条件（JSON格式）
+  points      Int      @default(0) // 奖励积分
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student_achievements student_achievements[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+// 学生成就记录表
+model student_achievements {
+  id            String       @id
+  studentId     String
+  achievementId String
+  unlockedAt    DateTime     @default(now())
+  students      students     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  achievements  achievements @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, achievementId])
+  @@index([studentId])
+  @@index([unlockedAt])
+}
+
+// 连续学习记录表
+model study_streaks {
+  id            String   @id
+  studentId     String
+  currentStreak Int      @default(0) // 当前连续天数
+  longestStreak Int      @default(0) // 最长连续天数
+  lastStudyDate DateTime? // 最后学习日期
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  students      students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId])
+  @@index([currentStreak])
 }
