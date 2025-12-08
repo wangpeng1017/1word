@@ -14,6 +14,8 @@ import {
   SettingOutlined,
   CalendarOutlined,
   FileTextOutlined,
+  ExperimentOutlined,
+  FileSearchOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -52,6 +54,16 @@ const menuItems: MenuItem[] = [
     key: '/admin/study-plans',
     icon: <CalendarOutlined />,
     label: '学习计划',
+  },
+  {
+    key: '/admin/proficiency-tests',
+    icon: <ExperimentOutlined />,
+    label: '测试题库',
+  },
+  {
+    key: '/admin/test-records',
+    icon: <FileSearchOutlined />,
+    label: '测试记录',
   },
   {
     key: '/admin/statistics',

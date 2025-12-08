@@ -4,6 +4,7 @@
     "pages/study/study",
     "pages/study/result",
     "pages/wrong/wrong",
+    "pages/test/test",
     "pages/profile/profile",
     "pages/login/login"
   ],
@@ -31,6 +32,12 @@
         "text": "错题本",
         "iconPath": "images/wrong.png",
         "selectedIconPath": "images/wrong-active.png"
+      },
+      {
+        "pagePath": "pages/test/test",
+        "text": "词汇测试",
+        "iconPath": "images/test.png",
+        "selectedIconPath": "images/test-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

@@ -93,6 +93,7 @@ model students {
   user            user              @relation(fields: [user_id], references: [id], onDelete: Cascade)
   study_plans     study_plans[]
   study_records   study_records[]
+  test_records    test_records[]
   word_masteries  word_masteries[]
   wrong_questions wrong_questions[]
 
@@ -265,6 +266,51 @@ model wrong_questions {
   vocabularies  vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
   @@index([studentId, vocabularyId])
+}
+
+// 词汇熟练度测试表
+model proficiency_tests {
+  id           String        @id
+  name         String        // 测试名称，如"高考核心词汇测试"
+  description  String?       // 测试描述
+  vocabularyIds String[]     // 测试包含的词汇ID列表
+  totalWords   Int           // 总词汇数
+  passScore    Int           @default(60) // 及格分数
+  duration     Int?          // 测试时长（分钟），null表示不限时
+  isActive     Boolean       @default(true) // 是否启用
+  createdBy    String        // 创建者（教师ID）
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  test_records test_records[]
+
+  @@index([isActive])
+  @@index([createdBy])
+}
+
+// 测试记录表
+model test_records {
+  id              String            @id
+  testId          String            // 测试ID
+  studentId       String            // 学生ID
+  totalQuestions  Int               // 总题数
+  correctCount    Int               // 正确数
+  wrongCount      Int               // 错误数
+  score           Int               // 得分
+  accuracy        Float             // 正确率
+  totalTime       Int               // 总用时（秒）
+  startedAt       DateTime          // 开始时间
+  completedAt     DateTime?         // 完成时间
+  isCompleted     Boolean           @default(false) // 是否完成
+  answers         Json              // 答题详情 [{vocabularyId, questionId, answer, isCorrect}]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  proficiency_tests proficiency_tests @relation(fields: [testId], references: [id], onDelete: Cascade)
+  students        students          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@index([studentId])
+  @@index([studentId, testId])
+  @@index([createdAt])
 }
 
 enum QuestionType {
