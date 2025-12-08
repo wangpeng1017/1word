@@ -95,18 +95,25 @@ export async function POST(request: NextRequest) {
         vocab.difficulty as 'EASY' | 'MEDIUM' | 'HARD'
       )
 
+      // 生成唯一ID
+      const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
       // 创建学习计划
       const plan = await prisma.study_plans.create({
         data: {
+          id: planId,
           studentId,
           vocabularyId: vocab.id,
           status: 'PENDING',
           reviewCount: 0,
           nextReviewAt,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         }
       })
 
       // 创建word_masteries记录
+      const masteryId = `wm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       await prisma.word_masteries.upsert({
         where: {
           studentId_vocabularyId: {
@@ -115,12 +122,15 @@ export async function POST(request: NextRequest) {
           }
         },
         create: {
+          id: masteryId,
           studentId,
           vocabularyId: vocab.id,
           totalWrongCount: 0,
           consecutiveCorrect: 0,
           isMastered: false,
           isDifficult: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         update: {}
       })

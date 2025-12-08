@@ -23,7 +23,6 @@ import {
   EditOutlined,
   SearchOutlined,
   DeleteOutlined,
-  UndoOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -239,31 +238,6 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
     }
   }
 
-  // 重置学习进度
-  const handleReset = async (planIds: string[]) => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/study-plans/reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ planIds }),
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(result.message || '重置成功')
-        setSelectedRowKeys([])
-        fetchData()
-      } else {
-        message.error(result.error || '重置失败')
-      }
-    } catch (error) {
-      message.error('重置失败')
-    }
-  }
 
   // 添加词汇
   const handleAddWords = async (vocabularyIds: string[]) => {
@@ -397,7 +371,7 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 220,
+      width: 150,
       render: (_, record) => (
         <Space>
           <Button
@@ -416,20 +390,6 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
             }}
           >
             编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<UndoOutlined />}
-            onClick={() => {
-              Modal.confirm({
-                title: '确认重置',
-                content: '确定要重置该学习计划吗？将清空复习记录和进度。',
-                onOk: () => handleReset([record.id]),
-              })
-            }}
-          >
-            重置
           </Button>
           <Button
             type="link"
@@ -573,32 +533,18 @@ onClick={() => setBatchOpen(true)}
             刷新
           </Button>
           {selectedRowKeys.length > 0 && (
-            <>
-              <Button
-                icon={<UndoOutlined />}
-                onClick={() => {
-                  Modal.confirm({
-                    title: '确认批量重置',
-                    content: `确定要重置选中的 ${selectedRowKeys.length} 条学习计划吗？`,
-                    onOk: () => handleReset(selectedRowKeys as string[]),
-                  })
-                }}
-              >
-                批量重置 ({selectedRowKeys.length})
-              </Button>
-              <Button
-                danger
-                onClick={() => {
-                  Modal.confirm({
-                    title: '确认批量删除',
-                    content: `确定要删除选中的 ${selectedRowKeys.length} 条学习计划吗？`,
-                    onOk: () => handleDelete(selectedRowKeys as string[]),
-                  })
-                }}
-              >
-                批量删除 ({selectedRowKeys.length})
-              </Button>
-            </>
+            <Button
+              danger
+              onClick={() => {
+                Modal.confirm({
+                  title: '确认批量删除',
+                  content: `确定要删除选中的 ${selectedRowKeys.length} 条学习计划吗？`,
+                  onOk: () => handleDelete(selectedRowKeys as string[]),
+                })
+              }}
+            >
+              批量删除 ({selectedRowKeys.length})
+            </Button>
           )}
         </Space>
       </div>

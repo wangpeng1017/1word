@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
-import { resetStudyPlansByPairs } from '@/lib/study-plan-helpers'
 
 // 获取班级学习计划列表
 export async function GET(request: NextRequest) {
@@ -255,23 +254,8 @@ export async function POST(request: NextRequest) {
       await prisma.plan_classes.createMany({ data: planClassData, skipDuplicates: true })
     }
 
-    // 2) overwrite：重置已存在计划的状态/时间
-    // 使用公共函数确保同步重置 study_plans 和 word_masteries 表
-    let updatedKeys = new Set<string>()
-    if (overwrite && existingPlans.length > 0) {
-      const pairsToReset = existingPlans.map(p => ({
-        studentId: p.studentId,
-        vocabularyId: p.vocabularyId,
-      }))
-
-      // 调用公共重置函数
-      const resetResults = await resetStudyPlansByPairs(pairsToReset)
-
-      // 记录已重置的键
-      for (const result of resetResults) {
-        updatedKeys.add(`${result.studentId}|${result.vocabularyId}`)
-      }
-    }
+    // 2) overwrite模式已移除，始终跳过已存在的计划
+    // 简化逻辑，不再重置已存在的计划
 
     // 3) 批量插入新的study_plans（需要提供必填字段：id、updatedAt）
     if (toCreatePairs.length > 0) {
@@ -336,35 +320,18 @@ export async function POST(request: NextRequest) {
       createdAt: p.createdAt,
     }))
 
-    const updated = overwrite ? Array.from(updatedKeys).map(key => {
-      const [studentId, vocabularyId] = key.split('|')
-      const p: any = latestMap.get(key)
-      return {
-        studentId,
-        studentName: p?.students?.user?.name ?? studentMap.get(studentId)?.user?.name,
-        classId: p?.students?.class_id ?? studentMap.get(studentId)?.class_id,
-        vocabularyId,
-        word: p?.vocabularies?.word ?? vocabMap.get(vocabularyId)?.word,
-        primaryMeaning: p?.vocabularies?.primary_meaning ?? vocabMap.get(vocabularyId)?.primary_meaning,
-        status: p?.status ?? 'PENDING',
-        reviewCount: p?.reviewCount ?? 0,
-        nextReviewAt: p?.nextReviewAt ?? new Date(startDate),
-        createdAt: p?.createdAt,
-      }
-    }) : []
-
     return successResponse({
       createdCount: created.length,
       duplicateCount: duplicates.length,
-      updatedCount: updated.length,
+      updatedCount: 0,
       failedCount: 0,
       invalidCount: invalidItems.length,
       created,
       duplicates,
-      updated,
+      updated: [],
       failed: [],
       invalid: invalidItems,
-    }, `生成完成：新增 ${created.length} 条，已存在 ${duplicates.length} 条${overwrite ? `，重置 ${updated.length} 条` : ''}${invalidItems.length > 0 ? `，${invalidItems.length} 条因无题目被跳过` : ''}`)
+    }, `生成完成：新增 ${created.length} 条，已跳过 ${duplicates.length} 条${invalidItems.length > 0 ? `，${invalidItems.length} 条因无题目被跳过` : ''}`)
   } catch (error: any) {
     console.error('创建班级学习计划错误:', error)
     return errorResponse(`创建班级学习计划失败: ${error?.message || '未知错误'}`, 500)

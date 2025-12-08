@@ -73,52 +73,18 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   }
 
   const doGenerate = async () => {
+    setLoading(true)
     try {
       const token = localStorage.getItem('token')
       const values = await form.validateFields()
 
-      // 如果选择了重置模式，需要二次确认
-      if (values.overwrite === true) {
-        Modal.confirm({
-          title: '确认重置已存在的学习计划？',
-          content: (
-            <div>
-              <p style={{ color: '#ff4d4f', marginBottom: 8 }}>
-                ⚠️ 此操作将清空以下数据，且无法恢复：
-              </p>
-              <ul style={{ marginLeft: 20, color: '#666' }}>
-                <li>学习进度（状态、复习次数）</li>
-                <li>掌握度数据（错误次数、正确率）</li>
-                <li>难点标记和已掌握标记</li>
-              </ul>
-              <p style={{ marginTop: 8 }}>确定要继续吗？</p>
-            </div>
-          ),
-          okText: '确定重置',
-          okType: 'danger',
-          cancelText: '取消',
-          onOk: async () => {
-            await executeGenerate(values, token)
-          },
-        })
-      } else {
-        await executeGenerate(values, token)
-      }
-    } catch (error) {
-      // 表单验证失败
-    }
-  }
-
-  const executeGenerate = async (values: any, token: string | null) => {
-    setLoading(true)
-    try {
       const payload = {
         classIds: values.classIds,
         vocabularyIds: values.vocabularyIds,
         startDate: values.startDate ? dayjs(values.startDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
         endDate: values.endDate ? dayjs(values.endDate).format('YYYY-MM-DD') : null,
         preview: false,
-        overwrite: values.overwrite === true,
+        overwrite: false, // 始终跳过已存在的计划
       }
       const res = await fetch('/api/plan-classes', {
         method: 'POST',
@@ -133,6 +99,8 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
       } else {
         message.error(json.error || '生成失败')
       }
+    } catch (error) {
+      message.error('生成失败')
     } finally {
       setLoading(false)
     }
@@ -182,20 +150,6 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
             <Form.Item label="计划结束日期" name="endDate">
               <DatePicker />
             </Form.Item>
-            <Form.Item
-              name="overwrite"
-              label="生成策略"
-              tooltip="重置模式会清空学生的学习进度和掌握度数据，请谨慎使用"
-              initialValue={false}
-            >
-              <Select
-                style={{ width: 220 }}
-                options={[
-                  { label: '默认（跳过已存在）', value: false },
-                  { label: '⚠️ 重置已存在计划', value: true },
-                ]}
-              />
-            </Form.Item>
           </Space>
 
           <Space>
@@ -220,7 +174,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
 
         {result && (
           <Tabs
-            defaultActiveKey={result.invalidCount > 0 ? 'invalid' : (result.createdCount > 0 ? 'created' : (result.duplicateCount > 0 ? 'duplicates' : 'updated'))}
+            defaultActiveKey={result.invalidCount > 0 ? 'invalid' : (result.createdCount > 0 ? 'created' : 'duplicates')}
             items={[
               {
                 key: 'created',
@@ -229,13 +183,8 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
               },
               {
                 key: 'duplicates',
-                label: `已存在 (${result.duplicateCount})`,
+                label: `已跳过 (${result.duplicateCount})`,
                 children: <Table rowKey={(r) => `${r.studentId}-${r.vocabularyId}`} dataSource={result.duplicates} columns={columns} size="small" pagination={{ pageSize: 10 }} />,
-              },
-              {
-                key: 'updated',
-                label: `重置/更新 (${result.updatedCount})`,
-                children: <Table rowKey={(r) => `${r.studentId}-${r.vocabularyId}`} dataSource={result.updated} columns={columns} size="small" pagination={{ pageSize: 10 }} />,
               },
               {
                 key: 'invalid',
