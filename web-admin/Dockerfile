@@ -3,10 +3,12 @@ FROM m.daocloud.io/docker.io/library/node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+COPY prisma ./prisma/
+
+RUN npm ci --omit=dev
+RUN npx prisma generate
 
 COPY . .
-RUN npx prisma generate
 RUN npm run build
 
 EXPOSE 3000
