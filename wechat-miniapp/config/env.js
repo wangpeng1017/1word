@@ -4,7 +4,7 @@
 // preview: Vercel预览环境
 // production: 阿里云生产环境
 
-const ENV = 'production' // 手动切换环境
+const ENV = 'preview' // 手动切换环境
 
 const config = {
   development: {
