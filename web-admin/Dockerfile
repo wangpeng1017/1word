@@ -1,4 +1,4 @@
-FROM registry.cn-hangzhou.aliyuncs.com/library/node:20-alpine
+FROM m.daocloud.io/docker.io/library/node:20-alpine
 
 WORKDIR /app
 
