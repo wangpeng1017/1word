@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
 
     const totalSessions = studyRecords.length
     const completedSessions = studyRecords.filter(r => r.isCompleted).length
-    const totalWords = studyRecords.reduce((sum, r) => sum + r.completedWords, 0)
+    const totalWordsLearned = studyRecords.reduce((sum, r) => sum + r.completedWords, 0)
     const totalCorrect = studyRecords.reduce((sum, r) => sum + r.correctCount, 0)
     const totalWrong = studyRecords.reduce((sum, r) => sum + r.wrongCount, 0)
     const totalTime = studyRecords.reduce((sum, r) => sum + r.totalTime, 0)
-    const avgAccuracy = totalWords > 0 ? (totalCorrect / (totalCorrect + totalWrong)) * 100 : 0
+    const avgAccuracy = totalWordsLearned > 0 ? (totalCorrect / (totalCorrect + totalWrong)) * 100 : 0
 
     // 4. 活跃学生统计（最近7天有学习记录）
     const sevenDaysAgo = new Date(today)
@@ -78,16 +78,58 @@ export async function GET(request: NextRequest) {
       distinct: ['studentId'],
     })
 
-    // 5. 掌握度统计
+    // 4.1 今日完成学习的学生数（今天有 isCompleted=true 学习记录的独立学生数）
+    const todayCompletedStudents = await prisma.study_records.findMany({
+      where: {
+        students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
+        taskDate: {
+          gte: today,
+          lte: today,
+        },
+        isCompleted: true,
+      },
+      select: {
+        studentId: true,
+      },
+      distinct: ['studentId'],
+    })
+
+    // 5. 掌握度统计 - 按独立词汇统计（vocabularyId 去重）
     const wordMasteries = await prisma.word_masteries.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
       },
+      select: {
+        vocabularyId: true,
+        isMastered: true,
+        isDifficult: true,
+      },
     })
 
-    const masteredWords = wordMasteries.filter(m => m.isMastered).length
-    const difficultWords = wordMasteries.filter(m => m.isDifficult).length
-    const learningWords = wordMasteries.filter(m => !m.isMastered).length
+    // 按 vocabularyId 去重统计
+    const vocabMasteryMap = new Map<string, { isMastered: boolean; isDifficult: boolean }>()
+    wordMasteries.forEach(m => {
+      const existing = vocabMasteryMap.get(m.vocabularyId)
+      if (!existing) {
+        // 首次遇到该词汇
+        vocabMasteryMap.set(m.vocabularyId, {
+          isMastered: m.isMastered,
+          isDifficult: m.isDifficult
+        })
+      } else {
+        // 如果任意学生已掌握，则标记为已掌握
+        if (m.isMastered) existing.isMastered = true
+        // 如果任意学生标记为难点，则标记为难点
+        if (m.isDifficult) existing.isDifficult = true
+      }
+    })
+
+    // 统计独立词汇数
+    const uniqueVocabs = Array.from(vocabMasteryMap.values())
+    const masteredWords = uniqueVocabs.filter(v => v.isMastered).length
+    const difficultWords = uniqueVocabs.filter(v => v.isDifficult).length
+    const learningWords = uniqueVocabs.filter(v => !v.isMastered).length
+    const totalLearnedVocabs = uniqueVocabs.length  // 有学习记录的独立词汇数
 
     // 6. 每日学习趋势（最近14天）
     const fourteenDaysAgo = new Date(today)
@@ -186,10 +228,11 @@ export async function GET(request: NextRequest) {
       overview: {
         totalStudents,
         activeStudents: activeStudentIds.length,
-        totalVocabularies,
+        todayCompletedStudents: todayCompletedStudents.length,  // 今日完成学习的学生数
+        totalVocabularies,  // 词库总数
         totalSessions,
         completedSessions,
-        totalWords,
+        totalWords: totalVocabularies,  // 学习总词汇 = 词库总数
         avgAccuracy: avgAccuracy.toFixed(1),
         totalTime: Math.floor(totalTime / 60), // 转换为分钟
       },
@@ -197,8 +240,9 @@ export async function GET(request: NextRequest) {
         masteredWords,
         learningWords,
         difficultWords,
-        masteryRate: wordMasteries.length > 0
-          ? ((masteredWords / wordMasteries.length) * 100).toFixed(1)
+        // 掌握率 = 已掌握独立词汇数 / 有学习记录的独立词汇数
+        masteryRate: totalLearnedVocabs > 0
+          ? ((masteredWords / totalLearnedVocabs) * 100).toFixed(1)
           : 0,
       },
       dailyTrend,

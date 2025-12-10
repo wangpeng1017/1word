@@ -19,6 +19,7 @@ Page({
       wrongCount: 0,
       accuracy: 0,
       totalTimeSeconds: 0,
+      totalTimeMinutes: 0,  // 预计算的分钟数，供 WXML 使用
     },
     partOfSpeechStats: [],
     topWrongWords: [],
@@ -146,8 +147,17 @@ Page({
           .map(([pos, count]) => ({ pos, count }))
           .sort((a, b) => b.count - a.count)
 
+        // 预计算累计用时分钟数
+        const overview = data.overview || {}
+        const totalTimeMinutes = overview.totalTimeSeconds > 0
+          ? Math.round(overview.totalTimeSeconds / 60)
+          : 0
+
         this.setData({
-          detailedStats: data.overview || {},
+          detailedStats: {
+            ...overview,
+            totalTimeMinutes,
+          },
           partOfSpeechStats: posStats,
           topWrongWords: data.topWrongWords || [],
           isLoading: false,

@@ -123,7 +123,7 @@
     
     <view class="time-info">
       <text class="time-icon">⏱</text>
-      <text class="time-text">累计用时: {{detailedStats.totalTimeSeconds > 0 ? (detailedStats.totalTimeSeconds / 60).toFixed(0) : 0}} 分钟</text>
+      <text class="time-text">累计用时: {{detailedStats.totalTimeMinutes || 0}} 分钟</text>
     </view>
   </view>
 

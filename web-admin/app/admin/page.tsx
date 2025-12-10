@@ -34,8 +34,9 @@ export default function AdminDashboard() {
       }
 
       // 并行请求所有统计数据
-      const [vocabRes, studentsRes, classesRes] = await Promise.all([
-        fetch('/api/vocabularies', {
+      const today = new Date().toISOString().split('T')[0]
+      const [vocabRes, studentsRes, classesRes, overviewRes] = await Promise.all([
+        fetch('/api/vocabularies?limit=1', {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch('/api/students', {
@@ -44,17 +45,26 @@ export default function AdminDashboard() {
         fetch('/api/classes', {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`/api/statistics/overview?startDate=${today}&endDate=${today}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ])
 
       const vocabData = await vocabRes.json()
       const studentsData = await studentsRes.json()
       const classesData = await classesRes.json()
+      const overviewData = await overviewRes.json()
+
+      // 今日完成学习的学生人数
+      const todayStudyCount = overviewData.success
+        ? (overviewData.data?.overview?.todayCompletedStudents || 0)
+        : 0
 
       setStats({
-        vocabularies: vocabData.data?.length || 0,
+        vocabularies: vocabData.data?.pagination?.total || 0,  // 使用 pagination.total
         students: studentsData.data?.students?.length || 0,
         classes: classesData.data?.length || 0,
-        todayStudy: 0, // TODO: 实际API
+        todayStudy: todayStudyCount,  // 今日完成学习的学生人数
       })
     } catch (error) {
       console.error('加载统计数据失败:', error)
