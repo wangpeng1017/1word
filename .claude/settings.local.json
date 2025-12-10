@@ -13,7 +13,19 @@
       "mcp__serena__find_symbol",
       "mcp__serena__activate_project",
       "Bash(mkdir:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(sshpass -p 'Fung@19875201962' ssh -o StrictHostKeyChecking=no root@47.92.96.143 \"echo ''SSH连接成功'' && hostname && whoami\")",
+      "Bash(dir:*)",
+      "Bash(ssh:*)",
+      "Bash(ls:*)",
+      "Bash(scp:*)",
+      "Bash(sshpass -p 'Fung@19875201962' ssh -o StrictHostKeyChecking=no root@47.92.96.143 \"docker images && echo ''---'' && docker ps -a\")",
+      "Bash(sshpass -p 'Fung@19875201962' ssh -o StrictHostKeyChecking=no root@47.92.96.143 \"cd /root/word-app && docker-compose up -d\")",
+      "Bash(findstr /i \"backup sql json\")",
+      "Bash(sshpass -p 'Fung@19875201962' ssh -o StrictHostKeyChecking=no root@47.92.96.143 \"docker ps -a\")",
+      "Bash(bash deploy.sh)",
+      "Bash(sshpass:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []
