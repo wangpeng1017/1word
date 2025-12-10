@@ -45,15 +45,18 @@ Page({
 
       if (Array.isArray(achievements)) {
         const unlockedCount = achievements.filter(a => a.isUnlocked).length
+        const totalCount = achievements.length
         const totalPoints = achievements
           .filter(a => a.isUnlocked)
           .reduce((sum, a) => sum + a.points, 0)
+        const completionRate = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0
 
         this.setData({
           achievements,
           unlockedCount,
-          totalCount: achievements.length,
-          totalPoints
+          totalCount,
+          totalPoints,
+          completionRate
         })
 
         this.filterAchievements()

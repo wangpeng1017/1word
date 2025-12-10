@@ -1,9 +1,13 @@
 // app.js
+const envConfig = require('./config/env.js')
+
 App({
   globalData: {
     userInfo: null,
     token: null,
-    apiUrl: 'https://11word.vercel.app/api', // 线上环境API地址
+    apiUrl: envConfig.apiUrl, // 从环境配置读取API地址
+    debug: envConfig.debug,
+    envName: envConfig.name,
   },
 
   onLaunch() {

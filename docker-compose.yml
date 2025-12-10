@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-word
+    restart: always
+    environment:
+      POSTGRES_USER: word_user
+      POSTGRES_PASSWORD: word_pass_2024
+      POSTGRES_DB: word_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U word_user -d word_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./web-admin
+      dockerfile: Dockerfile
+    container_name: word-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://word_user:word_pass_2024@postgres:5432/word_app"
+      JWT_SECRET: "vocab_jwt_secret_2024_change_in_production"
+      NEXT_PUBLIC_API_URL: "http://47.92.96.143:3000"
+      NODE_ENV: "production"
+      # Vercel Blob配置（保持原有）
+      BLOB_READ_WRITE_TOKEN: "${BLOB_READ_WRITE_TOKEN}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma db push && npm start"
+
+volumes:
+  postgres_data:

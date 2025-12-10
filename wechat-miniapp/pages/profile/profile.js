@@ -260,6 +260,13 @@ Page({
     })
   },
 
+  // 跳转到词汇测试页面
+  goToTest() {
+    wx.navigateTo({
+      url: '/pages/test/test'
+    })
+  },
+
   // 跳转到成就页面
   goToAchievements() {
     wx.navigateTo({

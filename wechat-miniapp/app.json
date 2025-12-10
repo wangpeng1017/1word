@@ -38,12 +38,6 @@
         "selectedIconPath": "images/wrong-active.png"
       },
       {
-        "pagePath": "pages/test/test",
-        "text": "词汇测试",
-        "iconPath": "images/test.png",
-        "selectedIconPath": "images/test-active.png"
-      },
-      {
         "pagePath": "pages/profile/profile",
         "text": "学习数据",
         "iconPath": "images/data.png",

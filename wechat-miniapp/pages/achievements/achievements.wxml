@@ -18,7 +18,7 @@
     </view>
     <view class="stat-divider"></view>
     <view class="stat-item">
-      <text class="stat-value">{{(unlockedCount / totalCount * 100).toFixed(0)}}%</text>
+      <text class="stat-value">{{completionRate}}%</text>
       <text class="stat-label">完成度</text>
     </view>
   </view>

@@ -55,6 +55,14 @@
       </view>
       <text class="link-arrow">›</text>
     </view>
+    <view class="quick-link-item" bindtap="goToTest">
+      <view class="link-icon">✍️</view>
+      <view class="link-content">
+        <text class="link-title">词汇测试</text>
+        <text class="link-desc">测试词汇掌握情况</text>
+      </view>
+      <text class="link-arrow">›</text>
+    </view>
     <view class="quick-link-item" bindtap="goToAchievements">
       <view class="link-icon">🏆</view>
       <view class="link-content">
