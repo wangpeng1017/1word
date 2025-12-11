@@ -74,21 +74,44 @@ export default function VocabulariesPage() {
   const [importing, setImporting] = useState(false)
   const [form] = Form.useForm()
 
+  // 分页状态
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 })
+  // 防抖搜索
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // 搜索防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText)
+      setPagination(prev => ({ ...prev, page: 1 })) // 搜索时重置到第一页
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchText])
+
   useEffect(() => {
     loadData()
-  }, [])
+  }, [pagination.page, pagination.limit, highFreqFilter, debouncedSearch])
 
   const loadData = async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      // 加载音频和多词性释义
-      const response = await fetch('/api/vocabularies?includeAudios=true&includeMeanings=true', {
+      // 性能优化: 不加载音频和释义，只在编辑时加载
+      const params = new URLSearchParams({
+        page: String(pagination.page),
+        limit: String(pagination.limit),
+        includeMeanings: 'true', // 需要显示释义列
+      })
+      if (debouncedSearch) params.append('search', debouncedSearch)
+      if (highFreqFilter !== null) params.append('isHighFrequency', String(highFreqFilter))
+
+      const response = await fetch(`/api/vocabularies?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
       if (result.success) {
         setData(result.data?.vocabularies || [])
+        setPagination(prev => ({ ...prev, total: result.data?.pagination?.total || 0 }))
       } else {
         message.error('加载失败')
       }
@@ -281,9 +304,6 @@ export default function VocabulariesPage() {
       key: 'word',
       width: 150,
       fixed: 'left',
-      filteredValue: searchText ? [searchText] : null,
-      onFilter: (value, record) =>
-        record.word.toLowerCase().includes((value as string).toLowerCase()),
       render: (word: string) => (
         <span style={{ fontWeight: 500, fontSize: 15 }}>{word}</span>
       ),
@@ -353,41 +373,6 @@ export default function VocabulariesPage() {
           )}
         </Space>
       ),
-    },
-    {
-      title: '发音',
-      key: 'audio',
-      width: 180,
-      render: (_, record: Vocabulary) => {
-        const usAudio = record.audios?.find((a) => a.accent === 'US')
-        const ukAudio = record.audios?.find((a) => a.accent === 'UK')
-
-        return (
-          <Space size="small">
-            {usAudio && (
-              <AudioPlayer
-                audioUrl={usAudio.audioUrl}
-                accent="US"
-                word={record.word}
-                size="small"
-                showAccent={true}
-              />
-            )}
-            {ukAudio && (
-              <AudioPlayer
-                audioUrl={ukAudio.audioUrl}
-                accent="UK"
-                word={record.word}
-                size="small"
-                showAccent={true}
-              />
-            )}
-            {!usAudio && !ukAudio && (
-              <span style={{ color: '#999', fontSize: 12 }}>暂无音频</span>
-            )}
-          </Space>
-        )
-      },
     },
     {
       title: '高频词',
@@ -468,10 +453,7 @@ export default function VocabulariesPage() {
 
         <Table
           columns={columns}
-          dataSource={data.filter((item) => {
-            if (highFreqFilter !== null && item.isHighFrequency !== highFreqFilter) return false
-            return true
-          })}
+          dataSource={data}
           rowKey="id"
           loading={loading}
           scroll={{ x: 1300 }}
@@ -480,9 +462,15 @@ export default function VocabulariesPage() {
             onChange: setSelectedRowKeys,
           }}
           pagination={{
+            current: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              setPagination(prev => ({ ...prev, page, limit: pageSize }))
+            },
           }}
         />
       </Card>
