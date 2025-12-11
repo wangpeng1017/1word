@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         where: {
           studentId,
           vocabularyId,
-          taskDate: { gte: today, lte: new Date(today.getTime() + 24*60*60*1000 - 1) },
+          taskDate: { gte: today, lte: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) },
         },
         data: {
           status: 'COMPLETED',
@@ -101,7 +101,21 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // 2.3 记录错题
+      // 2.3 记录所有答题到 question_answers 表（用于计算最近3次正确率）
+      await prisma.question_answers.create({
+        data: {
+          id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+          studentId,
+          vocabularyId,
+          questionId,
+          answer: userAnswer,
+          isCorrect,
+          timeSpent: timeSpent || null,
+          answeredAt: now,
+        },
+      })
+
+      // 2.4 记录错题
       if (!isCorrect) {
         const question = await prisma.questions.findUnique({
           where: { id: questionId },
@@ -122,7 +136,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 2.4 更新单词掌握度
+      // 2.5 更新单词掌握度
       let wordMastery = await prisma.word_masteries.findFirst({
         where: {
           studentId,
@@ -147,12 +161,12 @@ export async function POST(request: NextRequest) {
         })
       } else {
         // 更新现有掌握度记录
-        const newTotalWrongCount = isCorrect 
-          ? wordMastery.totalWrongCount 
+        const newTotalWrongCount = isCorrect
+          ? wordMastery.totalWrongCount
           : wordMastery.totalWrongCount + 1
-        
-        const newConsecutiveCorrect = isCorrect 
-          ? wordMastery.consecutiveCorrect + 1 
+
+        const newConsecutiveCorrect = isCorrect
+          ? wordMastery.consecutiveCorrect + 1
           : 0
 
         const newIsMastered = isMastered(newConsecutiveCorrect)

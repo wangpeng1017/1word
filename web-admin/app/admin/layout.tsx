@@ -17,6 +17,7 @@ import {
   ExperimentOutlined,
   FileSearchOutlined,
   LineChartOutlined,
+  FileExclamationOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -75,6 +76,16 @@ const menuItems: MenuItem[] = [
     key: '/admin/learning-data',
     icon: <LineChartOutlined />,
     label: '学习数据',
+  },
+  {
+    key: '/admin/wrong-questions',
+    icon: <FileExclamationOutlined />,
+    label: '错题明细',
+  },
+  {
+    key: '/admin/word-mastery',
+    icon: <BarChartOutlined />,
+    label: '单词掌握',
   },
   {
     key: '/admin/settings',
