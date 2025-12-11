@@ -468,6 +468,7 @@ export default function StudyPlansPage() {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setBatchOpen(true)}
+            style={{ color: '#fff' }}
           >
             批量生成计划
           </Button>
@@ -477,6 +478,7 @@ export default function StudyPlansPage() {
             disabled={!selectedStudentId}
             onClick={() => setAddWordsOpen(true)}
             title={!selectedStudentId ? '请先通过学生姓名筛选单个学生' : undefined}
+            style={{ color: selectedStudentId ? '#fff' : undefined }}
           >
             添加词汇{selectedStudentId ? '' : '（请先筛选单个学生）'}
           </Button>
