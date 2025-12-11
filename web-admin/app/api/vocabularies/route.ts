@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const includeAudios = searchParams.get('includeAudios') === 'true'
     const includeMeanings = searchParams.get('includeMeanings') === 'true'
+    const includeImages = searchParams.get('includeImages') === 'true'
 
     const skip = (page - 1) * limit
 
@@ -55,6 +56,13 @@ export async function GET(request: NextRequest) {
     if (includeMeanings) {
       includeOptions.word_meanings = {
         orderBy: { orderIndex: 'asc' }
+      }
+    }
+
+    if (includeImages) {
+      includeOptions.word_images = {
+        orderBy: { createdAt: 'desc' },
+        take: 1 // 只取第一张图片用于列表展示
       }
     }
 
@@ -106,6 +114,16 @@ export async function GET(request: NextRequest) {
           meaning: meaning.meaning,
           orderIndex: meaning.orderIndex,
           examples: meaning.examples || [],
+        }))
+      }
+
+      // 映射图片数据
+      if (vocab.word_images) {
+        result.images = vocab.word_images.map((image: any) => ({
+          id: image.id,
+          imageUrl: image.imageUrl || image.image_url,
+          description: image.description,
+          createdAt: image.createdAt || image.created_at,
         }))
       }
 

@@ -12,6 +12,7 @@ import {
   Form,
   Select,
   Card,
+  Image,
 } from 'antd'
 import {
   PlusOutlined,
@@ -46,6 +47,12 @@ interface WordMeaning {
   examples: string[]
 }
 
+interface WordImage {
+  id: string
+  imageUrl: string
+  description?: string
+}
+
 interface Vocabulary {
   id: string
   word: string
@@ -59,7 +66,8 @@ interface Vocabulary {
   difficulty: string
   createdAt: string
   audios?: WordAudio[]
-  meanings?: WordMeaning[] // 新增: 多词性多释义
+  meanings?: WordMeaning[]
+  images?: WordImage[]
 }
 
 export default function VocabulariesPage() {
@@ -100,7 +108,8 @@ export default function VocabulariesPage() {
       const params = new URLSearchParams({
         page: String(pagination.page),
         limit: String(pagination.limit),
-        includeMeanings: 'true', // 需要显示释义列
+        includeMeanings: 'true',
+        includeImages: 'true',
       })
       if (debouncedSearch) params.append('search', debouncedSearch)
       if (highFreqFilter !== null) params.append('isHighFrequency', String(highFreqFilter))
@@ -372,6 +381,24 @@ export default function VocabulariesPage() {
             <span style={{ color: '#999' }}>-</span>
           )}
         </Space>
+      ),
+    },
+    {
+      title: '实物图片',
+      key: 'images',
+      width: 80,
+      render: (_: any, record: Vocabulary) => (
+        record.images && record.images.length > 0 ? (
+          <Image
+            src={record.images[0].imageUrl}
+            width={40}
+            height={40}
+            style={{ objectFit: 'cover', borderRadius: 4 }}
+            preview={{ mask: '查看' }}
+          />
+        ) : (
+          <span style={{ color: '#999', fontSize: 12 }}>-</span>
+        )
       ),
     },
     {
