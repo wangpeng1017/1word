@@ -11,32 +11,47 @@ interface Vocabulary {
   isHighFrequency: boolean
 }
 
+interface Student {
+  id: string
+  user?: { name: string }
+  name?: string
+}
+
 interface AddWordsDialogProps {
   open: boolean
   onClose: () => void
-  studentId: string | undefined
-  onCompleted: (vocabularyIds: string[]) => void
+  students: Student[]
+  onCompleted: (studentId: string, vocabularyIds: string[]) => void
 }
 
 export default function AddWordsDialog({
   open,
   onClose,
-  studentId,
+  students,
   onCompleted,
 }: AddWordsDialogProps) {
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([])
   const [selectedVocabularyIds, setSelectedVocabularyIds] = useState<string[]>([])
+  const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>()
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [existingVocabularyIds, setExistingVocabularyIds] = useState<Set<string>>(new Set())
 
-  // 加载词汇列表和已有的学习计划
+  // 加载词汇列表
   useEffect(() => {
-    if (open && studentId) {
+    if (open) {
       fetchVocabularies()
-      fetchExistingPlans()
     }
-  }, [open, studentId])
+  }, [open])
+
+  // 当选择学生时加载已有的学习计划
+  useEffect(() => {
+    if (open && selectedStudentId) {
+      fetchExistingPlans()
+    } else {
+      setExistingVocabularyIds(new Set())
+    }
+  }, [open, selectedStudentId])
 
   const fetchVocabularies = async () => {
     setLoading(true)
@@ -59,11 +74,11 @@ export default function AddWordsDialog({
   }
 
   const fetchExistingPlans = async () => {
-    if (!studentId) return
+    if (!selectedStudentId) return
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/study-plans?studentId=${studentId}&limit=10000`, {
+      const response = await fetch(`/api/study-plans?studentId=${selectedStudentId}&limit=10000`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,6 +96,10 @@ export default function AddWordsDialog({
   }
 
   const handleOk = async () => {
+    if (!selectedStudentId) {
+      message.warning('请先选择学生')
+      return
+    }
     if (selectedVocabularyIds.length === 0) {
       message.warning('请至少选择一个词汇')
       return
@@ -88,8 +107,9 @@ export default function AddWordsDialog({
 
     setSubmitting(true)
     try {
-      await onCompleted(selectedVocabularyIds)
+      await onCompleted(selectedStudentId, selectedVocabularyIds)
       setSelectedVocabularyIds([])
+      setSelectedStudentId(undefined)
     } finally {
       setSubmitting(false)
     }
@@ -97,6 +117,7 @@ export default function AddWordsDialog({
 
   const handleCancel = () => {
     setSelectedVocabularyIds([])
+    setSelectedStudentId(undefined)
     onClose()
   }
 
@@ -116,8 +137,24 @@ export default function AddWordsDialog({
     >
       <Spin spinning={loading}>
         <div style={{ marginBottom: 16 }}>
+          <p style={{ color: '#666', marginBottom: 8 }}>选择学生:</p>
+          <Select
+            showSearch
+            placeholder="请选择学生"
+            style={{ width: '100%', marginBottom: 16 }}
+            value={selectedStudentId}
+            onChange={(val) => {
+              setSelectedStudentId(val)
+              setSelectedVocabularyIds([])
+            }}
+            optionFilterProp="children"
+            options={students.map((s) => ({
+              label: s.user?.name || s.name || '',
+              value: s.id,
+            }))}
+          />
           <p style={{ color: '#666', marginBottom: 8 }}>
-            选择要添加到学习计划的词汇（已排除该学生已有的词汇）
+            选择要添加到学习计划的词汇{selectedStudentId ? '（已排除该学生已有的词汇）' : ''}:
           </p>
           <Select
             mode="multiple"

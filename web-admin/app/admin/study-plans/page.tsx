@@ -240,12 +240,7 @@ export default function StudyPlansPage() {
 
 
   // 添加词汇
-  const handleAddWords = async (vocabularyIds: string[]) => {
-    if (!selectedStudentId) {
-      message.error('请先选择学生')
-      return
-    }
-
+  const handleAddWords = async (studentId: string, vocabularyIds: string[]) => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/study-plans/add-words', {
@@ -255,7 +250,7 @@ export default function StudyPlansPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          studentId: selectedStudentId,
+          studentId,
           vocabularyIds,
         }),
       })
@@ -471,27 +466,11 @@ export default function StudyPlansPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            disabled={!selectedStudentId}
             onClick={() => setAddWordsOpen(true)}
             style={{ color: '#fff' }}
           >
             添加词汇
           </Button>
-          <Select
-            placeholder="选择学生"
-            allowClear
-            showSearch
-            style={{ width: 180 }}
-            value={selectedStudentId}
-            onChange={(val) => setSelectedStudentId(val || undefined)}
-            optionFilterProp="children"
-          >
-            {students.map((s: any) => (
-              <Select.Option key={s.id} value={s.id}>
-                {s.user?.name || s.name}
-              </Select.Option>
-            ))}
-          </Select>
           <Input
             placeholder="学生姓名"
             prefix={<SearchOutlined />}
@@ -596,7 +575,7 @@ export default function StudyPlansPage() {
       <AddWordsDialog
         open={addWordsOpen}
         onClose={() => setAddWordsOpen(false)}
-        studentId={selectedStudentId}
+        students={students}
         onCompleted={handleAddWords}
       />
 
