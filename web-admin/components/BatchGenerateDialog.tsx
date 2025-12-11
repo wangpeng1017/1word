@@ -122,9 +122,9 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
       destroyOnClose
     >
       <Space direction="vertical" style={{ width: '100%' }} size={16}>
-        <Form form={form} layout="vertical" disabled={loading || isPreviewed}>
+        <Form form={form} layout="vertical">
           <Form.Item label="选择班级" name="classIds" rules={[{ required: true, message: '请选择至少一个班级' }]}>
-            <Select mode="multiple" placeholder="请选择班级（可多选）" showSearch optionFilterProp="children">
+            <Select mode="multiple" placeholder="请选择班级（可多选）" showSearch optionFilterProp="children" disabled={loading || isPreviewed}>
               {classes.map((c: any) => (
                 <Select.Option key={c.id} value={c.id}>
                   {c.name} ({c.grade}) - {c._count?.students || 0}人
@@ -134,7 +134,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
           </Form.Item>
 
           <Form.Item label="选择词汇" name="vocabularyIds" rules={[{ required: true, message: '请选择至少一个词汇' }]}>
-            <Select mode="multiple" placeholder="请选择词汇（可多选）" showSearch optionFilterProp="children">
+            <Select mode="multiple" placeholder="请选择词汇（可多选）" showSearch optionFilterProp="children" disabled={loading || isPreviewed}>
               {vocabularies.map((v: any) => (
                 <Select.Option key={v.id} value={v.id}>
                   {v.word} - {v.primaryMeaning}
@@ -145,10 +145,10 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
 
           <Space size={12} wrap>
             <Form.Item label="计划开始日期" name="startDate" rules={[{ required: true, message: '请选择开始日期' }]} initialValue={dayjs()}>
-              <DatePicker />
+              <DatePicker disabled={loading || isPreviewed} />
             </Form.Item>
             <Form.Item label="计划结束日期" name="endDate">
-              <DatePicker />
+              <DatePicker disabled={loading || isPreviewed} />
             </Form.Item>
           </Space>
 
@@ -160,7 +160,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
               type="primary"
               onClick={doGenerate}
               loading={loading}
-              style={isPreviewed ? { animation: 'pulse 1.5s ease-in-out infinite' } : {}}
+              style={isPreviewed ? { animation: 'pulse 1.5s ease-in-out infinite', color: '#fff' } : { color: '#fff' }}
             >
               确定生成
             </Button>
