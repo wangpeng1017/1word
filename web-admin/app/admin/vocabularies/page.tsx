@@ -70,7 +70,6 @@ export default function VocabulariesPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<Vocabulary | null>(null)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  const [difficultyFilter, setDifficultyFilter] = useState<string>('')
   const [highFreqFilter, setHighFreqFilter] = useState<boolean | null>(null)
   const [importing, setImporting] = useState(false)
   const [form] = Form.useForm()
@@ -391,25 +390,6 @@ export default function VocabulariesPage() {
       },
     },
     {
-      title: '难度',
-      dataIndex: 'difficulty',
-      key: 'difficulty',
-      width: 100,
-      render: (difficulty: string) => {
-        const colorMap: Record<string, string> = {
-          EASY: 'green',
-          MEDIUM: 'orange',
-          HARD: 'red',
-        }
-        const textMap: Record<string, string> = {
-          EASY: '简单',
-          MEDIUM: '中等',
-          HARD: '困难',
-        }
-        return <Tag color={colorMap[difficulty]}>{textMap[difficulty] || difficulty}</Tag>
-      },
-    },
-    {
       title: '高频词',
       dataIndex: 'isHighFrequency',
       key: 'isHighFrequency',
@@ -464,17 +444,6 @@ export default function VocabulariesPage() {
             style={{ width: 200 }}
           />
           <Select
-            placeholder="难度筛选"
-            allowClear
-            style={{ width: 120 }}
-            value={difficultyFilter || undefined}
-            onChange={setDifficultyFilter}
-          >
-            <Select.Option value="EASY">简单</Select.Option>
-            <Select.Option value="MEDIUM">中等</Select.Option>
-            <Select.Option value="HARD">困难</Select.Option>
-          </Select>
-          <Select
             placeholder="高频词"
             allowClear
             style={{ width: 120 }}
@@ -500,7 +469,6 @@ export default function VocabulariesPage() {
         <Table
           columns={columns}
           dataSource={data.filter((item) => {
-            if (difficultyFilter && item.difficulty !== difficultyFilter) return false
             if (highFreqFilter !== null && item.isHighFrequency !== highFreqFilter) return false
             return true
           })}
@@ -619,19 +587,6 @@ export default function VocabulariesPage() {
 
           <Form.Item label="通用音标" name="phonetic">
             <Input placeholder="如果不区分英美，可填写通用音标" />
-          </Form.Item>
-
-          <Form.Item
-            label="难度"
-            name="difficulty"
-            rules={[{ required: true, message: '请选择难度' }]}
-            initialValue="MEDIUM"
-          >
-            <Select>
-              <Option value="EASY">简单</Option>
-              <Option value="MEDIUM">中等</Option>
-              <Option value="HARD">困难</Option>
-            </Select>
           </Form.Item>
 
           <Form.Item
