@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Tag } from 'antd'
+import { useState, useEffect, Suspense } from 'react'
+import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Tag, Spin } from 'antd'
 import { PlusOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
@@ -36,7 +36,7 @@ const questionTypeMap: Record<string, { label: string; color: string }> = {
   FILL_IN_BLANK: { label: '选词填空', color: 'orange' },
 }
 
-export default function QuestionsPage() {
+function QuestionsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
@@ -564,5 +564,14 @@ export default function QuestionsPage() {
         </Upload.Dragger>
       </Modal>
     </div>
+  )
+}
+
+// 使用 Suspense 包装以支持 useSearchParams (Next.js 15 要求)
+export default function QuestionsPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: 50 }}><Spin size="large" /></div>}>
+      <QuestionsContent />
+    </Suspense>
   )
 }
