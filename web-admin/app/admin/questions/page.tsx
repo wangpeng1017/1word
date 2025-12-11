@@ -5,7 +5,7 @@ import { Table, Button, Space, Modal, Form, Input, Select, Upload, message, Tag 
 import { PlusOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const { TextArea } = Input
 
@@ -38,6 +38,7 @@ const questionTypeMap: Record<string, { label: string; color: string }> = {
 
 export default function QuestionsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
@@ -45,10 +46,16 @@ export default function QuestionsPage() {
   const [importModalVisible, setImportModalVisible] = useState(false)
   const [form] = Form.useForm()
   const [vocabularies, setVocabularies] = useState<Array<{ id: string; word: string }>>([])
+
+  // 从 URL 参数获取筛选条件
+  const urlVocabularyId = searchParams.get('vocabularyId')
+  const urlWord = searchParams.get('word')
+
   const [filters, setFilters] = useState<{
     vocabularyId?: string
     type?: string
   }>({})
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
@@ -56,26 +63,28 @@ export default function QuestionsPage() {
   })
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
-  // 从URL参数中读取初始筛选条件
+  // 当 URL 参数变化时更新筛选条件
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const vocabularyId = urlParams.get('vocabularyId')
-      const word = urlParams.get('word')
-      if (vocabularyId) {
-        setFilters(prev => ({ ...prev, vocabularyId }))
-        if (word) {
-          message.info(`已筛选词汇: ${word}`)
-        }
+    if (urlVocabularyId) {
+      setFilters(prev => ({ ...prev, vocabularyId: urlVocabularyId }))
+      if (urlWord) {
+        message.info(`已筛选词汇: ${urlWord}`)
       }
+    } else {
+      // 清空 URL 参数时移除筛选
+      setFilters(prev => {
+        const { vocabularyId, ...rest } = prev
+        return rest
+      })
     }
-  }, [])
+  }, [urlVocabularyId, urlWord])
 
+  // 加载词汇列表
   useEffect(() => {
-    fetchQuestions()
     fetchVocabularies()
   }, [])
 
+  // 加载题目列表 - 依赖分页和筛选条件
   useEffect(() => {
     fetchQuestions()
   }, [pagination.current, pagination.pageSize, filters])
@@ -139,6 +148,13 @@ export default function QuestionsPage() {
   const handleCreate = () => {
     setEditingQuestion(null)
     form.resetFields()
+    // 如果有词汇筛选，自动填入该词汇
+    if (filters.vocabularyId) {
+      const vocab = vocabularies.find(v => v.id === filters.vocabularyId)
+      if (vocab) {
+        form.setFieldValue('vocabularyId', vocab.word)
+      }
+    }
     setModalVisible(true)
   }
 
