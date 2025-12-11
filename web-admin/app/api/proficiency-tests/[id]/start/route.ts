@@ -61,79 +61,60 @@ export async function POST(
       return apiResponse.error('测试题库中没有词汇', 400)
     }
 
-    // 为每个词汇生成题目
-    const totalWords = vocabularies.length
-    const questionTypeAllocation = allocateQuestionTypes(totalWords)
+    // 为每个词汇分配题型
+    const vocabularyIds = vocabularies.map(v => v.id)
+    const questionTypeAllocation = allocateQuestionTypes(vocabularyIds)
 
     const questions: any[] = []
-    let currentIndex = 0
 
-    for (const allocation of questionTypeAllocation) {
-      const { type, count } = allocation
+    for (const vocabulary of vocabularies) {
+      const targetType = questionTypeAllocation.get(vocabulary.id) || 'ENGLISH_TO_CHINESE'
 
-      for (let i = 0; i < count && currentIndex < vocabularies.length; i++) {
-        const vocabulary = vocabularies[currentIndex]
-        currentIndex++
+      // 获取该词汇指定类型的题目
+      let vocabQuestions = await prisma.questions.findMany({
+        where: {
+          vocabularyId: vocabulary.id,
+          type: targetType
+        },
+        include: {
+          question_options: {
+            orderBy: { order: 'asc' }
+          }
+        }
+      })
 
-        // 获取该词汇的题目
-        const vocabQuestions = await prisma.questions.findMany({
+      // 如果没有指定类型的题目，获取任意类型
+      if (vocabQuestions.length === 0) {
+        vocabQuestions = await prisma.questions.findMany({
           where: {
-            vocabularyId: vocabulary.id,
-            type
+            vocabularyId: vocabulary.id
           },
           include: {
             question_options: {
               orderBy: { order: 'asc' }
             }
-          }
+          },
+          take: 1
         })
+      }
 
-        if (vocabQuestions.length > 0) {
-          // 随机选择一个题目
-          const randomQuestion = vocabQuestions[Math.floor(Math.random() * vocabQuestions.length)]
-          questions.push({
-            questionId: randomQuestion.id,
-            vocabularyId: vocabulary.id,
-            type: randomQuestion.type,
-            content: randomQuestion.content,
-            sentence: randomQuestion.sentence,
-            audioUrl: randomQuestion.audioUrl,
-            options: randomQuestion.question_options.map(opt => ({
-              id: opt.id,
-              content: opt.content,
-              order: opt.order
-            })),
-            // 不返回正确答案
-          })
-        } else {
-          // 如果没有该类型的题目，尝试其他类型
-          const anyQuestion = await prisma.questions.findFirst({
-            where: {
-              vocabularyId: vocabulary.id
-            },
-            include: {
-              question_options: {
-                orderBy: { order: 'asc' }
-              }
-            }
-          })
-
-          if (anyQuestion) {
-            questions.push({
-              questionId: anyQuestion.id,
-              vocabularyId: vocabulary.id,
-              type: anyQuestion.type,
-              content: anyQuestion.content,
-              sentence: anyQuestion.sentence,
-              audioUrl: anyQuestion.audioUrl,
-              options: anyQuestion.question_options.map(opt => ({
-                id: opt.id,
-                content: opt.content,
-                order: opt.order
-              })),
-            })
-          }
-        }
+      if (vocabQuestions.length > 0) {
+        // 随机选择一个题目
+        const randomQuestion = vocabQuestions[Math.floor(Math.random() * vocabQuestions.length)]
+        questions.push({
+          questionId: randomQuestion.id,
+          vocabularyId: vocabulary.id,
+          type: randomQuestion.type,
+          content: randomQuestion.content,
+          sentence: randomQuestion.sentence,
+          audioUrl: randomQuestion.audioUrl,
+          options: randomQuestion.question_options.map(opt => ({
+            id: opt.id,
+            content: opt.content,
+            order: opt.order
+          })),
+          // 不返回正确答案
+        })
       }
     }
 
