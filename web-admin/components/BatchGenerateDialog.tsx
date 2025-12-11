@@ -127,7 +127,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
             <Select mode="multiple" placeholder="请选择班级（可多选）" showSearch optionFilterProp="children">
               {classes.map((c: any) => (
                 <Select.Option key={c.id} value={c.id}>
-                  {c.name} ({c.grade})
+                  {c.name} ({c.grade}) - {c._count?.students || 0}人
                 </Select.Option>
               ))}
             </Select>
