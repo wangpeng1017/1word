@@ -32,11 +32,27 @@ var formatTime = function(dateStr) {
   return (hours < 10 ? '0' + hours : hours) + ':' + (minutes < 10 ? '0' + minutes : minutes);
 }
 
+var arrayMax = function(arr) {
+  if (!arr || arr.length === 0) return 1;
+  var max = arr[0];
+  for (var i = 1; i < arr.length; i++) {
+    if (arr[i] > max) max = arr[i];
+  }
+  return max || 1;
+}
+
+var calcBarHeight = function(item, arr) {
+  var max = arrayMax(arr);
+  return (item / max) * 100;
+}
+
 module.exports = {
   toFixed: toFixed,
   floor: floor,
   round: round,
   formatMinutes: formatMinutes,
   formatSeconds: formatSeconds,
-  formatTime: formatTime
+  formatTime: formatTime,
+  arrayMax: arrayMax,
+  calcBarHeight: calcBarHeight
 };

@@ -71,7 +71,7 @@
           >
             <view
               class="chart-bar secondary"
-              style="height: {{(item / Math.max(...chartData.wordCounts)) * 100}}%"
+              style="height: {{fmt.calcBarHeight(item, chartData.wordCounts)}}%"
             >
               <text class="bar-value">{{item}}</text>
             </view>
