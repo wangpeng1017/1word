@@ -108,7 +108,7 @@ export default function VocabulariesPage() {
 
   const handleEdit = async (record: Vocabulary) => {
     setEditingRecord(record)
-    
+
     // 加载完整数据包括音频和图片
     try {
       const token = localStorage.getItem('token')
@@ -116,21 +116,21 @@ export default function VocabulariesPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
-      
+
       if (result.success) {
         const fullRecord = result.data
         const usAudio = fullRecord.audios?.find((a: any) => a.accent === 'US')
         const ukAudio = fullRecord.audios?.find((a: any) => a.accent === 'UK')
         const image = fullRecord.images?.[0]
-        
+
         // 准备 meanings 数据
         const meanings = fullRecord.meanings && fullRecord.meanings.length > 0
           ? fullRecord.meanings.map((m: WordMeaning) => ({
-              partOfSpeech: m.partOfSpeech,
-              meaning: m.meaning,
-            }))
+            partOfSpeech: m.partOfSpeech,
+            meaning: m.meaning,
+          }))
           : [] // 如果没有 meanings，用户可手动添加
-        
+
         form.setFieldsValue({
           word: fullRecord.word,
           meanings,
@@ -149,17 +149,17 @@ export default function VocabulariesPage() {
       // 如果加载失败，使用基本数据
       const meanings = record.meanings && record.meanings.length > 0
         ? record.meanings.map((m: WordMeaning) => ({
-            partOfSpeech: m.partOfSpeech,
-            meaning: m.meaning,
-          }))
+          partOfSpeech: m.partOfSpeech,
+          meaning: m.meaning,
+        }))
         : []
-      
+
       form.setFieldsValue({
         ...record,
         meanings,
       })
     }
-    
+
     setModalVisible(true)
   }
 
@@ -300,10 +300,10 @@ export default function VocabulariesPage() {
             <Space direction="vertical" size={2} style={{ width: '100%' }}>
               {record.meanings.map((m, idx) => (
                 <div key={m.id || idx} style={{ fontSize: 12, lineHeight: 1.5 }}>
-                  <Tag 
-                    color="blue" 
-                    style={{ 
-                      fontSize: 10, 
+                  <Tag
+                    color="blue"
+                    style={{
+                      fontSize: 10,
                       padding: '0 4px',
                       marginRight: 6,
                       minWidth: 30,
@@ -362,7 +362,7 @@ export default function VocabulariesPage() {
       render: (_, record: Vocabulary) => {
         const usAudio = record.audios?.find((a) => a.accent === 'US')
         const ukAudio = record.audios?.find((a) => a.accent === 'UK')
-        
+
         return (
           <Space size="small">
             {usAudio && (
@@ -490,28 +490,6 @@ export default function VocabulariesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             添加词汇
           </Button>
-          <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
-            下载模板
-          </Button>
-          <Button 
-            icon={<UploadOutlined />} 
-            loading={importing}
-            onClick={() => {
-              const input = document.createElement('input')
-              input.type = 'file'
-              input.accept = '.xlsx,.xls'
-              input.onchange = (e: any) => {
-                const file = e.target.files?.[0]
-                if (file) handleImport(file)
-              }
-              input.click()
-            }}
-          >
-            批量导入
-          </Button>
-          <Button icon={<DownloadOutlined />} onClick={handleExport}>
-            导出数据
-          </Button>
           {selectedRowKeys.length > 0 && (
             <Button danger onClick={handleBatchDelete}>
               批量删除 ({selectedRowKeys.length})
@@ -574,16 +552,16 @@ export default function VocabulariesPage() {
                   </Button>
                 )}
                 {fields.map((field, index) => (
-                  <Card 
-                    key={field.key} 
-                    size="small" 
+                  <Card
+                    key={field.key}
+                    size="small"
                     style={{ marginBottom: 8 }}
                     title={`释义 ${index + 1}`}
                     extra={
-                      <Button 
-                        type="link" 
-                        danger 
-                        size="small" 
+                      <Button
+                        type="link"
+                        danger
+                        size="small"
                         onClick={() => remove(field.name)}
                         icon={<MinusCircleOutlined />}
                       >
@@ -638,7 +616,7 @@ export default function VocabulariesPage() {
               <Input placeholder="例如: /həˈləʊ/" />
             </Form.Item>
           </Space.Compact>
-          
+
           <Form.Item label="通用音标" name="phonetic">
             <Input placeholder="如果不区分英美，可填写通用音标" />
           </Form.Item>
@@ -669,12 +647,12 @@ export default function VocabulariesPage() {
           </Form.Item>
 
           <Form.Item label="美式音频URL" name="audioUrlUS">
-            <Input 
-              placeholder="美式发音音频链接（可选）" 
+            <Input
+              placeholder="美式发音音频链接（可选）"
               addonAfter={
-                <Button 
-                  type="link" 
-                  size="small" 
+                <Button
+                  type="link"
+                  size="small"
                   icon={<UploadOutlined />}
                   onClick={() => message.info('请先上传音频文件到Vercel Blob，然后粘贴URL')}
                 >
@@ -685,12 +663,12 @@ export default function VocabulariesPage() {
           </Form.Item>
 
           <Form.Item label="英式音频URL" name="audioUrlUK">
-            <Input 
-              placeholder="英式发音音频链接（可选）" 
+            <Input
+              placeholder="英式发音音频链接（可选）"
               addonAfter={
-                <Button 
-                  type="link" 
-                  size="small" 
+                <Button
+                  type="link"
+                  size="small"
                   icon={<UploadOutlined />}
                   onClick={() => message.info('请先上传音频文件到Vercel Blob，然后粘贴URL')}
                 >
@@ -701,12 +679,12 @@ export default function VocabulariesPage() {
           </Form.Item>
 
           <Form.Item label="图片URL" name="imageUrl">
-            <Input 
-              placeholder="词汇图片链接（可选）" 
+            <Input
+              placeholder="词汇图片链接（可选）"
               addonAfter={
-                <Button 
-                  type="link" 
-                  size="small" 
+                <Button
+                  type="link"
+                  size="small"
                   icon={<UploadOutlined />}
                   onClick={() => message.info('请先上传图片文件到Vercel Blob，然后粘贴URL')}
                 >

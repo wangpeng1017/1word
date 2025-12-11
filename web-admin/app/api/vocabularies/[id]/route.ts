@@ -12,7 +12,7 @@ export async function GET(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     if (!token || !verifyToken(token)) {
       return unauthorizedResponse()
     }
@@ -21,7 +21,7 @@ export async function GET(
     const includeMeanings = searchParams.get('includeMeanings') !== 'false' // 默认包含
     const includeAudios = searchParams.get('includeAudios') === 'true'
     const includeImages = searchParams.get('includeImages') === 'true'
-    
+
     const includeOptions: any = {}
     if (includeMeanings) {
       includeOptions.word_meanings = {
@@ -38,7 +38,7 @@ export async function GET(
         orderBy: { createdAt: 'asc' }
       }
     }
-    
+
     const vocabulary = await prisma.vocabularies.findUnique({
       where: { id: params.id },
       include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
@@ -49,13 +49,13 @@ export async function GET(
     }
 
     const { audio_url, created_at, updated_at, word_meanings, word_audios, word_images, ...rest } = vocabulary as any
-    const result: any = { 
-      ...rest, 
-      audioUrl: audio_url ?? null, 
-      createdAt: created_at, 
-      updatedAt: updated_at 
+    const result: any = {
+      ...rest,
+      audioUrl: audio_url ?? null,
+      createdAt: created_at,
+      updatedAt: updated_at
     }
-    
+
     // 映射多词性多释义
     if (word_meanings) {
       result.meanings = word_meanings.map((m: any) => ({
@@ -66,7 +66,7 @@ export async function GET(
         examples: m.examples || [],
       }))
     }
-    
+
     // 映射音频
     if (word_audios) {
       result.audios = word_audios.map((a: any) => ({
@@ -77,7 +77,7 @@ export async function GET(
         createdAt: a.createdAt,
       }))
     }
-    
+
     // 映射图片
     if (word_images) {
       result.images = word_images.map((i: any) => ({
@@ -87,7 +87,7 @@ export async function GET(
         createdAt: i.createdAt,
       }))
     }
-    
+
     return successResponse(result)
   } catch (error) {
     console.error('获取词汇详情错误:', error)
@@ -104,7 +104,7 @@ export async function PUT(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以更新词汇')
@@ -135,7 +135,7 @@ export async function PUT(
       const updateData: any = {
         updated_at: new Date(),
       }
-      
+
       if (word) updateData.word = word.toLowerCase()
       if (partOfSpeech) updateData.part_of_speech = partOfSpeech
       if (primaryMeaning) updateData.primary_meaning = primaryMeaning
@@ -151,93 +151,85 @@ export async function PUT(
         where: { id: params.id },
         data: updateData,
       })
-      
+
       // 更新多释义：删除旧的，创建新的
       if (meanings && Array.isArray(meanings)) {
         // 删除所有旧释义
         await tx.word_meanings.deleteMany({
-          where: { vocabulary_id: params.id },
+          where: { vocabularyId: params.id },
         })
-        
+
         // 创建新释义
         if (meanings.length > 0) {
           await tx.word_meanings.createMany({
             data: meanings.map((m: any, index: number) => ({
               id: `wm_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-              vocabulary_id: params.id,
-              part_of_speech: m.partOfSpeech,
+              vocabularyId: params.id,
+              partOfSpeech: m.partOfSpeech,
               meaning: m.meaning,
-              order_index: index,
+              orderIndex: index,
               examples: m.examples || [],
-              created_at: new Date(),
-              updated_at: new Date(),
             })),
           })
         }
       }
-      
+
       // 更新音频
       if (typeof audioUrlUS !== 'undefined') {
         // 删除旧的 US 音频
         await tx.word_audios.deleteMany({
-          where: { vocabulary_id: params.id, accent: 'US' },
+          where: { vocabularyId: params.id, accent: 'US' },
         })
         // 创建新的
         if (audioUrlUS) {
           await tx.word_audios.create({
             data: {
               id: `wa_${Date.now()}_us_${Math.random().toString(36).substr(2, 9)}`,
-              vocabulary_id: params.id,
-              audio_url: audioUrlUS,
+              vocabularyId: params.id,
+              audioUrl: audioUrlUS,
               accent: 'US',
-              created_at: new Date(),
-              updated_at: new Date(),
             },
           })
         }
       }
-      
+
       if (typeof audioUrlUK !== 'undefined') {
         // 删除旧的 UK 音频
         await tx.word_audios.deleteMany({
-          where: { vocabulary_id: params.id, accent: 'UK' },
+          where: { vocabularyId: params.id, accent: 'UK' },
         })
         // 创建新的
         if (audioUrlUK) {
           await tx.word_audios.create({
             data: {
               id: `wa_${Date.now()}_uk_${Math.random().toString(36).substr(2, 9)}`,
-              vocabulary_id: params.id,
-              audio_url: audioUrlUK,
+              vocabularyId: params.id,
+              audioUrl: audioUrlUK,
               accent: 'UK',
-              created_at: new Date(),
-              updated_at: new Date(),
             },
           })
         }
       }
-      
+
       // 更新图片
       if (typeof imageUrl !== 'undefined') {
         // 删除旧图片
         await tx.word_images.deleteMany({
-          where: { vocabulary_id: params.id },
+          where: { vocabularyId: params.id },
         })
         // 创建新图片
         if (imageUrl) {
           await tx.word_images.create({
             data: {
               id: `wi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              vocabulary_id: params.id,
-              image_url: imageUrl,
+              vocabularyId: params.id,
+              imageUrl: imageUrl,
               description: imageDescription,
-              created_at: new Date(),
-              updated_at: new Date(),
             },
           })
         }
       }
-      
+
       return vocab
     })
 
@@ -257,7 +249,7 @@ export async function DELETE(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以删除词汇')
