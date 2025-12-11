@@ -21,8 +21,6 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   const [isPreviewed, setIsPreviewed] = useState(false)
 
   const columns: ColumnsType<PlanItem> = useMemo(() => ([
-    { title: '学生', dataIndex: 'studentName', key: 'studentName' },
-    { title: '班级ID', dataIndex: 'classId', key: 'classId' },
     {
       title: '单词', dataIndex: 'word', key: 'word', render: (w, r) => (
         <Space direction="vertical" size={0}>

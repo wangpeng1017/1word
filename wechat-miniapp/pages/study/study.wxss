@@ -569,3 +569,126 @@
   font-size: 26rpx;
   color: #374151;
 }
+
+/* 🎮 游戏化UI样式 */
+
+/* 经验值获取动画 */
+.exp-gain-animation {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  animation: expFloat 1s ease-out forwards;
+}
+
+.exp-text {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FFD700;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+}
+
+@keyframes expFloat {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100rpx) scale(1.2);
+  }
+}
+
+/* 连对徽章 */
+.streak-badge {
+  position: fixed;
+  top: 200rpx;
+  right: 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+  padding: 12rpx 24rpx;
+  border-radius: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 53, 0.4);
+  animation: streakPulse 0.5s ease-out;
+  z-index: 50;
+}
+
+.streak-icon {
+  font-size: 32rpx;
+}
+
+.streak-count {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+@keyframes streakPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 里程碑弹窗遮罩 */
+.milestone-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 里程碑弹窗 */
+.milestone-popup {
+  background: linear-gradient(135deg, #FF7A7A 0%, #FFB347 100%);
+  border-radius: 32rpx;
+  padding: 60rpx 80rpx;
+  text-align: center;
+  animation: milestoneScale 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 16rpx 48rpx rgba(255, 122, 122, 0.5);
+}
+
+.milestone-icon {
+  font-size: 120rpx;
+  animation: fireWiggle 0.5s ease-in-out infinite;
+}
+
+@keyframes fireWiggle {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.milestone-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+  margin: 16rpx 0;
+}
+
+.milestone-count {
+  font-size: 64rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+}
+
+.milestone-subtitle {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 16rpx;
+}
+
+@keyframes milestoneScale {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+

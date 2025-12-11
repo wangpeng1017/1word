@@ -215,10 +215,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. 添加积分奖励
-    const basePoints = totalWords // 每个单词1分
-    const accuracyBonus = Math.floor(accuracy * totalWords * 0.5) // 正确率奖励
-    const totalPoints = basePoints + accuracyBonus
+    // 3. 🎮 添加积分奖励（游戏化）
+    // 基础积分：每答对1题 +1分
+    const basePoints = correctCount
+    // 完成任务奖励：+5分
+    const completionBonus = 5
+    // 全对奖励：正确率100%额外+3分
+    const perfectBonus = accuracy === 1 ? 3 : 0
+    const totalPoints = basePoints + completionBonus + perfectBonus
 
     // 获取或创建积分记录
     let studentPoints = await prisma.student_points.findUnique({
@@ -264,7 +268,7 @@ export async function POST(request: NextRequest) {
         id: historyId,
         studentId,
         points: totalPoints,
-        reason: `完成学习：${totalWords}个单词`,
+        reason: `学习${totalWords}题(对${correctCount}个+${basePoints}分, 完成+${completionBonus}分${perfectBonus > 0 ? ', 全对+' + perfectBonus + '分' : ''})`,
         relatedType: 'study_record',
         relatedId: srId
       }

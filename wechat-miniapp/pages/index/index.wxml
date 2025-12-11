@@ -9,6 +9,26 @@
   </view>
 
   <block wx:if="{{state==='ready'}}">
+    <!-- 🎮 游戏化任务进度卡片 -->
+    <view class="task-card">
+      <view class="task-header">
+        <view class="task-title">📋 今日复习任务</view>
+        <view class="task-badge" wx:if="{{overview.dueCount > 0}}">
+          待完成 {{overview.dueCount - overview.reviewedCount}}
+        </view>
+      </view>
+      
+      <view class="task-progress">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+        </view>
+        <view class="progress-info">
+          <text class="progress-done">{{overview.reviewedCount}} / {{overview.dueCount}}</text>
+          <text class="progress-percent">{{progressPercent}}%</text>
+        </view>
+      </view>
+    </view>
+
     <view class="stats">
       <view class="stat">
         <view class="num">{{overview.dueCount}}</view>
@@ -24,11 +44,6 @@
         <view class="num">{{overview.timeString}}</view>
         <view class="label">今日用时</view>
       </view>
-    </view>
-
-    <view class="progress-wrap">
-      <progress percent="{{progressPercent}}" stroke-width="8" active activeColor="#FF7A7A" />
-      <text class="progress-text">{{progressPercent}}%</text>
     </view>
 
     <button class="cta" type="primary" bindtap="startReview">

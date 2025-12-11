@@ -143,5 +143,26 @@
         <text class="stat-label">错误</text>
       </view>
     </view>
+
+    <!-- 🎮 经验值获取动画 -->
+    <view wx:if="{{showExpGain}}" class="exp-gain-animation">
+      <text class="exp-text">+{{expGainValue}} 经验</text>
+    </view>
+
+    <!-- 🎮 连对次数显示 -->
+    <view wx:if="{{consecutiveCorrect > 0 && isCorrect}}" class="streak-badge">
+      <text class="streak-icon">🔥</text>
+      <text class="streak-count">连对 {{consecutiveCorrect}} 题</text>
+    </view>
+  </view>
+
+  <!-- 🏆 里程碑弹窗 -->
+  <view wx:if="{{showMilestone}}" class="milestone-overlay" bindtap="closeMilestone">
+    <view class="milestone-popup">
+      <view class="milestone-icon">🔥</view>
+      <view class="milestone-title">太棒了！</view>
+      <view class="milestone-count">连对 {{milestoneCount}} 题</view>
+      <view class="milestone-subtitle">继续保持！</view>
+    </view>
   </view>
 </view>

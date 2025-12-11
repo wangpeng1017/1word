@@ -38,6 +38,13 @@ Page({
 
     // 音频播放
     audioContext: null,
+
+    // 🎮 游戏化激励
+    consecutiveCorrect: 0, // 连续答对计数
+    showMilestone: false,  // 是否显示里程碑弹窗
+    milestoneCount: 0,     // 当前里程碑数字
+    showExpGain: false,    // 显示经验获取动画
+    expGainValue: 0,       // 经验获取数值
   },
 
   onLoad(options) {
@@ -230,7 +237,7 @@ Page({
 
   // 提交答案
   submitAnswer() {
-    const { selectedAnswer, currentQuestion, currentTask } = this.data
+    const { selectedAnswer, currentQuestion, currentTask, consecutiveCorrect } = this.data
 
     if (!selectedAnswer) {
       wx.showToast({
@@ -256,6 +263,16 @@ Page({
     const correctCount = answers.filter(a => a.isCorrect).length
     const wrongCount = answers.filter(a => !a.isCorrect).length
 
+    // 🎮 游戏化反馈
+    const newConsecutiveCorrect = isCorrect ? consecutiveCorrect + 1 : 0
+    let expGain = isCorrect ? 1 : 0
+
+    // 检查连对里程碑 (5, 10, 15, 20...)
+    const isMilestone = isCorrect && newConsecutiveCorrect > 0 && newConsecutiveCorrect % 5 === 0
+    if (isMilestone) {
+      expGain += Math.floor(newConsecutiveCorrect / 5)
+    }
+
     this.setData({
       isAnswered: true,
       isCorrect,
@@ -263,15 +280,64 @@ Page({
       answers,
       correctCount,
       wrongCount,
+      consecutiveCorrect: newConsecutiveCorrect,
+      showExpGain: isCorrect,
+      expGainValue: expGain,
     })
 
-    // 如果回答正确，1.5秒后自动进入下一题
+    // 🔊 震动反馈
+    this.playFeedback(isCorrect)
+
+    // 🏆 里程碑弹窗
+    if (isMilestone) {
+      setTimeout(() => {
+        this.showMilestonePopup(newConsecutiveCorrect)
+      }, 300)
+    }
+
+    // 隐藏经验获取动画
     if (isCorrect) {
       setTimeout(() => {
-        this.nextQuestion()
-      }, 1500)
+        this.setData({ showExpGain: false })
+      }, 1000)
     }
-    // 如果回答错误，显示“继续”按钮，手动点击后才进入下一题
+
+    // 如果回答正确，自动进入下一题
+    if (isCorrect) {
+      const delay = isMilestone ? 2500 : 1500
+      setTimeout(() => {
+        this.nextQuestion()
+      }, delay)
+    }
+    // 如果回答错误，显示"继续"按钮
+  },
+
+  // 🔊 播放反馈（震动已禁用）
+  playFeedback(isCorrect) {
+    // 震动反馈已禁用
+    // if (isCorrect) {
+    //   wx.vibrateShort({ type: 'light' })
+    // } else {
+    //   wx.vibrateShort({ type: 'medium' })
+    // }
+  },
+
+  // 🏆 显示里程碑弹窗
+  showMilestonePopup(count) {
+    // 震动已禁用
+    // wx.vibrateLong()
+    this.setData({
+      showMilestone: true,
+      milestoneCount: count,
+    })
+    setTimeout(() => {
+      this.setData({ showMilestone: false })
+    }, 2000)
+  },
+
+  // 关闭里程碑弹窗
+  closeMilestone() {
+    this.setData({ showMilestone: false })
   },
 
   // 下一题

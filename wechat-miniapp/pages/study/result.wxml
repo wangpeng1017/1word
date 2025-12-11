@@ -48,6 +48,17 @@
     </view>
   </view>
 
+  <!-- 🎮 连胜预告卡片 -->
+  <view class="streak-card" wx:if="{{streakDays >= 0}}">
+    <view class="streak-header">
+      <text class="streak-fire">🔥</text>
+      <text class="streak-title">连续学习 {{streakDays}} 天</text>
+    </view>
+    <view class="streak-message">
+      <text class="streak-text">{{streakMessage}}</text>
+    </view>
+  </view>
+
   <!-- 鼓励语 -->
   <view class="encouragement">
     <text wx:if="{{accuracy === 100}}">完美答题！所有单词都掌握了 🎯</text>
