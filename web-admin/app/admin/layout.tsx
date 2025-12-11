@@ -16,6 +16,7 @@ import {
   FileTextOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
+  LineChartOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -69,6 +70,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/statistics',
     icon: <BarChartOutlined />,
     label: '学习统计',
+  },
+  {
+    key: '/admin/learning-data',
+    icon: <LineChartOutlined />,
+    label: '学习数据',
   },
   {
     key: '/admin/settings',
@@ -134,9 +140,9 @@ export default function AdminLayout({
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}>
-      <Sider 
-        trigger={null} 
-        collapsible 
+      <Sider
+        trigger={null}
+        collapsible
         collapsed={collapsed}
         style={{
           overflow: 'auto',
