@@ -119,8 +119,10 @@ export async function GET(
       return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
     })
 
-    // 计算“今天应复习数”：已生成的未完成任务 + 还未生成的应复习计划数量
+    // 计算"今天应复习数"：已生成的未完成任务 + 还未生成的应复习计划数量
     const existingPendingCount = validTasks.filter((t: any) => t.status !== 'COMPLETED').length
+    // 🔧 修复：计算今日已完成的任务数
+    const todayCompletedCount = todayTasks.filter((t: any) => t.status === 'COMPLETED').length
     const existingVocabIdSet = new Set(vocabularyIds)
     // 注意：下面的 duePlans 和 missingCount 放到定义 endOfToday 之后再计算，避免引用顺序问题
 
@@ -158,8 +160,9 @@ export async function GET(
     })
     const missingCount = duePlans.filter(p => !existingVocabIdSet.has(p.vocabularyId)).length
 
-    // 最终 today.dueCount：已生成的未完成任务 + 还未生成的应复习计划
-    const estimatedDueCount = existingPendingCount + missingCount
+    // 🔧 修复：今日应复习总数 = 已完成 + 未完成
+    // todayTotalTasks 应该代表"今天的全部任务数量"，而不仅是剩余未完成的
+    const todayTotalTasks = todayCompletedCount + existingPendingCount + missingCount
 
     // 🔧 修复：如果存在缺失的任务（即 dueCount > tasks.length），自动生成
     if (missingCount > 0) {
@@ -242,7 +245,8 @@ export async function GET(
       validTasks: validTasks.length,
       tasksWithSelection: tasksWithSelection.length,
       needReview,
-      estimatedDueCount,
+      todayTotalTasks,
+      todayCompletedCount,
       missingCount,
     })
 
@@ -312,9 +316,9 @@ export async function GET(
       },
       today: {
         // today.dueCount 定义为“仍需完成”的任务量（已生成未完成 + 尚未生成的应复习计划）
-        dueCount: estimatedDueCount,
-        completedCount: 0, // 与 dueCount 对应的已完成进度，新增计划当天应为0，由学习页实时推进
-        pendingCount: estimatedDueCount,
+        dueCount: todayTotalTasks,
+        completedCount: todayCompletedCount,
+        pendingCount: todayTotalTasks - todayCompletedCount,
         tasks: tasksWithSelection.map((t: any) => ({
           id: t.id,
           status: t.status,

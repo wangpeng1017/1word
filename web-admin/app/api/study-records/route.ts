@@ -169,7 +169,23 @@ export async function POST(request: NextRequest) {
           ? wordMastery.consecutiveCorrect + 1
           : 0
 
-        const newIsMastered = isMastered(newConsecutiveCorrect)
+        // 🔧 修复：基于最近3次答题记录判定是否掌握（必须连续3次100%正确）
+        // 从 question_answers 表获取最近3次答题记录
+        const recentAnswers = await prisma.question_answers.findMany({
+          where: {
+            studentId,
+            vocabularyId,
+          },
+          orderBy: { answeredAt: 'desc' },
+          take: 3,
+          select: { isCorrect: true }
+        })
+
+        // 只有当最近3次答题都正确时才判定为掌握
+        const hasThreeRecords = recentAnswers.length >= 3
+        const allCorrect = hasThreeRecords && recentAnswers.every(a => a.isCorrect)
+        const newIsMastered = allCorrect
+
         const newIsDifficult = isDifficult(newTotalWrongCount)
 
         await prisma.word_masteries.update({

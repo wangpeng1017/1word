@@ -9,17 +9,17 @@ Page({
     tasks: [],
     currentIndex: 0,
     totalCount: 0,
-    
+
     // 当前题目
     currentTask: null,
     currentQuestion: null,
-    
+
     // 答题状态
     selectedAnswer: '',
     isAnswered: false,
     isCorrect: false,
     showResult: false,
-    
+
     // 统计数据
     answers: [], // 答题记录
     correctCount: 0,
@@ -28,14 +28,14 @@ Page({
     sessionStartTime: null, // 总开始时间
     elapsedTime: '00:00', // 已用时
     timer: null, // 计时器
-    
+
     // 进度
     progress: 0,
-    
+
     // 加载状态
     isLoading: true,
     loadError: false,
-    
+
     // 音频播放
     audioContext: null,
   },
@@ -70,7 +70,7 @@ Page({
     if (this.data.timer) {
       clearInterval(this.data.timer)
     }
-    
+
     // 页面卸载时保存进度（如果未完成）
     if (this.data.currentIndex < this.data.totalCount) {
       this.saveProgress()
@@ -87,7 +87,7 @@ Page({
         elapsedTime: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
       })
     }, 1000)
-    
+
     this.setData({ timer })
   },
 
@@ -95,7 +95,7 @@ Page({
   async loadTasks() {
     try {
       wx.showLoading({ title: '加载中...' })
-      
+
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) {
         throw new Error('未找到学生ID')
@@ -125,9 +125,9 @@ Page({
       }
 
       // 过滤出有题目的任务
-      const validTasks = tasks.filter(task => 
-        task.vocabulary && 
-        task.vocabulary.questions && 
+      const validTasks = tasks.filter(task =>
+        task.vocabulary &&
+        task.vocabulary.questions &&
         task.vocabulary.questions.length > 0
       )
 
@@ -155,7 +155,7 @@ Page({
     } catch (error) {
       wx.hideLoading()
       console.error('加载任务失败:', error)
-      
+
       wx.showModal({
         title: '加载失败',
         content: error.message || '请检查网络连接',
@@ -179,13 +179,24 @@ Page({
 
     const currentTask = tasks[currentIndex]
     const vocabulary = currentTask.vocabulary
-    
-    // 优先选择英选汉题型
-    let question = vocabulary.questions.find(q => q.type === 'ENGLISH_TO_CHINESE')
-    
-    // 如果没有英选汉，选择其他题型
+
+    // 🔧 修复：优先使用后端分配的题目ID（基于80%/20%题型分配）
+    let question = null
+
+    // 1. 优先使用后端分配的 selectedQuestionId
+    if (currentTask.selectedQuestionId) {
+      question = vocabulary.questions.find(q => q.id === currentTask.selectedQuestionId)
+    }
+
+    // 2. 如果没找到，按 targetQuestionType 寻找
+    if (!question && currentTask.targetQuestionType) {
+      question = vocabulary.questions.find(q => q.type === currentTask.targetQuestionType)
+    }
+
+    // 3. 兜底：随机选择一个题目
     if (!question && vocabulary.questions.length > 0) {
-      question = vocabulary.questions[0]
+      const randomIndex = Math.floor(Math.random() * vocabulary.questions.length)
+      question = vocabulary.questions[randomIndex]
     }
 
     if (!question) {
@@ -292,7 +303,7 @@ Page({
       wx.showLoading({ title: '提交中...' })
 
       const studentId = app.globalData.userInfo?.studentId
-      
+
       // 提交答题记录
       await post('/study-records', {
         studentId,
@@ -311,7 +322,7 @@ Page({
     } catch (error) {
       wx.hideLoading()
       console.error('提交失败:', error)
-      
+
       wx.showModal({
         title: '提交失败',
         content: '答题记录提交失败，请重试',
@@ -330,7 +341,7 @@ Page({
   // 保存进度
   saveProgress() {
     const { tasks, currentIndex, answers, correctCount, wrongCount } = this.data
-    
+
     saveStudyProgress({
       tasks,
       currentIndex,
@@ -344,7 +355,7 @@ Page({
   // 恢复进度
   resumeProgress() {
     const progress = getStudyProgress()
-    
+
     if (progress) {
       this.setData({
         tasks: progress.tasks,
@@ -355,7 +366,7 @@ Page({
         totalCount: progress.tasks.length,
         isLoading: false,
       })
-      
+
       this.loadCurrentQuestion()
     } else {
       // 没有保存的进度，正常加载
@@ -381,7 +392,7 @@ Page({
   // 播放音频（听力题）
   playAudio() {
     const { currentTask } = this.data
-    
+
     if (!currentTask || !currentTask.vocabulary) {
       return
     }
@@ -391,7 +402,7 @@ Page({
       if (!this.data.audioContext) {
         this.data.audioContext = wx.createInnerAudioContext()
       }
-      
+
       this.data.audioContext.src = currentTask.vocabulary.audioUrl
       this.data.audioContext.play()
     } else {
@@ -401,7 +412,7 @@ Page({
         icon: 'loading',
         duration: 1000
       })
-      
+
       // TODO: 调用TTS接口或使用第三方服务
       // 这里可以集成百度TTS、讯飞TTS或其他服务
     }
