@@ -73,7 +73,7 @@ export default function StudyPlansPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [vocabularies, setVocabularies] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
-const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
+  const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
   const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -181,7 +181,7 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
     }
   }
 
-// 批量生成班级学习计划交互改由 BatchGenerateDialog 负责
+  // 批量生成班级学习计划交互改由 BatchGenerateDialog 负责
 
   // 更新计划
   const handleUpdate = async (values: any) => {
@@ -467,7 +467,7 @@ const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
           <Button
             type="primary"
             icon={<PlusOutlined />}
-onClick={() => setBatchOpen(true)}
+            onClick={() => setBatchOpen(true)}
           >
             批量生成计划
           </Button>
@@ -476,8 +476,9 @@ onClick={() => setBatchOpen(true)}
             icon={<PlusOutlined />}
             disabled={!selectedStudentId}
             onClick={() => setAddWordsOpen(true)}
+            title={!selectedStudentId ? '请先通过学生姓名筛选单个学生' : undefined}
           >
-            添加词汇
+            添加词汇{selectedStudentId ? '' : '（请先筛选单个学生）'}
           </Button>
           <Input
             placeholder="学生姓名"
@@ -527,7 +528,7 @@ onClick={() => setBatchOpen(true)}
               </Select.Option>
             ))}
           </Select>
-          <Button type="primary" onClick={() => { setPagination((p)=>({ ...p, current: 1 })); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>查询</Button>
+          <Button type="primary" onClick={() => { setPagination((p) => ({ ...p, current: 1 })); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>查询</Button>
           <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>重置</Button>
           <Button icon={<ReloadOutlined />} onClick={() => fetchData()}>
             刷新
@@ -567,7 +568,7 @@ onClick={() => setBatchOpen(true)}
         }}
       />
 
-<BatchGenerateDialog
+      <BatchGenerateDialog
         open={batchOpen}
         onClose={() => setBatchOpen(false)}
         classes={classes}
