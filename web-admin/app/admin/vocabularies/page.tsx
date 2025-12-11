@@ -13,7 +13,9 @@ import {
   Select,
   Card,
   Image,
+  Upload,
 } from 'antd'
+import type { UploadFile } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
@@ -24,6 +26,8 @@ import {
   UploadOutlined,
   SoundOutlined,
   MinusCircleOutlined,
+  DeleteOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/navigation'
@@ -81,6 +85,8 @@ export default function VocabulariesPage() {
   const [highFreqFilter, setHighFreqFilter] = useState<boolean | null>(null)
   const [importing, setImporting] = useState(false)
   const [form] = Form.useForm()
+  const [imageFileList, setImageFileList] = useState<UploadFile[]>([])
+  const [uploading, setUploading] = useState(false)
 
   // 分页状态
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 })
@@ -134,6 +140,7 @@ export default function VocabulariesPage() {
   const handleAdd = () => {
     setEditingRecord(null)
     form.resetFields()
+    setImageFileList([])
     setModalVisible(true)
   }
 
@@ -175,6 +182,18 @@ export default function VocabulariesPage() {
           imageUrl: image?.imageUrl || '',
           imageDescription: image?.description || '',
         })
+
+        // 设置图片列表
+        if (image?.imageUrl) {
+          setImageFileList([{
+            uid: '-1',
+            name: 'image',
+            status: 'done',
+            url: image.imageUrl,
+          }])
+        } else {
+          setImageFileList([])
+        }
       }
     } catch (error) {
       // 如果加载失败，使用基本数据
@@ -192,6 +211,43 @@ export default function VocabulariesPage() {
     }
 
     setModalVisible(true)
+  }
+
+  // 图片上传处理
+  const handleImageUpload = async (file: File) => {
+    setUploading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'image')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        const imageUrl = result.data.url
+        form.setFieldValue('imageUrl', imageUrl)
+        setImageFileList([{
+          uid: '-1',
+          name: file.name,
+          status: 'done',
+          url: imageUrl,
+        }])
+        message.success('图片上传成功')
+      } else {
+        message.error(result.error || '上传失败')
+      }
+    } catch (error) {
+      message.error('上传失败')
+    } finally {
+      setUploading(false)
+    }
+    return false // 阻止默认上传行为
   }
 
   const handleDelete = async (id: string) => {
@@ -648,20 +704,27 @@ export default function VocabulariesPage() {
             />
           </Form.Item>
 
-          <Form.Item label="图片URL" name="imageUrl">
-            <Input
-              placeholder="词汇图片链接（可选）"
-              addonAfter={
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<UploadOutlined />}
-                  onClick={() => message.info('请先上传图片文件到Vercel Blob，然后粘贴URL')}
-                >
-                  上传
-                </Button>
-              }
-            />
+          <Form.Item label="实物图片" name="imageUrl">
+            <Input.Group compact>
+              <Upload
+                listType="picture-card"
+                fileList={imageFileList}
+                beforeUpload={handleImageUpload}
+                onRemove={() => {
+                  setImageFileList([])
+                  form.setFieldValue('imageUrl', '')
+                }}
+                maxCount={1}
+                accept="image/*"
+              >
+                {imageFileList.length < 1 && (
+                  <div>
+                    {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                    <div style={{ marginTop: 8 }}>上传图片</div>
+                  </div>
+                )}
+              </Upload>
+            </Input.Group>
           </Form.Item>
 
           <Form.Item label="图片描述" name="imageDescription">
