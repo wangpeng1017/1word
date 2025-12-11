@@ -105,14 +105,14 @@ export default function QuestionsPage() {
         page: pagination.current.toString(),
         limit: pagination.pageSize.toString(),
       })
-      
+
       if (filters.vocabularyId) {
         params.append('vocabularyId', filters.vocabularyId)
       }
       if (filters.type) {
         params.append('type', filters.type)
       }
-      
+
       const response = await fetch(
         `/api/questions?${params.toString()}`,
         {
@@ -187,7 +187,7 @@ export default function QuestionsPage() {
     try {
       const values = await form.validateFields()
       const token = localStorage.getItem('token')
-      
+
       // 解析选项
       const optionLines = values.options?.split('\n').filter((line: string) => line.trim()) || []
       const options = optionLines.map((line: string, index: number) => ({
@@ -267,11 +267,38 @@ export default function QuestionsPage() {
       {
         word: 'apple',
         type: 'ENGLISH_TO_CHINESE',
-        content: 'apple',
+        content: 'apple /ˈæpl/',
         correctAnswer: '苹果',
         options: 'A.苹果|B.香蕉|C.橙子|D.梨',
         sentence: '',
         audioUrl: '',
+      },
+      {
+        word: 'banana',
+        type: 'CHINESE_TO_ENGLISH',
+        content: '香蕉',
+        correctAnswer: 'banana',
+        options: 'A.apple|B.banana|C.orange|D.pear',
+        sentence: '',
+        audioUrl: '',
+      },
+      {
+        word: 'orange',
+        type: 'FILL_IN_BLANK',
+        content: 'orange',
+        correctAnswer: 'orange',
+        options: 'A.apple|B.banana|C.orange|D.pear',
+        sentence: 'I like to drink ___ juice in the morning.',
+        audioUrl: '',
+      },
+      {
+        word: 'pear',
+        type: 'LISTENING',
+        content: 'pear',
+        correctAnswer: 'pear',
+        options: 'A.apple|B.banana|C.orange|D.pear',
+        sentence: '',
+        audioUrl: 'https://example.com/audio/pear.mp3',
       },
     ]
 
@@ -376,7 +403,7 @@ export default function QuestionsPage() {
             )}
           </Space>
         </div>
-        
+
         {/* 筛选区域 */}
         <Space size="middle" style={{ marginBottom: 16 }}>
           <span>筛选：</span>
