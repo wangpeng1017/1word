@@ -273,19 +273,15 @@ export default function StudyPlansPage() {
     }
   }
 
-  // 检测是否选择了单个学生
+  // 检测是否选择了单个学生 - 从表格数据自动推断，作为默认值
   useEffect(() => {
-    if (data.length > 0) {
+    if (data.length > 0 && !selectedStudentId) {
       const studentIds = new Set(data.map(d => d.studentId))
       if (studentIds.size === 1) {
         setSelectedStudentId(Array.from(studentIds)[0])
-      } else {
-        setSelectedStudentId(undefined)
       }
-    } else {
-      setSelectedStudentId(undefined)
     }
-  }, [data])
+  }, [data, selectedStudentId])
 
   // 明细模式下的列（调整为 班级 在前，学生 在后）
   const columns: ColumnsType<StudyPlan> = [
@@ -477,11 +473,25 @@ export default function StudyPlansPage() {
             icon={<PlusOutlined />}
             disabled={!selectedStudentId}
             onClick={() => setAddWordsOpen(true)}
-            title={!selectedStudentId ? '请先通过学生姓名筛选单个学生' : undefined}
-            style={{ color: selectedStudentId ? '#fff' : undefined }}
+            style={{ color: '#fff' }}
           >
-            添加词汇{selectedStudentId ? '' : '（请先筛选单个学生）'}
+            添加词汇
           </Button>
+          <Select
+            placeholder="选择学生"
+            allowClear
+            showSearch
+            style={{ width: 180 }}
+            value={selectedStudentId}
+            onChange={(val) => setSelectedStudentId(val || undefined)}
+            optionFilterProp="children"
+          >
+            {students.map((s: any) => (
+              <Select.Option key={s.id} value={s.id}>
+                {s.user?.name || s.name}
+              </Select.Option>
+            ))}
+          </Select>
           <Input
             placeholder="学生姓名"
             prefix={<SearchOutlined />}
@@ -616,6 +626,6 @@ export default function StudyPlansPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </div >
   )
 }
