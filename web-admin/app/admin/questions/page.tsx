@@ -51,10 +51,15 @@ function QuestionsContent() {
   const urlVocabularyId = searchParams.get('vocabularyId')
   const urlWord = searchParams.get('word')
 
-  const [filters, setFilters] = useState<{
+  // 用户手动选择的筛选条件（优先级低于 URL 参数）
+  const [manualFilters, setManualFilters] = useState<{
     vocabularyId?: string
     type?: string
   }>({})
+
+  // 实际使用的 vocabularyId：URL 参数优先，否则用用户手动选择
+  const activeVocabularyId = urlVocabularyId || manualFilters.vocabularyId
+  const activeType = manualFilters.type
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -62,22 +67,15 @@ function QuestionsContent() {
     total: 0,
   })
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [shownMessage, setShownMessage] = useState(false)
 
-  // 当 URL 参数变化时更新筛选条件
+  // 显示 URL 筛选提示（只显示一次）
   useEffect(() => {
-    if (urlVocabularyId) {
-      setFilters(prev => ({ ...prev, vocabularyId: urlVocabularyId }))
-      if (urlWord) {
-        message.info(`已筛选词汇: ${urlWord}`)
-      }
-    } else {
-      // 清空 URL 参数时移除筛选
-      setFilters(prev => {
-        const { vocabularyId, ...rest } = prev
-        return rest
-      })
+    if (urlWord && urlVocabularyId && !shownMessage) {
+      message.info(`已筛选词汇: ${urlWord}`)
+      setShownMessage(true)
     }
-  }, [urlVocabularyId, urlWord])
+  }, [urlVocabularyId, urlWord, shownMessage])
 
   // 加载词汇列表
   useEffect(() => {
@@ -87,7 +85,7 @@ function QuestionsContent() {
   // 加载题目列表 - 依赖分页和筛选条件
   useEffect(() => {
     fetchQuestions()
-  }, [pagination.current, pagination.pageSize, filters])
+  }, [pagination.current, pagination.pageSize, activeVocabularyId, activeType])
 
   const fetchVocabularies = async () => {
     try {
@@ -115,11 +113,11 @@ function QuestionsContent() {
         limit: pagination.pageSize.toString(),
       })
 
-      if (filters.vocabularyId) {
-        params.append('vocabularyId', filters.vocabularyId)
+      if (activeVocabularyId) {
+        params.append('vocabularyId', activeVocabularyId)
       }
-      if (filters.type) {
-        params.append('type', filters.type)
+      if (activeType) {
+        params.append('type', activeType)
       }
 
       const response = await fetch(
@@ -149,8 +147,8 @@ function QuestionsContent() {
     setEditingQuestion(null)
     form.resetFields()
     // 如果有词汇筛选，自动填入该词汇
-    if (filters.vocabularyId) {
-      const vocab = vocabularies.find(v => v.id === filters.vocabularyId)
+    if (activeVocabularyId) {
+      const vocab = vocabularies.find(v => v.id === activeVocabularyId)
       if (vocab) {
         form.setFieldValue('vocabularyId', vocab.word)
       }
@@ -438,10 +436,14 @@ function QuestionsContent() {
                 value: v.id,
               })),
             ]}
-            value={filters.vocabularyId || ''}
+            value={activeVocabularyId || ''}
             onChange={(value) => {
-              setFilters({ ...filters, vocabularyId: value || undefined })
+              setManualFilters({ ...manualFilters, vocabularyId: value || undefined })
               setPagination({ ...pagination, current: 1 })
+              // 清除 URL 参数（如果有）
+              if (urlVocabularyId) {
+                router.push('/admin/questions')
+              }
             }}
           />
           <Select
@@ -455,17 +457,20 @@ function QuestionsContent() {
                 value: key,
               })),
             ]}
-            value={filters.type || ''}
+            value={activeType || ''}
             onChange={(value) => {
-              setFilters({ ...filters, type: value || undefined })
+              setManualFilters({ ...manualFilters, type: value || undefined })
               setPagination({ ...pagination, current: 1 })
             }}
           />
-          {(filters.vocabularyId || filters.type) && (
+          {(activeVocabularyId || activeType) && (
             <Button
               onClick={() => {
-                setFilters({})
+                setManualFilters({})
                 setPagination({ ...pagination, current: 1 })
+                if (urlVocabularyId) {
+                  router.push('/admin/questions')
+                }
               }}
             >
               清空筛选
