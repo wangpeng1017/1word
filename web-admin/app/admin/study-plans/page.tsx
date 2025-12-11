@@ -304,23 +304,7 @@ export default function StudyPlansPage() {
         </Space>
       ),
     },
-    {
-      title: '难度',
-      dataIndex: ['vocabulary', 'difficulty'],
-      render: (difficulty) => {
-        const colorMap: any = {
-          EASY: 'green',
-          MEDIUM: 'orange',
-          HARD: 'red',
-        }
-        const textMap: any = {
-          EASY: '简单',
-          MEDIUM: '中等',
-          HARD: '困难',
-        }
-        return <Tag color={colorMap[difficulty]}>{textMap[difficulty]}</Tag>
-      },
-    },
+
     {
       title: '高频词',
       dataIndex: ['vocabulary', 'isHighFrequency'],
