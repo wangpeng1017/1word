@@ -1,4 +1,5 @@
 <!--pages/study-history/study-history.wxml-->
+<wxs src="../../utils/format.wxs" module="fmt" />
 <view class="container">
   <!-- 头部统计卡片 -->
   <view class="stats-card">
@@ -26,7 +27,7 @@
         <text class="stat-label">平均正确率</text>
       </view>
       <view class="stat-item">
-        <text class="stat-value">{{(stats.totalTime / 60).toFixed(0)}}</text>
+        <text class="stat-value">{{fmt.toFixed(stats.totalTime / 60, 0)}}</text>
         <text class="stat-label">总用时(分)</text>
       </view>
     </view>
@@ -129,7 +130,7 @@
           >
             <view class="record-time">
               <text class="time-icon">🕐</text>
-              <text class="time-text">{{record.createdAt ? new Date(record.createdAt).toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'}) : '--:--'}}</text>
+              <text class="time-text">{{fmt.formatTime(record.createdAt)}}</text>
             </view>
 
             <view class="record-stats">
@@ -147,12 +148,12 @@
               </view>
               <view class="record-stat">
                 <text class="stat-label">正确率</text>
-                <text class="stat-value accent">{{record.totalWords > 0 ? Math.round((record.correctCount / record.totalWords) * 100) : 0}}%</text>
+                <text class="stat-value accent">{{record.totalWords > 0 ? fmt.round((record.correctCount / record.totalWords) * 100) : 0}}%</text>
               </view>
             </view>
 
             <view class="record-footer">
-              <text class="record-time-spent">⏱ 用时 {{Math.floor((record.totalTime || 0) / 60)}}分{{(record.totalTime || 0) % 60}}秒</text>
+              <text class="record-time-spent">⏱ 用时 {{fmt.floor((record.totalTime || 0) / 60)}}分{{(record.totalTime || 0) % 60}}秒</text>
               <text class="record-arrow">›</text>
             </view>
           </view>
