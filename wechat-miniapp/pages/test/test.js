@@ -1,6 +1,6 @@
 // pages/test/test.js
+const { get, post } = require('../../utils/request')
 const app = getApp()
-const API_BASE = app.globalData.apiBase
 
 Page({
   data: {
@@ -37,8 +37,7 @@ Page({
     try {
       this.setData({ state: 'loading' })
 
-      const token = wx.getStorageSync('token')
-      if (!token) {
+      if (!app.globalData.token) {
         wx.showToast({ title: '请先登录', icon: 'none' })
         setTimeout(() => {
           wx.switchTab({ url: '/pages/profile/profile' })
@@ -46,26 +45,18 @@ Page({
         return
       }
 
-      const res = await wx.request({
-        url: `${API_BASE}/proficiency-tests?isActive=true`,
-        header: { Authorization: `Bearer ${token}` },
-      })
+      const tests = await get('/proficiency-tests?isActive=true')
 
-      if (res.data.success) {
-        const tests = res.data.data || []
-        this.setData({
-          tests,
-          state: tests.length > 0 ? 'list' : 'error',
-          errorMsg: tests.length > 0 ? '' : '暂无可用测试',
-        })
-      } else {
-        throw new Error(res.data.message || '加载失败')
-      }
+      this.setData({
+        tests: tests || [],
+        state: (tests && tests.length > 0) ? 'list' : 'error',
+        errorMsg: (tests && tests.length > 0) ? '' : '暂无可用测试',
+      })
     } catch (error) {
       console.error('加载测试列表失败:', error)
       this.setData({
         state: 'error',
-        errorMsg: error.message || '加载失败',
+        errorMsg: error || '加载失败',
       })
     }
   },
@@ -100,50 +91,37 @@ Page({
     try {
       wx.showLoading({ title: '加载中...' })
 
-      const token = wx.getStorageSync('token')
-      const studentId = wx.getStorageSync('studentId')
+      const studentId = app.globalData.userInfo?.studentId
 
-      const res = await wx.request({
-        url: `${API_BASE}/proficiency-tests/${this.data.selectedTest.id}/start`,
-        method: 'POST',
-        header: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        data: { studentId },
-      })
+      const result = await post(`/proficiency-tests/${this.data.selectedTest.id}/start`, { studentId })
 
       wx.hideLoading()
 
-      if (res.data.success) {
-        const { questions, duration } = res.data.data
+      const { questions, duration } = result
 
-        if (!questions || questions.length === 0) {
-          wx.showToast({ title: '测试题目为空', icon: 'none' })
-          return
-        }
+      if (!questions || questions.length === 0) {
+        wx.showToast({ title: '测试题目为空', icon: 'none' })
+        return
+      }
 
-        this.setData({
-          questions,
-          currentIndex: 0,
-          answers: [],
-          startTime: Date.now(),
-          state: 'testing',
-        })
+      this.setData({
+        questions,
+        currentIndex: 0,
+        answers: [],
+        startTime: Date.now(),
+        state: 'testing',
+      })
 
-        this.loadQuestion(0)
+      this.loadQuestion(0)
 
-        // 如果有时长限制，启动倒计时
-        if (duration) {
-          this.startTimer(duration * 60)
-        }
-      } else {
-        throw new Error(res.data.message || '开始测试失败')
+      // 如果有时长限制，启动倒计时
+      if (duration) {
+        this.startTimer(duration * 60)
       }
     } catch (error) {
       wx.hideLoading()
       console.error('开始测试失败:', error)
-      wx.showToast({ title: error.message || '开始测试失败', icon: 'none' })
+      wx.showToast({ title: error || '开始测试失败', icon: 'none' })
     }
   },
 
@@ -231,17 +209,9 @@ Page({
   // 检查答案（简化版，实际应该在提交时由后端统一判断）
   async checkAnswer(questionId, answer) {
     try {
-      const token = wx.getStorageSync('token')
-      const res = await wx.request({
-        url: `${API_BASE}/questions/${questionId}`,
-        header: { Authorization: `Bearer ${token}` },
-      })
-
-      if (res.data.success) {
-        const correctAnswer = res.data.data.correctAnswer
-        return answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim()
-      }
-      return false
+      const question = await get(`/questions/${questionId}`)
+      const correctAnswer = question.correctAnswer
+      return answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim()
     } catch (error) {
       console.error('检查答案失败:', error)
       return false
@@ -255,46 +225,32 @@ Page({
 
       this.clearTimer()
 
-      const token = wx.getStorageSync('token')
-      const studentId = wx.getStorageSync('studentId')
+      const studentId = app.globalData.userInfo?.studentId
       const { selectedTest, answers, startTime } = this.data
 
       const completedAt = Date.now()
-      const totalTime = Math.floor((completedAt - startTime) / 1000)
 
-      const res = await wx.request({
-        url: `${API_BASE}/test-records`,
-        method: 'POST',
-        header: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        data: {
-          testId: selectedTest.id,
-          studentId,
-          answers,
-          startedAt: new Date(startTime).toISOString(),
-          completedAt: new Date(completedAt).toISOString(),
-        },
+      const result = await post('/test-records', {
+        testId: selectedTest.id,
+        studentId,
+        answers,
+        startedAt: new Date(startTime).toISOString(),
+        completedAt: new Date(completedAt).toISOString(),
       })
 
       wx.hideLoading()
 
-      if (res.data.success) {
-        const { stats, isPassed } = res.data.data
+      const { stats, isPassed } = result
 
-        this.setData({
-          result: stats,
-          isPassed,
-          state: 'result',
-        })
-      } else {
-        throw new Error(res.data.message || '提交失败')
-      }
+      this.setData({
+        result: stats,
+        isPassed,
+        state: 'result',
+      })
     } catch (error) {
       wx.hideLoading()
       console.error('提交测试失败:', error)
-      wx.showToast({ title: error.message || '提交失败', icon: 'none' })
+      wx.showToast({ title: error || '提交失败', icon: 'none' })
     }
   },
 

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     if (!token || !verifyToken(token)) {
       return unauthorizedResponse()
     }
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {}
-    
+
     if (search) {
       where.OR = [
         { word: { contains: search, mode: 'insensitive' } },
@@ -45,19 +45,19 @@ export async function GET(request: NextRequest) {
 
     // 索引使用: idx_vocabularies_frequency_difficulty, idx_vocabularies_created_at_desc
     const includeOptions: any = {}
-    
+
     if (includeAudios) {
       includeOptions.word_audios = {
         orderBy: { createdAt: 'asc' }
       }
     }
-    
+
     if (includeMeanings) {
       includeOptions.word_meanings = {
         orderBy: { orderIndex: 'asc' }
       }
     }
-    
+
     const [vocabularies, total] = await Promise.all([
       prisma.vocabularies.findMany({
         where,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         createdAt: vocab.created_at,
         updatedAt: vocab.updated_at,
       }
-      
+
       // 映射音频数据
       if (vocab.word_audios) {
         result.audios = vocab.word_audios.map((audio: any) => ({
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
           createdAt: audio.createdAt || audio.created_at,
         }))
       }
-      
+
       // 映射多词性多释义数据
       if (vocab.word_meanings) {
         result.meanings = vocab.word_meanings.map((meaning: any) => ({
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
           examples: meaning.examples || [],
         }))
       }
-      
+
       return result
     })
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以创建词汇')
@@ -165,10 +165,10 @@ export async function POST(request: NextRequest) {
     if (!word) {
       return errorResponse('请输入单词')
     }
-    
+
     const hasMeanings = meanings && Array.isArray(meanings) && meanings.length > 0
     const hasOldFormat = partOfSpeech && partOfSpeech.length > 0 && primaryMeaning
-    
+
     if (!hasMeanings && !hasOldFormat) {
       return errorResponse('请添加至少一个释义，或填写词性和核心释义')
     }
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     const vocabId = `v_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
+
     // 使用事务创建词汇和释义
     const vocabulary = await prisma.$transaction(async (tx) => {
       // 创建词汇
@@ -203,64 +203,56 @@ export async function POST(request: NextRequest) {
           updated_at: new Date(),
         },
       })
-      
+
       // 创建多释义
       if (hasMeanings) {
         await tx.word_meanings.createMany({
           data: meanings.map((m: any, index: number) => ({
             id: `wm_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-            vocabulary_id: vocabId,
-            part_of_speech: m.partOfSpeech,
+            vocabularyId: vocabId,
+            partOfSpeech: m.partOfSpeech,
             meaning: m.meaning,
-            order_index: index,
+            orderIndex: index,
             examples: m.examples || [],
-            created_at: new Date(),
-            updated_at: new Date(),
           })),
         })
       }
-      
+
       // 创建音频
       if (audioUrlUS) {
         await tx.word_audios.create({
           data: {
             id: `wa_${Date.now()}_us_${Math.random().toString(36).substr(2, 9)}`,
-            vocabulary_id: vocabId,
-            audio_url: audioUrlUS,
+            vocabularyId: vocabId,
+            audioUrl: audioUrlUS,
             accent: 'US',
-            created_at: new Date(),
-            updated_at: new Date(),
           },
         })
       }
-      
+
       if (audioUrlUK) {
         await tx.word_audios.create({
           data: {
             id: `wa_${Date.now()}_uk_${Math.random().toString(36).substr(2, 9)}`,
-            vocabulary_id: vocabId,
-            audio_url: audioUrlUK,
+            vocabularyId: vocabId,
+            audioUrl: audioUrlUK,
             accent: 'UK',
-            created_at: new Date(),
-            updated_at: new Date(),
           },
         })
       }
-      
+
       // 创建图片
       if (imageUrl) {
         await tx.word_images.create({
           data: {
             id: `wi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            vocabulary_id: vocabId,
-            image_url: imageUrl,
+            vocabularyId: vocabId,
+            imageUrl: imageUrl,
             description: imageDescription,
-            created_at: new Date(),
-            updated_at: new Date(),
           },
         })
       }
-      
+
       return vocab
     })
 
