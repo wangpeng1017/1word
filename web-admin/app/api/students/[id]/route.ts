@@ -23,7 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  
+
   try {
     const token = getTokenFromHeader(request.headers.get('authorization'))
     if (!token) {
@@ -79,14 +79,14 @@ export async function PUT(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以更新学生信息')
     }
 
     const body = await request.json()
-    const { name, studentNo, classId, grade } = body
+    const { name, studentNo, classId, grade, phone } = body
 
     if (!name || !studentNo) {
       return errorResponse('姓名和学号不能为空')
@@ -115,8 +115,9 @@ export async function PUT(
     // 更新用户信息
     await prisma.user.update({
       where: { id: student.user_id },
-      data: { 
+      data: {
         name,
+        phone: phone || null,
         updated_at: new Date(),
       },
     })
@@ -166,7 +167,7 @@ export async function DELETE(
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以删除学生')
@@ -190,7 +191,7 @@ export async function DELETE(
       // 软删除：停用账号而不是物理删除
       await prisma.user.update({
         where: { id: student.user_id },
-        data: { 
+        data: {
           is_active: false,
           updated_at: new Date(),
         },
