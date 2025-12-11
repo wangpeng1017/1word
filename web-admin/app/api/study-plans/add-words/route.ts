@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { studentId, vocabularyIds } = body
+    const { studentId, vocabularyIds, startDate, endDate } = body
 
     if (!studentId) {
       return errorResponse('缺少学生ID')
@@ -27,6 +27,16 @@ export async function POST(request: NextRequest) {
 
     if (!vocabularyIds || vocabularyIds.length === 0) {
       return errorResponse('请至少选择一个词汇')
+    }
+
+    // 解析开始日期（默认今天）
+    const planStartDate = startDate ? new Date(startDate) : getTodayDate()
+    planStartDate.setHours(0, 0, 0, 0)
+
+    // 解析结束日期（可选）
+    const planEndDate = endDate ? new Date(endDate) : null
+    if (planEndDate) {
+      planEndDate.setHours(23, 59, 59, 999)
     }
 
     // 验证学生是否存在
@@ -87,13 +97,8 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // 计算第一次复习时间
-      const nextReviewAt = calculateNextReviewDate(
-        today,
-        0,
-        1,
-        vocab.difficulty as 'EASY' | 'MEDIUM' | 'HARD'
-      )
+      // 新添加的词汇：nextReviewAt = 开始日期（当天可学）
+      const nextReviewAt = planStartDate
 
       // 生成唯一ID
       const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`

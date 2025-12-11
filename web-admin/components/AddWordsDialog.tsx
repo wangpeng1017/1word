@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Modal, Select, message, Spin } from 'antd'
+import { Modal, Select, message, Spin, DatePicker, Space } from 'antd'
+import dayjs, { Dayjs } from 'dayjs'
 
 interface Vocabulary {
   id: string
@@ -21,7 +22,7 @@ interface AddWordsDialogProps {
   open: boolean
   onClose: () => void
   students: Student[]
-  onCompleted: (studentId: string, vocabularyIds: string[]) => void
+  onCompleted: (studentId: string, vocabularyIds: string[], startDate: string, endDate?: string) => void
 }
 
 export default function AddWordsDialog({
@@ -33,6 +34,8 @@ export default function AddWordsDialog({
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([])
   const [selectedVocabularyIds, setSelectedVocabularyIds] = useState<string[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>()
+  const [startDate, setStartDate] = useState<Dayjs>(dayjs())
+  const [endDate, setEndDate] = useState<Dayjs | null>(null)
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [existingVocabularyIds, setExistingVocabularyIds] = useState<Set<string>>(new Set())
@@ -85,8 +88,8 @@ export default function AddWordsDialog({
       })
       const result = await response.json()
       if (result.success) {
-        const existingIds = new Set(
-          result.data.studyPlans.map((plan: any) => plan.vocabularyId)
+        const existingIds = new Set<string>(
+          result.data.studyPlans.map((plan: any) => plan.vocabularyId as string)
         )
         setExistingVocabularyIds(existingIds)
       }
@@ -107,9 +110,16 @@ export default function AddWordsDialog({
 
     setSubmitting(true)
     try {
-      await onCompleted(selectedStudentId, selectedVocabularyIds)
+      await onCompleted(
+        selectedStudentId,
+        selectedVocabularyIds,
+        startDate.format('YYYY-MM-DD'),
+        endDate ? endDate.format('YYYY-MM-DD') : undefined
+      )
       setSelectedVocabularyIds([])
       setSelectedStudentId(undefined)
+      setStartDate(dayjs())
+      setEndDate(null)
     } finally {
       setSubmitting(false)
     }
@@ -118,6 +128,8 @@ export default function AddWordsDialog({
   const handleCancel = () => {
     setSelectedVocabularyIds([])
     setSelectedStudentId(undefined)
+    setStartDate(dayjs())
+    setEndDate(null)
     onClose()
   }
 
@@ -176,6 +188,26 @@ export default function AddWordsDialog({
           <p style={{ color: '#999', fontSize: 12, marginTop: 8 }}>
             可用词汇数：{availableVocabularies.length} / 总词汇数：{vocabularies.length}
           </p>
+
+          <Space size={16} style={{ marginTop: 16 }}>
+            <div>
+              <p style={{ color: '#666', marginBottom: 8 }}>计划开始日期:</p>
+              <DatePicker
+                value={startDate}
+                onChange={(v) => v && setStartDate(v)}
+                allowClear={false}
+              />
+            </div>
+            <div>
+              <p style={{ color: '#666', marginBottom: 8 }}>计划结束日期 (可选):</p>
+              <DatePicker
+                value={endDate}
+                onChange={setEndDate}
+                allowClear
+                placeholder="可选"
+              />
+            </div>
+          </Space>
         </div>
       </Spin>
     </Modal>

@@ -240,7 +240,7 @@ export default function StudyPlansPage() {
 
 
   // 添加词汇
-  const handleAddWords = async (studentId: string, vocabularyIds: string[]) => {
+  const handleAddWords = async (studentId: string, vocabularyIds: string[], startDate: string, endDate?: string) => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/study-plans/add-words', {
@@ -252,6 +252,8 @@ export default function StudyPlansPage() {
         body: JSON.stringify({
           studentId,
           vocabularyIds,
+          startDate,
+          endDate,
         }),
       })
 
@@ -283,7 +285,7 @@ export default function StudyPlansPage() {
     {
       title: '班级',
       key: 'class',
-      render: (_, record) => (record.student as any).class?.name || record.student?.classes?.name || '-',
+      render: (_, record) => (record.student as any).class?.name || '-',
     },
     {
       title: '学生',
@@ -389,8 +391,11 @@ export default function StudyPlansPage() {
             icon={<DeleteOutlined />}
             onClick={() => {
               Modal.confirm({
-                title: '确认删除',
-                content: '确定要删除该学习计划吗？',
+                title: '确认删除学习计划',
+                content: '计划删除后，该词汇的未来学习任务将全部删除，确认删除？',
+                okText: '确认删除',
+                okType: 'danger',
+                cancelText: '取消',
                 onOk: () => handleDelete([record.id]),
               })
             }}

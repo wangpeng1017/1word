@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         wrongCount,
         accuracy,
         totalTime,
-        startedAt: now,
+        startedAt: new Date(now.getTime() - totalTime * 1000), // 根据用时推算开始时间
         completedAt: now,
         isCompleted: true,
         updatedAt: now,

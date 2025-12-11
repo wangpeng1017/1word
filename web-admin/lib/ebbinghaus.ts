@@ -20,18 +20,16 @@ export const DEFAULT_CONFIG = {
  * @param lastReviewDate 上次复习时间
  * @param reviewCount 已复习次数（从0开始）
  * @param accuracy 最近正确率 (0-1)，用于动态调整
- * @param difficulty 单词难度 EASY/MEDIUM/HARD
  * @returns 下次复习时间
  */
 export function calculateNextReviewDate(
   lastReviewDate: Date,
   reviewCount: number,
-  accuracy: number = 1,
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD' = 'MEDIUM'
+  accuracy: number = 1
 ): Date {
   const intervalIndex = Math.min(reviewCount, REVIEW_INTERVALS.length - 1)
   let intervalDays = REVIEW_INTERVALS[intervalIndex]
-  
+
   // 根据正确率动态调整间隔
   if (accuracy < 0.6) {
     // 正确率低，缩短间隔
@@ -40,19 +38,13 @@ export function calculateNextReviewDate(
     // 正确率高，可延长间隔
     intervalDays = Math.ceil(intervalDays * 1.2)
   }
-  
-  // 根据难度调整间隔
-  const difficultyMultiplier = {
-    EASY: 1.2,
-    MEDIUM: 1,
-    HARD: 0.8,
-  }
-  intervalDays = Math.ceil(intervalDays * difficultyMultiplier[difficulty])
-  
+
+  // 难度系数已移除，保持纯艾宾浩斯间隔
+
   const nextDate = new Date(lastReviewDate)
   nextDate.setDate(nextDate.getDate() + intervalDays)
   nextDate.setHours(0, 0, 0, 0) // 设置为当天0点
-  
+
   return nextDate
 }
 
@@ -109,18 +101,18 @@ export function calculatePriority(
   reviewCount: number
 ): number {
   let priority = 0
-  
+
   // 难点词汇加权
   if (isDifficult) {
     priority += 100
   }
-  
+
   // 超期未复习加权
   priority += daysSinceLastReview * 10
-  
+
   // 复习次数少的优先
   priority += Math.max(0, 5 - reviewCount) * 5
-  
+
   return priority
 }
 
@@ -133,10 +125,10 @@ export function calculatePriority(
 export function shouldReviewToday(nextReviewDate: Date, today: Date = new Date()): boolean {
   const todayStart = new Date(today)
   todayStart.setHours(0, 0, 0, 0)
-  
+
   const reviewDateStart = new Date(nextReviewDate)
   reviewDateStart.setHours(0, 0, 0, 0)
-  
+
   return reviewDateStart <= todayStart
 }
 
