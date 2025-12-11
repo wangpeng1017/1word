@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
                 : 0,
             correctCount: record.correctCount,
             wrongCount: record.wrongCount,
-            accuracy: Math.round(record.accuracy * 100) / 100,
+            accuracy: Math.round(record.accuracy * 100), // 转为百分比整数 (0-100)
             totalTime: record.totalTime, // 秒
             startedAt: record.startedAt,
             completedAt: record.completedAt,
