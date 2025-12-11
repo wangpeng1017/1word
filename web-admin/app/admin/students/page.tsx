@@ -67,6 +67,7 @@ export default function StudentsPage() {
     form.setFieldsValue({
       name: record.user?.name,
       studentNo: record.studentNo,
+      phone: record.user?.phone,
       grade: record.grade,
       classId: record.class?.id,
     })
@@ -115,12 +116,12 @@ export default function StudentsPage() {
     try {
       const values = await form.validateFields()
       const token = localStorage.getItem('token')
-      
+
       const url = editingRecord
         ? `/api/students/${editingRecord.id}`
         : '/api/students'
       const method = editingRecord ? 'PUT' : 'POST'
-      
+
       // 如果是新增，添加默认密码
       if (!editingRecord) {
         values.password = values.password || '123456'
@@ -194,6 +195,12 @@ export default function StudentsPage() {
       ),
     },
     { title: '学号', dataIndex: 'studentNo', key: 'studentNo' },
+    {
+      title: '电话号码',
+      dataIndex: ['user', 'phone'],
+      key: 'phone',
+      render: (phone: string) => phone || '-',
+    },
     { title: '年级', dataIndex: 'grade', key: 'grade' },
     {
       title: '班级',
@@ -212,9 +219,9 @@ export default function StudentsPage() {
       key: 'action',
       render: (_: any, record: any) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EditOutlined />} 
+          <Button
+            type="link"
+            icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
             编辑
@@ -240,10 +247,10 @@ export default function StudentsPage() {
           </Button>
         )}
       </Space>
-      <Table 
-        columns={columns} 
-        dataSource={data} 
-        rowKey="id" 
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
         loading={loading}
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
       />
@@ -263,6 +270,18 @@ export default function StudentsPage() {
           </Form.Item>
           <Form.Item label="学号" name="studentNo" rules={[{ required: true }]}>
             <Input />
+          </Form.Item>
+          <Form.Item
+            label="电话号码"
+            name="phone"
+            rules={[
+              {
+                pattern: /^1\d{10}$/,
+                message: '请输入11位手机号码'
+              }
+            ]}
+          >
+            <Input placeholder="11位手机号码" maxLength={11} />
           </Form.Item>
           <Form.Item label="年级" name="grade">
             <Input placeholder="例如: 高一" />
