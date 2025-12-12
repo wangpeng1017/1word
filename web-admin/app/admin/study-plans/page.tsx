@@ -355,7 +355,8 @@ export default function StudyPlansPage() {
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setEditingRecord(record)
               form.setFieldsValue({
                 status: record.status,
@@ -373,7 +374,8 @@ export default function StudyPlansPage() {
             size="small"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               Modal.confirm({
                 title: '确认删除学习计划',
                 content: '计划删除后，该词汇的未来学习任务将全部删除，确认删除？',
