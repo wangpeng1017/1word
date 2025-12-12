@@ -10,9 +10,9 @@
   <view class="login-form card mt-5">
     <view class="form-item">
       <text class="form-label">学号</text>
-      <input 
-        class="form-input" 
-        placeholder="请输入学号" 
+      <input
+        class="form-input"
+        placeholder="请输入学号"
         value="{{studentNo}}"
         bindinput="onStudentNoInput"
       />
@@ -20,17 +20,17 @@
 
     <view class="form-item mt-3">
       <text class="form-label">密码</text>
-      <input 
-        class="form-input" 
-        placeholder="请输入密码" 
+      <input
+        class="form-input"
+        placeholder="请输入密码"
         password="{{true}}"
         value="{{password}}"
         bindinput="onPasswordInput"
       />
     </view>
 
-    <button 
-      class="btn-primary mt-4" 
+    <button
+      class="btn-primary mt-4"
       bindtap="handleLogin"
       loading="{{loading}}"
     >
@@ -40,5 +40,35 @@
 
   <view class="login-footer mt-4 text-center">
     <text class="text-muted">首次登录请使用默认密码 123456</text>
+
+    <!-- 客服按钮 -->
+    <view wx:if="{{hasCustomerService}}" class="customer-service-btn" bindtap="showCustomerService">
+      <text class="cs-icon">💬</text>
+      <text class="cs-text">联系客服</text>
+    </view>
+  </view>
+</view>
+
+<!-- 客服二维码弹窗 -->
+<view wx:if="{{showQrcode}}" class="qrcode-modal" catchtouchmove="true">
+  <view class="qrcode-mask" bindtap="hideCustomerService"></view>
+  <view class="qrcode-content">
+    <view class="qrcode-header">
+      <text class="qrcode-title">联系客服</text>
+      <text class="qrcode-close" bindtap="hideCustomerService">✕</text>
+    </view>
+    <view class="qrcode-body">
+      <image
+        class="qrcode-image"
+        src="{{qrcodeUrl}}"
+        mode="aspectFit"
+        bindtap="previewQrcode"
+      />
+      <text class="qrcode-tip">长按识别或保存二维码添加客服微信</text>
+    </view>
+    <view class="qrcode-actions">
+      <button class="qrcode-btn" bindtap="previewQrcode">查看大图</button>
+      <button class="qrcode-btn qrcode-btn-primary" bindtap="saveQrcode">保存到相册</button>
+    </view>
   </view>
 </view>
