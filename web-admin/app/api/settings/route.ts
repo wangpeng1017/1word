@@ -34,13 +34,6 @@ export async function GET(request: NextRequest) {
 
     // 如果没有设置，返回默认值
     if (Object.keys(settingsMap).length === 0) {
-      settingsMap.reviewRules = {
-        masteryThreshold: 3,
-        difficultThreshold: 3,
-        dailyNewWords: 20,
-        dailyReviewWords: 30,
-        interruptHours: 24,
-      }
       settingsMap.systemInfo = {
         systemName: '智能词汇复习助手',
         version: 'v1.0.0',

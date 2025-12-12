@@ -5,14 +5,11 @@
 
 export const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
 
-// 默认配置
+// 默认配置（实际使用的参数）
 export const DEFAULT_CONFIG = {
-  MASTERY_THRESHOLD: 3,           // 掌握阈值：连续正确3次
+  MASTERY_THRESHOLD: 3,           // 掌握阈值：最近3次全对（已由 question_answers 实现）
   DIFFICULT_THRESHOLD: 3,         // 难点阈值：累计错误3次
-  DAILY_NEW_WORDS: 20,            // 每日新词数量
-  DAILY_REVIEW_WORDS: 30,         // 每日复习词数量
-  RECENT_ACCURACY_COUNT: 3,       // 最近N次用于计算正确率
-  INTERRUPT_HOURS: 24,            // 中断判定时长（小时）
+  DAILY_REVIEW_WORDS: 30,         // 每日复习词数量上限
 }
 
 /**
