@@ -16,6 +16,7 @@ import {
   Row,
   Col,
   Input,
+  Popconfirm,
 } from 'antd'
 import {
   PlusOutlined,
@@ -369,25 +370,23 @@ export default function StudyPlansPage() {
           >
             编辑
           </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={(e) => {
-              e.stopPropagation()
-              Modal.confirm({
-                title: '确认删除学习计划',
-                content: '计划删除后，该词汇的未来学习任务将全部删除，确认删除？',
-                okText: '确认删除',
-                okType: 'danger',
-                cancelText: '取消',
-                onOk: () => handleDelete([record.id]),
-              })
-            }}
+          <Popconfirm
+            title="确认删除学习计划"
+            description="计划删除后，该词汇的未来学习任务将全部删除"
+            okText="确认删除"
+            okType="danger"
+            cancelText="取消"
+            onConfirm={() => handleDelete([record.id])}
           >
-            删除
-          </Button>
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+            >
+              删除
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
