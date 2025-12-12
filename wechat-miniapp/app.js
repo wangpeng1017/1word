@@ -5,7 +5,7 @@ App({
   globalData: {
     userInfo: null,
     token: null,
-    apiUrl: envConfig.apiUrl, // 从环境配置读取API地址
+    apiUrl: envConfig.apiUrl,
     debug: envConfig.debug,
     envName: envConfig.name,
   },
@@ -17,9 +17,6 @@ App({
       this.globalData.token = token
       this.checkLoginStatus()
     }
-
-    // 检查是否有未完成的复习
-    this.checkUnfinishedStudy()
   },
 
   // 检查登录状态
@@ -33,7 +30,6 @@ App({
         if (res.data.success) {
           this.globalData.userInfo = res.data.data
         } else {
-          // Token无效，清除登录信息
           this.logout()
         }
       },
@@ -41,22 +37,6 @@ App({
         this.logout()
       }
     })
-  },
-
-  // 检查未完成的复习
-  checkUnfinishedStudy() {
-    const unfinishedSession = wx.getStorageSync('currentSession')
-    if (unfinishedSession) {
-      const { startTime } = unfinishedSession
-      const now = Date.now()
-      const timeout = 24 * 60 * 60 * 1000 // 24小时
-
-      if (now - startTime > timeout) {
-        // 超时，标记为中断
-        wx.setStorageSync('interruptedSession', unfinishedSession)
-        wx.removeStorageSync('currentSession')
-      }
-    }
   },
 
   // 登出

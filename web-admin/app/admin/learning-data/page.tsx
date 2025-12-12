@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Card, Tag, Button, Space, message } from 'antd'
-import { ReloadOutlined } from '@ant-design/icons'
+import { Table, Card, Tag, Button, Space, message, Select, DatePicker } from 'antd'
+import { ReloadOutlined, FilterOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+
+const { RangePicker } = DatePicker
 
 interface LearningRecord {
     id: string
@@ -14,23 +16,19 @@ interface LearningRecord {
     taskDate: string
     totalWords: number
     completedWords: number
+    interruptedWords: number
     completionRate: number
-    correctCount: number
-    wrongCount: number
-    accuracy: number
-    totalTime: number
-    startedAt: string
+    startedAt: string | null
     completedAt: string | null
-    isCompleted: boolean
+    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'INTERRUPTED'
 }
 
-// 格式化时长（秒 -> 分秒）
-function formatDuration(seconds: number): string {
-    if (!seconds || seconds <= 0) return '-'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    if (mins === 0) return `${secs}秒`
-    return `${mins}分${secs}秒`
+// 状态配置
+const STATUS_CONFIG = {
+    PENDING: { label: '待开始', color: 'default' },
+    IN_PROGRESS: { label: '进行中', color: 'processing' },
+    COMPLETED: { label: '已完成', color: 'success' },
+    INTERRUPTED: { label: '已中断', color: 'error' },
 }
 
 export default function LearningDataPage() {
@@ -41,10 +39,14 @@ export default function LearningDataPage() {
         pageSize: 20,
         total: 0,
     })
+    const [filters, setFilters] = useState({
+        status: undefined as string | undefined,
+        dateRange: undefined as [dayjs.Dayjs, dayjs.Dayjs] | undefined,
+    })
 
     useEffect(() => {
         fetchData()
-    }, [pagination.current, pagination.pageSize])
+    }, [pagination.current, pagination.pageSize, filters])
 
     const fetchData = async () => {
         setLoading(true)
@@ -54,6 +56,14 @@ export default function LearningDataPage() {
                 page: String(pagination.current),
                 limit: String(pagination.pageSize),
             })
+
+            if (filters.status) {
+                params.append('status', filters.status)
+            }
+            if (filters.dateRange) {
+                params.append('startDate', filters.dateRange[0].format('YYYY-MM-DD'))
+                params.append('endDate', filters.dateRange[1].format('YYYY-MM-DD'))
+            }
 
             const response = await fetch(`/api/learning-data?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -100,7 +110,7 @@ export default function LearningDataPage() {
         {
             title: '完成率',
             key: 'completionRate',
-            width: 120,
+            width: 140,
             render: (_, record) => {
                 const rate = record.completionRate
                 const color = rate >= 100 ? 'green' : rate >= 50 ? 'orange' : 'red'
@@ -115,58 +125,76 @@ export default function LearningDataPage() {
             },
         },
         {
-            title: '正确率',
-            dataIndex: 'accuracy',
-            key: 'accuracy',
-            width: 80,
-            render: (accuracy: number) => {
-                const color = accuracy >= 80 ? 'green' : accuracy >= 60 ? 'orange' : 'red'
-                return <Tag color={color}>{accuracy}%</Tag>
-            },
-        },
-        {
-            title: '答题时长',
-            dataIndex: 'totalTime',
-            key: 'totalTime',
-            width: 100,
-            render: (seconds: number) => formatDuration(seconds),
+            title: '中断词数',
+            dataIndex: 'interruptedWords',
+            key: 'interruptedWords',
+            width: 90,
+            render: (count: number) => count > 0 ? (
+                <Tag color="error">{count}</Tag>
+            ) : '-',
         },
         {
             title: '开始时间',
             dataIndex: 'startedAt',
             key: 'startedAt',
             width: 160,
-            render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-',
+            render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
         },
         {
             title: '结束时间',
             dataIndex: 'completedAt',
             key: 'completedAt',
             width: 160,
-            render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-',
+            render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
         },
         {
             title: '状态',
-            dataIndex: 'isCompleted',
-            key: 'isCompleted',
-            width: 80,
-            render: (isCompleted: boolean) => (
-                <Tag color={isCompleted ? 'green' : 'processing'}>
-                    {isCompleted ? '已完成' : '进行中'}
-                </Tag>
-            ),
+            dataIndex: 'status',
+            key: 'status',
+            width: 100,
+            fixed: 'right',
+            render: (status: keyof typeof STATUS_CONFIG) => {
+                const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING
+                return <Tag color={config.color}>{config.label}</Tag>
+            },
         },
     ]
 
     return (
         <Card>
             <div style={{ marginBottom: 16 }}>
-                <Space>
+                <Space wrap>
                     <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
                         刷新
                     </Button>
+                    <Select
+                        placeholder="状态筛选"
+                        style={{ width: 120 }}
+                        allowClear
+                        value={filters.status}
+                        onChange={(value) => {
+                            setFilters(prev => ({ ...prev, status: value }))
+                            setPagination(prev => ({ ...prev, current: 1 }))
+                        }}
+                        options={[
+                            { label: '待开始', value: 'PENDING' },
+                            { label: '进行中', value: 'IN_PROGRESS' },
+                            { label: '已完成', value: 'COMPLETED' },
+                            { label: '已中断', value: 'INTERRUPTED' },
+                        ]}
+                    />
+                    <RangePicker
+                        value={filters.dateRange}
+                        onChange={(dates) => {
+                            setFilters(prev => ({
+                                ...prev,
+                                dateRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | undefined
+                            }))
+                            setPagination(prev => ({ ...prev, current: 1 }))
+                        }}
+                    />
                     <span style={{ color: '#666', fontSize: 12 }}>
-                        最新完成的任务排在最上面
+                        <FilterOutlined /> 最新的任务排在最上面
                     </span>
                 </Space>
             </div>
@@ -176,7 +204,7 @@ export default function LearningDataPage() {
                 dataSource={data}
                 rowKey="id"
                 loading={loading}
-                scroll={{ x: 1100 }}
+                scroll={{ x: 1000 }}
                 pagination={{
                     ...pagination,
                     showSizeChanger: true,

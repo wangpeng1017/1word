@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Form, Input, Button, message, Divider, Space, Tag, Alert } from 'antd'
+import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert } from 'antd'
 import { SaveOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons'
 
 export default function SettingsPage() {
@@ -29,6 +29,7 @@ export default function SettingsPage() {
         form.setFieldsValue({
           systemName: settings.systemInfo?.systemName || '智能词汇复习助手',
           defaultPassword: settings.systemInfo?.defaultPassword || '123456',
+          interruptTimeout: settings.studyConfig?.interruptTimeout || 10,
         })
       }
     } catch (error) {
@@ -51,6 +52,9 @@ export default function SettingsPage() {
           systemName: values.systemName,
           version: 'v1.0.0',
           defaultPassword: values.defaultPassword,
+        },
+        studyConfig: {
+          interruptTimeout: values.interruptTimeout,
         },
       }
 
@@ -133,6 +137,39 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* 学习配置 */}
+          <div>
+            <Divider orientation="left">
+              <Space>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>学习配置</span>
+                <Tag color="blue">复习规则</Tag>
+              </Space>
+            </Divider>
+
+            <div style={{
+              background: '#f5f7fa',
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 24,
+            }}>
+              <Form.Item
+                label="中断超时时间（分钟）"
+                name="interruptTimeout"
+                tooltip="学生开始复习后，超过该时间未完成将自动标记为【中断】"
+                rules={[{ required: true, message: '请输入超时时间' }]}
+                style={{ marginBottom: 0 }}
+              >
+                <InputNumber
+                  min={1}
+                  max={1440}
+                  placeholder="10"
+                  style={{ width: 200 }}
+                  addonAfter="分钟"
+                />
+              </Form.Item>
+            </div>
+          </div>
+
           {/* 操作按钮 */}
           <Form.Item style={{ marginBottom: 0 }}>
             <Space>
@@ -181,10 +218,10 @@ export default function SettingsPage() {
             <li>难点判定：累计错误≥3次，标记为重点难点</li>
           </ul>
 
-          <p style={{ marginTop: 16 }}><strong>每日学习：</strong></p>
+          <p style={{ marginTop: 16 }}><strong>中断检测：</strong></p>
           <ul style={{ paddingLeft: 20 }}>
-            <li>任务按艾宾浩斯曲线自动分配，返回所有到期词汇</li>
-            <li>未完成的任务会自动标记为中断</li>
+            <li>学生开始复习后，超过设定时间未完成，自动标记为"中断"</li>
+            <li>中断的任务会在【学习数据】中显示，学生可选择继续复习</li>
           </ul>
         </div>
       </Card>

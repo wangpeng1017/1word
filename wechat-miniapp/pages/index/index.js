@@ -1,6 +1,6 @@
 // pages/index/index.js
 const { get, post } = require('../../utils/request')
-const { getStudyProgress, clearStudyProgress } = require('../../utils/storage')
+const { getStudyProgress, clearStudyProgress, getSyncQueue, clearSyncQueue } = require('../../utils/storage')
 const app = getApp()
 
 Page({
@@ -11,6 +11,8 @@ Page({
     progressPercent: 0,
     nextReviewHint: '',
     defaultCover: 'https://dummyimage.com/120x160/EEF3FF/2F6BFF.png&text=BOOK',
+    hasUnfinishedProgress: false,
+    unfinishedCount: 0,
   },
 
   onLoad() {
@@ -24,6 +26,8 @@ Page({
   onShow() {
     if (app.globalData.token) {
       this.init()
+      // 尝试同步离线数据
+      this.syncOfflineData()
     }
   },
 
@@ -33,13 +37,16 @@ Page({
 
   async init() {
     this.setData({ state: 'loading', dateStr: this.formatDate(new Date()) })
+
+    // 检查是否有未完成的进度
+    this.checkUnfinishedProgress()
+
     try {
       const ov = await this.getTodayOverview()
       if (!ov) {
         this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint() })
         return
       }
-      // 今日任务为0 或 已全部完成 => 显示完成态，按钮不可点
       if (ov.dueCount === 0 || (ov.reviewedCount >= ov.dueCount && ov.dueCount > 0)) {
         this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint(), overview: ov, progressPercent: 100 })
         return
@@ -52,10 +59,112 @@ Page({
     }
   },
 
+  // 检查是否有未完成的进度
+  checkUnfinishedProgress() {
+    const saved = getStudyProgress()
+    if (!saved) {
+      this.setData({ hasUnfinishedProgress: false, unfinishedCount: 0 })
+      return
+    }
+
+    // 检查是否是今天的进度
+    const savedDate = saved.timestamp ? new Date(saved.timestamp).toDateString() : null
+    const today = new Date().toDateString()
+
+    if (savedDate !== today) {
+      // 跨天进度，清除
+      clearStudyProgress()
+      this.setData({ hasUnfinishedProgress: false, unfinishedCount: 0 })
+      return
+    }
+
+    // 计算未完成的数量
+    const totalTasks = saved.tasks?.length || 0
+    const answeredCount = saved.answers?.length || 0
+    const remainingCount = totalTasks - answeredCount
+
+    if (remainingCount > 0 && answeredCount > 0) {
+      this.setData({
+        hasUnfinishedProgress: true,
+        unfinishedCount: remainingCount,
+      })
+
+      // 弹窗提示是否继续
+      wx.showModal({
+        title: '发现未完成的复习',
+        content: `您有 ${remainingCount} 个单词未完成复习，是否继续上次的学习？`,
+        confirmText: '继续学习',
+        cancelText: '重新开始',
+        success: (res) => {
+          if (res.confirm) {
+            // 继续上次进度
+            wx.navigateTo({ url: '/pages/study/study?resume=true' })
+          } else if (res.cancel) {
+            // 清除进度，重新开始
+            clearStudyProgress()
+            this.setData({ hasUnfinishedProgress: false, unfinishedCount: 0 })
+          }
+        }
+      })
+    } else {
+      this.setData({ hasUnfinishedProgress: false, unfinishedCount: 0 })
+    }
+  },
+
+  // 同步离线数据
+  async syncOfflineData() {
+    const syncQueue = getSyncQueue()
+    if (!syncQueue || syncQueue.length === 0) return
+
+    console.log(`[同步] 发现 ${syncQueue.length} 条离线数据待同步`)
+
+    try {
+      for (const item of syncQueue) {
+        if (item.type === 'study_complete') {
+          await post('/study-records', {
+            studentId: item.data.studentId,
+            answers: item.data.answers,
+          })
+          console.log('[同步] 学习记录同步成功')
+        }
+      }
+
+      // 同步成功，清空队列
+      clearSyncQueue()
+      wx.showToast({
+        title: '离线数据已同步',
+        icon: 'success',
+        duration: 1500
+      })
+    } catch (error) {
+      console.error('[同步] 离线数据同步失败', error)
+      // 同步失败，保留队列，下次再试
+    }
+  },
+
   startReview() {
+    const { hasUnfinishedProgress } = this.data
     const progress = this.data.overview || {}
-    const needResume = progress.reviewedCount > 0 && progress.reviewedCount < progress.dueCount
-    wx.navigateTo({ url: `/pages/study/study${needResume ? '?resume=true' : ''}` })
+    const needResume = hasUnfinishedProgress || (progress.reviewedCount > 0 && progress.reviewedCount < progress.dueCount)
+
+    if (needResume) {
+      wx.showModal({
+        title: '继续上次复习？',
+        content: '检测到有未完成的学习进度',
+        confirmText: '继续学习',
+        cancelText: '重新开始',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/study/study?resume=true' })
+          } else {
+            clearStudyProgress()
+            wx.navigateTo({ url: '/pages/study/study' })
+          }
+        }
+      })
+    } else {
+      wx.navigateTo({ url: '/pages/study/study' })
+    }
   },
 
   reload() { this.init() },
@@ -64,7 +173,6 @@ Page({
     const studentId = app.globalData.userInfo && app.globalData.userInfo.studentId
     if (!studentId) return null
 
-    // P8: 先调用 POST 确保任务已生成（包括新添加的词汇）
     try {
       await post(`/students/${studentId}/daily-tasks`)
     } catch (e) {
@@ -81,17 +189,13 @@ Page({
       }
     }
 
-    // 直接从复习概览接口获取（小程序友好的 miniapp 段）
     try {
       const data = await get(`/review-plan/${studentId}`)
       const mi = data && data.miniapp
       if (mi && mi.today) {
-        // 若本地有进度，则让前端进度覆盖服务端统计的一部分（以便继续学习提示）
         const saved = getStudyProgress()
         const due = mi.today.dueCount || 0
-        // 将服务端已完成数限制在 <= due，避免“历史已完成数”压过新增任务
         const reviewedFromServer = Math.min(mi.today.completedCount || 0, due)
-        // 仅在同一天内才使用本地进度；跨天则忽略并清理，避免把昨天的进度当成今天已完成
         const savedIsToday = saved && saved.startTime && (new Date(saved.startTime).toDateString() === new Date().toDateString())
         const reviewedFromLocal = savedIsToday ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
 
@@ -104,11 +208,9 @@ Page({
         }
       }
     } catch (e) {
-      // 失败时回退到旧逻辑（不报错，保证首页可用）
       console.warn('review-plan 获取失败，使用回退逻辑', e)
     }
 
-    // 回退逻辑：仍尝试旧的每日任务接口
     let tasks = []
     try {
       tasks = await get(`/students/${studentId}/daily-tasks`)
@@ -117,10 +219,10 @@ Page({
     }
     const dueCount = Array.isArray(tasks) ? tasks.length : 0
 
-    const saved = getStudyProgress()
+    const savedProgress = getStudyProgress()
     let reviewedCount = 0
-    if (saved) {
-      reviewedCount = Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, dueCount)
+    if (savedProgress) {
+      reviewedCount = Math.min(savedProgress.currentIndex || (savedProgress.answers && savedProgress.answers.length) || 0, dueCount)
     }
 
     return { bookName: '今日任务', dueCount, reviewedCount, elapsedMinutes: 0, timeString: '00:00' }
