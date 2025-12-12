@@ -509,27 +509,31 @@ export default function VocabularyDetailPage() {
         {vocabulary && (
           <Descriptions column={2}>
             <Descriptions.Item label="单词">{vocabulary.word}</Descriptions.Item>
-            <Descriptions.Item label="音标">{vocabulary.phonetic || '-'}</Descriptions.Item>
-            <Descriptions.Item label="词性">
-              {vocabulary.partOfSpeech?.map((pos: string, i: number) => (
-                <Tag key={i} color="blue">
-                  {pos}
-                </Tag>
-              ))}
-            </Descriptions.Item>
+            <Descriptions.Item label="音标">{vocabulary.phonetic || vocabulary.phoneticUS || vocabulary.phoneticUK || '-'}</Descriptions.Item>
             <Descriptions.Item label="难度">
               <Tag color={vocabulary.difficulty === 'EASY' ? 'green' : vocabulary.difficulty === 'HARD' ? 'red' : 'orange'}>
                 {vocabulary.difficulty === 'EASY' ? '简单' : vocabulary.difficulty === 'HARD' ? '困难' : '中等'}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="核心释义" span={2}>
-              {vocabulary.primaryMeaning}
+            <Descriptions.Item label="高频词">
+              <Tag color={vocabulary.isHighFrequency ? 'red' : 'default'}>
+                {vocabulary.isHighFrequency ? '是' : '否'}
+              </Tag>
             </Descriptions.Item>
-            {vocabulary.secondaryMeaning && (
-              <Descriptions.Item label="延伸释义" span={2}>
-                {vocabulary.secondaryMeaning}
-              </Descriptions.Item>
-            )}
+            <Descriptions.Item label="释义" span={2}>
+              {vocabulary.meanings && vocabulary.meanings.length > 0 ? (
+                <Space direction="vertical" size={4}>
+                  {vocabulary.meanings.map((m: any, idx: number) => (
+                    <div key={m.id || idx}>
+                      <Tag color="blue" style={{ marginRight: 8 }}>{m.partOfSpeech}</Tag>
+                      <span>{m.meaning}</span>
+                    </div>
+                  ))}
+                </Space>
+              ) : (
+                <span>{vocabulary.primaryMeaning || '-'}</span>
+              )}
+            </Descriptions.Item>
           </Descriptions>
         )}
       </Card>

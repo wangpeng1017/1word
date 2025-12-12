@@ -3,32 +3,38 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 
-// 统一小程序字段：
-// - vocabularies(question_options) => vocabulary(options)
+// 统一小程序字段映射（从 question_answers 表格式化）
 function mapWrongQuestionsForMiniapp(rows: any[]) {
-  return rows.map((wq: any) => {
-    const v = wq.vocabularies || wq.vocabulary || {}
-    const q = wq.questions || wq.question || {}
+  return rows.map((qa: any) => {
+    const v = qa.vocabularies || qa.vocabulary || {}
+    const q = qa.questions || qa.question || {}
     const options = (q.question_options || q.options || [])
       .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
       .map((o: any) => ({ id: o.id, content: o.content, isCorrect: o.isCorrect, order: o.order }))
 
+    // 获取第一个 meaning
+    const firstMeaning = v.word_meanings?.[0]?.meaning || ''
+
     return {
-      id: wq.id,
-      studentId: wq.studentId,
-      vocabularyId: wq.vocabularyId,
-      questionId: wq.questionId,
-      wrongAnswer: wq.wrongAnswer,
-      correctAnswer: wq.correctAnswer,
-      wrongAt: wq.wrongAt,
+      id: qa.id,
+      studentId: qa.studentId,
+      vocabularyId: qa.vocabularyId,
+      questionId: qa.questionId,
+      wrongAnswer: qa.answer, // question_answers 中是 answer 字段
+      correctAnswer: q.correctAnswer,
+      wrongAt: qa.answeredAt, // 改用 answeredAt
       vocabulary: {
         id: v.id,
         word: v.word,
-        primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
-        secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
-        audioUrl: v.audioUrl ?? v.audio_url,
+        primaryMeaning: firstMeaning,
+        secondaryMeaning: null,
+        audioUrl: v.audio_url,
         difficulty: v.difficulty,
-        isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
+        isHighFrequency: v.is_high_frequency,
+        meanings: v.word_meanings?.map((m: any) => ({
+          partOfSpeech: m.partOfSpeech,
+          meaning: m.meaning,
+        })) || [],
       },
       question: {
         id: q.id,
@@ -44,6 +50,7 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
 }
 
 // GET /api/students/[id]/wrong-questions - 获取学生错题本
+// 改用 question_answers 表查询（替代已废弃的 wrong_questions 表）
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -66,17 +73,33 @@ export async function GET(
     const questionType = searchParams.get('questionType')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // 构建查询条件
-    const where: any = { studentId }
+    // 构建查询条件（使用 question_answers 表，筛选 isCorrect = false）
+    const where: any = {
+      studentId,
+      isCorrect: false, // 只查询错误的答题记录
+    }
     if (vocabularyId) {
       where.vocabularyId = vocabularyId
     }
 
-    // 查询错题
-    const wrongQuestionsRaw = await prisma.wrong_questions.findMany({
+    // 如果指定了题型，需要在 questions 关联上过滤
+    if (questionType) {
+      where.questions = {
+        type: questionType,
+      }
+    }
+
+    // 查询错题（从 question_answers 表）
+    const wrongAnswersRaw = await prisma.question_answers.findMany({
       where,
       include: {
-        vocabularies: true,
+        vocabularies: {
+          include: {
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+            },
+          },
+        },
         questions: {
           include: {
             question_options: {
@@ -85,17 +108,12 @@ export async function GET(
           },
         },
       },
-      orderBy: { wrongAt: 'desc' },
+      orderBy: { answeredAt: 'desc' },
       take: limit,
     })
 
     // 统一结构
-    let shaped = mapWrongQuestionsForMiniapp(wrongQuestionsRaw)
-
-    // 按题型过滤（如果指定）
-    if (questionType) {
-      shaped = shaped.filter((item) => item.question?.type === questionType)
-    }
+    const shaped = mapWrongQuestionsForMiniapp(wrongAnswersRaw)
 
     // 统计信息
     const stats = {

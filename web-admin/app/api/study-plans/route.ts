@@ -76,9 +76,14 @@ export async function GET(request: NextRequest) {
           vocabularies: {
             select: {
               word: true,
-              primary_meaning: true,
               difficulty: true,
               is_high_frequency: true,
+              // 使用 word_meanings 获取释义
+              word_meanings: {
+                orderBy: { orderIndex: 'asc' },
+                take: 1,
+                select: { meaning: true },
+              },
             },
           },
         },
@@ -91,6 +96,7 @@ export async function GET(request: NextRequest) {
       id: sp.id,
       studentId: sp.studentId,
       vocabularyId: sp.vocabularyId,
+      planClassId: sp.planClassId, // 新增：来源班级计划ID
       status: sp.status,
       reviewCount: sp.reviewCount,
       lastReviewAt: sp.lastReviewAt,
@@ -100,7 +106,8 @@ export async function GET(request: NextRequest) {
       student: { ...sp.students, class: sp.students?.classes },
       vocabulary: {
         word: sp.vocabularies?.word,
-        primaryMeaning: sp.vocabularies?.primary_meaning,
+        // 从 word_meanings 获取释义
+        primaryMeaning: sp.vocabularies?.word_meanings?.[0]?.meaning || '',
         difficulty: sp.vocabularies?.difficulty,
         isHighFrequency: sp.vocabularies?.is_high_frequency,
       },
@@ -156,13 +163,26 @@ export async function PUT(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primary_meaning: true,
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+              take: 1,
+              select: { meaning: true },
+            },
           },
         },
       },
     })
 
-    return successResponse(studyPlan, '学习计划更新成功')
+    // 格式化返回数据
+    const formattedPlan = {
+      ...studyPlan,
+      vocabularies: {
+        word: studyPlan.vocabularies?.word,
+        primary_meaning: studyPlan.vocabularies?.word_meanings?.[0]?.meaning || '',
+      },
+    }
+
+    return successResponse(formattedPlan, '学习计划更新成功')
   } catch (error: any) {
     console.error('更新学习计划错误:', error)
     return errorResponse(`更新学习计划失败: ${error?.message || '未知错误'}`, 500)

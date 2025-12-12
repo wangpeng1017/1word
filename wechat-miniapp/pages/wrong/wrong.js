@@ -85,9 +85,19 @@ Page({
     const index = e.currentTarget.dataset.index
     const question = this.data.filteredQuestions[index]
 
+    // 构建释义文本（优先使用 meanings 数组）
+    let meaningText = ''
+    if (question.vocabulary.meanings && question.vocabulary.meanings.length > 0) {
+      meaningText = question.vocabulary.meanings
+        .map(m => `${m.partOfSpeech} ${m.meaning}`)
+        .join('\n')
+    } else {
+      meaningText = '暂无释义'
+    }
+
     wx.showModal({
       title: question.vocabulary.word,
-      content: `题型：${this.getQuestionTypeName(question.question.type)}\n\n${question.question.content}\n\n你的答案：${question.wrongAnswer}\n正确答案：${question.correctAnswer}\n\n释义：${question.vocabulary.primaryMeaning}`,
+      content: `题型：${this.getQuestionTypeName(question.question.type)}\n\n${question.question.content}\n\n你的答案：${question.wrongAnswer}\n正确答案：${question.correctAnswer}\n\n释义：\n${meaningText}`,
       showCancel: false,
       confirmText: '知道了',
     })

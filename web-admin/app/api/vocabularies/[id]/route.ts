@@ -48,23 +48,27 @@ export async function GET(
       return notFoundResponse('词汇不存在')
     }
 
-    const { audio_url, created_at, updated_at, word_meanings, word_audios, word_images, ...rest } = vocabulary as any
+    const { audio_url, created_at, updated_at, word_meanings, word_audios, word_images, part_of_speech, primary_meaning, secondary_meaning, ...rest } = vocabulary as any
+    const meanings = word_meanings || []
+    const firstMeaning = meanings[0]
+
     const result: any = {
       ...rest,
+      // 从 word_meanings 获取词性和释义（兼容旧格式）
+      partOfSpeech: firstMeaning ? [firstMeaning.partOfSpeech] : [],
+      primaryMeaning: firstMeaning?.meaning || '',
+      secondaryMeaning: meanings[1]?.meaning || null,
       audioUrl: audio_url ?? null,
       createdAt: created_at,
-      updatedAt: updated_at
-    }
-
-    // 映射多词性多释义
-    if (word_meanings) {
-      result.meanings = word_meanings.map((m: any) => ({
+      updatedAt: updated_at,
+      // 始终返回 meanings 数组
+      meanings: meanings.map((m: any) => ({
         id: m.id,
         partOfSpeech: m.partOfSpeech,
         meaning: m.meaning,
         orderIndex: m.orderIndex,
         examples: m.examples || [],
-      }))
+      })),
     }
 
     // 映射音频
@@ -114,13 +118,9 @@ export async function PUT(
     const {
       word,
       meanings,
-      partOfSpeech, // 向后兼容
-      primaryMeaning, // 向后兼容
-      secondaryMeaning,
       phonetic,
       phoneticUS,
       phoneticUK,
-      audioUrl, // deprecated
       audioUrlUS,
       audioUrlUK,
       imageUrl,
@@ -130,22 +130,19 @@ export async function PUT(
     } = body
 
     // 使用事务更新词汇、释义、音频和图片
+    // 注意：释义数据完全存储在 word_meanings 表，不再使用旧字段
     const vocabulary = await prisma.$transaction(async (tx) => {
-      // 更新词汇基本信息
+      // 更新词汇基本信息（不再更新旧的 part_of_speech, primary_meaning 字段）
       const updateData: any = {
         updated_at: new Date(),
       }
 
       if (word) updateData.word = word.toLowerCase()
-      if (partOfSpeech) updateData.part_of_speech = partOfSpeech
-      if (primaryMeaning) updateData.primary_meaning = primaryMeaning
-      if (typeof secondaryMeaning !== 'undefined') updateData.secondary_meaning = secondaryMeaning
       if (typeof phonetic !== 'undefined') updateData.phonetic = phonetic
       if (typeof phoneticUS !== 'undefined') updateData.phonetic_us = phoneticUS
       if (typeof phoneticUK !== 'undefined') updateData.phonetic_uk = phoneticUK
       if (typeof isHighFrequency !== 'undefined') updateData.is_high_frequency = isHighFrequency
       if (difficulty) updateData.difficulty = difficulty
-      if (typeof audioUrl !== 'undefined') updateData.audio_url = audioUrl // deprecated
 
       const vocab = await tx.vocabularies.update({
         where: { id: params.id },

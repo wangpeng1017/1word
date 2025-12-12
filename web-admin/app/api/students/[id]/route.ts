@@ -102,58 +102,65 @@ export async function PUT(
       return notFoundResponse('学生不存在')
     }
 
-    // 检查学号是否被其他学生使用
-    if (studentNo !== student.student_no) {
-      const existing = await prisma.students.findUnique({
-        where: { student_no: studentNo },
-      })
-      if (existing) {
-        return errorResponse('学号已被使用')
+    // 使用事务保护：检查学号唯一性 + 更新用户表 + 更新学生表
+    const updatedStudent = await prisma.$transaction(async (tx) => {
+      // 1. 检查学号是否被其他学生使用（事务内检查避免竞态条件）
+      if (studentNo !== student.student_no) {
+        const existing = await tx.students.findUnique({
+          where: { student_no: studentNo },
+        })
+        if (existing) {
+          throw new Error('学号已被使用')
+        }
       }
-    }
 
-    // 更新用户信息
-    await prisma.user.update({
-      where: { id: student.user_id },
-      data: {
-        name,
-        phone: phone || null,
-        updated_at: new Date(),
-      },
-    })
+      // 2. 更新用户信息
+      await tx.user.update({
+        where: { id: student.user_id },
+        data: {
+          name,
+          phone: phone || null,
+          updated_at: new Date(),
+        },
+      })
 
-    // 更新学生信息
-    const updatedStudent = await prisma.students.update({
-      where: { id: params.id },
-      data: {
-        student_no: studentNo,
-        class_id: classId || null,
-        grade,
-        updated_at: new Date(),
-      },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
+      // 3. 更新学生信息并返回
+      return await tx.students.update({
+        where: { id: params.id },
+        data: {
+          student_no: studentNo,
+          class_id: classId || null,
+          grade,
+          updated_at: new Date(),
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          classes: {
+            select: {
+              name: true,
+              grade: true,
+            },
           },
         },
-        classes: {
-          select: {
-            name: true,
-            grade: true,
-          },
-        },
-      },
+      })
     })
 
     // 转换数据格式
     const formattedStudent = formatStudentData(updatedStudent)
 
     return successResponse(formattedStudent, '学生信息更新成功')
-  } catch (error) {
+  } catch (error: any) {
     console.error('更新学生信息错误:', error)
+    // 处理学号重复的错误
+    if (error.message === '学号已被使用') {
+      return errorResponse('学号已被使用')
+    }
     return errorResponse('更新学生信息失败', 500)
   }
 }
@@ -178,7 +185,7 @@ export async function DELETE(
       where: { id: params.id },
       include: {
         study_records: true,
-        wrong_questions: true,
+        question_answers: true, // 改用question_answers替代wrong_questions
       },
     })
 
@@ -187,7 +194,7 @@ export async function DELETE(
     }
 
     // 检查是否有学习记录
-    if (student.study_records.length > 0 || student.wrong_questions.length > 0) {
+    if (student.study_records.length > 0 || student.question_answers.length > 0) {
       // 软删除：停用账号而不是物理删除
       await prisma.user.update({
         where: { id: student.user_id },

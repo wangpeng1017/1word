@@ -48,6 +48,7 @@ model plan_classes {
   updated_at    DateTime
   classes       classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
   vocabularies  vocabularies    @relation(fields: [vocabulary_id], references: [id], onDelete: Cascade)
+  study_plans   study_plans[]   // 新增：关联的学生学习计划
 
   @@unique([class_id, vocabulary_id])
   @@index([class_id])
@@ -111,6 +112,7 @@ model study_plans {
   id           String          @id
   studentId    String
   vocabularyId String
+  planClassId  String?         // 新增：来源班级计划ID，用于追溯
   status       StudyPlanStatus @default(PENDING)
   reviewCount  Int             @default(0)
   lastReviewAt DateTime?
@@ -119,8 +121,10 @@ model study_plans {
   updatedAt    DateTime
   students     students        @relation(fields: [studentId], references: [id], onDelete: Cascade)
   vocabularies vocabularies    @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  plan_classes plan_classes?   @relation(fields: [planClassId], references: [id], onDelete: SetNull)
 
   @@unique([studentId, vocabularyId])
+  @@index([planClassId])
 }
 
 model study_records {

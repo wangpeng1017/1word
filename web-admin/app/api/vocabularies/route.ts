@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { word: { contains: search, mode: 'insensitive' } },
-        { primary_meaning: { contains: search } },
+        // 搜索 word_meanings 表中的释义
+        { word_meanings: { some: { meaning: { contains: search } } } },
       ]
     }
 
@@ -45,17 +46,16 @@ export async function GET(request: NextRequest) {
     }
 
     // 索引使用: idx_vocabularies_frequency_difficulty, idx_vocabularies_created_at_desc
-    const includeOptions: any = {}
+    const includeOptions: any = {
+      // 始终包含 word_meanings，用于获取 primaryMeaning
+      word_meanings: {
+        orderBy: { orderIndex: 'asc' as const }
+      }
+    }
 
     if (includeAudios) {
       includeOptions.word_audios = {
         orderBy: { createdAt: 'asc' }
-      }
-    }
-
-    if (includeMeanings) {
-      includeOptions.word_meanings = {
-        orderBy: { orderIndex: 'asc' }
       }
     }
 
@@ -78,13 +78,18 @@ export async function GET(request: NextRequest) {
     ])
 
     // 将 snake_case 映射为前端预期的 camelCase 字段
+    // 注意：释义数据已完全迁移到 word_meanings 表
     const mapped = vocabularies.map((vocab: any) => {
+      const meanings = vocab.word_meanings || []
+      const firstMeaning = meanings[0]
+
       const result: any = {
         id: vocab.id,
         word: vocab.word,
-        partOfSpeech: vocab.part_of_speech || [],
-        primaryMeaning: vocab.primary_meaning || '',
-        secondaryMeaning: vocab.secondary_meaning || null,
+        // 从 word_meanings 获取词性和释义
+        partOfSpeech: firstMeaning ? [firstMeaning.partOfSpeech] : [],
+        primaryMeaning: firstMeaning?.meaning || '',
+        secondaryMeaning: meanings[1]?.meaning || null,
         phonetic: vocab.phonetic || null,
         phoneticUS: vocab.phonetic_us || null,
         phoneticUK: vocab.phonetic_uk || null,
@@ -93,6 +98,14 @@ export async function GET(request: NextRequest) {
         difficulty: vocab.difficulty || 'MEDIUM',
         createdAt: vocab.created_at,
         updatedAt: vocab.updated_at,
+        // 始终返回 meanings 数组
+        meanings: meanings.map((meaning: any) => ({
+          id: meaning.id,
+          partOfSpeech: meaning.partOfSpeech,
+          meaning: meaning.meaning,
+          orderIndex: meaning.orderIndex,
+          examples: meaning.examples || [],
+        })),
       }
 
       // 映射音频数据
@@ -103,17 +116,6 @@ export async function GET(request: NextRequest) {
           accent: audio.accent,
           duration: audio.duration,
           createdAt: audio.createdAt || audio.created_at,
-        }))
-      }
-
-      // 映射多词性多释义数据
-      if (vocab.word_meanings) {
-        result.meanings = vocab.word_meanings.map((meaning: any) => ({
-          id: meaning.id,
-          partOfSpeech: meaning.partOfSpeech,
-          meaning: meaning.meaning,
-          orderIndex: meaning.orderIndex,
-          examples: meaning.examples || [],
         }))
       }
 
@@ -179,16 +181,15 @@ export async function POST(request: NextRequest) {
       imageDescription,
     } = body
 
-    // 验证: 支持新的 meanings 或旧的 partOfSpeech + primaryMeaning
+    // 验证: 必须使用新的 meanings 数组
     if (!word) {
       return errorResponse('请输入单词')
     }
 
     const hasMeanings = meanings && Array.isArray(meanings) && meanings.length > 0
-    const hasOldFormat = partOfSpeech && partOfSpeech.length > 0 && primaryMeaning
 
-    if (!hasMeanings && !hasOldFormat) {
-      return errorResponse('请添加至少一个释义，或填写词性和核心释义')
+    if (!hasMeanings) {
+      return errorResponse('请添加至少一个释义')
     }
 
     // 检查单词是否已存在
@@ -202,16 +203,13 @@ export async function POST(request: NextRequest) {
 
     const vocabId = `v_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // 使用事务创建词汇和释义
+    // 使用事务创建词汇和释义（释义存储在 word_meanings 表）
     const vocabulary = await prisma.$transaction(async (tx) => {
-      // 创建词汇
+      // 创建词汇（不再使用旧的 part_of_speech, primary_meaning 字段）
       const vocab = await tx.vocabularies.create({
         data: {
           id: vocabId,
           word: word.toLowerCase(),
-          part_of_speech: partOfSpeech || [], // 向后兼容
-          primary_meaning: primaryMeaning || '', // 向后兼容
-          secondary_meaning: secondaryMeaning,
           phonetic,
           phonetic_us: phoneticUS,
           phonetic_uk: phoneticUK,
@@ -222,19 +220,17 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // 创建多释义
-      if (hasMeanings) {
-        await tx.word_meanings.createMany({
-          data: meanings.map((m: any, index: number) => ({
-            id: `wm_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-            vocabularyId: vocabId,
-            partOfSpeech: m.partOfSpeech,
-            meaning: m.meaning,
-            orderIndex: index,
-            examples: m.examples || [],
-          })),
-        })
-      }
+      // 创建多释义（释义数据存储在 word_meanings 表）
+      await tx.word_meanings.createMany({
+        data: meanings.map((m: any, index: number) => ({
+          id: `wm_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+          vocabularyId: vocabId,
+          partOfSpeech: m.partOfSpeech,
+          meaning: m.meaning,
+          orderIndex: index,
+          examples: m.examples || [],
+        })),
+      })
 
       // 创建音频
       if (audioUrlUS) {

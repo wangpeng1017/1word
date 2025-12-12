@@ -52,7 +52,13 @@ export async function GET(request: NextRequest) {
           vocabularies: {
             select: {
               word: true,
-              primary_meaning: true,
+              word_meanings: {
+                orderBy: { orderIndex: 'asc' },
+                take: 1,
+                select: {
+                  meaning: true,
+                },
+              },
             },
           },
           question_options: {
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
       vocabularyId: q.vocabularyId,
       vocabulary: {
         word: q.vocabularies?.word || '',
-        primaryMeaning: q.vocabularies?.primary_meaning || '',
+        primaryMeaning: q.vocabularies?.word_meanings?.[0]?.meaning || '',
       },
       options: q.question_options?.map((opt: any) => ({
         id: opt.id,
@@ -160,7 +166,13 @@ export async function POST(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primary_meaning: true,
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+              take: 1,
+              select: {
+                meaning: true,
+              },
+            },
           },
         },
         question_options: {
@@ -182,7 +194,7 @@ export async function POST(request: NextRequest) {
       vocabularyId: question.vocabularyId,
       vocabulary: {
         word: question.vocabularies?.word || '',
-        primaryMeaning: question.vocabularies?.primary_meaning || '',
+        primaryMeaning: question.vocabularies?.word_meanings?.[0]?.meaning || '',
       },
       options: question.question_options?.map((opt: any) => ({
         id: opt.id,
@@ -204,7 +216,7 @@ export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
       return unauthorizedResponse('只有教师可以更新题目')
@@ -217,45 +229,53 @@ export async function PUT(request: NextRequest) {
       return errorResponse('缺少题目ID')
     }
 
-    // 更新题目（先删除旧选项再创建新选项）
-    await prisma.question_options.deleteMany({
-      where: { questionId: id },
-    })
+    // 使用事务保护：删除旧选项 + 更新题目 + 创建新选项
+    const question = await prisma.$transaction(async (tx) => {
+      // 1. 删除旧选项
+      await tx.question_options.deleteMany({
+        where: { questionId: id },
+      })
 
-    await prisma.questions.update({
-      where: { id },
-      data: {
-        type,
-        content,
-        sentence,
-        audioUrl,
-        correctAnswer,
-        updatedAt: new Date(),
-        question_options: {
-          create: options?.map((opt: any, index: number) => ({
-            id: `qo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            content: opt.content,
-            isCorrect: opt.isCorrect,
-            order: opt.order ?? index,
-            createdAt: new Date(),
-          })) || [],
-        },
-      },
-    })
-
-    const question = await prisma.questions.findUnique({
-      where: { id },
-      include: {
-        vocabularies: {
-          select: {
-            word: true,
-            primary_meaning: true,
+      // 2. 更新题目并创建新选项
+      await tx.questions.update({
+        where: { id },
+        data: {
+          type,
+          content,
+          sentence,
+          audioUrl,
+          correctAnswer,
+          updatedAt: new Date(),
+          question_options: {
+            create: options?.map((opt: any, index: number) => ({
+              id: `qo_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+              content: opt.content,
+              isCorrect: opt.isCorrect,
+              order: opt.order ?? index,
+              createdAt: new Date(),
+            })) || [],
           },
         },
-        question_options: {
-          orderBy: { order: 'asc' },
+      })
+
+      // 3. 返回更新后的完整数据
+      return await tx.questions.findUnique({
+        where: { id },
+        include: {
+          vocabularies: {
+            select: {
+              word: true,
+              word_meanings: {
+                orderBy: { orderIndex: 'asc' },
+                take: 1,
+              },
+            },
+          },
+          question_options: {
+            orderBy: { order: 'asc' },
+          },
         },
-      },
+      })
     })
 
     // 转换数据格式以匹配前端
@@ -271,7 +291,7 @@ export async function PUT(request: NextRequest) {
       vocabularyId: question.vocabularyId,
       vocabulary: {
         word: question.vocabularies?.word || '',
-        primaryMeaning: question.vocabularies?.primary_meaning || '',
+        primaryMeaning: question.vocabularies?.word_meanings?.[0]?.meaning || '',
       },
       options: question.question_options?.map((opt: any) => ({
         id: opt.id,

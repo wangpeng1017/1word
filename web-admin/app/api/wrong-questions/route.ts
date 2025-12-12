@@ -6,6 +6,7 @@ import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/resp
 /**
  * 获取错题明细列表
  * GET /api/wrong-questions
+ * 改用 question_answers 表查询（替代已废弃的 wrong_questions 表）
  */
 export async function GET(request: NextRequest) {
     try {
@@ -28,8 +29,10 @@ export async function GET(request: NextRequest) {
         const startDate = searchParams.get('startDate')
         const endDate = searchParams.get('endDate')
 
-        // 构建查询条件
-        const where: any = {}
+        // 构建查询条件（使用 question_answers 表，筛选 isCorrect = false）
+        const where: any = {
+            isCorrect: false, // 只查询错误的答题记录
+        }
 
         if (studentId) {
             where.studentId = studentId
@@ -42,21 +45,21 @@ export async function GET(request: NextRequest) {
         }
 
         if (startDate || endDate) {
-            where.wrongAt = {}
+            where.answeredAt = {}
             if (startDate) {
-                where.wrongAt.gte = new Date(startDate)
+                where.answeredAt.gte = new Date(startDate)
             }
             if (endDate) {
-                where.wrongAt.lte = new Date(endDate + 'T23:59:59')
+                where.answeredAt.lte = new Date(endDate + 'T23:59:59')
             }
         }
 
         const [records, total] = await Promise.all([
-            prisma.wrong_questions.findMany({
+            prisma.question_answers.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: { wrongAt: 'desc' },
+                orderBy: { answeredAt: 'desc' },
                 include: {
                     students: {
                         include: {
@@ -67,18 +70,23 @@ export async function GET(request: NextRequest) {
                     vocabularies: {
                         select: {
                             word: true,
-                            primary_meaning: true,
+                            word_meanings: {
+                                orderBy: { orderIndex: 'asc' },
+                                take: 1,
+                                select: { meaning: true },
+                            },
                         },
                     },
                     questions: {
                         select: {
                             type: true,
                             content: true,
+                            correctAnswer: true,
                         },
                     },
                 },
             }),
-            prisma.wrong_questions.count({ where }),
+            prisma.question_answers.count({ where }),
         ])
 
         // 格式化数据
@@ -88,12 +96,12 @@ export async function GET(request: NextRequest) {
             studentName: record.students?.user?.name || '未知',
             className: record.students?.classes?.name || '未分配',
             word: record.vocabularies?.word || '',
-            meaning: record.vocabularies?.primary_meaning || '',
+            meaning: record.vocabularies?.word_meanings?.[0]?.meaning || '',
             questionType: record.questions?.type || '',
             questionContent: record.questions?.content || '',
-            wrongAnswer: record.wrongAnswer,
-            correctAnswer: record.correctAnswer,
-            wrongAt: record.wrongAt,
+            wrongAnswer: record.answer, // question_answers 表中是 answer 字段
+            correctAnswer: record.questions?.correctAnswer || '',
+            wrongAt: record.answeredAt, // 改用 answeredAt
         }))
 
         return successResponse({

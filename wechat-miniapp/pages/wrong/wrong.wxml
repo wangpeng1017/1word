@@ -90,7 +90,13 @@
         </view>
 
         <view class="meaning">
-          {{item.vocabulary.primaryMeaning}}
+          <block wx:if="{{item.vocabulary.meanings && item.vocabulary.meanings.length > 0}}">
+            <view wx:for="{{item.vocabulary.meanings}}" wx:for-item="m" wx:key="id" class="meaning-item">
+              <text class="pos-tag">{{m.partOfSpeech}}</text>
+              <text>{{m.meaning}}</text>
+            </view>
+          </block>
+          <text wx:else>暂无释义</text>
         </view>
       </view>
     </view>

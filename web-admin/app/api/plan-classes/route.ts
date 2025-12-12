@@ -47,9 +47,14 @@ export async function GET(request: NextRequest) {
           vocabularies: {
             select: {
               word: true,
-              primary_meaning: true,
               difficulty: true,
               is_high_frequency: true,
+              // 使用 word_meanings 获取释义
+              word_meanings: {
+                orderBy: { orderIndex: 'asc' },
+                take: 1,
+                select: { meaning: true },
+              },
             },
           },
         },
@@ -57,8 +62,17 @@ export async function GET(request: NextRequest) {
       prisma.plan_classes.count({ where }),
     ])
 
+    // 格式化返回数据，将 word_meanings 映射为 primaryMeaning
+    const formattedPlanClasses = planClasses.map((pc: any) => ({
+      ...pc,
+      vocabularies: {
+        ...pc.vocabularies,
+        primary_meaning: pc.vocabularies?.word_meanings?.[0]?.meaning || '',
+      },
+    }))
+
     return successResponse({
-      planClasses,
+      planClasses: formattedPlanClasses,
       pagination: {
         page,
         limit,
@@ -126,7 +140,12 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         word: true,
-        primary_meaning: true,
+        // 使用 word_meanings 获取释义
+        word_meanings: {
+          orderBy: { orderIndex: 'asc' },
+          take: 1,
+          select: { meaning: true },
+        },
         questions: { select: { id: true } } // 检查题目数量
       },
     })
@@ -174,7 +193,16 @@ export async function POST(request: NextRequest) {
       },
       include: {
         students: { select: { user: { select: { name: true } }, class_id: true } },
-        vocabularies: { select: { word: true, primary_meaning: true } },
+        vocabularies: {
+          select: {
+            word: true,
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+              take: 1,
+              select: { meaning: true },
+            },
+          },
+        },
       },
     })
 
@@ -201,7 +229,7 @@ export async function POST(request: NextRequest) {
           classId: studentMap.get(sid)?.class_id,
           vocabularyId: v.id,
           word: v.word,
-          primaryMeaning: v.primary_meaning,
+          primaryMeaning: v.word_meanings?.[0]?.meaning || '',
           status: 'INVALID', // 自定义状态
           reviewCount: 0,
           nextReviewAt: null,
@@ -218,7 +246,7 @@ export async function POST(request: NextRequest) {
         classId: p.students?.class_id,
         vocabularyId: p.vocabularyId,
         word: p.vocabularies?.word,
-        primaryMeaning: p.vocabularies?.primary_meaning,
+        primaryMeaning: p.vocabularies?.word_meanings?.[0]?.meaning || '',
         status: p.status,
         reviewCount: p.reviewCount,
         nextReviewAt: p.nextReviewAt,
@@ -230,7 +258,7 @@ export async function POST(request: NextRequest) {
         classId: studentMap.get(studentId)?.class_id,
         vocabularyId,
         word: vocabMap.get(vocabularyId)?.word,
-        primaryMeaning: vocabMap.get(vocabularyId)?.primary_meaning,
+        primaryMeaning: vocabMap.get(vocabularyId)?.word_meanings?.[0]?.meaning || '',
         status: 'PENDING',
         reviewCount: 0,
         nextReviewAt: new Date(startDate),
@@ -254,14 +282,17 @@ export async function POST(request: NextRequest) {
     // 写库：1) 班级计划去重写入 2) 处理overwrite 3) 插入新的study_plans
     // 1) 班级计划 createMany（幂等）
     // 注意：只写入有效单词的班级计划
+    const planClassIdMap = new Map<string, string>() // key: `${classId}|${vocabularyId}`, value: planClassId
     if (classIds.length > 0 && validVocabularyIds.length > 0) {
       const planClassData: any[] = []
       const timestamp = Date.now()
       let counter = 0
       for (const classId of classIds) {
         for (const vocabularyId of validVocabularyIds) {
+          const pcId = `pc_${timestamp}_${counter++}_${Math.random().toString(36).substr(2, 9)}`
+          planClassIdMap.set(`${classId}|${vocabularyId}`, pcId)
           planClassData.push({
-            id: `pc_${timestamp}_${counter++}_${Math.random().toString(36).substr(2, 9)}`,
+            id: pcId,
             class_id: classId,
             vocabulary_id: vocabularyId,
             start_date: new Date(startDate),
@@ -273,26 +304,44 @@ export async function POST(request: NextRequest) {
         }
       }
       await prisma.plan_classes.createMany({ data: planClassData, skipDuplicates: true })
+
+      // 查询已存在的 plan_classes 以获取其 ID（用于关联）
+      const existingPlanClasses = await prisma.plan_classes.findMany({
+        where: {
+          class_id: { in: classIds },
+          vocabulary_id: { in: validVocabularyIds },
+        },
+        select: { id: true, class_id: true, vocabulary_id: true },
+      })
+      for (const pc of existingPlanClasses) {
+        planClassIdMap.set(`${pc.class_id}|${pc.vocabulary_id}`, pc.id)
+      }
     }
 
     // 2) overwrite模式已移除，始终跳过已存在的计划
     // 简化逻辑，不再重置已存在的计划
 
-    // 3) 批量插入新的study_plans（需要提供必填字段：id、updatedAt）
+    // 3) 批量插入新的study_plans（需要提供必填字段：id、updatedAt、planClassId）
     if (toCreatePairs.length > 0) {
       const ts = Date.now()
       let idx = 0
       await prisma.study_plans.createMany({
-        data: toCreatePairs.map(({ studentId, vocabularyId }) => ({
-          id: `sp_${ts}_${idx++}_${Math.random().toString(36).substr(2, 9)}`,
-          studentId,
-          vocabularyId,
-          status: 'PENDING' as const,
-          reviewCount: 0,
-          nextReviewAt: new Date(startDate),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })),
+        data: toCreatePairs.map(({ studentId, vocabularyId }) => {
+          // 根据学生所属班级获取 planClassId
+          const studentClassId = studentMap.get(studentId)?.class_id
+          const planClassId = studentClassId ? planClassIdMap.get(`${studentClassId}|${vocabularyId}`) : null
+          return {
+            id: `sp_${ts}_${idx++}_${Math.random().toString(36).substr(2, 9)}`,
+            studentId,
+            vocabularyId,
+            planClassId: planClassId || null, // 记录来源班级计划ID
+            status: 'PENDING' as const,
+            reviewCount: 0,
+            nextReviewAt: new Date(startDate),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        }),
         skipDuplicates: true,
       })
     }
@@ -305,7 +354,16 @@ export async function POST(request: NextRequest) {
       },
       include: {
         students: { select: { user: { select: { name: true } }, class_id: true } },
-        vocabularies: { select: { word: true, primary_meaning: true } },
+        vocabularies: {
+          select: {
+            word: true,
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+              take: 1,
+              select: { meaning: true },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -320,7 +378,7 @@ export async function POST(request: NextRequest) {
         classId: p?.students?.class_id ?? studentMap.get(studentId)?.class_id,
         vocabularyId,
         word: p?.vocabularies?.word ?? vocabMap.get(vocabularyId)?.word,
-        primaryMeaning: p?.vocabularies?.primary_meaning ?? vocabMap.get(vocabularyId)?.primary_meaning,
+        primaryMeaning: p?.vocabularies?.word_meanings?.[0]?.meaning ?? vocabMap.get(vocabularyId)?.word_meanings?.[0]?.meaning ?? '',
         status: p?.status ?? 'PENDING',
         reviewCount: p?.reviewCount ?? 0,
         nextReviewAt: p?.nextReviewAt ?? new Date(startDate),
@@ -334,7 +392,7 @@ export async function POST(request: NextRequest) {
       classId: p.students?.class_id,
       vocabularyId: p.vocabularyId,
       word: p.vocabularies?.word,
-      primaryMeaning: p.vocabularies?.primary_meaning,
+      primaryMeaning: p.vocabularies?.word_meanings?.[0]?.meaning || '',
       status: p.status,
       reviewCount: p.reviewCount,
       nextReviewAt: p.nextReviewAt,
@@ -406,13 +464,26 @@ export async function PUT(request: NextRequest) {
         vocabularies: {
           select: {
             word: true,
-            primary_meaning: true,
+            word_meanings: {
+              orderBy: { orderIndex: 'asc' },
+              take: 1,
+              select: { meaning: true },
+            },
           },
         },
       },
     })
 
-    return successResponse(planClass, '班级学习计划更新成功')
+    // 格式化返回数据
+    const formattedPlanClass = {
+      ...planClass,
+      vocabularies: {
+        ...planClass.vocabularies,
+        primary_meaning: planClass.vocabularies?.word_meanings?.[0]?.meaning || '',
+      },
+    }
+
+    return successResponse(formattedPlanClass, '班级学习计划更新成功')
   } catch (error: any) {
     console.error('更新班级学习计划错误:', error)
     return errorResponse(`更新班级学习计划失败: ${error?.message || '未知错误'}`, 500)

@@ -40,70 +40,55 @@ export async function POST(request: NextRequest) {
     const accuracy = totalWords > 0 ? correctCount / totalWords : 0
     const totalTime = answers.reduce((sum: number, a: any) => sum + (a.timeSpent || 0), 0)
 
-    // 1. 创建学习记录
-    // 生成显式ID，避免无默认值时报错
-    const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-    const studyRecord = await prisma.study_records.create({
-      data: {
-        id: srId,
-        studentId,
-        taskDate: today,
-        totalWords,
-        completedWords: totalWords,
-        correctCount,
-        wrongCount,
-        accuracy,
-        totalTime,
-        startedAt: new Date(now.getTime() - totalTime * 1000), // 根据用时推算开始时间
-        completedAt: now,
-        isCompleted: true,
-        updatedAt: now,
-      },
-    })
+    // 提取所有词汇ID用于批量查询
+    const vocabularyIds = [...new Set(answers.map((a: any) => a.vocabularyId))]
 
-    // 2. 处理每个单词的答题结果
-    for (const answer of answers) {
-      const { vocabularyId, questionId, answer: userAnswer, isCorrect, timeSpent } = answer
+    // 使用事务保护整个操作
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. 批量预查询（避免N+1查询）
+      const [existingStudyPlans, existingMasteries] = await Promise.all([
+        tx.study_plans.findMany({
+          where: { studentId, vocabularyId: { in: vocabularyIds } },
+        }),
+        tx.word_masteries.findMany({
+          where: { studentId, vocabularyId: { in: vocabularyIds } },
+        }),
+      ])
 
-      // 2.1 更新每日任务状态
-      await prisma.daily_tasks.updateMany({
-        where: {
-          studentId,
-          vocabularyId,
-          taskDate: { gte: today, lte: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) },
-        },
+      const planMap = new Map(existingStudyPlans.map(p => [p.vocabularyId, p]))
+      const masteryMap = new Map(existingMasteries.map(m => [m.vocabularyId, m]))
+
+      // 2. 创建学习记录
+      const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+      const studyRecord = await tx.study_records.create({
         data: {
-          status: 'COMPLETED',
+          id: srId,
+          studentId,
+          taskDate: today,
+          totalWords,
+          completedWords: totalWords,
+          correctCount,
+          wrongCount,
+          accuracy,
+          totalTime,
+          startedAt: new Date(now.getTime() - totalTime * 1000),
           completedAt: now,
+          isCompleted: true,
+          updatedAt: now,
         },
       })
 
-      // 2.2 更新学习计划
-      const studyPlan = await prisma.study_plans.findFirst({
-        where: {
-          studentId,
-          vocabularyId,
-        },
-      })
+      // 3. 准备批量操作的数据
+      const questionAnswersToCreate: any[] = []
+      const dailyTaskUpdates: { studentId: string; vocabularyId: string }[] = []
+      const studyPlanUpdates: any[] = []
+      const masteryUpserts: any[] = []
 
-      if (studyPlan) {
-        const newReviewCount = studyPlan.reviewCount + 1
-        const nextReviewDate = calculateNextReviewDate(now, newReviewCount)
+      for (const answer of answers) {
+        const { vocabularyId, questionId, answer: userAnswer, isCorrect, timeSpent } = answer
 
-        await prisma.study_plans.update({
-          where: { id: studyPlan.id },
-          data: {
-            status: 'IN_PROGRESS',
-            reviewCount: newReviewCount,
-            lastReviewAt: now,
-            nextReviewAt: nextReviewDate,
-          },
-        })
-      }
-
-      // 2.3 记录所有答题到 question_answers 表（用于计算最近3次正确率）
-      await prisma.question_answers.create({
-        data: {
+        // 3.1 准备答题记录
+        questionAnswersToCreate.push({
           id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
           studentId,
           vocabularyId,
@@ -112,183 +97,206 @@ export async function POST(request: NextRequest) {
           isCorrect,
           timeSpent: timeSpent || null,
           answeredAt: now,
-        },
-      })
-
-      // 2.4 记录错题
-      if (!isCorrect) {
-        const question = await prisma.questions.findUnique({
-          where: { id: questionId },
         })
 
-        if (question) {
-          await prisma.wrong_questions.create({
-            data: {
-              id: `wq_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
-              studentId,
-              vocabularyId,
-              questionId,
-              wrongAnswer: userAnswer,
-              correctAnswer: question.correctAnswer,
-              wrongAt: now,
-            },
+        // 3.2 准备每日任务更新
+        dailyTaskUpdates.push({ studentId, vocabularyId })
+
+        // 3.3 准备学习计划更新
+        const studyPlan = planMap.get(vocabularyId)
+        if (studyPlan) {
+          const newReviewCount = studyPlan.reviewCount + 1
+          const nextReviewDate = calculateNextReviewDate(now, newReviewCount)
+          studyPlanUpdates.push({
+            id: studyPlan.id,
+            reviewCount: newReviewCount,
+            nextReviewAt: nextReviewDate,
           })
         }
-      }
 
-      // 2.5 更新单词掌握度
-      let wordMastery = await prisma.word_masteries.findFirst({
-        where: {
-          studentId,
+        // 3.4 准备掌握度更新
+        const existingMastery = masteryMap.get(vocabularyId)
+        masteryUpserts.push({
           vocabularyId,
+          isCorrect,
+          existingMastery,
+        })
+      }
+
+      // 4. 批量创建答题记录
+      if (questionAnswersToCreate.length > 0) {
+        await tx.question_answers.createMany({
+          data: questionAnswersToCreate,
+        })
+      }
+
+      // 5. 批量更新每日任务
+      for (const { studentId: sid, vocabularyId } of dailyTaskUpdates) {
+        await tx.daily_tasks.updateMany({
+          where: {
+            studentId: sid,
+            vocabularyId,
+            taskDate: { gte: today, lte: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) },
+          },
+          data: {
+            status: 'COMPLETED',
+            completedAt: now,
+          },
+        })
+      }
+
+      // 6. 批量更新学习计划
+      for (const plan of studyPlanUpdates) {
+        await tx.study_plans.update({
+          where: { id: plan.id },
+          data: {
+            status: 'IN_PROGRESS',
+            reviewCount: plan.reviewCount,
+            lastReviewAt: now,
+            nextReviewAt: plan.nextReviewAt,
+          },
+        })
+      }
+
+      // 7. 处理掌握度（需要查询最近答题记录）
+      for (const item of masteryUpserts) {
+        const { vocabularyId, isCorrect, existingMastery } = item
+
+        if (!existingMastery) {
+          // 创建新的掌握度记录
+          await tx.word_masteries.create({
+            data: {
+              id: `wm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+              studentId,
+              vocabularyId,
+              totalWrongCount: isCorrect ? 0 : 1,
+              consecutiveCorrect: isCorrect ? 1 : 0,
+              isMastered: false,
+              isDifficult: false,
+              lastPracticeAt: now,
+              updatedAt: now,
+            },
+          })
+        } else {
+          // 更新现有掌握度记录
+          const newTotalWrongCount = isCorrect
+            ? existingMastery.totalWrongCount
+            : existingMastery.totalWrongCount + 1
+
+          const newConsecutiveCorrect = isCorrect
+            ? existingMastery.consecutiveCorrect + 1
+            : 0
+
+          // 查询最近3次答题记录判定是否掌握
+          const recentAnswers = await tx.question_answers.findMany({
+            where: { studentId, vocabularyId },
+            orderBy: { answeredAt: 'desc' },
+            take: 3,
+            select: { isCorrect: true },
+          })
+
+          const hasThreeRecords = recentAnswers.length >= 3
+          const allCorrect = hasThreeRecords && recentAnswers.every(a => a.isCorrect)
+          const newIsMastered = allCorrect
+
+          const recentCorrectCount = recentAnswers.filter(a => a.isCorrect).length
+          const newRecentAccuracy = recentAnswers.length > 0
+            ? recentCorrectCount / recentAnswers.length
+            : null
+
+          const newIsDifficult = isDifficult(newTotalWrongCount)
+
+          await tx.word_masteries.update({
+            where: { id: existingMastery.id },
+            data: {
+              totalWrongCount: newTotalWrongCount,
+              consecutiveCorrect: newConsecutiveCorrect,
+              recentAccuracy: newRecentAccuracy,
+              isMastered: newIsMastered,
+              isDifficult: newIsDifficult,
+              lastPracticeAt: now,
+              updatedAt: now,
+            },
+          })
+
+          // 如果已掌握，更新学习计划状态
+          if (newIsMastered) {
+            await tx.study_plans.updateMany({
+              where: { studentId, vocabularyId },
+              data: { status: 'MASTERED' },
+            })
+          }
+        }
+      }
+
+      // 8. 处理积分系统
+      const basePoints = correctCount
+      const completionBonus = 5
+      const perfectBonus = accuracy === 1 ? 3 : 0
+      const totalPoints = basePoints + completionBonus + perfectBonus
+
+      let studentPoints = await tx.student_points.findUnique({
+        where: { studentId },
+      })
+
+      if (!studentPoints) {
+        const pointsId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+        studentPoints = await tx.student_points.create({
+          data: {
+            id: pointsId,
+            studentId,
+            totalPoints: 0,
+            dailyPoints: 0,
+            weeklyPoints: 0,
+            monthlyPoints: 0,
+            level: 1,
+          },
+        })
+      }
+
+      const newTotalPoints = studentPoints.totalPoints + totalPoints
+      const newLevel = Math.floor(newTotalPoints / 100) + 1
+
+      await tx.student_points.update({
+        where: { studentId },
+        data: {
+          totalPoints: newTotalPoints,
+          dailyPoints: studentPoints.dailyPoints + totalPoints,
+          weeklyPoints: studentPoints.weeklyPoints + totalPoints,
+          monthlyPoints: studentPoints.monthlyPoints + totalPoints,
+          level: newLevel,
         },
       })
 
-      if (!wordMastery) {
-        // 创建新的掌握度记录（显式提供id和updatedAt）
-        wordMastery = await prisma.word_masteries.create({
-          data: {
-            id: `wm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
-            studentId,
-            vocabularyId,
-            totalWrongCount: isCorrect ? 0 : 1,
-            consecutiveCorrect: isCorrect ? 1 : 0,
-            isMastered: false,
-            isDifficult: false,
-            lastPracticeAt: now,
-            updatedAt: now,
-          },
-        })
-      } else {
-        // 更新现有掌握度记录
-        const newTotalWrongCount = isCorrect
-          ? wordMastery.totalWrongCount
-          : wordMastery.totalWrongCount + 1
-
-        const newConsecutiveCorrect = isCorrect
-          ? wordMastery.consecutiveCorrect + 1
-          : 0
-
-        // 🔧 修复：基于最近3次答题记录判定是否掌握（必须连续3次100%正确）
-        // 从 question_answers 表获取最近3次答题记录
-        const recentAnswers = await prisma.question_answers.findMany({
-          where: {
-            studentId,
-            vocabularyId,
-          },
-          orderBy: { answeredAt: 'desc' },
-          take: 3,
-          select: { isCorrect: true }
-        })
-
-        // 只有当最近3次答题都正确时才判定为掌握
-        const hasThreeRecords = recentAnswers.length >= 3
-        const allCorrect = hasThreeRecords && recentAnswers.every(a => a.isCorrect)
-        const newIsMastered = allCorrect
-
-        // 计算最近3次正确率
-        const recentCorrectCount = recentAnswers.filter(a => a.isCorrect).length
-        const newRecentAccuracy = recentAnswers.length > 0
-          ? recentCorrectCount / recentAnswers.length
-          : null
-
-        const newIsDifficult = isDifficult(newTotalWrongCount)
-
-        await prisma.word_masteries.update({
-          where: { id: wordMastery.id },
-          data: {
-            totalWrongCount: newTotalWrongCount,
-            consecutiveCorrect: newConsecutiveCorrect,
-            recentAccuracy: newRecentAccuracy,  // 更新最近正确率
-            isMastered: newIsMastered,
-            isDifficult: newIsDifficult,
-            lastPracticeAt: now,
-            updatedAt: now,
-          },
-        })
-
-        // 如果已掌握，更新学习计划状态
-        if (newIsMastered) {
-          await prisma.study_plans.updateMany({
-            where: {
-              studentId,
-              vocabularyId,
-            },
-            data: {
-              status: 'MASTERED',
-            },
-          })
-        }
-      }
-    }
-
-    // 3. 🎮 添加积分奖励（游戏化）
-    // 基础积分：每答对1题 +1分
-    const basePoints = correctCount
-    // 完成任务奖励：+5分
-    const completionBonus = 5
-    // 全对奖励：正确率100%额外+3分
-    const perfectBonus = accuracy === 1 ? 3 : 0
-    const totalPoints = basePoints + completionBonus + perfectBonus
-
-    // 获取或创建积分记录
-    let studentPoints = await prisma.student_points.findUnique({
-      where: { studentId }
-    })
-
-    if (!studentPoints) {
-      const pointsId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-      studentPoints = await prisma.student_points.create({
+      // 记录积分历史
+      const historyId = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+      await tx.point_history.create({
         data: {
-          id: pointsId,
+          id: historyId,
           studentId,
-          totalPoints: 0,
-          dailyPoints: 0,
-          weeklyPoints: 0,
-          monthlyPoints: 0,
-          level: 1,
-          updatedAt: new Date()
-        }
+          points: totalPoints,
+          reason: `学习${totalWords}题(对${correctCount}个+${basePoints}分, 完成+${completionBonus}分${perfectBonus > 0 ? ', 全对+' + perfectBonus + '分' : ''})`,
+          relatedType: 'study_record',
+          relatedId: srId,
+        },
       })
-    }
 
-    // 更新积分
-    const newTotalPoints = studentPoints.totalPoints + totalPoints
-    const newLevel = Math.floor(newTotalPoints / 100) + 1
-
-    await prisma.student_points.update({
-      where: { studentId },
-      data: {
-        totalPoints: newTotalPoints,
-        dailyPoints: studentPoints.dailyPoints + totalPoints,
-        weeklyPoints: studentPoints.weeklyPoints + totalPoints,
-        monthlyPoints: studentPoints.monthlyPoints + totalPoints,
-        level: newLevel,
-        updatedAt: new Date()
+      return {
+        studyRecord,
+        totalPoints,
+        newTotalPoints,
+        newLevel,
       }
     })
 
-    // 记录积分历史
-    const historyId = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-    await prisma.point_history.create({
-      data: {
-        id: historyId,
-        studentId,
-        points: totalPoints,
-        reason: `学习${totalWords}题(对${correctCount}个+${basePoints}分, 完成+${completionBonus}分${perfectBonus > 0 ? ', 全对+' + perfectBonus + '分' : ''})`,
-        relatedType: 'study_record',
-        relatedId: srId
-      }
-    })
-
-    // 4. 检查并解锁成就（异步执行，不阻塞响应）
+    // 检查并解锁成就（异步执行，不阻塞响应）
     checkAndUnlockAchievements(studentId).catch(err => {
       console.error('检查成就失败:', err)
     })
 
     return apiResponse.success({
       message: '答题记录已提交',
-      studyRecord,
+      studyRecord: result.studyRecord,
       stats: {
         totalWords,
         correctCount,
@@ -296,10 +304,10 @@ export async function POST(request: NextRequest) {
         accuracy: Math.round(accuracy * 100),
       },
       points: {
-        earned: totalPoints,
-        total: newTotalPoints,
-        level: newLevel
-      }
+        earned: result.totalPoints,
+        total: result.newTotalPoints,
+        level: result.newLevel,
+      },
     })
   } catch (error: any) {
     console.error('提交答题记录失败:', error)
