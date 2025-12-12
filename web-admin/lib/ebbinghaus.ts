@@ -50,7 +50,11 @@ export function calculateNextReviewDate(
 
 /**
  * 判断单词是否已掌握
- * 规则：连续 N 次复习正确率100%
+ *
+ * @deprecated 此函数已废弃，请使用 question_answers 表最近3条记录进行判定。
+ * 统一标准：最近3次答题全部正确时判定为掌握。
+ * 参见 /api/study-records 和 /api/review-plan/update-mastery 的实现。
+ *
  * @param consecutiveCorrect 连续正确次数
  * @param threshold 掌握阈值，默认3
  * @returns 是否已掌握

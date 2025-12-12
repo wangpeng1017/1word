@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       distinct: ['studentId'],
     })
 
-    // 5. 掌握度统计 - 按独立词汇统计（vocabularyId 去重）
+    // 5. 掌握度统计 - 改用人次统计（更准确）
     const wordMasteries = await prisma.word_masteries.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
@@ -106,30 +106,15 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // 按 vocabularyId 去重统计
-    const vocabMasteryMap = new Map<string, { isMastered: boolean; isDifficult: boolean }>()
-    wordMasteries.forEach(m => {
-      const existing = vocabMasteryMap.get(m.vocabularyId)
-      if (!existing) {
-        // 首次遇到该词汇
-        vocabMasteryMap.set(m.vocabularyId, {
-          isMastered: m.isMastered,
-          isDifficult: m.isDifficult
-        })
-      } else {
-        // 如果任意学生已掌握，则标记为已掌握
-        if (m.isMastered) existing.isMastered = true
-        // 如果任意学生标记为难点，则标记为难点
-        if (m.isDifficult) existing.isDifficult = true
-      }
-    })
+    // 统计人次（每个学生-词汇对为一条记录）
+    const totalMasteryRecords = wordMasteries.length
+    const masteredRecords = wordMasteries.filter(m => m.isMastered).length
+    const difficultRecords = wordMasteries.filter(m => m.isDifficult).length
+    const learningRecords = wordMasteries.filter(m => !m.isMastered).length
 
-    // 统计独立词汇数
-    const uniqueVocabs = Array.from(vocabMasteryMap.values())
-    const masteredWords = uniqueVocabs.filter(v => v.isMastered).length
-    const difficultWords = uniqueVocabs.filter(v => v.isDifficult).length
-    const learningWords = uniqueVocabs.filter(v => !v.isMastered).length
-    const totalLearnedVocabs = uniqueVocabs.length  // 有学习记录的独立词汇数
+    // 统计独立词汇数（用于展示覆盖了多少词汇）
+    const uniqueVocabIds = new Set(wordMasteries.map(m => m.vocabularyId))
+    const totalLearnedVocabs = uniqueVocabIds.size
 
     // 6. 每日学习趋势（最近14天）
     const fourteenDaysAgo = new Date(today)
@@ -237,12 +222,14 @@ export async function GET(request: NextRequest) {
         totalTime: Math.floor(totalTime / 60), // 转换为分钟
       },
       mastery: {
-        masteredWords,
-        learningWords,
-        difficultWords,
-        // 掌握率 = 已掌握独立词汇数 / 有学习记录的独立词汇数
-        masteryRate: totalLearnedVocabs > 0
-          ? ((masteredWords / totalLearnedVocabs) * 100).toFixed(1)
+        masteredCount: masteredRecords,      // 已掌握的学生-词汇对数量
+        learningCount: learningRecords,      // 学习中的学生-词汇对数量
+        difficultCount: difficultRecords,    // 难点词汇的学生-词汇对数量
+        totalRecords: totalMasteryRecords,   // 总学习记录数
+        uniqueVocabs: totalLearnedVocabs,    // 覆盖的独立词汇数
+        // 掌握率 = 已掌握记录数 / 总记录数（人次维度，更准确）
+        masteryRate: totalMasteryRecords > 0
+          ? ((masteredRecords / totalMasteryRecords) * 100).toFixed(1)
           : 0,
       },
       dailyTrend,

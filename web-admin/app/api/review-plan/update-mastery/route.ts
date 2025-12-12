@@ -4,35 +4,54 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import {
   calculateNextReviewDate,
-  isMastered as checkMastered,
   isDifficult as checkDifficult,
-  calculateRecentAccuracy,
 } from '@/lib/ebbinghaus'
 
 /**
  * 更新词汇掌握度
  * POST /api/review-plan/update-mastery
- * 
+ *
  * 学生每次完成答题后调用此接口更新掌握度
+ *
+ * 掌握判定逻辑（统一标准）：
+ * - 基于 question_answers 表最近3条记录
+ * - 只有当最近3次答题全部正确时，才判定为掌握
  */
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload) {
       return unauthorizedResponse()
     }
 
     const body = await request.json()
-    const { studentId, vocabularyId, isCorrect, questionType } = body
+    const { studentId, vocabularyId, isCorrect, questionId, wrongAnswer, correctAnswer } = body
 
     if (!studentId || !vocabularyId || typeof isCorrect !== 'boolean') {
       return errorResponse('参数不完整')
     }
 
-    // 1. 获取或创建词汇掌握度记录
+    const now = new Date()
+
+    // 1. 记录答题到 question_answers 表（用于统一的掌握判定）
+    if (questionId) {
+      await prisma.question_answers.create({
+        data: {
+          id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+          studentId,
+          vocabularyId,
+          questionId,
+          answer: isCorrect ? (correctAnswer || '') : (wrongAnswer || ''),
+          isCorrect,
+          answeredAt: now,
+        },
+      })
+    }
+
+    // 2. 获取或创建词汇掌握度记录
     let wordMastery = await prisma.word_masteries.findUnique({
       where: {
         studentId_vocabularyId: {
@@ -49,20 +68,22 @@ export async function POST(request: NextRequest) {
       // 首次练习该词汇，创建记录
       wordMastery = await prisma.word_masteries.create({
         data: {
+          id: `wm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
           studentId,
           vocabularyId,
-          totalWrongCount: 0,
-          consecutiveCorrect: 0,
+          totalWrongCount: isCorrect ? 0 : 1,
+          consecutiveCorrect: isCorrect ? 1 : 0,
           isMastered: false,
           isDifficult: false,
+          updatedAt: now,
         },
         include: {
-          vocabulary: true,
+          vocabularies: true,
         },
       })
     }
 
-    // 2. 更新掌握度数据
+    // 3. 更新掌握度数据
     let newConsecutiveCorrect = wordMastery.consecutiveCorrect
     let newTotalWrongCount = wordMastery.totalWrongCount
 
@@ -71,38 +92,45 @@ export async function POST(request: NextRequest) {
     } else {
       newConsecutiveCorrect = 0 // 答错重置连续正确次数
       newTotalWrongCount += 1
-      
+
       // 记录错题
-      await prisma.wrong_questions.create({
-        data: {
-          studentId,
-          vocabularyId,
-          questionId: body.questionId || '', // 如果有题目ID
-          wrongAnswer: body.wrongAnswer || '',
-          correctAnswer: body.correctAnswer || '',
-        },
-      })
+      if (questionId) {
+        await prisma.wrong_questions.create({
+          data: {
+            id: `wq_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+            studentId,
+            vocabularyId,
+            questionId,
+            wrongAnswer: wrongAnswer || '',
+            correctAnswer: correctAnswer || '',
+            wrongAt: now,
+          },
+        })
+      }
     }
 
-    // 3. 判断是否掌握/是否为难点
-    const mastered = checkMastered(newConsecutiveCorrect)
-    const difficult = checkDifficult(newTotalWrongCount)
-
-    // 4. 获取最近的答题记录计算正确率
-    const recentWrongQuestions = await prisma.wrong_questions.findMany({
+    // 4. 基于 question_answers 最近3条记录判定掌握（统一标准）
+    const recentAnswers = await prisma.question_answers.findMany({
       where: {
         studentId,
         vocabularyId,
       },
-      orderBy: {
-        wrongAt: 'desc',
-      },
+      orderBy: { answeredAt: 'desc' },
       take: 3,
+      select: { isCorrect: true }
     })
-    
-    // 构建最近3次答题记录（简化处理）
-    const recentRecords: boolean[] = [isCorrect]
-    const recentAccuracy = calculateRecentAccuracy(recentRecords)
+
+    const hasThreeRecords = recentAnswers.length >= 3
+    const allCorrect = hasThreeRecords && recentAnswers.every(a => a.isCorrect)
+    const mastered = allCorrect
+
+    // 计算最近3次正确率
+    const recentCorrectCount = recentAnswers.filter(a => a.isCorrect).length
+    const recentAccuracy = recentAnswers.length > 0
+      ? recentCorrectCount / recentAnswers.length
+      : null
+
+    const difficult = checkDifficult(newTotalWrongCount)
 
     // 5. 更新词汇掌握度
     const updatedMastery = await prisma.word_masteries.update({
@@ -118,7 +146,8 @@ export async function POST(request: NextRequest) {
         isMastered: mastered,
         isDifficult: difficult,
         recentAccuracy,
-        lastPracticeAt: new Date(),
+        lastPracticeAt: now,
+        updatedAt: now,
       },
     })
 

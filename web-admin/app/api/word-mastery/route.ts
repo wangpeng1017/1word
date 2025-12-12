@@ -87,6 +87,10 @@ export async function GET(request: NextRequest) {
                 existing.avgConsecutiveCorrect += record.consecutiveCorrect
                 if (record.isMastered) existing.masteredCount += 1
                 if (record.isDifficult) existing.difficultCount += 1
+                // 使用已存储的 recentAccuracy（已在答题时更新）
+                if (record.recentAccuracy !== null && existing.recentAccuracy === null) {
+                    existing.recentAccuracy = record.recentAccuracy
+                }
             } else {
                 aggregatedData.set(vocabId, {
                     vocabularyId: vocabId,
@@ -100,33 +104,8 @@ export async function GET(request: NextRequest) {
                     avgConsecutiveCorrect: record.consecutiveCorrect,
                     masteredCount: record.isMastered ? 1 : 0,
                     difficultCount: record.isDifficult ? 1 : 0,
-                    recentAccuracy: null,
+                    recentAccuracy: record.recentAccuracy,  // 直接使用已存储的值
                 })
-            }
-        }
-
-        // 计算每个单词的最近3次正确率
-        const vocabIds = Array.from(aggregatedData.keys())
-
-        for (const vocabId of vocabIds) {
-            // 获取该单词的最近3次答题记录
-            const recentAnswers = await prisma.question_answers.findMany({
-                where: {
-                    vocabularyId: vocabId,
-                    ...(studentFilter.studentId ? { studentId: studentFilter.studentId } : {})
-                },
-                orderBy: { answeredAt: 'desc' },
-                take: 3,
-                select: { isCorrect: true }
-            })
-
-            if (recentAnswers.length > 0) {
-                const correctCount = recentAnswers.filter(a => a.isCorrect).length
-                const accuracy = Math.round((correctCount / recentAnswers.length) * 100)
-                const data = aggregatedData.get(vocabId)
-                if (data) {
-                    data.recentAccuracy = accuracy
-                }
             }
         }
 

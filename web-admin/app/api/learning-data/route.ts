@@ -5,7 +5,7 @@ import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/resp
 
 /**
  * 获取学习数据列表
- * GET /api/learning-data
+ * GET /api/learning-data?classId=xxx&studentId=xxx&startDate=xxx&endDate=xxx
  */
 export async function GET(request: NextRequest) {
     try {
@@ -22,8 +22,36 @@ export async function GET(request: NextRequest) {
         const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100)
         const skip = (page - 1) * limit
 
+        // 筛选条件
+        const classId = searchParams.get('classId')
+        const studentId = searchParams.get('studentId')
+        const startDate = searchParams.get('startDate')
+        const endDate = searchParams.get('endDate')
+
+        // 构建查询条件
+        const where: any = {}
+
+        if (studentId) {
+            where.studentId = studentId
+        } else if (classId) {
+            where.students = {
+                class_id: classId,
+            }
+        }
+
+        if (startDate || endDate) {
+            where.taskDate = {}
+            if (startDate) {
+                where.taskDate.gte = new Date(startDate)
+            }
+            if (endDate) {
+                where.taskDate.lte = new Date(endDate + 'T23:59:59')
+            }
+        }
+
         const [records, total] = await Promise.all([
             prisma.study_records.findMany({
+                where,
                 skip,
                 take: limit,
                 orderBy: [
@@ -47,7 +75,7 @@ export async function GET(request: NextRequest) {
                     },
                 },
             }),
-            prisma.study_records.count(),
+            prisma.study_records.count({ where }),
         ])
 
         // 格式化数据

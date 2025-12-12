@@ -186,6 +186,12 @@ export async function POST(request: NextRequest) {
         const allCorrect = hasThreeRecords && recentAnswers.every(a => a.isCorrect)
         const newIsMastered = allCorrect
 
+        // 计算最近3次正确率
+        const recentCorrectCount = recentAnswers.filter(a => a.isCorrect).length
+        const newRecentAccuracy = recentAnswers.length > 0
+          ? recentCorrectCount / recentAnswers.length
+          : null
+
         const newIsDifficult = isDifficult(newTotalWrongCount)
 
         await prisma.word_masteries.update({
@@ -193,6 +199,7 @@ export async function POST(request: NextRequest) {
           data: {
             totalWrongCount: newTotalWrongCount,
             consecutiveCorrect: newConsecutiveCorrect,
+            recentAccuracy: newRecentAccuracy,  // 更新最近正确率
             isMastered: newIsMastered,
             isDifficult: newIsDifficult,
             lastPracticeAt: now,

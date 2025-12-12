@@ -4,6 +4,7 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { shouldReviewToday, getTodayDate, calculatePriority, daysBetween, DEFAULT_CONFIG } from '@/lib/ebbinghaus'
 import { allocateQuestionTypes, selectQuestionByType, getQuestionTypeStats } from '@/lib/question-type-allocator'
+import { detectInterruptedTasks } from '@/lib/task-interrupt-detector'
 
 /**
  * 获取学生每日任务
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     if (!token || !verifyToken(token)) {
       return unauthorizedResponse()
     }
@@ -25,6 +26,9 @@ export async function GET(request: NextRequest) {
     if (!studentId) {
       return errorResponse('缺少学生ID')
     }
+
+    // 检测并更新中断的任务（在查询之前执行）
+    await detectInterruptedTasks(studentId)
 
     // 解析日期
     const targetDate = dateParam ? new Date(dateParam) : getTodayDate()

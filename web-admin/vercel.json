@@ -1,5 +1,15 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "regions": ["hkg1"]
+  "regions": ["hkg1"],
+  "crons": [
+    {
+      "path": "/api/cron/reset-points",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/data-archive",
+      "schedule": "0 3 * * 0"
+    }
+  ]
 }
