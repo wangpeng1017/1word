@@ -172,9 +172,7 @@ export default function SettingsPage() {
         <div style={{ lineHeight: 1.8, color: '#666' }}>
           <p><strong>艾宾浩斯复习间隔：</strong></p>
           <ul style={{ paddingLeft: 20 }}>
-            <li>复习间隔：1天 → 2天 → 4天 → 7天 → 15天</li>
-            <li>正确率高（≥90%）时，间隔自动延长20%</li>
-            <li>正确率低（&lt;60%）时，间隔自动缩短50%</li>
+            <li>严格按记忆曲线：1天 → 2天 → 4天 → 7天 → 15天</li>
           </ul>
 
           <p style={{ marginTop: 16 }}><strong>掌握与难点判定：</strong></p>

@@ -105,13 +105,8 @@ export async function POST(request: NextRequest) {
 
         // 检查学习计划是否已存在
         if (!existingPlanSet.has(key)) {
-          // 计算第一次复习时间
-          const nextReviewAt = calculateNextReviewDate(
-            today,
-            0, // 复习次数为0
-            1, // 初始正确率100%
-            vocab.difficulty as 'EASY' | 'MEDIUM' | 'HARD'
-          )
+          // 计算第一次复习时间（严格按艾宾浩斯曲线）
+          const nextReviewAt = calculateNextReviewDate(today, 0)
 
           studyPlansToCreate.push({
             id: generateId('sp'),

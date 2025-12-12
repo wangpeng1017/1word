@@ -13,29 +13,17 @@ export const DEFAULT_CONFIG = {
 
 /**
  * 计算下次复习时间
+ * 严格按艾宾浩斯曲线：1天、2天、4天、7天、15天
  * @param lastReviewDate 上次复习时间
  * @param reviewCount 已复习次数（从0开始）
- * @param accuracy 最近正确率 (0-1)，用于动态调整
  * @returns 下次复习时间
  */
 export function calculateNextReviewDate(
   lastReviewDate: Date,
-  reviewCount: number,
-  accuracy: number = 1
+  reviewCount: number
 ): Date {
   const intervalIndex = Math.min(reviewCount, REVIEW_INTERVALS.length - 1)
-  let intervalDays = REVIEW_INTERVALS[intervalIndex]
-
-  // 根据正确率动态调整间隔
-  if (accuracy < 0.6) {
-    // 正确率低，缩短间隔
-    intervalDays = Math.max(1, Math.floor(intervalDays * 0.5))
-  } else if (accuracy >= 0.9) {
-    // 正确率高，可延长间隔
-    intervalDays = Math.ceil(intervalDays * 1.2)
-  }
-
-  // 难度系数已移除，保持纯艾宾浩斯间隔
+  const intervalDays = REVIEW_INTERVALS[intervalIndex]
 
   const nextDate = new Date(lastReviewDate)
   nextDate.setDate(nextDate.getDate() + intervalDays)

@@ -170,25 +170,15 @@ export async function POST(request: NextRequest) {
           status: 'IN_PROGRESS',
           reviewCount: 1,
           lastReviewAt: new Date(),
-          nextReviewAt: calculateNextReviewDate(
-            new Date(),
-            0,
-            recentAccuracy,
-            wordMastery.vocabularies.difficulty as any
-          ),
+          nextReviewAt: calculateNextReviewDate(new Date(), 0),
         },
       })
     } else {
       // 更新学习计划
       const newReviewCount = studyPlan.reviewCount + 1
-      const nextReviewDate = mastered 
+      const nextReviewDate = mastered
         ? null // 已掌握不再安排复习
-        : calculateNextReviewDate(
-            new Date(),
-            newReviewCount,
-            recentAccuracy,
-            wordMastery.vocabularies.difficulty as any
-          )
+        : calculateNextReviewDate(new Date(), newReviewCount)
 
       await prisma.study_plans.update({
         where: {
