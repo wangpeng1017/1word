@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     const allowedTypes: Record<string, string[]> = {
       audio: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'],
       image: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+      qrcode: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
       general: ['*/*'],
     }
 

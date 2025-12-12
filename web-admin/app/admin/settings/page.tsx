@@ -1,13 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert } from 'antd'
-import { SaveOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons'
+import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal } from 'antd'
+import { SaveOutlined, ReloadOutlined, SettingOutlined, UploadOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import type { UploadFile, UploadProps } from 'antd'
 
 export default function SettingsPage() {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [qrcodeUrl, setQrcodeUrl] = useState<string>('')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -25,12 +29,16 @@ export default function SettingsPage() {
       if (result.success) {
         const settings = result.data
 
-        // 设置表单值
         form.setFieldsValue({
           systemName: settings.systemInfo?.systemName || '智能词汇复习助手',
           defaultPassword: settings.systemInfo?.defaultPassword || '123456',
           interruptTimeout: settings.studyConfig?.interruptTimeout || 10,
         })
+
+        // 加载客服二维码
+        if (settings.customerService?.qrcodeUrl) {
+          setQrcodeUrl(settings.customerService.qrcodeUrl)
+        }
       }
     } catch (error) {
       message.error('加载设置失败')
@@ -46,7 +54,6 @@ export default function SettingsPage() {
 
       const token = localStorage.getItem('token')
 
-      // 构建设置对象
       const settings = {
         systemInfo: {
           systemName: values.systemName,
@@ -55,6 +62,9 @@ export default function SettingsPage() {
         },
         studyConfig: {
           interruptTimeout: values.interruptTimeout,
+        },
+        customerService: {
+          qrcodeUrl: qrcodeUrl,
         },
       }
 
@@ -84,6 +94,57 @@ export default function SettingsPage() {
   const handleReset = () => {
     form.resetFields()
     loadSettings()
+  }
+
+  // 处理二维码上传
+  const handleUpload: UploadProps['customRequest'] = async (options) => {
+    const { file, onSuccess, onError } = options
+    setUploading(true)
+
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', file as File)
+      formData.append('type', 'qrcode')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.data?.url) {
+        setQrcodeUrl(result.data.url)
+        message.success('二维码上传成功')
+        onSuccess?.(result)
+      } else {
+        throw new Error(result.error || '上传失败')
+      }
+    } catch (error: any) {
+      message.error(error.message || '上传失败')
+      onError?.(error)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // 删除二维码
+  const handleDeleteQrcode = () => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除客服二维码吗？删除后学生将无法看到联系客服按钮。',
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        setQrcodeUrl('')
+        message.success('二维码已删除，请点击"保存设置"生效')
+      },
+    })
   }
 
   return (
@@ -166,6 +227,97 @@ export default function SettingsPage() {
                   style={{ width: 200 }}
                   addonAfter="分钟"
                 />
+              </Form.Item>
+            </div>
+          </div>
+
+          {/* 客服设置 */}
+          <div>
+            <Divider orientation="left">
+              <Space>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>客服设置</span>
+                <Tag color="orange">联系方式</Tag>
+              </Space>
+            </Divider>
+
+            <div style={{
+              background: '#f5f7fa',
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 24,
+            }}>
+              <Form.Item
+                label="客服微信二维码"
+                tooltip="上传客服微信二维码，学生可在登录页扫码添加客服"
+                style={{ marginBottom: 0 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                  {qrcodeUrl ? (
+                    <div style={{ position: 'relative' }}>
+                      <Image
+                        src={qrcodeUrl}
+                        alt="客服二维码"
+                        width={120}
+                        height={120}
+                        style={{ borderRadius: 8, border: '1px solid #d9d9d9' }}
+                        preview={{
+                          visible: previewOpen,
+                          onVisibleChange: setPreviewOpen,
+                        }}
+                      />
+                      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                        <Button
+                          size="small"
+                          onClick={() => setPreviewOpen(true)}
+                        >
+                          预览
+                        </Button>
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteQrcode}
+                        >
+                          删除
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Upload
+                      accept="image/*"
+                      showUploadList={false}
+                      customRequest={handleUpload}
+                    >
+                      <div style={{
+                        width: 120,
+                        height: 120,
+                        border: '1px dashed #d9d9d9',
+                        borderRadius: 8,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        background: '#fafafa',
+                      }}>
+                        {uploading ? (
+                          <span>上传中...</span>
+                        ) : (
+                          <>
+                            <PlusOutlined style={{ fontSize: 24, color: '#999' }} />
+                            <span style={{ marginTop: 8, color: '#666', fontSize: 12 }}>上传二维码</span>
+                          </>
+                        )}
+                      </div>
+                    </Upload>
+                  )}
+                  <div style={{ color: '#666', fontSize: 12, lineHeight: 1.8 }}>
+                    <p>• 支持 JPG、PNG 格式</p>
+                    <p>• 建议尺寸 300x300 像素以上</p>
+                    <p>• 上传后学生可在登录页看到"联系客服"按钮</p>
+                    <p>• 删除二维码后按钮将隐藏</p>
+                  </div>
+                </div>
               </Form.Item>
             </div>
           </div>
