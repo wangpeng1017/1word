@@ -93,13 +93,13 @@
           <text class="result-value">{{currentQuestion.correctAnswer}}</text>
         </view>
         
-        <!-- 释义展示 -->
-        <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="result-meanings">
+        <!-- 释义展示（限制高度，可滚动） -->
+        <scroll-view scroll-y class="result-meanings-scroll" wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}">
           <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="result-meaning-item">
             <text class="meaning-pos">{{item.partOfSpeech}}</text>
             <text class="meaning-content">{{item.meaning}}</text>
           </view>
-        </view>
+        </scroll-view>
         <text wx:elif="{{currentQuestion.correctAnswer != currentTask.vocabulary.primaryMeaning}}" class="result-meaning">{{currentTask.vocabulary.primaryMeaning}}</text>
       </view>
 
@@ -110,24 +110,25 @@
         <view class="firework firework-4"></view>
         <view class="firework firework-5"></view>
       </view>
+
+      <!-- 继续按钮（放在result-bar内部，避免被遮挡） -->
+      <button 
+        wx:if="{{!isCorrect}}" 
+        class="continue-btn-inside" 
+        bindtap="nextQuestion"
+      >
+        继续
+      </button>
     </view>
 
-    <!-- 提交按钮 / 继续按钮 -->
-    <view class="submit-section">
+    <!-- 提交按钮（仅在未答题时显示） -->
+    <view class="submit-section" wx:if="{{!isAnswered}}">
       <button 
-        wx:if="{{!isAnswered}}" 
         class="submit-btn" 
         bindtap="submitAnswer" 
         disabled="{{!selectedAnswer}}"
       >
         提交答案
-      </button>
-      <button 
-        wx:elif="{{isAnswered && !isCorrect}}" 
-        class="submit-btn continue-btn" 
-        bindtap="nextQuestion"
-      >
-        继续
       </button>
     </view>
 

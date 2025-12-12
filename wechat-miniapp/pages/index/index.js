@@ -1,6 +1,6 @@
 // pages/index/index.js
-const { get } = require('../../utils/request')
-const { getStudyProgress } = require('../../utils/storage')
+const { get, post } = require('../../utils/request')
+const { getStudyProgress, clearStudyProgress } = require('../../utils/storage')
 const app = getApp()
 
 Page({
@@ -63,6 +63,23 @@ Page({
   async getTodayOverview() {
     const studentId = app.globalData.userInfo && app.globalData.userInfo.studentId
     if (!studentId) return null
+
+    // P8: 先调用 POST 确保任务已生成（包括新添加的词汇）
+    try {
+      await post(`/students/${studentId}/daily-tasks`)
+    } catch (e) {
+      console.warn('同步任务失败，继续获取概览', e)
+    }
+
+    // 清理跨天的本地进度
+    const saved = getStudyProgress()
+    if (saved && saved.timestamp) {
+      const savedDate = new Date(saved.timestamp).toDateString()
+      const today = new Date().toDateString()
+      if (savedDate !== today) {
+        clearStudyProgress()
+      }
+    }
 
     // 直接从复习概览接口获取（小程序友好的 miniapp 段）
     try {

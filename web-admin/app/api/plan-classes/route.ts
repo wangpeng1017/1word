@@ -98,6 +98,19 @@ export async function POST(request: NextRequest) {
       return errorResponse('请指定计划开始日期')
     }
 
+    // P7: 数量限制检查
+    const MAX_CLASSES = 10
+    const MAX_VOCABULARIES = 200
+    const MAX_TOTAL_PLANS = 5000
+
+    if (classIds.length > MAX_CLASSES) {
+      return errorResponse(`单次最多选择 ${MAX_CLASSES} 个班级，当前选择了 ${classIds.length} 个`)
+    }
+
+    if (vocabularyIds.length > MAX_VOCABULARIES) {
+      return errorResponse(`单次最多选择 ${MAX_VOCABULARIES} 个词汇，当前选择了 ${vocabularyIds.length} 个`)
+    }
+
     // 验证班级是否存在
     const classes = await prisma.classes.findMany({
       where: { id: { in: classIds } },
@@ -138,6 +151,14 @@ export async function POST(request: NextRequest) {
 
     if (studentsByClass.length === 0) {
       return errorResponse('所选班级下没有学生')
+    }
+
+    // P7: 检查总计划数量限制
+    const estimatedPlans = studentsByClass.length * validVocabularyIds.length
+    if (estimatedPlans > MAX_TOTAL_PLANS) {
+      return errorResponse(
+        `预计生成 ${estimatedPlans} 条计划（${studentsByClass.length} 学生 × ${validVocabularyIds.length} 词汇），超过单次限制 ${MAX_TOTAL_PLANS}。请分批操作。`
+      )
     }
 
     const studentIds = studentsByClass.map(s => s.id)
@@ -398,7 +419,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// 批量删除班级学习计划
+// 批量删除班级学习计划（级联删除学生计划）
 export async function DELETE(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -416,15 +437,73 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少计划ID')
     }
 
-    await prisma.plan_classes.deleteMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
+    // 1. 获取要删除的 plan_classes 详情
+    const planClassesToDelete = await prisma.plan_classes.findMany({
+      where: { id: { in: ids } },
+      select: { class_id: true, vocabulary_id: true }
     })
 
-    return successResponse(null, '班级学习计划删除成功')
+    if (planClassesToDelete.length === 0) {
+      return errorResponse('未找到要删除的计划')
+    }
+
+    // 2. 查找关联班级的所有学生
+    const classIds = [...new Set(planClassesToDelete.map(p => p.class_id))]
+    const students = await prisma.students.findMany({
+      where: { class_id: { in: classIds } },
+      select: { id: true, class_id: true }
+    })
+
+    // 3. 构建要删除的学生学习计划条件
+    const studyPlanDeleteConditions: Array<{ studentId: { in: string[] }, vocabularyId: string }> = []
+    const dailyTaskDeleteConditions: Array<{ studentId: { in: string[] }, vocabularyId: string }> = []
+
+    for (const pc of planClassesToDelete) {
+      const studentIds = students
+        .filter(s => s.class_id === pc.class_id)
+        .map(s => s.id)
+
+      if (studentIds.length > 0) {
+        studyPlanDeleteConditions.push({
+          studentId: { in: studentIds },
+          vocabularyId: pc.vocabulary_id
+        })
+        dailyTaskDeleteConditions.push({
+          studentId: { in: studentIds },
+          vocabularyId: pc.vocabulary_id
+        })
+      }
+    }
+
+    // 4. 统计将删除的记录数
+    let deletedStudyPlansCount = 0
+    let deletedDailyTasksCount = 0
+
+    // 5. 使用事务执行级联删除
+    await prisma.$transaction(async (tx) => {
+      // 删除学生的每日任务
+      for (const cond of dailyTaskDeleteConditions) {
+        const result = await tx.daily_tasks.deleteMany({ where: cond })
+        deletedDailyTasksCount += result.count
+      }
+
+      // 删除学生的学习计划
+      for (const cond of studyPlanDeleteConditions) {
+        const result = await tx.study_plans.deleteMany({ where: cond })
+        deletedStudyPlansCount += result.count
+      }
+
+      // 删除班级计划
+      await tx.plan_classes.deleteMany({
+        where: { id: { in: ids } }
+      })
+    })
+
+    return successResponse({
+      deletedPlanClasses: ids.length,
+      deletedStudyPlans: deletedStudyPlansCount,
+      deletedDailyTasks: deletedDailyTasksCount
+    }, `删除成功：${ids.length} 个班级计划，${deletedStudyPlansCount} 个学生计划，${deletedDailyTasksCount} 个每日任务`)
   } catch (error: any) {
     console.error('删除班级学习计划错误:', error)
     return errorResponse(`删除班级学习计划失败: ${error?.message || '未知错误'}`, 500)

@@ -140,6 +140,40 @@ export async function POST(request: NextRequest) {
         update: {}
       })
 
+      // P2: 如果 nextReviewAt 是今天，同时创建 daily_task
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const todayEnd = new Date()
+      todayEnd.setHours(23, 59, 59, 999)
+
+      if (nextReviewAt >= todayStart && nextReviewAt <= todayEnd) {
+        // 检查今日任务是否已存在
+        const existingTask = await prisma.daily_tasks.findFirst({
+          where: {
+            studentId,
+            vocabularyId: vocab.id,
+            taskDate: {
+              gte: todayStart,
+              lte: todayEnd
+            }
+          }
+        })
+
+        if (!existingTask) {
+          const taskId = `dt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          await prisma.daily_tasks.create({
+            data: {
+              id: taskId,
+              studentId,
+              vocabularyId: vocab.id,
+              taskDate: todayStart,
+              status: 'PENDING',
+              updatedAt: new Date()
+            }
+          })
+        }
+      }
+
       created.push({
         planId: plan.id,
         studentId,

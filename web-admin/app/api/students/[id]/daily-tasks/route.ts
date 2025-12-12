@@ -214,8 +214,8 @@ export async function POST(
     })
 
     // 2. 区分需创建的任务和需重置状态的任务
-    // 如果 plan 在 reviewPlans 中（说明今日需复习），但对应的 daily_task 已是 COMPLETED，
-    // 说明可能是用户重置了计划（Overwrite），此时应将 daily_task 重置为 PENDING。
+    // P6: 重置所有非 PENDING 状态的任务（包括 COMPLETED 和 IN_PROGRESS）
+    // 这样可以处理教师重新分配计划或用户需要重新学习的场景
     const existingMap = new Map(existingTasks.map(t => [t.vocabularyId, t]))
 
     const tasksToCreate: any[] = []
@@ -224,7 +224,8 @@ export async function POST(
     for (const plan of reviewPlans) {
       const existingTask = existingMap.get(plan.vocabularyId)
       if (existingTask) {
-        if (existingTask.status === 'COMPLETED') {
+        // P6: 重置所有非 PENDING 状态的任务
+        if (existingTask.status !== 'PENDING') {
           taskIdsToReset.push(existingTask.id)
         }
       } else {

@@ -98,7 +98,7 @@ Page({
     this.setData({ timer })
   },
 
-  // 加载每日任务
+  // 加载每日任务（P9: 优化请求 + P10: 无题目词汇提示）
   async loadTasks() {
     try {
       wx.showLoading({ title: '加载中...' })
@@ -108,14 +108,18 @@ Page({
         throw new Error('未找到学生ID')
       }
 
-      // 获取今日任务
-      const response = await get(`/students/${studentId}/daily-tasks`)
-      let tasks = response
+      // P9: 统一使用 POST 接口，它会返回任务列表
+      // POST 会检查 study_plans 并生成缺失的 daily_tasks
+      const response = await post(`/students/${studentId}/daily-tasks`)
 
-      // 如果没有任务，尝试生成
-      if (!tasks || tasks.length === 0) {
-        const generateResponse = await post(`/students/${studentId}/daily-tasks`)
-        tasks = generateResponse.tasks || []
+      // 兼容两种返回格式：{ tasks: [] } 或直接数组
+      let tasks = []
+      if (Array.isArray(response)) {
+        tasks = response
+      } else if (response && Array.isArray(response.tasks)) {
+        tasks = response.tasks
+      } else if (response && response.data && Array.isArray(response.data.tasks)) {
+        tasks = response.data.tasks
       }
 
       if (!tasks || tasks.length === 0) {
@@ -131,18 +135,38 @@ Page({
         return
       }
 
-      // 过滤出有题目的任务
+      // P10: 统计无题目的任务并提示用户
+      const invalidTasks = tasks.filter(task =>
+        !task.vocabulary ||
+        !task.vocabulary.questions ||
+        task.vocabulary.questions.length === 0
+      )
       const validTasks = tasks.filter(task =>
         task.vocabulary &&
         task.vocabulary.questions &&
         task.vocabulary.questions.length > 0
       )
 
+      // P10: 显示跳过的无题目词汇数量
+      if (invalidTasks.length > 0) {
+        const invalidWords = invalidTasks
+          .map(t => t.vocabulary?.word || '未知')
+          .slice(0, 3)
+          .join('、')
+        const moreText = invalidTasks.length > 3 ? `等${invalidTasks.length}个` : ''
+
+        wx.showToast({
+          title: `${invalidWords}${moreText}单词暂无题目，已跳过`,
+          icon: 'none',
+          duration: 3000
+        })
+      }
+
       if (validTasks.length === 0) {
         wx.hideLoading()
         wx.showModal({
           title: '提示',
-          content: '任务中没有可用的题目',
+          content: `共${tasks.length}个任务，但都没有可用的题目。请联系老师添加题目。`,
           showCancel: false,
           success: () => {
             wx.navigateBack()
@@ -418,24 +442,112 @@ Page({
     })
   },
 
-  // 恢复进度
-  resumeProgress() {
+  // 恢复进度（P5: 添加服务端校验）
+  async resumeProgress() {
     const progress = getStudyProgress()
 
-    if (progress) {
+    if (!progress) {
+      // 没有保存的进度，正常加载
+      this.loadTasks()
+      return
+    }
+
+    // 检查进度是否是今天的
+    const savedDate = progress.timestamp ? new Date(progress.timestamp).toDateString() : null
+    const today = new Date().toDateString()
+    if (savedDate !== today) {
+      // 跨天进度已过期，清除并重新加载
+      console.log('进度已过期（跨天），重新加载任务')
+      clearStudyProgress()
+      this.loadTasks()
+      return
+    }
+
+    // 校验本地进度是否仍有效
+    try {
+      wx.showLoading({ title: '校验进度中...' })
+      const studentId = app.globalData.userInfo?.studentId
+
+      // 从服务端获取当前有效任务
+      const response = await get(`/students/${studentId}/daily-tasks`)
+      const serverTasks = Array.isArray(response) ? response : (response?.tasks || [])
+
+      wx.hideLoading()
+
+      if (!serverTasks || serverTasks.length === 0) {
+        // 服务端无任务，清除本地进度
+        clearStudyProgress()
+        wx.showModal({
+          title: '提示',
+          content: '任务已更新，请重新开始',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
+      }
+
+      // 校验本地任务是否仍存在于服务端
+      const serverTaskIds = new Set(serverTasks.map(t => t.id))
+      const serverVocabIds = new Set(serverTasks.map(t => t.vocabularyId))
+
+      // 过滤出仍有效的本地任务
+      const validLocalTasks = progress.tasks.filter(t =>
+        serverTaskIds.has(t.id) || serverVocabIds.has(t.vocabularyId)
+      )
+
+      if (validLocalTasks.length === 0) {
+        // 本地进度全部失效，重新加载
+        console.log('本地进度已全部失效，重新加载')
+        clearStudyProgress()
+        this.loadTasks()
+        return
+      }
+
+      // 已回答的词汇ID集合
+      const answeredVocabIds = new Set(progress.answers.map(a => a.vocabularyId))
+
+      // 计算剩余需要学习的任务（排除已回答的）
+      const remainingTasks = validLocalTasks.filter(t => !answeredVocabIds.has(t.vocabularyId))
+
+      if (remainingTasks.length === 0) {
+        // 所有任务已完成，直接提交
+        console.log('所有任务已完成，直接提交结果')
+        this.setData({
+          tasks: validLocalTasks,
+          answers: progress.answers,
+          correctCount: progress.correctCount,
+          wrongCount: progress.wrongCount,
+          totalCount: validLocalTasks.length,
+          currentIndex: validLocalTasks.length,
+          isLoading: false,
+        })
+        this.finishStudy()
+        return
+      }
+
+      // 恢复进度：从第一个未完成的任务开始
       this.setData({
-        tasks: progress.tasks,
-        currentIndex: progress.currentIndex,
+        tasks: validLocalTasks,
+        currentIndex: validLocalTasks.length - remainingTasks.length,
         answers: progress.answers,
         correctCount: progress.correctCount,
         wrongCount: progress.wrongCount,
-        totalCount: progress.tasks.length,
+        totalCount: validLocalTasks.length,
         isLoading: false,
       })
 
+      wx.showToast({
+        title: `已恢复进度 ${progress.answers.length}/${validLocalTasks.length}`,
+        icon: 'none',
+        duration: 1500
+      })
+
       this.loadCurrentQuestion()
-    } else {
-      // 没有保存的进度，正常加载
+    } catch (error) {
+      wx.hideLoading()
+      console.error('校验进度失败:', error)
+      // 校验失败，清除进度重新加载
+      clearStudyProgress()
       this.loadTasks()
     }
   },
