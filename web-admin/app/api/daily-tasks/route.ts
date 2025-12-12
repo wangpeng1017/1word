@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
-import { shouldReviewToday, getTodayDate, calculatePriority, daysBetween, DEFAULT_CONFIG } from '@/lib/ebbinghaus'
+import { shouldReviewToday, getTodayDate, calculatePriority, daysBetween } from '@/lib/ebbinghaus'
 import { allocateQuestionTypes, selectQuestionByType, getQuestionTypeStats } from '@/lib/question-type-allocator'
 import { detectInterruptedTasks } from '@/lib/task-interrupt-detector'
 
@@ -169,14 +169,13 @@ async function generateDailyTasks(studentId: string, targetDate: Date) {
       }
     })
 
-  // 按优先级排序并取前N个
+  // 按优先级排序（不限制数量，返回所有需要复习的词汇）
   wordsToReview.sort((a, b) => b.priority - a.priority)
-  const selectedWords = wordsToReview.slice(0, DEFAULT_CONFIG.DAILY_REVIEW_WORDS)
 
   // 创建每日任务（生成显式 id，避免数据库未配置默认值时报错）
   const dtTimestamp = Date.now()
   let dtCounter = 0
-  const tasksToInsert = selectedWords.map(({ plan }) => ({
+  const tasksToInsert = wordsToReview.map(({ plan }) => ({
     id: `dt_${dtTimestamp}_${dtCounter++}_${Math.random().toString(36).slice(2, 10)}`,
     studentId,
     vocabularyId: plan.vocabularyId,

@@ -3,14 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import {
-  calculateNextReviewDate,
   shouldReviewToday,
   getTodayDate,
   daysBetween,
   calculatePriority,
-  isMastered,
-  isDifficult,
-  DEFAULT_CONFIG,
 } from '@/lib/ebbinghaus'
 
 /**
@@ -93,78 +89,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // 5. 按优先级排序，取前N个
+    // 5. 按优先级排序（返回所有需要复习的词汇，不限制数量）
     const sortedWords = wordsWithPriority.sort((a, b) => b.priority - a.priority)
-    const dailyReviewLimit = DEFAULT_CONFIG.DAILY_REVIEW_WORDS
-    const todayReviewWords = sortedWords.slice(0, dailyReviewLimit)
 
-    // 6. 添加新词（如果复习词数不足）
-    let newWords: any[] = []
-    if (todayReviewWords.length < dailyReviewLimit) {
-      const remainingSlots = dailyReviewLimit - todayReviewWords.length
-      
-      // 获取还未加入学习计划的词汇
-      const existingVocabIds = studyPlans.map(p => p.vocabularyId)
-      const newVocabularies = await prisma.vocabularies.findMany({
-        where: {
-          id: { notIn: existingVocabIds },
-        },
-        take: remainingSlots,
-        orderBy: [
-          { is_high_frequency: 'desc' }, // 高频词优先
-          { difficulty: 'asc' },       // 简单的优先
-        ],
-      })
+    // 6. 获取所有需要复习的词汇
+    const allWords = sortedWords.map(w => w.vocabularies)
 
-      newWords = newVocabularies
-    }
-
-    // 7. 为新词创建学习计划和掌握度记录
-    for (const vocab of newWords) {
-      // 创建学习计划
-      await prisma.study_plans.upsert({
-        where: {
-          studentId_vocabularyId: {
-            studentId,
-            vocabularyId: vocab.id,
-          },
-        },
-        create: {
-          studentId,
-          vocabularyId: vocab.id,
-          status: 'PENDING',
-          reviewCount: 0,
-          nextReviewAt: targetDate,
-        },
-        update: {},
-      })
-
-      // 创建掌握度记录
-      await prisma.word_masteries.upsert({
-        where: {
-          studentId_vocabularyId: {
-            studentId,
-            vocabularyId: vocab.id,
-          },
-        },
-        create: {
-          studentId,
-          vocabularyId: vocab.id,
-          totalWrongCount: 0,
-          consecutiveCorrect: 0,
-          isMastered: false,
-          isDifficult: false,
-        },
-        update: {},
-      })
-    }
-
-    // 8. 创建每日任务
-    const allWords = [
-      ...todayReviewWords.map(w => w.vocabularies),
-      ...newWords,
-    ]
-
+    // 7. 创建每日任务
     for (const vocab of allWords) {
       await prisma.daily_tasks.upsert({
         where: {
@@ -188,8 +119,6 @@ export async function POST(request: NextRequest) {
 
     return successResponse({
       date: targetDate,
-      reviewWords: todayReviewWords.length,
-      newWords: newWords.length,
       totalWords: allWords.length,
       words: allWords.map(w => ({
         id: w.id,

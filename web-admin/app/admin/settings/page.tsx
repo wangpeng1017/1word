@@ -185,8 +185,7 @@ export default function SettingsPage() {
 
           <p style={{ marginTop: 16 }}><strong>每日学习：</strong></p>
           <ul style={{ paddingLeft: 20 }}>
-            <li>每日复习词数量上限：30个</li>
-            <li>任务按艾宾浩斯曲线自动分配</li>
+            <li>任务按艾宾浩斯曲线自动分配，返回所有到期词汇</li>
             <li>未完成的任务会自动标记为中断</li>
           </ul>
         </div>
