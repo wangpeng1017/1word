@@ -1,7 +1,15 @@
 {
   "description": "智能词汇复习助手 - 微信小程序",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "backups" },
+      { "type": "folder", "value": ".git" },
+      { "type": "file", "value": "README.md" },
+      { "type": "file", "value": "测试指南.md" },
+      { "type": "file", "value": "答题模式说明.md" },
+      { "type": "file", "value": "配置说明.md" },
+      { "type": "file", "value": ".gitignore" }
+    ],
     "include": []
   },
   "setting": {
