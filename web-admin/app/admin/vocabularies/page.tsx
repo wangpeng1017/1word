@@ -110,12 +110,12 @@ export default function VocabulariesPage() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      // 性能优化: 不加载音频和释义，只在编辑时加载
       const params = new URLSearchParams({
         page: String(pagination.page),
         limit: String(pagination.limit),
         includeMeanings: 'true',
         includeImages: 'true',
+        includeAudios: 'true',
       })
       if (debouncedSearch) params.append('search', debouncedSearch)
       if (highFreqFilter !== null) params.append('isHighFrequency', String(highFreqFilter))
@@ -438,6 +438,28 @@ export default function VocabulariesPage() {
           )}
         </Space>
       ),
+    },
+    {
+      title: '音频',
+      key: 'audios',
+      width: 100,
+      render: (_: any, record: Vocabulary) => {
+        const usAudio = record.audios?.find(a => a.accent === 'US')
+        const ukAudio = record.audios?.find(a => a.accent === 'UK')
+        if (!usAudio && !ukAudio) {
+          return <span style={{ color: '#999', fontSize: 12 }}>-</span>
+        }
+        return (
+          <Space direction="vertical" size={2}>
+            {usAudio && (
+              <AudioPlayer audioUrl={usAudio.audioUrl} accent="US" size="small" showAccent={false} />
+            )}
+            {ukAudio && (
+              <AudioPlayer audioUrl={ukAudio.audioUrl} accent="UK" size="small" showAccent={false} />
+            )}
+          </Space>
+        )
+      },
     },
     {
       title: '实物图片',
