@@ -41,6 +41,8 @@ model plan_classes {
   id            String          @id
   class_id      String
   vocabulary_id String
+  pack_id       String?         // 来源词汇库ID
+  day_number    Int?            // 来源词汇库的第几天
   status        StudyPlanStatus @default(PENDING)
   start_date    DateTime        @db.Date
   end_date      DateTime?       @db.Date
@@ -48,11 +50,13 @@ model plan_classes {
   updated_at    DateTime
   classes       classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
   vocabularies  vocabularies    @relation(fields: [vocabulary_id], references: [id], onDelete: Cascade)
+  vocabulary_packs vocabulary_packs? @relation(fields: [pack_id], references: [id], onDelete: SetNull)
   study_plans   study_plans[]   // 新增：关联的学生学习计划
 
   @@unique([class_id, vocabulary_id])
   @@index([class_id])
   @@index([status])
+  @@index([pack_id])
 }
 
 model question_options {
@@ -207,6 +211,7 @@ model vocabularies {
   word_meanings     word_meanings[]    // 新增: 多词性多释义
   wrong_questions   wrong_questions[]
   question_answers  question_answers[] // 新增: 答题记录关联
+  pack_day_words    vocabulary_pack_day_words[] // 词汇库关联
 }
 
 model word_audios {
@@ -452,4 +457,54 @@ model question_answers {
 
   @@index([studentId, vocabularyId])
   @@index([studentId, answeredAt])
+}
+
+// 词汇库（课程模板，如"10天班"、"20天班"）
+model vocabulary_packs {
+  id          String   @id
+  name        String   @unique  // "高考核心词汇10天班"
+  description String?
+  totalDays   Int      // 总天数，如10、20
+  totalWords  Int      @default(0) // 总词汇数（自动统计）
+  isActive    Boolean  @default(true)
+  createdBy   String   // 创建者教师ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pack_days    vocabulary_pack_days[]
+  plan_classes plan_classes[]
+
+  @@index([isActive])
+  @@index([createdBy])
+}
+
+// 词汇库每日配置
+model vocabulary_pack_days {
+  id         String   @id
+  packId     String
+  dayNumber  Int      // 1, 2, 3...
+  title      String?  // "Day1 - 基础动词"
+  wordCount  Int      @default(0) // 该天词汇数（自动统计）
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  pack      vocabulary_packs           @relation(fields: [packId], references: [id], onDelete: Cascade)
+  day_words vocabulary_pack_day_words[]
+
+  @@unique([packId, dayNumber])
+  @@index([packId])
+}
+
+// 每日词汇关联
+model vocabulary_pack_day_words {
+  id           String @id
+  packDayId    String
+  vocabularyId String
+  orderIndex   Int    @default(0) // 排序
+
+  pack_day   vocabulary_pack_days @relation(fields: [packDayId], references: [id], onDelete: Cascade)
+  vocabulary vocabularies         @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([packDayId, vocabularyId])
+  @@index([packDayId])
 }

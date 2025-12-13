@@ -18,6 +18,7 @@ import {
   FileSearchOutlined,
   LineChartOutlined,
   FileExclamationOutlined,
+  FolderOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -51,6 +52,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/classes',
     icon: <TeamOutlined />,
     label: '班级管理',
+  },
+  {
+    key: '/admin/vocabulary-packs',
+    icon: <FolderOutlined />,
+    label: '词汇库',
   },
   {
     key: '/admin/study-plans',
