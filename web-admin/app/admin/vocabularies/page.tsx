@@ -442,7 +442,7 @@ export default function VocabulariesPage() {
     {
       title: '音频',
       key: 'audios',
-      width: 100,
+      width: 140,
       render: (_: any, record: Vocabulary) => {
         const usAudio = record.audios?.find(a => a.accent === 'US')
         const ukAudio = record.audios?.find(a => a.accent === 'UK')
@@ -450,12 +450,18 @@ export default function VocabulariesPage() {
           return <span style={{ color: '#999', fontSize: 12 }}>-</span>
         }
         return (
-          <Space direction="vertical" size={2}>
+          <Space direction="vertical" size={4}>
             {usAudio && (
-              <AudioPlayer audioUrl={usAudio.audioUrl} accent="US" size="small" showAccent={false} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Tag color="blue" style={{ fontSize: 10, padding: '0 4px', margin: 0 }}>美式</Tag>
+                <AudioPlayer audioUrl={usAudio.audioUrl} accent="US" size="small" showAccent={false} />
+              </div>
             )}
             {ukAudio && (
-              <AudioPlayer audioUrl={ukAudio.audioUrl} accent="UK" size="small" showAccent={false} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Tag color="green" style={{ fontSize: 10, padding: '0 4px', margin: 0 }}>英式</Tag>
+                <AudioPlayer audioUrl={ukAudio.audioUrl} accent="UK" size="small" showAccent={false} />
+              </div>
             )}
           </Space>
         )

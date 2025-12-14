@@ -34,9 +34,21 @@ const menuItems: MenuItem[] = [
     label: '控制台',
   },
   {
-    key: '/admin/vocabularies',
+    key: 'vocabulary-group',
     icon: <BookOutlined />,
     label: '词汇管理',
+    children: [
+      {
+        key: '/admin/vocabularies',
+        icon: <BookOutlined />,
+        label: '词汇列表',
+      },
+      {
+        key: '/admin/vocabulary-packs',
+        icon: <FolderOutlined />,
+        label: '词汇库',
+      },
+    ],
   },
   {
     key: '/admin/questions',
@@ -52,11 +64,6 @@ const menuItems: MenuItem[] = [
     key: '/admin/classes',
     icon: <TeamOutlined />,
     label: '班级管理',
-  },
-  {
-    key: '/admin/vocabulary-packs',
-    icon: <FolderOutlined />,
-    label: '词汇库',
   },
   {
     key: '/admin/study-plans',
@@ -155,6 +162,15 @@ export default function AdminLayout({
   // 获取当前选中的菜单
   const selectedKeys = [pathname]
 
+  // 获取需要展开的菜单组
+  const getOpenKeys = () => {
+    if (pathname.startsWith('/admin/vocabularies') || pathname.startsWith('/admin/vocabulary-packs')) {
+      return ['vocabulary-group']
+    }
+    return []
+  }
+  const [openKeys, setOpenKeys] = useState<string[]>(getOpenKeys())
+
   return (
     <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}>
       <Sider
@@ -199,6 +215,8 @@ export default function AdminLayout({
         <Menu
           mode="inline"
           selectedKeys={selectedKeys}
+          openKeys={openKeys}
+          onOpenChange={(keys) => setOpenKeys(keys as string[])}
           items={menuItems}
           onClick={handleMenuClick}
           style={{

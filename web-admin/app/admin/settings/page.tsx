@@ -1,17 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal } from 'antd'
-import { SaveOutlined, ReloadOutlined, SettingOutlined, UploadOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal, Row, Col } from 'antd'
+import { SaveOutlined, ReloadOutlined, SettingOutlined, UploadOutlined, DeleteOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons'
 import type { UploadFile, UploadProps } from 'antd'
 
 export default function SettingsPage() {
   const [form] = Form.useForm()
+  const [passwordForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [qrcodeUrl, setQrcodeUrl] = useState<string>('')
   const [previewOpen, setPreviewOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -145,6 +148,41 @@ export default function SettingsPage() {
         message.success('二维码已删除，请点击"保存设置"生效')
       },
     })
+  }
+
+  // 更改密码
+  const handleChangePassword = async () => {
+    try {
+      const values = await passwordForm.validateFields()
+      setChangingPassword(true)
+
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success('密码修改成功')
+        setPasswordModalVisible(false)
+        passwordForm.resetFields()
+      } else {
+        message.error(result.error || '密码修改失败')
+      }
+    } catch (error: any) {
+      if (error.errorFields) {
+        // 表单验证错误，不需要额外提示
+        return
+      }
+      message.error('密码修改失败')
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
   return (
@@ -322,6 +360,42 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* 账号安全 */}
+          <div>
+            <Divider orientation="left">
+              <Space>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>账号安全</span>
+                <Tag color="red">密码管理</Tag>
+              </Space>
+            </Divider>
+
+            <div style={{
+              background: '#f5f7fa',
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 24,
+            }}>
+              <Row align="middle" justify="space-between">
+                <Col>
+                  <div>
+                    <span style={{ fontWeight: 500 }}>登录密码</span>
+                    <p style={{ color: '#666', fontSize: 12, marginTop: 4, marginBottom: 0 }}>
+                      定期更换密码可以提高账号安全性
+                    </p>
+                  </div>
+                </Col>
+                <Col>
+                  <Button
+                    icon={<LockOutlined />}
+                    onClick={() => setPasswordModalVisible(true)}
+                  >
+                    修改密码
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+          </div>
+
           {/* 操作按钮 */}
           <Form.Item style={{ marginBottom: 0 }}>
             <Space>
@@ -345,6 +419,69 @@ export default function SettingsPage() {
           </Form.Item>
         </Form>
       </Card>
+
+      {/* 修改密码弹窗 */}
+      <Modal
+        title={
+          <Space>
+            <LockOutlined />
+            <span>修改密码</span>
+          </Space>
+        }
+        open={passwordModalVisible}
+        onOk={handleChangePassword}
+        onCancel={() => {
+          setPasswordModalVisible(false)
+          passwordForm.resetFields()
+        }}
+        confirmLoading={changingPassword}
+        okText="确认修改"
+        cancelText="取消"
+      >
+        <Form
+          form={passwordForm}
+          layout="vertical"
+          style={{ marginTop: 16 }}
+        >
+          <Form.Item
+            label="当前密码"
+            name="currentPassword"
+            rules={[{ required: true, message: '请输入当前密码' }]}
+          >
+            <Input.Password placeholder="请输入当前密码" />
+          </Form.Item>
+
+          <Form.Item
+            label="新密码"
+            name="newPassword"
+            rules={[
+              { required: true, message: '请输入新密码' },
+              { min: 6, message: '密码长度不能少于6位' },
+            ]}
+          >
+            <Input.Password placeholder="请输入新密码（至少6位）" />
+          </Form.Item>
+
+          <Form.Item
+            label="确认新密码"
+            name="confirmPassword"
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: '请再次输入新密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'))
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入新密码" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* 复习规则说明卡片 */}
       <Card
