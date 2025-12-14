@@ -19,6 +19,7 @@ import {
   LineChartOutlined,
   FileExclamationOutlined,
   FolderOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -99,6 +100,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/word-mastery',
     icon: <BarChartOutlined />,
     label: '单词掌握',
+  },
+  {
+    key: '/admin/student-levels',
+    icon: <TrophyOutlined />,
+    label: '等级数据',
   },
   {
     key: '/admin/settings',

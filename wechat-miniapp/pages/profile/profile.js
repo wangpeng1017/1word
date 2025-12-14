@@ -1,5 +1,5 @@
 // pages/profile/profile.js
-const { get, post } = require('../../utils/request')
+const { get } = require('../../utils/request')
 const app = getApp()
 
 Page({
@@ -10,40 +10,18 @@ Page({
       masteredWords: 0,
       difficultWords: 0,
       studyDays: 0,
-      wrongCount: 0,
     },
-    // 详细统计数据
     detailedStats: {
-      totalQuestions: 0,
-      correctCount: 0,
-      wrongCount: 0,
       accuracy: 0,
-      totalTimeSeconds: 0,
-      totalTimeMinutes: 0,  // 预计算的分钟数，供 WXML 使用
     },
-    partOfSpeechStats: [],
-    topWrongWords: [],
-    // 时间段选择
-    periodTabs: ['今日', '本周', '本月', '全部'],
-    currentPeriod: 1, // 默认本周
-    periodMap: ['today', 'week', 'month', 'all'],
-    isLoading: true,
-    isExporting: false,
-    // 游戏化数据
     pointsInfo: {
       totalPoints: 0,
-      dailyPoints: 0,
-      weeklyPoints: 0,
-      monthlyPoints: 0,
       level: 1
     },
-    levelProgress: 0,
-    pointsToNextLevel: 100,
     achievementCount: 0,
   },
 
   onLoad() {
-    // 检查登录状态
     if (!app.globalData.token) {
       wx.reLaunch({
         url: '/pages/login/login',
@@ -61,17 +39,9 @@ Page({
   onShow() {
     if (app.globalData.token) {
       this.loadStats()
-      this.loadDetailedStats()
       this.loadPointsInfo()
       this.loadAchievementCount()
     }
-  },
-
-  // 切换时间段
-  onPeriodChange(e) {
-    const index = parseInt(e.detail.value)
-    this.setData({ currentPeriod: index })
-    this.loadDetailedStats()
   },
 
   // 加载用户信息
@@ -129,95 +99,22 @@ Page({
     }
   },
 
-  // 加载详细统计数据（新接口）
+  // 加载详细统计数据
   async loadDetailedStats() {
     try {
       const studentId = app.globalData.userInfo?.studentId
-      if (!studentId) {
-        this.setData({ isLoading: false })
-        return
-      }
+      if (!studentId) return
 
-      const period = this.data.periodMap[this.data.currentPeriod]
-      const data = await get(`/statistics/${studentId}?period=${period}`)
-
-      if (data) {
-        // 处理词性统计数据
-        const posStats = Object.entries(data.partOfSpeechStats || {})
-          .map(([pos, count]) => ({ pos, count }))
-          .sort((a, b) => b.count - a.count)
-
-        // 预计算累计用时分钟数
-        const overview = data.overview || {}
-        const totalTimeMinutes = overview.totalTimeSeconds > 0
-          ? Math.round(overview.totalTimeSeconds / 60)
-          : 0
-
+      const data = await get(`/statistics/${studentId}?period=all`)
+      if (data && data.overview) {
         this.setData({
           detailedStats: {
-            ...overview,
-            totalTimeMinutes,
+            accuracy: data.overview.accuracy || 0,
           },
-          partOfSpeechStats: posStats,
-          topWrongWords: data.topWrongWords || [],
-          isLoading: false,
         })
       }
     } catch (error) {
       console.error('加载详细统计数据失败:', error)
-      this.setData({ isLoading: false })
-    }
-  },
-
-  // 导出PDF报告
-  async exportPDF() {
-    await this.exportReport('pdf')
-  },
-
-  // 导出Word报告
-  async exportWord() {
-    await this.exportReport('word')
-  },
-
-  // 导出报告通用方法
-  async exportReport(format) {
-    const studentId = app.globalData.userInfo?.studentId
-    if (!studentId) {
-      wx.showToast({ title: '未找到学生信息', icon: 'none' })
-      return
-    }
-
-    this.setData({ isExporting: true })
-
-    try {
-      const period = this.data.periodMap[this.data.currentPeriod]
-      const result = await post(`/statistics/${studentId}/export`, {
-        format,
-        period,
-      })
-
-      if (result && result.downloadUrl) {
-        // 复制下载链接到剪贴板
-        wx.setClipboardData({
-          data: `${app.globalData.baseUrl}${result.downloadUrl}`,
-          success: () => {
-            wx.showModal({
-              title: '报告生成成功',
-              content: `下载链接已复制到剪贴板，请在浏览器中打开下载。\n\n文件名: ${result.fileName}`,
-              confirmText: '好的',
-              showCancel: false,
-            })
-          },
-        })
-      }
-    } catch (error) {
-      console.error('导出报告失败:', error)
-      wx.showToast({
-        title: '导出失败',
-        icon: 'none',
-      })
-    } finally {
-      this.setData({ isExporting: false })
     }
   },
 
@@ -229,17 +126,11 @@ Page({
 
       const res = await get(`/points?studentId=${studentId}`)
       if (res && res.points) {
-        const points = res.points
-        const currentLevelPoints = (points.level - 1) * 100
-        const nextLevelPoints = points.level * 100
-        const progressPoints = points.totalPoints - currentLevelPoints
-        const levelProgress = (progressPoints / 100) * 100
-        const pointsToNextLevel = nextLevelPoints - points.totalPoints
-
         this.setData({
-          pointsInfo: points,
-          levelProgress: Math.min(levelProgress, 100),
-          pointsToNextLevel: Math.max(pointsToNextLevel, 0)
+          pointsInfo: {
+            totalPoints: res.points.totalPoints || 0,
+            level: res.points.level || 1
+          }
         })
       }
     } catch (error) {
@@ -288,13 +179,6 @@ Page({
   goToLeaderboard() {
     wx.navigateTo({
       url: '/pages/leaderboard/leaderboard'
-    })
-  },
-
-  // 跳转到积分历史页面
-  goToPointsHistory() {
-    wx.navigateTo({
-      url: '/pages/points-history/points-history'
     })
   },
 

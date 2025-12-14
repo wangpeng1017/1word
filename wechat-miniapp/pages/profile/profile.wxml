@@ -1,206 +1,71 @@
 <!--pages/profile/profile.wxml-->
 <view class="container">
-  <!-- 用户信息卡片 -->
+  <!-- 用户信息卡片（合并等级信息） -->
   <view class="user-card">
-    <view class="user-avatar">👤</view>
-    <view class="user-info">
-      <text class="user-name">{{userInfo.name || '同学'}}</text>
-      <text class="user-id">学号：{{userInfo.studentNo || '--'}}</text>
+    <view class="user-left">
+      <view class="user-avatar">👤</view>
+      <view class="user-info">
+        <text class="user-name">{{userInfo.name || '同学'}}</text>
+        <text class="user-id">学号：{{userInfo.studentNo || '--'}}</text>
+      </view>
     </view>
-  </view>
-
-  <!-- 积分等级卡片 -->
-  <view class="points-card">
-    <view class="points-header">
+    <view class="user-level">
       <view class="level-badge">
         <text class="level-icon">⭐</text>
         <text class="level-text">Lv.{{pointsInfo.level || 1}}</text>
       </view>
-      <view class="points-total">
-        <text class="points-value">{{pointsInfo.totalPoints || 0}}</text>
-        <text class="points-label">总积分</text>
-      </view>
+      <text class="points-text">{{pointsInfo.totalPoints || 0}}积分</text>
     </view>
+  </view>
 
-    <view class="level-progress">
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{levelProgress}}%"></view>
+  <!-- 学习数据概览 -->
+  <view class="stats-section">
+    <view class="stats-grid-compact">
+      <view class="stat-card-compact">
+        <text class="stat-value-compact">{{stats.totalWords}}</text>
+        <text class="stat-label-compact">学习词汇</text>
       </view>
-      <text class="progress-text">距离下一级还需 {{pointsToNextLevel}} 积分</text>
-    </view>
-
-    <view class="points-stats">
-      <view class="points-stat-item">
-        <text class="stat-value">{{pointsInfo.dailyPoints || 0}}</text>
-        <text class="stat-label">今日</text>
+      <view class="stat-card-compact">
+        <text class="stat-value-compact">{{stats.masteredWords}}</text>
+        <text class="stat-label-compact">已掌握</text>
       </view>
-      <view class="points-stat-item">
-        <text class="stat-value">{{pointsInfo.weeklyPoints || 0}}</text>
-        <text class="stat-label">本周</text>
+      <view class="stat-card-compact accent">
+        <text class="stat-value-compact">{{detailedStats.accuracy}}%</text>
+        <text class="stat-label-compact">正确率</text>
       </view>
-      <view class="points-stat-item">
-        <text class="stat-value">{{pointsInfo.monthlyPoints || 0}}</text>
-        <text class="stat-label">本月</text>
+      <view class="stat-card-compact">
+        <text class="stat-value-compact">{{stats.studyDays}}</text>
+        <text class="stat-label-compact">学习天数</text>
       </view>
     </view>
   </view>
 
-  <!-- 成就和排行榜入口 -->
+  <!-- 功能入口 -->
   <view class="quick-links">
     <view class="quick-link-item" bindtap="goToStudyHistory">
       <view class="link-icon">📚</view>
-      <view class="link-content">
-        <text class="link-title">学习历史</text>
-        <text class="link-desc">查看学习记录</text>
-      </view>
+      <text class="link-title">学习历史</text>
       <text class="link-arrow">›</text>
     </view>
     <view class="quick-link-item" bindtap="goToTest">
       <view class="link-icon">✍️</view>
-      <view class="link-content">
-        <text class="link-title">词汇测试</text>
-        <text class="link-desc">测试词汇掌握情况</text>
-      </view>
+      <text class="link-title">词汇测试</text>
       <text class="link-arrow">›</text>
     </view>
     <view class="quick-link-item" bindtap="goToAchievements">
       <view class="link-icon">🏆</view>
-      <view class="link-content">
-        <text class="link-title">我的成就</text>
-        <text class="link-desc">已解锁 {{achievementCount}} 个</text>
-      </view>
+      <text class="link-title">我的成就</text>
+      <view class="link-badge" wx:if="{{achievementCount > 0}}">{{achievementCount}}</view>
       <text class="link-arrow">›</text>
     </view>
     <view class="quick-link-item" bindtap="goToLeaderboard">
       <view class="link-icon">📊</view>
-      <view class="link-content">
-        <text class="link-title">排行榜</text>
-        <text class="link-desc">查看我的排名</text>
-      </view>
-      <text class="link-arrow">›</text>
-    </view>
-    <view class="quick-link-item" bindtap="goToPointsHistory">
-      <view class="link-icon">📝</view>
-      <view class="link-content">
-        <text class="link-title">积分历史</text>
-        <text class="link-desc">查看积分变动</text>
-      </view>
+      <text class="link-title">排行榜</text>
       <text class="link-arrow">›</text>
     </view>
   </view>
 
-  <!-- 时间段选择 -->
-  <view class="period-selector">
-    <picker mode="selector" range="{{periodTabs}}" value="{{currentPeriod}}" bindchange="onPeriodChange">
-      <view class="period-picker">
-        <text class="period-text">📊 {{periodTabs[currentPeriod]}}</text>
-        <text class="period-arrow">▼</text>
-      </view>
-    </picker>
-  </view>
-
-  <!-- 学习概况 -->
-  <view class="stats-section">
-    <view class="section-title">学习概况</view>
-    <view class="overview-grid">
-      <view class="overview-item">
-        <text class="overview-value">{{detailedStats.totalQuestions}}</text>
-        <text class="overview-label">总题数</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-value">{{detailedStats.correctCount}}</text>
-        <text class="overview-label">正确数</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-value">{{detailedStats.wrongCount}}</text>
-        <text class="overview-label">错误数</text>
-      </view>
-      <view class="overview-item accent">
-        <text class="overview-value">{{detailedStats.accuracy}}%</text>
-        <text class="overview-label">正确率</text>
-      </view>
-    </view>
-    
-    <view class="time-info">
-      <text class="time-icon">⏱</text>
-      <text class="time-text">累计用时: {{detailedStats.totalTimeMinutes || 0}} 分钟</text>
-    </view>
-  </view>
-
-  <!-- 错题词性分布 -->
-  <view class="stats-section" wx:if="{{partOfSpeechStats.length > 0}}">
-    <view class="section-title">错题词性分布</view>
-    <view class="pos-list">
-      <view class="pos-item" wx:for="{{partOfSpeechStats}}" wx:key="pos">
-        <view class="pos-bar-container">
-          <view class="pos-bar" style="width: {{(item.count / partOfSpeechStats[0].count) * 100}}%"></view>
-        </view>
-        <view class="pos-info">
-          <text class="pos-name">{{item.pos}}</text>
-          <text class="pos-count">{{item.count}}次</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 高频错词 -->
-  <view class="stats-section" wx:if="{{topWrongWords.length > 0}}">
-    <view class="section-title">高频错词 Top {{topWrongWords.length}}</view>
-    <view class="wrong-words-list">
-      <view class="wrong-word-item" wx:for="{{topWrongWords}}" wx:key="word" wx:for-index="idx">
-        <view class="word-rank">{{idx + 1}}</view>
-        <view class="word-content">
-          <text class="word-text">{{item.word}}</text>
-          <text class="word-meaning">{{item.meaning}}</text>
-        </view>
-        <view class="word-stats">
-          <text class="word-pos">{{item.partOfSpeech}}</text>
-          <text class="word-count">错{{item.wrongCount}}次</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 导出报告 -->
-  <view class="export-section">
-    <view class="section-title">导出学习报告</view>
-    <view class="export-buttons">
-      <button class="export-btn pdf" bindtap="exportPDF" disabled="{{isExporting}}">
-        <text class="btn-icon">📄</text>
-        <text class="btn-text">导出PDF</text>
-      </button>
-      <button class="export-btn word" bindtap="exportWord" disabled="{{isExporting}}">
-        <text class="btn-icon">📝</text>
-        <text class="btn-text">导出Word</text>
-      </button>
-    </view>
-    <text class="export-tip">📱 报告将生成下载链接，请在浏览器中打开</text>
-  </view>
-
-  <!-- 基础统计 -->
-  <view class="stats-section">
-    <view class="section-title">学习进度</view>
-    <view class="stats-grid">
-      <view class="stat-card">
-        <text class="stat-value">{{stats.totalWords}}</text>
-        <text class="stat-label">学习词汇</text>
-      </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.masteredWords}}</text>
-        <text class="stat-label">已掌握</text>
-      </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.difficultWords}}</text>
-        <text class="stat-label">重点词</text>
-      </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.studyDays}}</text>
-        <text class="stat-label">学习天数</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 功能列表 -->
+  <!-- 退出登录 -->
   <view class="menu-section">
     <view class="menu-item" bindtap="logout">
       <text class="menu-icon">🚪</text>
