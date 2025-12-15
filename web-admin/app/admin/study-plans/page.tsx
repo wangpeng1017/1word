@@ -28,7 +28,6 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import BatchGenerateDialog from '@/components/BatchGenerateDialog'
-import AddWordsDialog from '@/components/AddWordsDialog'
 
 interface Student {
   id: string
@@ -79,8 +78,6 @@ export default function StudyPlansPage() {
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
-  const [addWordsOpen, setAddWordsOpen] = useState(false)
-  const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>()
 
   // 加载数据
   useEffect(() => {
@@ -243,47 +240,6 @@ export default function StudyPlansPage() {
     }
   }
 
-
-  // 添加词汇
-  const handleAddWords = async (studentId: string, vocabularyIds: string[], startDate: string, endDate?: string) => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/study-plans/add-words', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          studentId,
-          vocabularyIds,
-          startDate,
-          endDate,
-        }),
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(result.message || '添加成功')
-        setAddWordsOpen(false)
-        fetchData()
-      } else {
-        message.error(result.error || '添加失败')
-      }
-    } catch (error) {
-      message.error('添加失败')
-    }
-  }
-
-  // 检测是否选择了单个学生 - 从表格数据自动推断，作为默认值
-  useEffect(() => {
-    if (data.length > 0 && !selectedStudentId) {
-      const studentIds = new Set(data.map(d => d.studentId))
-      if (studentIds.size === 1) {
-        setSelectedStudentId(Array.from(studentIds)[0])
-      }
-    }
-  }, [data, selectedStudentId])
 
   // 明细模式下的列（调整为 班级 在前，学生 在后）
   const columns: ColumnsType<StudyPlan> = [
@@ -457,14 +413,6 @@ export default function StudyPlansPage() {
           >
             批量生成计划
           </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setAddWordsOpen(true)}
-            style={{ color: '#fff' }}
-          >
-            添加词汇
-          </Button>
           <Input
             placeholder="学生姓名"
             prefix={<SearchOutlined />}
@@ -575,14 +523,6 @@ export default function StudyPlansPage() {
           setPagination((p) => ({ ...p, current: 1 }))
           await fetchData({ page: 1, pageSize: pagination.pageSize })
         }}
-      />
-
-      {/* 添加词汇对话框 */}
-      <AddWordsDialog
-        open={addWordsOpen}
-        onClose={() => setAddWordsOpen(false)}
-        students={students}
-        onCompleted={handleAddWords}
       />
 
       {/* 编辑对话框 */}
