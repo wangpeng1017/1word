@@ -391,7 +391,13 @@ export default function StudyPlansPage() {
             <Button
               danger
               onClick={() => {
-                const allPlanIds = data.filter(g => selectedRowKeys.includes(g.id)).flatMap(g => g.planIds)
+                const allPlanIds = data
+                  .filter(g => selectedRowKeys.includes(g.id))
+                  .flatMap(g => g.planIds || [])
+                if (allPlanIds.length === 0) {
+                  message.warning('未找到可删除的计划')
+                  return
+                }
                 Modal.confirm({
                   title: '确认批量删除',
                   content: `确定要删除选中的 ${selectedRowKeys.length} 组（共 ${allPlanIds.length} 条）学习计划吗？`,
