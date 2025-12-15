@@ -136,8 +136,8 @@ export async function GET(request: NextRequest) {
         const classInfo = (sp as any).students?.classes
         if (!classInfo) continue
 
-        const nextReviewDate = sp.nextReviewAt ? new Date(sp.nextReviewAt).toISOString().split('T')[0] : 'null'
-        const groupKey = `${classInfo.id}-${nextReviewDate}-${sp.reviewCount}`
+        // 按班级 + 记忆天数(reviewCount) 分组，合并同一班级同一天的所有学生和单词
+        const groupKey = `${classInfo.id}-${sp.reviewCount}`
 
         if (!groupMap.has(groupKey)) {
           groupMap.set(groupKey, {
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
 
       const groupedPlans = Array.from(groupMap.values())
         .map(g => ({
-          id: `${g.classId}-${g.nextReviewAt?.toISOString().split('T')[0] || 'null'}-${g.reviewCount}`,
+          id: `${g.classId}-${g.reviewCount}`,
           classId: g.classId,
           className: g.className,
           grade: g.grade,

@@ -23,6 +23,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
   DeleteOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -81,6 +82,9 @@ export default function StudyPlansPage() {
   const [filters, setFilters] = useState<{ studentName?: string; classId?: string; nextReviewRange?: [dayjs.Dayjs, dayjs.Dayjs] | null; createdRange?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<GroupedStudyPlan | null>(null)
+  const [editForm] = Form.useForm()
 
   // 加载数据
   useEffect(() => {
@@ -167,6 +171,32 @@ export default function StudyPlansPage() {
     }
   }
 
+  // 批量更新计划（整组）
+  const handleBatchUpdate = async (values: any) => {
+    if (!editingGroup) return
+    try {
+      const token = localStorage.getItem('token')
+      // 批量更新所有计划的下次复习时间
+      for (const planId of editingGroup.planIds) {
+        await fetch('/api/study-plans', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            planId,
+            nextReviewAt: values.nextReviewAt ? dayjs(values.nextReviewAt).format('YYYY-MM-DD') : null,
+          }),
+        })
+      }
+      message.success('更新成功')
+      setEditModalVisible(false)
+      setEditingGroup(null)
+      editForm.resetFields()
+      fetchData()
+    } catch (error) {
+      message.error('更新失败')
+    }
+  }
+
   // 删除计划（支持批量删除整组）
   const handleDelete = async (ids: string[]) => {
     try {
@@ -243,20 +273,34 @@ export default function StudyPlansPage() {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 80,
+      width: 120,
       render: (_, record) => (
-        <Popconfirm
-          title="确认删除该组学习计划"
-          description={`将删除 ${record.planIds.length} 条学习计划`}
-          okText="确认删除"
-          okType="danger"
-          cancelText="取消"
-          onConfirm={() => handleDelete(record.planIds)}
-        >
-          <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-            删除
+        <Space>
+          <Button
+            type="link"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setEditingGroup(record)
+              editForm.setFieldsValue({ nextReviewAt: record.nextReviewAt ? dayjs(record.nextReviewAt) : null })
+              setEditModalVisible(true)
+            }}
+          >
+            编辑
           </Button>
-        </Popconfirm>
+          <Popconfirm
+            title="确认删除该组学习计划"
+            description={`将删除 ${record.planIds.length} 条学习计划`}
+            okText="确认删除"
+            okType="danger"
+            cancelText="取消"
+            onConfirm={() => handleDelete(record.planIds)}
+          >
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+              删除
+            </Button>
+          </Popconfirm>
+        </Space>
       ),
     },
   ]
@@ -390,6 +434,23 @@ export default function StudyPlansPage() {
           await fetchData({ page: 1, pageSize: pagination.pageSize })
         }}
       />
+
+      {/* 编辑对话框 */}
+      <Modal
+        title={`编辑学习计划 - ${editingGroup?.className} ${editingGroup?.dayLabel}`}
+        open={editModalVisible}
+        onOk={() => editForm.submit()}
+        onCancel={() => { setEditModalVisible(false); setEditingGroup(null); editForm.resetFields() }}
+      >
+        <Form form={editForm} layout="vertical" onFinish={handleBatchUpdate}>
+          <p style={{ marginBottom: 16, color: '#666' }}>
+            将批量更新 {editingGroup?.planIds.length} 条学习计划
+          </p>
+          <Form.Item label="下次复习时间" name="nextReviewAt">
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
