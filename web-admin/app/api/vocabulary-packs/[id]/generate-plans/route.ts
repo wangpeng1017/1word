@@ -157,30 +157,39 @@ export async function POST(
       })
       const existingMasterySet = new Set(existingMasteries.map(m => `${m.studentId}_${m.vocabularyId}`))
 
+      // 艾宾浩斯复习间隔累计偏移量：Day 1, 2, 4, 7, 15 对应 +0, +1, +3, +6, +14 天
+      const reviewOffsets = [0, 1, 3, 6, 14]
+
       for (const item of created) {
-        const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        const taskDate = new Date(item.taskDate)
+        const baseDate = new Date(item.taskDate)
 
-        studyPlansData.push({
-          id: planId,
-          studentId: item.studentId,
-          vocabularyId: item.vocabularyId,
-          status: 'PENDING',
-          reviewCount: 0,
-          nextReviewAt: taskDate,
-          createdAt: now,
-          updatedAt: now,
-        })
+        // 为每个单词生成5条复习计划（Day 1, 2, 4, 7, 15）
+        for (let i = 0; i < reviewOffsets.length; i++) {
+          const taskDate = new Date(baseDate)
+          taskDate.setDate(taskDate.getDate() + reviewOffsets[i])
 
-        dailyTasksData.push({
-          id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          studentId: item.studentId,
-          vocabularyId: item.vocabularyId,
-          taskDate: taskDate,
-          status: 'PENDING',
-          createdAt: now,
-          updatedAt: now,
-        })
+          const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          studyPlansData.push({
+            id: planId,
+            studentId: item.studentId,
+            vocabularyId: item.vocabularyId,
+            status: 'PENDING',
+            reviewCount: i,
+            nextReviewAt: taskDate,
+            createdAt: now,
+            updatedAt: now,
+          })
+
+          dailyTasksData.push({
+            id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            studentId: item.studentId,
+            vocabularyId: item.vocabularyId,
+            taskDate: taskDate,
+            status: 'PENDING',
+            createdAt: now,
+            updatedAt: now,
+          })
+        }
 
         const masteryKey = `${item.studentId}_${item.vocabularyId}`
         if (!existingMasterySet.has(masteryKey)) {
