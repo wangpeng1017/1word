@@ -58,6 +58,17 @@ export async function POST(
       day.day_words.forEach(w => allVocabIds.add(w.vocabularyId))
     })
 
+    // 获取词汇详情（用于返回给前端显示）
+    const vocabDetails = await prisma.vocabularies.findMany({
+      where: { id: { in: Array.from(allVocabIds) } },
+      select: {
+        id: true,
+        word: true,
+        word_meanings: { orderBy: { orderIndex: 'asc' }, take: 1, select: { meaning: true } }
+      }
+    })
+    const vocabMap = new Map(vocabDetails.map(v => [v.id, { word: v.word, primaryMeaning: v.word_meanings?.[0]?.meaning || '' }]))
+
     // 检查词汇是否有题目
     const vocabsWithQuestions = await prisma.questions.groupBy({
       by: ['vocabularyId'],
@@ -91,10 +102,13 @@ export async function POST(
 
         for (const student of students) {
           const key = `${student.id}_${vocabId}`
+          const vocabInfo = vocabMap.get(vocabId)
           const item = {
             studentId: student.id,
             classId: student.class_id,
             vocabularyId: vocabId,
+            word: vocabInfo?.word || '',
+            primaryMeaning: vocabInfo?.primaryMeaning || '',
             dayNumber: day.dayNumber,
             taskDate: taskDate.toISOString().split('T')[0],
           }
