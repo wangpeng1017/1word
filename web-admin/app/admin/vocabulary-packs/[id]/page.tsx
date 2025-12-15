@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, Button, Space, Tag, message, Spin, Row, Col, Statistic, Modal, Table, AutoComplete, Input } from 'antd'
-import { ArrowLeftOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons'
+import { Card, Button, Space, Tag, message, Spin, Row, Col, Statistic, Modal, Table, AutoComplete } from 'antd'
+import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useRouter, useParams } from 'next/navigation'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -31,6 +31,14 @@ interface VocabularyPack {
   isActive: boolean
   pack_days: PackDay[]
 }
+
+interface SearchOption {
+  value: string
+  label: React.ReactNode
+  vocab: Vocabulary
+}
+
+const MAX_SEARCH_RESULTS = 50
 
 export default function VocabularyPackDetailPage() {
   const router = useRouter()
@@ -82,8 +90,8 @@ export default function VocabularyPackDetailPage() {
       if (result.success) {
         setAllVocabularies(result.data?.vocabularies || [])
       }
-    } catch (error) {
-      console.error('加载词汇失败')
+    } catch {
+      message.error('加载词汇失败')
     }
   }
 
@@ -140,7 +148,7 @@ export default function VocabularyPackDetailPage() {
     const results = allVocabularies
       .filter(v => !usedVocabIds.has(v.id) && !selectedIds.has(v.id))
       .filter(v => v.word.toLowerCase().includes(search) || v.primary_meaning.toLowerCase().includes(search))
-      .slice(0, 50)
+      .slice(0, MAX_SEARCH_RESULTS)
     setSearchOptions(results.map(v => ({
       value: v.id,
       label: <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{v.word} - {v.primary_meaning}</span></div>,
@@ -149,12 +157,10 @@ export default function VocabularyPackDetailPage() {
   }
 
   // 添加词汇
-  const handleAddVocab = (vocabId: string, option: any) => {
-    if (option.vocab) {
-      setSelectedVocabs(prev => [...prev, option.vocab])
-      setSearchValue('')
-      setSearchOptions([])
-    }
+  const handleAddVocab = (_vocabId: string, option: SearchOption) => {
+    setSelectedVocabs(prev => [...prev, option.vocab])
+    setSearchValue('')
+    setSearchOptions([])
   }
 
   // 删除词汇
