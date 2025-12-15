@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, Button, Space, Tag, message, Spin, Row, Col, Statistic, Modal, Select, Table, Input } from 'antd'
-import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons'
+import { Card, Button, Space, Tag, message, Spin, Row, Col, Statistic, Modal, Table, AutoComplete, Input } from 'antd'
+import { ArrowLeftOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons'
 import { useRouter, useParams } from 'next/navigation'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -42,9 +42,10 @@ export default function VocabularyPackDetailPage() {
   const [selectedDay, setSelectedDay] = useState<PackDay | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [allVocabularies, setAllVocabularies] = useState<Vocabulary[]>([])
-  const [selectedVocabIds, setSelectedVocabIds] = useState<string[]>([])
+  const [selectedVocabs, setSelectedVocabs] = useState<Vocabulary[]>([])
   const [saving, setSaving] = useState(false)
-  const [searchText, setSearchText] = useState('')
+  const [searchValue, setSearchValue] = useState('')
+  const [searchOptions, setSearchOptions] = useState<{ value: string; label: React.ReactNode }[]>([])
 
   useEffect(() => {
     fetchPack()
@@ -88,7 +89,9 @@ export default function VocabularyPackDetailPage() {
 
   const openDayEditor = (day: PackDay) => {
     setSelectedDay(day)
-    setSelectedVocabIds(day.day_words.map(w => w.vocabularyId))
+    setSelectedVocabs(day.day_words.map(w => w.vocabulary))
+    setSearchValue('')
+    setSearchOptions([])
     setModalVisible(true)
   }
 
@@ -100,7 +103,7 @@ export default function VocabularyPackDetailPage() {
       const res = await fetch(`/api/vocabulary-packs/${packId}/days`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ dayNumber: selectedDay.dayNumber, vocabularyIds: selectedVocabIds })
+        body: JSON.stringify({ dayNumber: selectedDay.dayNumber, vocabularyIds: selectedVocabs.map(v => v.id) })
       })
       const result = await res.json()
       if (result.success) {
@@ -125,15 +128,49 @@ export default function VocabularyPackDetailPage() {
     }
   })
 
-  // 过滤可选词汇
-  const availableVocabularies = allVocabularies.filter(v => {
-    if (usedVocabIds.has(v.id) && !selectedVocabIds.includes(v.id)) return false
-    if (searchText) {
-      const search = searchText.toLowerCase()
-      return v.word.toLowerCase().includes(search) || v.primary_meaning.toLowerCase().includes(search)
+  // 搜索词汇
+  const handleSearch = (value: string) => {
+    setSearchValue(value)
+    if (!value.trim()) {
+      setSearchOptions([])
+      return
     }
-    return true
-  })
+    const search = value.toLowerCase()
+    const selectedIds = new Set(selectedVocabs.map(v => v.id))
+    const results = allVocabularies
+      .filter(v => !usedVocabIds.has(v.id) && !selectedIds.has(v.id))
+      .filter(v => v.word.toLowerCase().includes(search) || v.primary_meaning.toLowerCase().includes(search))
+      .slice(0, 50)
+    setSearchOptions(results.map(v => ({
+      value: v.id,
+      label: <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{v.word} - {v.primary_meaning}</span></div>,
+      vocab: v
+    })))
+  }
+
+  // 添加词汇
+  const handleAddVocab = (vocabId: string, option: any) => {
+    if (option.vocab) {
+      setSelectedVocabs(prev => [...prev, option.vocab])
+      setSearchValue('')
+      setSearchOptions([])
+    }
+  }
+
+  // 删除词汇
+  const handleRemoveVocab = (vocabId: string) => {
+    setSelectedVocabs(prev => prev.filter(v => v.id !== vocabId))
+  }
+
+  // 已选词汇表格列
+  const selectedColumns: ColumnsType<Vocabulary> = [
+    { title: '#', width: 50, render: (_, __, index) => index + 1 },
+    { title: '词汇', dataIndex: 'word', width: 120 },
+    { title: '释义', dataIndex: 'primary_meaning' },
+    { title: '难度', dataIndex: 'difficulty', width: 80 },
+    { title: '高频', dataIndex: 'is_high_frequency', width: 60, render: (v) => v ? '✓' : '' },
+    { title: '操作', width: 80, render: (_, record) => <Button size="small" danger onClick={() => handleRemoveVocab(record.id)}>删除</Button> }
+  ]
 
   const dayColumns: ColumnsType<PackDay> = [
     { title: '天数', dataIndex: 'dayNumber', key: 'dayNumber', width: 80, render: (n) => `Day ${n}` },
@@ -189,44 +226,27 @@ export default function VocabularyPackDetailPage() {
         okText="保存"
       >
         <div style={{ marginBottom: 16 }}>
-          <Space>
-            <Input
-              placeholder="搜索词汇"
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 200 }}
-              allowClear
-            />
-            <span>已选: {selectedVocabIds.length} 词</span>
-            <Button size="small" onClick={() => setSelectedVocabIds([])}>清空</Button>
-          </Space>
+          <AutoComplete
+            style={{ width: '100%' }}
+            placeholder="搜索并添加词汇..."
+            value={searchValue}
+            options={searchOptions}
+            onSearch={handleSearch}
+            onSelect={handleAddVocab}
+          />
         </div>
-        <Select
-          mode="multiple"
-          style={{ width: '100%' }}
-          placeholder="选择词汇（可搜索）"
-          value={selectedVocabIds}
-          onChange={setSelectedVocabIds}
-          optionFilterProp="label"
-          maxTagCount="responsive"
-          options={availableVocabularies.map(v => ({
-            label: `${v.word} - ${v.primary_meaning}`,
-            value: v.id,
-          }))}
-          listHeight={400}
+        <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>已选词汇 ({selectedVocabs.length} 词)</span>
+          <Button size="small" onClick={() => setSelectedVocabs([])}>清空</Button>
+        </div>
+        <Table
+          columns={selectedColumns}
+          dataSource={selectedVocabs}
+          rowKey="id"
+          size="small"
+          pagination={false}
+          scroll={{ y: 300 }}
         />
-        <div style={{ marginTop: 16, maxHeight: 300, overflow: 'auto' }}>
-          <p style={{ color: '#666', marginBottom: 8 }}>已选词汇列表：</p>
-          {selectedVocabIds.map((id, index) => {
-            const vocab = allVocabularies.find(v => v.id === id)
-            return vocab ? (
-              <Tag key={id} closable onClose={() => setSelectedVocabIds(prev => prev.filter(i => i !== id))} style={{ marginBottom: 4 }}>
-                {index + 1}. {vocab.word}
-              </Tag>
-            ) : null
-          })}
-        </div>
       </Modal>
     </div>
   )
