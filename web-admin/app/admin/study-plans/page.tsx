@@ -75,7 +75,7 @@ export default function StudyPlansPage() {
   const [vocabularies, setVocabularies] = useState<any[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
-  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string }>({})
+  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string; nextReviewRange?: [dayjs.Dayjs, dayjs.Dayjs] | null; createdRange?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({})
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
@@ -104,6 +104,10 @@ export default function StudyPlansPage() {
       if (filters.classId) qs.append('classId', filters.classId)
       if (filters.vocabularyId) qs.append('vocabularyId', filters.vocabularyId)
       if (filters.status) qs.append('status', filters.status)
+      if (filters.nextReviewRange?.[0]) qs.append('nextReviewStart', filters.nextReviewRange[0].format('YYYY-MM-DD'))
+      if (filters.nextReviewRange?.[1]) qs.append('nextReviewEnd', filters.nextReviewRange[1].format('YYYY-MM-DD'))
+      if (filters.createdRange?.[0]) qs.append('createdStart', filters.createdRange[0].format('YYYY-MM-DD'))
+      if (filters.createdRange?.[1]) qs.append('createdEnd', filters.createdRange[1].format('YYYY-MM-DD'))
 
       const response = await fetch(
         `/api/study-plans?${qs.toString()}`,
@@ -509,6 +513,18 @@ export default function StudyPlansPage() {
               </Select.Option>
             ))}
           </Select>
+          <DatePicker.RangePicker
+            placeholder={['下次复习开始', '下次复习结束']}
+            style={{ width: 240 }}
+            value={filters.nextReviewRange}
+            onChange={(dates) => setFilters({ ...filters, nextReviewRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | null })}
+          />
+          <DatePicker.RangePicker
+            placeholder={['创建时间开始', '创建时间结束']}
+            style={{ width: 240 }}
+            value={filters.createdRange}
+            onChange={(dates) => setFilters({ ...filters, createdRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | null })}
+          />
           <Button type="primary" onClick={() => { setPagination((p) => ({ ...p, current: 1 })); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>查询</Button>
           <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>重置</Button>
           <Button icon={<ReloadOutlined />} onClick={() => fetchData()}>

@@ -9,7 +9,7 @@ import { successResponse, errorResponse } from '@/lib/response'
 export async function GET(request: NextRequest) {
   try {
     // 从系统配置中获取客服设置
-    const config = await prisma.systemConfig.findUnique({
+    const config = await prisma.system_configs.findUnique({
       where: { key: 'customerService' }
     })
 

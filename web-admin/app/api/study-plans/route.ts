@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const status = searchParams.get('status')
     const vocabularyId = searchParams.get('vocabularyId')
+    // 新增：日期筛选
+    const nextReviewStart = searchParams.get('nextReviewStart')
+    const nextReviewEnd = searchParams.get('nextReviewEnd')
+    const createdStart = searchParams.get('createdStart')
+    const createdEnd = searchParams.get('createdEnd')
 
     const skip = (page - 1) * limit
 
@@ -48,6 +53,32 @@ export async function GET(request: NextRequest) {
 
     if (vocabularyId) {
       where.vocabularyId = vocabularyId
+    }
+
+    // 下次复习日期筛选
+    if (nextReviewStart || nextReviewEnd) {
+      where.nextReviewAt = {}
+      if (nextReviewStart) {
+        where.nextReviewAt.gte = new Date(nextReviewStart)
+      }
+      if (nextReviewEnd) {
+        const endDate = new Date(nextReviewEnd)
+        endDate.setHours(23, 59, 59, 999)
+        where.nextReviewAt.lte = endDate
+      }
+    }
+
+    // 创建时间筛选
+    if (createdStart || createdEnd) {
+      where.createdAt = {}
+      if (createdStart) {
+        where.createdAt.gte = new Date(createdStart)
+      }
+      if (createdEnd) {
+        const endDate = new Date(createdEnd)
+        endDate.setHours(23, 59, 59, 999)
+        where.createdAt.lte = endDate
+      }
     }
 
     const [rows, total] = await Promise.all([

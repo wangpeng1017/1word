@@ -167,7 +167,13 @@ Page({
   // 播放音频
   playAudio() {
     const audioUrl = this.data.currentQuestion.audioUrl
-    if (!audioUrl) return
+    // 验证 audioUrl 是有效的 http/https URL
+    if (!audioUrl || !audioUrl.startsWith('http')) {
+      if (audioUrl) {
+        console.warn('无效的音频URL:', audioUrl)
+      }
+      return
+    }
 
     const innerAudioContext = wx.createInnerAudioContext()
     innerAudioContext.src = audioUrl

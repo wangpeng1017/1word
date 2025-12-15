@@ -1,0 +1,246 @@
+{
+  "projectName": "智能词汇复习助手",
+  "projectSummary": "基于艾宾浩斯遗忘曲线的英语单词学习系统，包含 Web 管理后台和微信小程序",
+  "lastScanned": "2025-12-15T10:29:09+08:00",
+  "scanVersion": "1.0.0",
+  "modules": [
+    {
+      "name": "web-admin",
+      "path": "web-admin",
+      "language": "TypeScript",
+      "framework": "Next.js 15",
+      "description": "Web 管理后台 + RESTful API，提供词汇管理、学生管理、数据统计、导出等功能",
+      "entryPoints": [
+        "app/layout.tsx",
+        "app/page.tsx",
+        "app/admin/layout.tsx",
+        "app/login/page.tsx"
+      ],
+      "apiRoutes": [
+        "app/api/auth",
+        "app/api/vocabularies",
+        "app/api/questions",
+        "app/api/students",
+        "app/api/classes",
+        "app/api/study-plans",
+        "app/api/vocabulary-packs",
+        "app/api/daily-tasks",
+        "app/api/study-records",
+        "app/api/wrong-questions",
+        "app/api/word-mastery",
+        "app/api/proficiency-tests",
+        "app/api/test-records",
+        "app/api/points",
+        "app/api/achievements",
+        "app/api/leaderboard",
+        "app/api/statistics",
+        "app/api/export",
+        "app/api/settings",
+        "app/api/cron"
+      ],
+      "coreLibraries": [
+        "lib/auth.ts",
+        "lib/ebbinghaus.ts",
+        "lib/question-type-allocator.ts",
+        "lib/achievement-checker.ts",
+        "lib/report-generator.ts",
+        "lib/task-interrupt-detector.ts",
+        "lib/id-generator.ts",
+        "lib/prisma.ts",
+        "lib/response.ts"
+      ],
+      "database": {
+        "type": "PostgreSQL",
+        "orm": "Prisma",
+        "schemaFile": "prisma/schema.prisma",
+        "mainTables": [
+          "users",
+          "teachers",
+          "students",
+          "classes",
+          "vocabularies",
+          "questions",
+          "study_plans",
+          "daily_tasks",
+          "study_records",
+          "wrong_questions",
+          "word_masteries",
+          "vocabulary_packs",
+          "proficiency_tests",
+          "student_points",
+          "achievements"
+        ]
+      },
+      "scripts": [
+        "scripts/init-db.js",
+        "scripts/init-achievements.js",
+        "scripts/generate-test-data.js",
+        "scripts/benchmark-pagination.js",
+        "scripts/import-phonetic-and-audio.js",
+        "scripts/upload-audio-to-blob.js",
+        "scripts/migrate-audio-to-blob.js",
+        "scripts/add-indexes.js"
+      ],
+      "tests": [
+        "tests/e2e/student-login-vocab.spec.ts"
+      ],
+      "configFiles": [
+        "next.config.js",
+        "tsconfig.json",
+        "tailwind.config.ts",
+        "postcss.config.js",
+        ".eslintrc.json"
+      ],
+      "coverage": {
+        "estimatedTotalFiles": 150,
+        "scannedFiles": 94,
+        "coveragePercent": 63,
+        "gaps": [
+          "缺少单元测试覆盖",
+          "部分 API 路由未详细扫描",
+          "components 目录未完整扫描"
+        ]
+      }
+    },
+    {
+      "name": "wechat-miniapp",
+      "path": "wechat-miniapp",
+      "language": "JavaScript",
+      "framework": "微信小程序原生",
+      "description": "微信小程序学生端，提供每日学习、答题、错题本、积分成就等功能",
+      "entryPoints": [
+        "app.js",
+        "app.json",
+        "app.wxss"
+      ],
+      "pages": [
+        "pages/index/index",
+        "pages/login/login",
+        "pages/study/study",
+        "pages/study/result",
+        "pages/wrong/wrong",
+        "pages/profile/profile",
+        "pages/test/test",
+        "pages/study-history/study-history",
+        "pages/achievements/achievements",
+        "pages/leaderboard/leaderboard",
+        "pages/points-history/points-history"
+      ],
+      "utils": [
+        "utils/request.js",
+        "utils/util.js",
+        "utils/storage.js"
+      ],
+      "config": [
+        "config/env.js",
+        "project.config.json"
+      ],
+      "apiIntegration": {
+        "baseUrl": "配置于 config/env.js",
+        "authentication": "JWT Bearer Token",
+        "mainEndpoints": [
+          "/api/auth/login",
+          "/api/auth/me",
+          "/api/students/[id]/daily-tasks",
+          "/api/study-records",
+          "/api/wrong-questions",
+          "/api/points",
+          "/api/achievements",
+          "/api/leaderboard"
+        ]
+      },
+      "coverage": {
+        "estimatedTotalFiles": 50,
+        "scannedFiles": 12,
+        "coveragePercent": 24,
+        "gaps": [
+          "页面详细逻辑未扫描",
+          "缺少测试文件",
+          "组件目录未发现"
+        ]
+      }
+    },
+    {
+      "name": "docs",
+      "path": "docs",
+      "language": "Markdown",
+      "description": "统一文档目录，存放产品需求、技术说明等文档",
+      "files": [
+        "web-admin说明.md"
+      ],
+      "coverage": {
+        "estimatedTotalFiles": 5,
+        "scannedFiles": 1,
+        "coveragePercent": 20,
+        "gaps": [
+          "文档目录内容较少，可能需要补充"
+        ]
+      }
+    }
+  ],
+  "rootFiles": [
+    "README.md",
+    "产品需求文档.md",
+    ".gitignore",
+    "CLAUDE.md"
+  ],
+  "ignoreRules": {
+    "source": ".gitignore",
+    "patterns": [
+      "node_modules/**",
+      ".git/**",
+      ".github/**",
+      "dist/**",
+      "build/**",
+      ".next/**",
+      "out/**",
+      "__pycache__/**",
+      "*.lock",
+      "*.log",
+      "*.bin",
+      "*.pdf",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.gif",
+      "*.mp4",
+      "*.zip",
+      "*.tar",
+      "*.gz",
+      ".env*",
+      ".vscode/**",
+      ".idea/**",
+      "prisma/migrations/**",
+      ".vercel/**",
+      "*.tsbuildinfo",
+      "next-env.d.ts"
+    ]
+  },
+  "statistics": {
+    "totalModules": 3,
+    "primaryLanguages": {
+      "TypeScript": 1,
+      "JavaScript": 1,
+      "Markdown": 1
+    },
+    "estimatedTotalFiles": 205,
+    "scannedFiles": 107,
+    "overallCoveragePercent": 52,
+    "ignoredDirectories": [
+      "node_modules",
+      ".next",
+      ".git",
+      "prisma/migrations"
+    ]
+  },
+  "nextSteps": [
+    "建议补扫：web-admin/components 目录（UI 组件）",
+    "建议补扫：wechat-miniapp/pages 各页面详细逻辑",
+    "建议补扫：wechat-miniapp/components 目录（如果存在）",
+    "建议添加：web-admin 单元测试",
+    "建议添加：wechat-miniapp 测试",
+    "建议完善：docs 目录文档"
+  ],
+  "truncated": false,
+  "truncationReason": null
+}
