@@ -21,7 +21,6 @@ import {
 import {
   PlusOutlined,
   ReloadOutlined,
-  EditOutlined,
   SearchOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
@@ -29,60 +28,63 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import BatchGenerateDialog from '@/components/BatchGenerateDialog'
 
-interface Student {
+// 班级分组模式的数据结构
+interface GroupedStudyPlan {
   id: string
-  user: {
-    name: string
-    email: string | null
-  }
-  class: {
-    name: string
-  } | null
-}
-
-interface Vocabulary {
-  word: string
-  primaryMeaning: string
-  difficulty: string
-  isHighFrequency: boolean
-}
-
-interface StudyPlan {
-  id: string
-  studentId: string
-  vocabularyId: string
-  status: string
+  classId: string
+  className: string
+  grade: string
+  students: { id: string; name: string }[]
+  vocabularies: { id: string; word: string; primaryMeaning: string }[]
   reviewCount: number
-  lastReviewAt: string | null
+  dayLabel: string
   nextReviewAt: string | null
   createdAt: string
-  updatedAt: string
-  student: Student
-  vocabulary: Vocabulary
+  planIds: string[]
+}
+
+// 可展开的 Tag 列表组件
+function ExpandableTags({ items, labelKey, max = 5 }: { items: any[]; labelKey: string; max?: number }) {
+  const [expanded, setExpanded] = useState(false)
+  const display = expanded ? items : items.slice(0, max)
+  const hasMore = items.length > max
+
+  return (
+    <Space size={[4, 4]} wrap>
+      {display.map((item, idx) => (
+        <Tag key={item.id || idx}>{item[labelKey]}</Tag>
+      ))}
+      {hasMore && !expanded && (
+        <Tag style={{ cursor: 'pointer' }} onClick={() => setExpanded(true)}>
+          +{items.length - max} 更多
+        </Tag>
+      )}
+      {hasMore && expanded && (
+        <Tag style={{ cursor: 'pointer' }} onClick={() => setExpanded(false)}>
+          收起
+        </Tag>
+      )}
+    </Space>
+  )
 }
 
 export default function StudyPlansPage() {
-  const [data, setData] = useState<StudyPlan[]>([])
+  const [data, setData] = useState<GroupedStudyPlan[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
     total: 0,
   })
-  const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<any[]>([])
   const [vocabularies, setVocabularies] = useState<any[]>([])
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editingRecord, setEditingRecord] = useState<StudyPlan | null>(null)
-  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; vocabularyId?: string; status?: string; nextReviewRange?: [dayjs.Dayjs, dayjs.Dayjs] | null; createdRange?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({})
-  const [form] = Form.useForm()
+  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; nextReviewRange?: [dayjs.Dayjs, dayjs.Dayjs] | null; createdRange?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
 
   // 加载数据
   useEffect(() => {
     fetchData()
-    fetchStudents()
     fetchClasses()
     fetchVocabularies()
   }, [pagination.current, pagination.pageSize])
@@ -96,11 +98,10 @@ export default function StudyPlansPage() {
       const qs = new URLSearchParams({
         page: String(page),
         limit: String(limit),
+        groupBy: 'class',
       })
       if (filters.studentName) qs.append('studentName', filters.studentName)
       if (filters.classId) qs.append('classId', filters.classId)
-      if (filters.vocabularyId) qs.append('vocabularyId', filters.vocabularyId)
-      if (filters.status) qs.append('status', filters.status)
       if (filters.nextReviewRange?.[0]) qs.append('nextReviewStart', filters.nextReviewRange[0].format('YYYY-MM-DD'))
       if (filters.nextReviewRange?.[1]) qs.append('nextReviewEnd', filters.nextReviewRange[1].format('YYYY-MM-DD'))
       if (filters.createdRange?.[0]) qs.append('createdStart', filters.createdRange[0].format('YYYY-MM-DD'))
@@ -129,23 +130,6 @@ export default function StudyPlansPage() {
       message.error('加载失败')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchStudents = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/students?limit=1000', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      const result = await response.json()
-      if (result.success) {
-        setStudents(result.data?.students || [])
-      }
-    } catch (error) {
-      console.error('加载学生列表失败:', error)
     }
   }
 
@@ -183,40 +167,7 @@ export default function StudyPlansPage() {
     }
   }
 
-  // 批量生成班级学习计划交互改由 BatchGenerateDialog 负责
-
-  // 更新计划
-  const handleUpdate = async (values: any) => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/study-plans', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          planId: editingRecord?.id,
-          ...values,
-        }),
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(result.message || '更新成功')
-        setModalVisible(false)
-        setEditingRecord(null)
-        form.resetFields()
-        fetchData()
-      } else {
-        message.error(result.error || '更新失败')
-      }
-    } catch (error) {
-      message.error('更新失败')
-    }
-  }
-
-  // 删除计划
+  // 删除计划（支持批量删除整组）
   const handleDelete = async (ids: string[]) => {
     try {
       const token = localStorage.getItem('token')
@@ -241,126 +192,79 @@ export default function StudyPlansPage() {
   }
 
 
-  // 明细模式下的列（调整为 班级 在前，学生 在后）
-  const columns: ColumnsType<StudyPlan> = [
+  // 班级分组模式的列定义
+  const columns: ColumnsType<GroupedStudyPlan> = [
     {
       title: '班级',
       key: 'class',
-      render: (_, record) => (record.student as any).class?.name || '-',
+      width: 120,
+      render: (_, record) => (
+        <div>
+          <div style={{ fontWeight: 'bold' }}>{record.className}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.grade}</div>
+        </div>
+      ),
     },
     {
       title: '学生',
-      key: 'student',
-      render: (_, record) => record.student.user.name,
+      key: 'students',
+      width: 200,
+      render: (_, record) => (
+        <ExpandableTags items={record.students} labelKey="name" max={5} />
+      ),
     },
     {
       title: '单词',
-      key: 'word',
+      key: 'vocabularies',
+      width: 250,
       render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <span style={{ fontWeight: 'bold' }}>{record.vocabulary.word}</span>
-          <span style={{ fontSize: '12px', color: '#666' }}>
-            {record.vocabulary.primaryMeaning}
-          </span>
-        </Space>
+        <ExpandableTags items={record.vocabularies} labelKey="word" max={5} />
       ),
     },
-
     {
-      title: '高频词',
-      dataIndex: ['vocabulary', 'isHighFrequency'],
-      render: (isHigh) => (isHigh ? <Tag color="red">是</Tag> : <span>否</span>),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      render: (status) => {
-        const colorMap: any = {
-          PENDING: 'default',
-          IN_PROGRESS: 'processing',
-          COMPLETED: 'success',
-          MASTERED: 'purple',
-        }
-        const textMap: any = {
-          PENDING: '待学习',
-          IN_PROGRESS: '学习中',
-          COMPLETED: '已完成',
-          MASTERED: '已掌握',
-        }
-        return <Tag color={colorMap[status]}>{textMap[status]}</Tag>
-      },
-    },
-    {
-      title: '复习次数',
-      dataIndex: 'reviewCount',
+      title: '记忆天数',
+      dataIndex: 'dayLabel',
+      width: 100,
+      render: (dayLabel) => <Tag color="blue">{dayLabel}</Tag>,
     },
     {
       title: '下次复习',
       dataIndex: 'nextReviewAt',
+      width: 110,
       render: (date) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-',
+      width: 140,
+      render: (date: string) => date ? dayjs(date).format('MM-DD HH:mm') : '-',
     },
     {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 150,
+      width: 80,
       render: (_, record) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingRecord(record)
-              form.setFieldsValue({
-                status: record.status,
-                nextReviewAt: record.nextReviewAt
-                  ? dayjs(record.nextReviewAt)
-                  : null,
-              })
-              setModalVisible(true)
-            }}
-          >
-            编辑
+        <Popconfirm
+          title="确认删除该组学习计划"
+          description={`将删除 ${record.planIds.length} 条学习计划`}
+          okText="确认删除"
+          okType="danger"
+          cancelText="取消"
+          onConfirm={() => handleDelete(record.planIds)}
+        >
+          <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+            删除
           </Button>
-          <Popconfirm
-            title="确认删除学习计划"
-            description="计划删除后，该词汇的未来学习任务将全部删除"
-            okText="确认删除"
-            okType="danger"
-            cancelText="取消"
-            onConfirm={() => handleDelete([record.id])}
-          >
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-            >
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
+        </Popconfirm>
       ),
     },
   ]
 
-
   // 统计数据
-  const stats = {
-    total: data.length,
-    pending: data.filter((d) => d.status === 'PENDING').length,
-    inProgress: data.filter((d) => d.status === 'IN_PROGRESS').length,
-    completed: data.filter((d) => d.status === 'COMPLETED').length,
-    mastered: data.filter((d) => d.status === 'MASTERED').length,
-  }
+  const totalPlans = data.reduce((sum, g) => sum + g.planIds.length, 0)
+  const totalStudents = new Set(data.flatMap(g => g.students.map(s => s.id))).size
+  const totalVocabs = new Set(data.flatMap(g => g.vocabularies.map(v => v.id))).size
 
   return (
     <div>
@@ -370,34 +274,22 @@ export default function StudyPlansPage() {
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="总计划数" value={stats.total} />
+            <Statistic title="计划组数" value={data.length} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic
-              title="待学习"
-              value={stats.pending}
-              valueStyle={{ color: '#999' }}
-            />
+            <Statistic title="总计划数" value={totalPlans} valueStyle={{ color: '#1890ff' }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic
-              title="学习中"
-              value={stats.inProgress}
-              valueStyle={{ color: '#1890ff' }}
-            />
+            <Statistic title="学生数" value={totalStudents} valueStyle={{ color: '#52c41a' }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic
-              title="已掌握"
-              value={stats.mastered}
-              valueStyle={{ color: '#52c41a' }}
-            />
+            <Statistic title="单词数" value={totalVocabs} valueStyle={{ color: '#722ed1' }} />
           </Card>
         </Col>
       </Row>
@@ -434,33 +326,6 @@ export default function StudyPlansPage() {
               </Select.Option>
             ))}
           </Select>
-          <Select
-            placeholder="选择状态"
-            allowClear
-            style={{ width: 160 }}
-            value={filters.status}
-            onChange={(val) => setFilters({ ...filters, status: val || undefined })}
-          >
-            <Select.Option value="PENDING">待学习</Select.Option>
-            <Select.Option value="IN_PROGRESS">学习中</Select.Option>
-            <Select.Option value="COMPLETED">已完成</Select.Option>
-            <Select.Option value="MASTERED">已掌握</Select.Option>
-          </Select>
-          <Select
-            showSearch
-            placeholder="选择词汇"
-            allowClear
-            style={{ width: 220 }}
-            value={filters.vocabularyId}
-            onChange={(val) => setFilters({ ...filters, vocabularyId: val || undefined })}
-            optionFilterProp="children"
-          >
-            {vocabularies.map((v) => (
-              <Select.Option key={v.id} value={v.id}>
-                {v.word} - {v.primaryMeaning}
-              </Select.Option>
-            ))}
-          </Select>
           <DatePicker.RangePicker
             placeholder={['下次复习开始', '下次复习结束']}
             style={{ width: 240 }}
@@ -482,10 +347,11 @@ export default function StudyPlansPage() {
             <Button
               danger
               onClick={() => {
+                const allPlanIds = data.filter(g => selectedRowKeys.includes(g.id)).flatMap(g => g.planIds)
                 Modal.confirm({
                   title: '确认批量删除',
-                  content: `确定要删除选中的 ${selectedRowKeys.length} 条学习计划吗？`,
-                  onOk: () => handleDelete(selectedRowKeys as string[]),
+                  content: `确定要删除选中的 ${selectedRowKeys.length} 组（共 ${allPlanIds.length} 条）学习计划吗？`,
+                  onOk: () => handleDelete(allPlanIds),
                 })
               }}
             >
@@ -524,33 +390,6 @@ export default function StudyPlansPage() {
           await fetchData({ page: 1, pageSize: pagination.pageSize })
         }}
       />
-
-      {/* 编辑对话框 */}
-      <Modal
-        title="编辑学习计划"
-        open={modalVisible}
-        onOk={() => form.submit()}
-        onCancel={() => {
-          setModalVisible(false)
-          setEditingRecord(null)
-          form.resetFields()
-        }}
-      >
-        <Form form={form} layout="vertical" onFinish={handleUpdate}>
-          <Form.Item label="状态" name="status">
-            <Select>
-              <Select.Option value="PENDING">待学习</Select.Option>
-              <Select.Option value="IN_PROGRESS">学习中</Select.Option>
-              <Select.Option value="COMPLETED">已完成</Select.Option>
-              <Select.Option value="MASTERED">已掌握</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="下次复习时间" name="nextReviewAt">
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div >
+    </div>
   )
 }

@@ -30,10 +30,44 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
   const [mode, setMode] = useState<'manual' | 'pack'>('pack')
   const [packs, setPacks] = useState<VocabularyPack[]>([])
   const [selectedPack, setSelectedPack] = useState<VocabularyPack | null>(null)
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
+  const [classStudents, setClassStudents] = useState<Record<string, { id: string; name: string }[]>>({})
 
   useEffect(() => {
     if (open) fetchPacks()
   }, [open])
+
+  // 获取选中班级的学生列表
+  useEffect(() => {
+    if (selectedClassIds.length === 0) {
+      setClassStudents({})
+      return
+    }
+    const fetchStudents = async () => {
+      const token = localStorage.getItem('token')
+      const newStudents: Record<string, { id: string; name: string }[]> = {}
+      for (const classId of selectedClassIds) {
+        if (classStudents[classId]) {
+          newStudents[classId] = classStudents[classId]
+          continue
+        }
+        try {
+          const res = await fetch(`/api/students?classId=${classId}&limit=200`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          const json = await res.json()
+          if (json.success) {
+            newStudents[classId] = (json.data?.students || []).map((s: any) => ({
+              id: s.id,
+              name: s.user?.name || '未知'
+            }))
+          }
+        } catch (e) { console.error(e) }
+      }
+      setClassStudents(newStudents)
+    }
+    fetchStudents()
+  }, [selectedClassIds])
 
   const fetchPacks = async () => {
     try {
@@ -182,6 +216,8 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
     setResult(null)
     setIsPreviewed(false)
     setSelectedPack(null)
+    setSelectedClassIds([])
+    setClassStudents({})
   }
 
   return (
@@ -201,7 +237,14 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
 
         <Form form={form} layout="vertical">
           <Form.Item label="选择班级" name="classIds" rules={[{ required: true, message: '请选择至少一个班级' }]}>
-            <Select mode="multiple" placeholder="请选择班级（可多选）" showSearch optionFilterProp="children" disabled={loading || isPreviewed}>
+            <Select
+              mode="multiple"
+              placeholder="请选择班级（可多选）"
+              showSearch
+              optionFilterProp="children"
+              disabled={loading || isPreviewed}
+              onChange={(vals: string[]) => setSelectedClassIds(vals)}
+            >
               {classes.map((c: any) => (
                 <Select.Option key={c.id} value={c.id}>
                   {c.name} ({c.grade}) - {c._count?.students || 0}人
@@ -209,6 +252,29 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
               ))}
             </Select>
           </Form.Item>
+
+          {/* 显示选中班级的学生 */}
+          {selectedClassIds.length > 0 && (
+            <div style={{ marginBottom: 16, padding: '12px', background: '#fafafa', borderRadius: 6, border: '1px solid #d9d9d9' }}>
+              <div style={{ marginBottom: 8, fontWeight: 500, color: '#666' }}>已选学生：</div>
+              {selectedClassIds.map(classId => {
+                const cls = classes.find((c: any) => c.id === classId)
+                const students = classStudents[classId] || []
+                return (
+                  <div key={classId} style={{ marginBottom: 8 }}>
+                    <span style={{ fontWeight: 500, marginRight: 8 }}>{cls?.name}：</span>
+                    {students.length > 0 ? (
+                      <Space size={[4, 4]} wrap>
+                        {students.map(s => <Tag key={s.id}>{s.name}</Tag>)}
+                      </Space>
+                    ) : (
+                      <span style={{ color: '#999' }}>加载中...</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {mode === 'pack' ? (
             <>

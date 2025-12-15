@@ -2,6 +2,16 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
+import { REVIEW_INTERVALS } from '@/lib/ebbinghaus'
+
+
+// 根据 reviewCount 获取记忆天数标签
+function getDayLabel(reviewCount) {
+  if (reviewCount >= REVIEW_INTERVALS.length) {
+    return 'Day ' + REVIEW_INTERVALS[REVIEW_INTERVALS.length - 1] + '+';
+  }
+  return 'Day ' + REVIEW_INTERVALS[reviewCount];
+}
 
 // 获取学习计划列表
 export async function GET(request: NextRequest) {
@@ -21,6 +31,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const status = searchParams.get('status')
     const vocabularyId = searchParams.get('vocabularyId')
+    const groupBy = searchParams.get('groupBy')
     // 新增：日期筛选
     const nextReviewStart = searchParams.get('nextReviewStart')
     const nextReviewEnd = searchParams.get('nextReviewEnd')
@@ -81,6 +92,123 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // 按班级分组模式
+    if (groupBy === 'class') {
+      const allRows = await prisma.study_plans.findMany({
+        where,
+        orderBy: [{ nextReviewAt: 'asc' }, { createdAt: 'desc' }],
+        include: {
+          students: {
+            include: {
+              user: { select: { name: true } },
+              classes: { select: { id: true, name: true, grade: true } },
+            },
+          },
+          vocabularies: {
+            select: {
+              id: true,
+              word: true,
+              word_meanings: {
+                orderBy: { orderIndex: 'asc' },
+                take: 1,
+                select: { meaning: true },
+              },
+            },
+          },
+        },
+      })
+
+      // 按 班级ID + 下次复习日期 + reviewCount 分组
+      const groupMap = new Map<string, {
+        classId: string
+        className: string
+        grade: string
+        students: Map<string, { id: string; name: string }>
+        vocabularies: Map<string, { id: string; word: string; primaryMeaning: string }>
+        reviewCount: number
+        dayLabel: string
+        nextReviewAt: Date | null
+        createdAt: Date
+        planIds: string[]
+      }>()
+
+      for (const sp of allRows) {
+        const classInfo = (sp as any).students?.classes
+        if (!classInfo) continue
+
+        const nextReviewDate = sp.nextReviewAt ? new Date(sp.nextReviewAt).toISOString().split('T')[0] : 'null'
+        const groupKey = `${classInfo.id}-${nextReviewDate}-${sp.reviewCount}`
+
+        if (!groupMap.has(groupKey)) {
+          groupMap.set(groupKey, {
+            classId: classInfo.id,
+            className: classInfo.name,
+            grade: classInfo.grade || '',
+            students: new Map(),
+            vocabularies: new Map(),
+            reviewCount: sp.reviewCount,
+            dayLabel: getDayLabel(sp.reviewCount),
+            nextReviewAt: sp.nextReviewAt,
+            createdAt: sp.createdAt,
+            planIds: [],
+          })
+        }
+
+        const group = groupMap.get(groupKey)!
+        group.planIds.push(sp.id)
+
+        const studentInfo = (sp as any).students
+        if (studentInfo?.user?.name) {
+          group.students.set(sp.studentId, {
+            id: sp.studentId,
+            name: studentInfo.user.name,
+          })
+        }
+
+        if (sp.vocabularies) {
+          group.vocabularies.set(sp.vocabularyId, {
+            id: sp.vocabularyId,
+            word: sp.vocabularies.word,
+            primaryMeaning: (sp.vocabularies as any).word_meanings?.[0]?.meaning || '',
+          })
+        }
+
+        if (sp.createdAt < group.createdAt) {
+          group.createdAt = sp.createdAt
+        }
+      }
+
+      const groupedPlans = Array.from(groupMap.values())
+        .map(g => ({
+          id: `${g.classId}-${g.nextReviewAt?.toISOString().split('T')[0] || 'null'}-${g.reviewCount}`,
+          classId: g.classId,
+          className: g.className,
+          grade: g.grade,
+          students: Array.from(g.students.values()),
+          vocabularies: Array.from(g.vocabularies.values()),
+          reviewCount: g.reviewCount,
+          dayLabel: g.dayLabel,
+          nextReviewAt: g.nextReviewAt,
+          createdAt: g.createdAt,
+          planIds: g.planIds,
+        }))
+        .sort((a, b) => {
+          if (a.nextReviewAt && b.nextReviewAt) {
+            return new Date(a.nextReviewAt).getTime() - new Date(b.nextReviewAt).getTime()
+          }
+          return 0
+        })
+
+      const total = groupedPlans.length
+      const paginatedPlans = groupedPlans.slice(skip, skip + limit)
+
+      return successResponse({
+        studyPlans: paginatedPlans,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      })
+    }
+
+    // 原有的扁平列表模式
     const [rows, total] = await Promise.all([
       prisma.study_plans.findMany({
         where,
