@@ -42,11 +42,62 @@ export default function LearningDataPage() {
     const [filters, setFilters] = useState({
         status: undefined as string | undefined,
         dateRange: undefined as [dayjs.Dayjs, dayjs.Dayjs] | undefined,
+        classId: undefined as string | undefined,
+        studentId: undefined as string | undefined,
     })
+    const [classes, setClasses] = useState<{ id: string; name: string; grade: string }[]>([])
+    const [students, setStudents] = useState<{ id: string; name: string; classId: string }[]>([])
+    const [allStudents, setAllStudents] = useState<{ id: string; name: string; classId: string }[]>([])
 
     useEffect(() => {
         fetchData()
     }, [pagination.current, pagination.pageSize, filters])
+
+    useEffect(() => {
+        fetchClasses()
+        fetchStudents()
+    }, [])
+
+    // 班级变化时过滤学生列表
+    useEffect(() => {
+        if (filters.classId) {
+            setStudents(allStudents.filter(s => s.classId === filters.classId))
+        } else {
+            setStudents(allStudents)
+        }
+    }, [filters.classId, allStudents])
+
+    const fetchClasses = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch('/api/classes?limit=1000', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const result = await res.json()
+            if (result.success) {
+                setClasses(result.data || [])
+            }
+        } catch { }
+    }
+
+    const fetchStudents = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch('/api/students?limit=1000', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const result = await res.json()
+            if (result.success) {
+                const list = (result.data?.students || []).map((s: any) => ({
+                    id: s.id,
+                    name: s.user?.name || '未知',
+                    classId: s.class_id
+                }))
+                setAllStudents(list)
+                setStudents(list)
+            }
+        } catch { }
+    }
 
     const fetchData = async () => {
         setLoading(true)
@@ -63,6 +114,12 @@ export default function LearningDataPage() {
             if (filters.dateRange) {
                 params.append('startDate', filters.dateRange[0].format('YYYY-MM-DD'))
                 params.append('endDate', filters.dateRange[1].format('YYYY-MM-DD'))
+            }
+            if (filters.classId) {
+                params.append('classId', filters.classId)
+            }
+            if (filters.studentId) {
+                params.append('studentId', filters.studentId)
             }
 
             const response = await fetch(`/api/learning-data?${params}`, {
@@ -167,6 +224,30 @@ export default function LearningDataPage() {
                     <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
                         刷新
                     </Button>
+                    <Select
+                        placeholder="选择班级"
+                        style={{ width: 140 }}
+                        allowClear
+                        value={filters.classId}
+                        onChange={(value) => {
+                            setFilters(prev => ({ ...prev, classId: value, studentId: undefined }))
+                            setPagination(prev => ({ ...prev, current: 1 }))
+                        }}
+                        options={classes.map(c => ({ label: `${c.name} (${c.grade})`, value: c.id }))}
+                    />
+                    <Select
+                        placeholder="选择学生"
+                        style={{ width: 140 }}
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        value={filters.studentId}
+                        onChange={(value) => {
+                            setFilters(prev => ({ ...prev, studentId: value }))
+                            setPagination(prev => ({ ...prev, current: 1 }))
+                        }}
+                        options={students.map(s => ({ label: s.name, value: s.id }))}
+                    />
                     <Select
                         placeholder="状态筛选"
                         style={{ width: 120 }}

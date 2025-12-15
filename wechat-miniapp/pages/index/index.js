@@ -89,21 +89,17 @@ Page({
         unfinishedCount: remainingCount,
       })
 
-      // 弹窗提示是否继续
+      // 弹窗提示继续学习（可关闭）
       wx.showModal({
         title: '发现未完成的复习',
-        content: `您有 ${remainingCount} 个单词未完成复习，是否继续上次的学习？`,
+        content: `您有 ${remainingCount} 个单词未完成复习`,
         confirmText: '继续学习',
-        cancelText: '重新开始',
+        cancelText: '稍后再说',
         success: (res) => {
           if (res.confirm) {
-            // 继续上次进度
             wx.navigateTo({ url: '/pages/study/study?resume=true' })
-          } else if (res.cancel) {
-            // 清除进度，重新开始
-            clearStudyProgress()
-            this.setData({ hasUnfinishedProgress: false, unfinishedCount: 0 })
           }
+          // 点击"稍后再说"不做任何操作，用户可以手动点击开始复习
         }
       })
     } else {
@@ -143,28 +139,8 @@ Page({
   },
 
   startReview() {
-    const { hasUnfinishedProgress } = this.data
-    const progress = this.data.overview || {}
-    const needResume = hasUnfinishedProgress || (progress.reviewedCount > 0 && progress.reviewedCount < progress.dueCount)
-
-    if (needResume) {
-      wx.showModal({
-        title: '继续上次复习？',
-        content: '检测到有未完成的学习进度',
-        confirmText: '继续学习',
-        cancelText: '重新开始',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateTo({ url: '/pages/study/study?resume=true' })
-          } else {
-            clearStudyProgress()
-            wx.navigateTo({ url: '/pages/study/study' })
-          }
-        }
-      })
-    } else {
-      wx.navigateTo({ url: '/pages/study/study' })
-    }
+    // 直接开始复习，resume=true 会自动跳过已完成的任务
+    wx.navigateTo({ url: '/pages/study/study?resume=true' })
   },
 
   reload() { this.init() },
