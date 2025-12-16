@@ -220,7 +220,7 @@ export async function POST(
       }
 
       return { studyPlans: studyPlansData.length, dailyTasks: dailyTasksData.length }
-    })
+    }, { timeout: 60000 })
 
     return successResponse({
       packName: pack.name,

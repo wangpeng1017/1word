@@ -388,25 +388,28 @@ export default function StudyPlansPage() {
             刷新
           </Button>
           {selectedRowKeys.length > 0 && (
-            <Button
-              danger
-              onClick={() => {
+            <Popconfirm
+              title="确认批量删除"
+              description={`确定要删除选中的 ${selectedRowKeys.length} 组学习计划吗？`}
+              okText="确认删除"
+              okType="danger"
+              cancelText="取消"
+              onConfirm={() => {
+                const selectedIds = new Set(selectedRowKeys.map(String))
                 const allPlanIds = data
-                  .filter(g => selectedRowKeys.includes(g.id))
+                  .filter(g => selectedIds.has(g.id))
                   .flatMap(g => g.planIds || [])
                 if (allPlanIds.length === 0) {
                   message.warning('未找到可删除的计划')
                   return
                 }
-                Modal.confirm({
-                  title: '确认批量删除',
-                  content: `确定要删除选中的 ${selectedRowKeys.length} 组（共 ${allPlanIds.length} 条）学习计划吗？`,
-                  onOk: () => handleDelete(allPlanIds),
-                })
+                handleDelete(allPlanIds)
               }}
             >
-              批量删除 ({selectedRowKeys.length})
-            </Button>
+              <Button danger>
+                批量删除 ({selectedRowKeys.length})
+              </Button>
+            </Popconfirm>
           )}
         </Space>
       </div>
