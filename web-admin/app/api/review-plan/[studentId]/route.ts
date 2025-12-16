@@ -148,20 +148,30 @@ export async function GET(
       },
     })
 
-    // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量（优先用 validTasks 数量，否则用 needReview 统计）
+    // 当天未生成 daily_tasks 的情况下，基于学习计划估算当日应复习数量
     // 计算缺失计划数量（需在定义 endOfToday 之后）
+    // 🔧 修复：排除今日已完成的词汇，避免重复计数
+    const completedVocabIds = todayTasks
+      .filter(t => t.status === 'COMPLETED')
+      .map(t => t.vocabularyId)
+    const completedVocabIdSet = new Set(completedVocabIds)
+
     const duePlans = await prisma.study_plans.findMany({
       where: {
         studentId,
         status: { in: ['IN_PROGRESS', 'PENDING'] },
         nextReviewAt: { lte: endOfToday },
+        // 排除今日已完成的词汇
+        ...(completedVocabIds.length > 0 && {
+          vocabularyId: { notIn: completedVocabIds },
+        }),
       },
       select: { vocabularyId: true },
     })
-    const missingCount = duePlans.filter(p => !existingVocabIdSet.has(p.vocabularyId)).length
+    // missingCount 只计算尚未生成任务的词汇（排除已完成和已存在的未完成任务）
+    const missingCount = duePlans.filter(p => !existingVocabIdSet.has(p.vocabularyId) && !completedVocabIdSet.has(p.vocabularyId)).length
 
-    // 🔧 修复：今日应复习总数 = 已完成 + 未完成
-    // todayTotalTasks 应该代表"今天的全部任务数量"，而不仅是剩余未完成的
+    // 🔧 修复：今日应复习总数 = 已完成 + 未完成（不重复计数）
     const todayTotalTasks = todayCompletedCount + existingPendingCount + missingCount
 
     // 🔧 修复：如果存在缺失的任务（即 dueCount > tasks.length），自动生成
