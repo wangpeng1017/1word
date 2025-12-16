@@ -24,7 +24,7 @@ export default function StudentsPage() {
     loadClasses()
   }, [])
 
-  const loadData = async (page = 1, pageSize = 20) => {
+  const loadData = async (page = pagination.current, pageSize = pagination.pageSize) => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -34,7 +34,8 @@ export default function StudentsPage() {
       const result = await response.json()
       if (result.success) {
         setData(result.data?.students || [])
-        setPagination({ current: result.data?.page || 1, pageSize: result.data?.limit || 20, total: result.data?.total || 0 })
+        const p = result.data?.pagination
+        setPagination({ current: p?.page || 1, pageSize: p?.limit || 20, total: p?.total || 0 })
       }
     } catch (error) {
       message.error('加载失败')
@@ -236,7 +237,7 @@ export default function StudentsPage() {
   return (
     <Card>
       <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ReloadOutlined />} onClick={loadData}>刷新</Button>
+        <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           添加学生
         </Button>
