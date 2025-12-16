@@ -163,23 +163,23 @@ export async function POST(
       for (const item of created) {
         const baseDate = new Date(item.taskDate)
 
-        // study_plans 表有唯一约束 [studentId, vocabularyId]，每个学生-单词只创建一条记录
-        const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        studyPlansData.push({
-          id: planId,
-          studentId: item.studentId,
-          vocabularyId: item.vocabularyId,
-          status: 'PENDING',
-          reviewCount: 0,
-          nextReviewAt: baseDate, // 第一次复习日期
-          createdAt: now,
-          updatedAt: now,
-        })
-
-        // daily_tasks 表有唯一约束 [studentId, vocabularyId, taskDate]，为每个复习日期创建一条任务
+        // 为每个单词生成5条复习计划（Day 1, 2, 4, 7, 15）
+        // study_plans 表唯一约束为 [studentId, vocabularyId, reviewCount]
         for (let i = 0; i < reviewOffsets.length; i++) {
           const taskDate = new Date(baseDate)
           taskDate.setDate(taskDate.getDate() + reviewOffsets[i])
+
+          const planId = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          studyPlansData.push({
+            id: planId,
+            studentId: item.studentId,
+            vocabularyId: item.vocabularyId,
+            status: 'PENDING',
+            reviewCount: i,
+            nextReviewAt: taskDate,
+            createdAt: now,
+            updatedAt: now,
+          })
 
           dailyTasksData.push({
             id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
