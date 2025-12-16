@@ -236,6 +236,42 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* 账号安全 */}
+          <div>
+            <Divider orientation="left">
+              <Space>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>账号安全</span>
+                <Tag color="red">密码管理</Tag>
+              </Space>
+            </Divider>
+
+            <div style={{
+              background: '#f5f7fa',
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 24,
+            }}>
+              <Row align="middle" justify="space-between">
+                <Col>
+                  <div>
+                    <span style={{ fontWeight: 500 }}>登录密码</span>
+                    <p style={{ color: '#666', fontSize: 12, marginTop: 4, marginBottom: 0 }}>
+                      定期更换密码可以提高账号安全性
+                    </p>
+                  </div>
+                </Col>
+                <Col>
+                  <Button
+                    icon={<LockOutlined />}
+                    onClick={() => setPasswordModalVisible(true)}
+                  >
+                    修改密码
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+          </div>
+
           {/* 学习配置 */}
           <div>
             <Divider orientation="left">
@@ -358,45 +394,7 @@ export default function SettingsPage() {
                 </div>
               </Form.Item>
             </div>
-          </div>
-
-          {/* 账号安全 */}
-          <div>
-            <Divider orientation="left">
-              <Space>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>账号安全</span>
-                <Tag color="red">密码管理</Tag>
-              </Space>
-            </Divider>
-
-            <div style={{
-              background: '#f5f7fa',
-              padding: 16,
-              borderRadius: 8,
-              marginBottom: 24,
-            }}>
-              <Row align="middle" justify="space-between">
-                <Col>
-                  <div>
-                    <span style={{ fontWeight: 500 }}>登录密码</span>
-                    <p style={{ color: '#666', fontSize: 12, marginTop: 4, marginBottom: 0 }}>
-                      定期更换密码可以提高账号安全性
-                    </p>
-                  </div>
-                </Col>
-                <Col>
-                  <Button
-                    icon={<LockOutlined />}
-                    onClick={() => setPasswordModalVisible(true)}
-                  >
-                    修改密码
-                  </Button>
-                </Col>
-              </Row>
-            </div>
-          </div>
-
-          {/* 操作按钮 */}
+          </div>{/* 操作按钮 */}
           <Form.Item style={{ marginBottom: 0 }}>
             <Space>
               <Button

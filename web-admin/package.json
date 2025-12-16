@@ -21,7 +21,10 @@
     "perf:generate-test-data": "node scripts/generate-test-data.js",
     "perf:benchmark": "node scripts/benchmark-pagination.js",
     "perf:test-all": "npm run perf:generate-test-data && npm run perf:benchmark",
-    "db:add-indexes": "node scripts/add-indexes.js"
+    "db:add-indexes": "node scripts/add-indexes.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
@@ -54,6 +57,7 @@
     "@types/pdfkit": "^0.17.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^4.0.15",
     "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "^15.0.0",
@@ -61,6 +65,7 @@
     "prisma": "^5.20.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.15"
   }
 }

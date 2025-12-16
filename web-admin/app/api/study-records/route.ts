@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
       return apiResponse.error('参数错误', 400)
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const now = new Date()
+    // 使用 UTC 日期，确保与数据库中的 taskDate 匹配
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
 
     const totalWords = answers.length
     const correctCount = answers.filter((a: any) => a.isCorrect).length
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: srId,
           studentId,
-          taskDate: today,
+          taskDate: todayUTC,
           totalWords,
           completedWords: totalWords,
           correctCount,
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
       where: {
         studentId,
         vocabularyId: { in: vocabularyIds },
-        taskDate: today,
+        taskDate: todayUTC,
       },
       data: {
         status: 'COMPLETED',
