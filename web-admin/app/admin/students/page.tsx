@@ -17,22 +17,24 @@ export default function StudentsPage() {
   const [uploading, setUploading] = useState(false)
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
 
   useEffect(() => {
-    loadData()
+    loadData(1, 20)
     loadClasses()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (page = 1, pageSize = 20) => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/students', {
+      const response = await fetch(`/api/students?page=${page}&limit=${pageSize}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
       if (result.success) {
         setData(result.data?.students || [])
+        setPagination({ current: result.data?.page || 1, pageSize: result.data?.limit || 20, total: result.data?.total || 0 })
       }
     } catch (error) {
       message.error('加载失败')
@@ -84,7 +86,7 @@ export default function StudentsPage() {
       const result = await response.json()
       if (result.success) {
         message.success(result.message || '删除成功')
-        loadData()
+        loadData(pagination.current, pagination.pageSize)
       } else {
         message.error(result.error || '删除失败')
       }
@@ -106,7 +108,7 @@ export default function StudentsPage() {
       )
       message.success('批量删除成功')
       setSelectedRowKeys([])
-      loadData()
+      loadData(pagination.current, pagination.pageSize)
     } catch (error) {
       message.error('批量删除失败')
     }
@@ -140,7 +142,7 @@ export default function StudentsPage() {
         message.success(editingRecord ? '更新成功' : '添加成功')
         setModalVisible(false)
         setEditingRecord(null)
-        loadData()
+        loadData(pagination.current, pagination.pageSize)
       } else {
         message.error(result.error || '操作失败')
       }
@@ -164,7 +166,7 @@ export default function StudentsPage() {
       if (result.success) {
         message.success(`成功导入${result.data?.count || 0}个学生`)
         setImportModalVisible(false)
-        loadData()
+        loadData(pagination.current, pagination.pageSize)
       } else {
         message.error(result.error || '导入失败')
       }
@@ -253,6 +255,13 @@ export default function StudentsPage() {
         rowKey="id"
         loading={loading}
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+        pagination={{
+          ...pagination,
+          showSizeChanger: true,
+          showTotal: (total) => `共 ${total} 条`,
+          pageSizeOptions: ['20', '50', '100'],
+          onChange: (page, pageSize) => loadData(page, pageSize),
+        }}
       />
       <Modal
         title={editingRecord ? '编辑学生' : '添加学生'}
