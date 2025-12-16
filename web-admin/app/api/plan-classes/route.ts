@@ -568,7 +568,7 @@ export async function DELETE(request: NextRequest) {
       await tx.plan_classes.deleteMany({
         where: { id: { in: ids } }
       })
-    })
+    }, { timeout: 30000 })
 
     return successResponse({
       deletedPlanClasses: ids.length,
