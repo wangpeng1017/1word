@@ -196,7 +196,12 @@ export async function POST(
       orderBy: { createdAt: 'asc' },
     })
 
-    // 1. 查找需要复习的单词（基于艾宾浩斯曲线）
+    // 1. 获取今日已完成的词汇ID（避免重复生成任务）
+    const completedVocabIds = existingTasks
+      .filter(t => t.status === 'COMPLETED')
+      .map(t => t.vocabularyId)
+
+    // 2. 查找需要复习的单词（基于艾宾浩斯曲线，排除今日已完成的）
     const reviewPlans = await prisma.study_plans.findMany({
       where: {
         studentId,
@@ -206,13 +211,15 @@ export async function POST(
         nextReviewAt: {
           lte: endOfToday, // 允许当天任意时间的计划进入复习队列
         },
+        // 排除今日已完成的词汇，避免重复生成任务
+        ...(completedVocabIds.length > 0 && {
+          vocabularyId: { notIn: completedVocabIds },
+        }),
       },
       take: 30, // 每天最多30个复习词（与配置一致）
     })
 
-    // 2. 区分需创建的任务和需重置状态的任务
-    // P6: 重置所有非 PENDING 状态的任务（包括 COMPLETED 和 IN_PROGRESS）
-    // 这样可以处理教师重新分配计划或用户需要重新学习的场景
+    // 3. 区分需创建的任务和需重置状态的任务
     const existingMap = new Map(existingTasks.map(t => [t.vocabularyId, t]))
 
     const tasksToCreate: any[] = []
@@ -221,10 +228,12 @@ export async function POST(
     for (const plan of reviewPlans) {
       const existingTask = existingMap.get(plan.vocabularyId)
       if (existingTask) {
-        // P6: 重置所有非 PENDING 状态的任务
-        if (existingTask.status !== 'PENDING') {
+        // 只重置 IN_PROGRESS 状态的任务（中断的任务）
+        // 不重置 COMPLETED 状态，避免已完成的任务被重复学习
+        if (existingTask.status === 'IN_PROGRESS') {
           taskIdsToReset.push(existingTask.id)
         }
+        // PENDING 和 COMPLETED 状态不做处理
       } else {
         tasksToCreate.push({
           studentId,
@@ -235,7 +244,7 @@ export async function POST(
       }
     }
 
-    // 3. 执行更新（重置状态）
+    // 4. 执行更新（重置中断的任务）
     if (taskIdsToReset.length > 0) {
       await prisma.daily_tasks.updateMany({
         where: { id: { in: taskIdsToReset } },
@@ -243,7 +252,7 @@ export async function POST(
       })
     }
 
-    // 4. 执行创建
+    // 5. 执行创建
     // 若没有需要新增或重置的任务且已存在任务，直接返回现有任务
     if (tasksToCreate.length === 0 && taskIdsToReset.length === 0 && existingTasks.length > 0) {
       const shapedExisting = mapTasksForMiniapp(existingTasks)
