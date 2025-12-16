@@ -127,9 +127,8 @@ model study_plans {
   vocabularies vocabularies    @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
   plan_classes plan_classes?   @relation(fields: [planClassId], references: [id], onDelete: SetNull)
 
-  @@unique([studentId, vocabularyId, reviewCount])
+  @@unique([studentId, vocabularyId])
   @@index([planClassId])
-  @@index([studentId, vocabularyId])
 }
 
 model study_records {

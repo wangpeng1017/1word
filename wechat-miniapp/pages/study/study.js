@@ -126,15 +126,30 @@ Page({
 
       let tasks = []
       try {
-        // 尝试从服务器获取
-        const response = await post(`/students/${studentId}/daily-tasks`)
+        // 先尝试 GET 获取已有任务
+        let response = await get(`/students/${studentId}/daily-tasks`)
 
+        // 解析响应
         if (Array.isArray(response)) {
           tasks = response
         } else if (response && Array.isArray(response.tasks)) {
           tasks = response.tasks
         } else if (response && response.data && Array.isArray(response.data.tasks)) {
           tasks = response.data.tasks
+        }
+
+        // 如果没有任务，再 POST 生成
+        if (tasks.length === 0) {
+          console.log('[任务] 无已有任务，尝试生成新任务')
+          response = await post(`/students/${studentId}/daily-tasks`)
+
+          if (Array.isArray(response)) {
+            tasks = response
+          } else if (response && Array.isArray(response.tasks)) {
+            tasks = response.tasks
+          } else if (response && response.data && Array.isArray(response.data.tasks)) {
+            tasks = response.data.tasks
+          }
         }
 
         // 缓存到本地（用于离线模式）

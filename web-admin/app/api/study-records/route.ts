@@ -4,9 +4,10 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { calculateNextReviewDate, isDifficult } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
 import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
+import { getTodayUTC } from '@/lib/date-utils'
 
-// 异步更新掌握度（非阻塞）
-async function updateMasteriesAsync(
+// 同步更新掌握度（确保数据一致性）
+async function updateMasteries(
   studentId: string,
   answers: any[],
   masteryMap: Map<string, any>,
@@ -81,7 +82,8 @@ async function updateMasteriesAsync(
       })
     }
   } catch (err) {
-    console.error('异步更新掌握度失败:', err)
+    console.error('更新掌握度失败:', err)
+    throw err // 同步模式下抛出错误
   }
 }
 
@@ -159,8 +161,8 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
-    // 使用 UTC 日期，确保与数据库中的 taskDate 匹配
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    // 使用统一的日期工具函数
+    const todayUTC = getTodayUTC()
 
     const totalWords = answers.length
     const correctCount = answers.filter((a: any) => a.isCorrect).length
@@ -254,9 +256,14 @@ export async function POST(request: NextRequest) {
       await Promise.all(planUpdates)
     }
 
-    updateMasteriesAsync(studentId, answers, coreResult.masteryMap, now)
-      .catch(err => console.error('掌握度更新失败:', err))
+    // 同步更新掌握度（确保数据一致性）
+    try {
+      await updateMasteries(studentId, answers, coreResult.masteryMap, now)
+    } catch (err) {
+      console.error('掌握度更新失败，但答题记录已保存:', err)
+    }
 
+    // 异步更新积分和成就（非关键路径）
     const pointsPromise = updatePointsAsync(studentId, correctCount, totalWords, accuracy, srId)
 
     checkAndUnlockAchievements(studentId)

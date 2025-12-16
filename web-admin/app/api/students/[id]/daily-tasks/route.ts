@@ -4,6 +4,7 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { calculateNextReviewDate } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
 import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
+import { getDateRangeUTC } from '@/lib/date-utils'
 
 // 统一小程序所需的数据结构：
 // - 将 prisma 返回的 vocabularies/question_options 等字段映射为 vocabulary/options 等
@@ -86,10 +87,8 @@ export async function GET(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const endOfToday = new Date(today)
-    endOfToday.setHours(23, 59, 59, 999)
+    // 使用统一的日期处理
+    const { start: today, end: endOfToday } = getDateRangeUTC()
 
     // 获取今日任务
     const dailyTasks = await prisma.daily_tasks.findMany({
@@ -166,10 +165,8 @@ export async function POST(
       return apiResponse.unauthorized('Token无效')
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const endOfToday = new Date(today)
-    endOfToday.setHours(23, 59, 59, 999)
+    // 使用统一的日期处理
+    const { start: today, end: endOfToday } = getDateRangeUTC()
 
     // 读取今日已存在任务（可能是先前生成的）
     const existingTasks = await prisma.daily_tasks.findMany({

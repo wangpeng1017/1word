@@ -2,16 +2,14 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
-import {
-  calculateNextReviewDate,
-  isDifficult as checkDifficult,
-} from '@/lib/ebbinghaus'
+import { isDifficult as checkDifficult } from '@/lib/ebbinghaus'
 
 /**
  * 更新词汇掌握度
  * POST /api/review-plan/update-mastery
  *
- * 学生每次完成答题后调用此接口更新掌握度
+ * 注意：此 API 仅更新掌握度（word_masteries），不更新学习计划（study_plans）的 reviewCount。
+ * reviewCount 的更新统一由 /api/study-records 处理，避免重复计数。
  *
  * 掌握判定逻辑（统一标准）：
  * - 基于 question_answers 表最近3条记录
@@ -151,47 +149,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 6. 更新学习计划
-    let studyPlan = await prisma.study_plans.findUnique({
-      where: {
-        studentId_vocabularyId: {
-          studentId,
-          vocabularyId,
-        },
-      },
-    })
-
-    if (!studyPlan) {
-      // 创建学习计划
-      studyPlan = await prisma.study_plans.create({
-        data: {
-          studentId,
-          vocabularyId,
-          status: 'IN_PROGRESS',
-          reviewCount: 1,
-          lastReviewAt: new Date(),
-          nextReviewAt: calculateNextReviewDate(new Date(), 0),
-        },
-      })
-    } else {
-      // 更新学习计划
-      const newReviewCount = studyPlan.reviewCount + 1
-      const nextReviewDate = mastered
-        ? null // 已掌握不再安排复习
-        : calculateNextReviewDate(new Date(), newReviewCount)
-
-      await prisma.study_plans.update({
+    // 6. 仅更新学习计划的掌握状态（不更新 reviewCount，由 study-records 统一处理）
+    if (mastered) {
+      await prisma.study_plans.updateMany({
         where: {
-          studentId_vocabularyId: {
-            studentId,
-            vocabularyId,
-          },
+          studentId,
+          vocabularyId,
         },
         data: {
-          reviewCount: newReviewCount,
-          lastReviewAt: new Date(),
-          nextReviewAt: nextReviewDate,
-          status: mastered ? 'MASTERED' : 'IN_PROGRESS',
+          status: 'MASTERED',
+          updatedAt: now,
         },
       })
     }
@@ -200,7 +167,6 @@ export async function POST(request: NextRequest) {
       mastery: updatedMastery,
       isMastered: mastered,
       isDifficult: difficult,
-      nextReviewDate: mastered ? null : studyPlan.nextReviewAt,
     }, '掌握度更新成功')
   } catch (error) {
     console.error('更新掌握度错误:', error)
