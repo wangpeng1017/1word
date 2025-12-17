@@ -164,6 +164,27 @@ export async function POST(request: NextRequest) {
     // 使用统一的日期工具函数
     const todayUTC = getTodayUTC()
 
+    // 幂等性检查：5秒内相同学生+相同答题数量视为重复提交
+    const fiveSecondsAgo = new Date(now.getTime() - 5000)
+    const recentRecord = await prisma.study_records.findFirst({
+      where: {
+        studentId,
+        taskDate: todayUTC,
+        totalWords: answers.length,
+        createdAt: { gte: fiveSecondsAgo },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    if (recentRecord) {
+      console.log(`[幂等] 检测到重复提交: studentId=${studentId}, existingId=${recentRecord.id}`)
+      return apiResponse.success({
+        message: '答题记录已存在（重复提交已忽略）',
+        studyRecordId: recentRecord.id,
+        duplicate: true,
+      })
+    }
+
     const totalWords = answers.length
     const correctCount = answers.filter((a: any) => a.isCorrect).length
     const wrongCount = totalWords - correctCount
@@ -235,18 +256,27 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const planUpdates = answers
-      .filter((a: any) => coreResult.planMap.has(a.vocabularyId))
-      .map((a: any) => {
-        const plan = coreResult.planMap.get(a.vocabularyId)
-        const newReviewCount = plan.reviewCount + 1
+    // P1修复：reviewCount去重 - 同一天同一单词只更新一次
+    const uniqueVocabIds = [...new Set(answers.map((a: any) => a.vocabularyId))]
+    const planUpdates = uniqueVocabIds
+      .filter((vocabId: string) => coreResult.planMap.has(vocabId))
+      .map((vocabId: string) => {
+        const plan = coreResult.planMap.get(vocabId)
+        // 检查今天是否已更新过（lastReviewAt是否是今天）
+        const lastReviewDate = plan.lastReviewAt ? new Date(plan.lastReviewAt).toDateString() : null
+        const todayStr = now.toDateString()
+        const alreadyReviewedToday = lastReviewDate === todayStr
+
+        // 如果今天已复习过，不再增加reviewCount
+        const newReviewCount = alreadyReviewedToday ? plan.reviewCount : plan.reviewCount + 1
+
         return prisma.study_plans.update({
           where: { id: plan.id },
           data: {
             status: 'IN_PROGRESS',
             reviewCount: newReviewCount,
             lastReviewAt: now,
-            nextReviewAt: calculateNextReviewDate(now, newReviewCount),
+            nextReviewAt: alreadyReviewedToday ? undefined : calculateNextReviewDate(now, newReviewCount),
             updatedAt: now,
           }
         })

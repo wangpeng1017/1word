@@ -48,6 +48,9 @@ Page({
 
     // 离线模式
     isOffline: false,
+
+    // 防重复提交
+    isSubmitting: false,
   },
 
   onLoad(options) {
@@ -420,6 +423,13 @@ Page({
 
   // 完成学习
   async finishStudy() {
+    // 防重复提交检查
+    if (this.data.isSubmitting) {
+      console.log("[防重复] 正在提交中，忽略重复点击")
+      return
+    }
+    this.setData({ isSubmitting: true })
+
     const { answers, correctCount, wrongCount, isOffline } = this.data
 
     if (answers.length === 0) {

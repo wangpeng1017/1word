@@ -115,17 +115,28 @@ Page({
     console.log(`[同步] 发现 ${syncQueue.length} 条离线数据待同步`)
 
     try {
-      for (const item of syncQueue) {
+      let successCount = 0
+      for (let i = 0; i < syncQueue.length; i++) {
+        const item = syncQueue[i]
         if (item.type === 'study_complete') {
-          await post('/study-records', {
-            studentId: item.data.studentId,
-            answers: item.data.answers,
-          })
-          console.log('[同步] 学习记录同步成功')
+          try {
+            await post('/study-records', {
+              studentId: item.data.studentId,
+              answers: item.data.answers,
+            })
+            console.log('[同步] 学习记录同步成功')
+            successCount++
+          } catch (itemError) {
+            // 单条失败，保留剩余队列
+            console.error('[同步] 单条同步失败，保留剩余队列', itemError)
+            const remaining = syncQueue.slice(i)
+            wx.setStorageSync('syncQueue', remaining)
+            throw itemError
+          }
         }
       }
 
-      // 同步成功，清空队列
+      // 全部成功，清空队列
       clearSyncQueue()
       wx.showToast({
         title: '离线数据已同步',

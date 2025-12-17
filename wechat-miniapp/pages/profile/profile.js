@@ -71,7 +71,7 @@ Page({
     this.setData({ userInfo })
   },
 
-  // 加载基础统计数据（来自 overview）
+  // 加载基础统计数据（统一使用 word_masteries 作为掌握度数据源）
   async loadStats() {
     try {
       const studentId = app.globalData.userInfo?.studentId
@@ -79,8 +79,17 @@ Page({
         return
       }
 
-      const overview = await get(`/review-plan/${studentId}`)
+      // 并行请求，统一使用 word_masteries 作为掌握度数据源
+      const [overview, masteryData] = await Promise.all([
+        get(`/review-plan/${studentId}`),
+        get(`/word-mastery?studentId=${studentId}&limit=1000`)
+      ])
       const progress = overview?.miniapp?.progress || {}
+
+      // 从 word_masteries 计算真实的已掌握数和难点数
+      const masteryRecords = masteryData?.records || []
+      const realMasteredWords = masteryRecords.filter(m => m.masteredCount > 0).length
+      const realDifficultWords = masteryRecords.filter(m => m.difficultCount > 0).length
 
       const records = await get(`/study-records?studentId=${studentId}&limit=7`)
       const wrongCount = Array.isArray(records) ? records.reduce((sum, r) => sum + (r.wrongCount || 0), 0) : 0
@@ -88,8 +97,8 @@ Page({
       this.setData({
         stats: {
           totalWords: progress.totalWords || 0,
-          masteredWords: progress.masteredWords || 0,
-          difficultWords: progress.difficultWords || 0,
+          masteredWords: realMasteredWords || progress.masteredWords || 0,
+          difficultWords: realDifficultWords || progress.difficultWords || 0,
           studyDays: progress.consecutiveDays || 0,
           wrongCount,
         },
