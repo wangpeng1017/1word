@@ -2,6 +2,20 @@
 const { get } = require('../../utils/request')
 const app = getApp()
 
+// 等级定义（递增式）
+const LEVEL_DEFINITIONS = [
+  { level: 1, minPoints: 0, name: '初学者' },
+  { level: 2, minPoints: 100, name: '入门学徒' },
+  { level: 3, minPoints: 300, name: '勤奋学员' },
+  { level: 4, minPoints: 600, name: '进阶达人' },
+  { level: 5, minPoints: 1000, name: '词汇能手' },
+  { level: 6, minPoints: 1500, name: '学习精英' },
+  { level: 7, minPoints: 2100, name: '词汇大师' },
+  { level: 8, minPoints: 2800, name: '语言专家' },
+  { level: 9, minPoints: 3600, name: '词汇宗师' },
+  { level: 10, minPoints: 4500, name: '传奇学霸' }
+]
+
 Page({
   data: {
     achievements: [],
@@ -18,16 +32,27 @@ Page({
     totalCount: 0,
     totalPoints: 0,
     showUnlockAnimation: false,
-    unlockedAchievement: null
+    unlockedAchievement: null,
+    pointsInfo: {
+      totalPoints: 0,
+      level: 1,
+      levelName: '初学者',
+      currentLevelMin: 0,
+      nextLevelPoints: 100,
+      pointsToNext: 100,
+      progressPercent: 0
+    }
   },
 
   onLoad() {
     this.loadAchievements()
+    this.loadPointsInfo()
   },
 
   onShow() {
     // 每次显示时刷新数据
     this.loadAchievements()
+    this.loadPointsInfo()
   },
 
   // 加载成就列表
@@ -177,5 +202,64 @@ Page({
     setTimeout(() => {
       this.setData({ showUnlockAnimation: false })
     }, 3000)
+  },
+
+  // 加载积分信息
+  async loadPointsInfo() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const res = await get(`/points?studentId=${studentId}`)
+      if (res && res.points) {
+        const totalPoints = res.points.totalPoints || 0
+        const levelInfo = this.calculateLevelInfo(totalPoints)
+
+        this.setData({
+          pointsInfo: {
+            totalPoints,
+            ...levelInfo
+          }
+        })
+      }
+    } catch (error) {
+      console.error('加载积分信息失败:', error)
+    }
+  },
+
+  // 计算等级信息
+  calculateLevelInfo(totalPoints) {
+    let currentLevel = LEVEL_DEFINITIONS[0]
+    let nextLevel = LEVEL_DEFINITIONS[1]
+
+    for (let i = LEVEL_DEFINITIONS.length - 1; i >= 0; i--) {
+      if (totalPoints >= LEVEL_DEFINITIONS[i].minPoints) {
+        currentLevel = LEVEL_DEFINITIONS[i]
+        nextLevel = LEVEL_DEFINITIONS[i + 1] || null
+        break
+      }
+    }
+
+    const currentLevelMin = currentLevel.minPoints
+    const nextLevelPoints = nextLevel ? nextLevel.minPoints : 0
+    const pointsToNext = nextLevel ? nextLevelPoints - totalPoints : 0
+
+    let progressPercent = 0
+    if (nextLevel) {
+      const levelRange = nextLevelPoints - currentLevelMin
+      const currentProgress = totalPoints - currentLevelMin
+      progressPercent = Math.min(100, Math.round((currentProgress / levelRange) * 100))
+    } else {
+      progressPercent = 100
+    }
+
+    return {
+      level: currentLevel.level,
+      levelName: currentLevel.name,
+      currentLevelMin,
+      nextLevelPoints,
+      pointsToNext,
+      progressPercent
+    }
   }
 })

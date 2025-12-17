@@ -5,6 +5,34 @@
     <view class="subtitle">已解锁 {{unlockedCount}} / {{totalCount}} 个成就</view>
   </view>
 
+  <!-- 积分等级卡片 -->
+  <view class="points-level-card">
+    <view class="level-info">
+      <view class="level-badge-large">
+        <text class="level-icon">⭐</text>
+        <text class="level-num">Lv.{{pointsInfo.level}}</text>
+      </view>
+      <view class="level-name">{{pointsInfo.levelName}}</view>
+    </view>
+    <view class="points-progress">
+      <view class="points-row">
+        <text class="current-points">{{pointsInfo.totalPoints}} 积分</text>
+        <text class="next-level-hint" wx:if="{{pointsInfo.nextLevelPoints > 0}}">
+          距离 Lv.{{pointsInfo.level + 1}} 还需 {{pointsInfo.pointsToNext}} 积分
+        </text>
+        <text class="next-level-hint" wx:else>已达最高等级</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{pointsInfo.progressPercent}}%"></view>
+      </view>
+      <view class="progress-labels">
+        <text>{{pointsInfo.currentLevelMin}}</text>
+        <text wx:if="{{pointsInfo.nextLevelPoints > 0}}">{{pointsInfo.nextLevelPoints}}</text>
+        <text wx:else>MAX</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 成就统计 -->
   <view class="stats-card">
     <view class="stat-item">

@@ -219,7 +219,9 @@ async function unlockAchievement(studentId: string, achievementId: string) {
       }
 
       const newTotalPoints = studentPoints.totalPoints + achievement.points
-      const newLevel = Math.floor(newTotalPoints / 100) + 1
+      // 使用共享的等级计算函数
+      const { calculateLevel } = await import('./constants')
+      const newLevel = calculateLevel(newTotalPoints)
 
       await prisma.student_points.update({
         where: { studentId },

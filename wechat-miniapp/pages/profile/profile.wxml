@@ -58,11 +58,6 @@
       <view class="link-badge" wx:if="{{achievementCount > 0}}">{{achievementCount}}</view>
       <text class="link-arrow">›</text>
     </view>
-    <view class="quick-link-item" bindtap="goToLeaderboard">
-      <view class="link-icon">📊</view>
-      <text class="link-title">排行榜</text>
-      <text class="link-arrow">›</text>
-    </view>
   </view>
 
   <!-- 退出登录 -->

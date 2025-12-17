@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
+import { LEVEL_DEFINITIONS, calculateLevel } from '@/lib/constants'
 
 // GET /api/points - 获取学生积分信息
 export async function GET(request: NextRequest) {
@@ -52,9 +53,22 @@ export async function GET(request: NextRequest) {
       take: 10
     })
 
+    // 使用新的等级计算逻辑
+    const correctLevel = calculateLevel(points.totalPoints)
+
+    // 如果数据库中的等级与计算的不一致，更新数据库
+    if (points.level !== correctLevel) {
+      await prisma.student_points.update({
+        where: { studentId },
+        data: { level: correctLevel, updatedAt: new Date() }
+      })
+      points.level = correctLevel
+    }
+
     return apiResponse.success({
       points,
-      history
+      history,
+      levelDefinitions: LEVEL_DEFINITIONS
     })
   } catch (error: any) {
     console.error('获取积分信息失败:', error)
@@ -115,8 +129,8 @@ export async function POST(request: NextRequest) {
     const newWeeklyPoints = studentPoints.weeklyPoints + points
     const newMonthlyPoints = studentPoints.monthlyPoints + points
 
-    // 计算等级（每100积分升1级）
-    const newLevel = Math.floor(newTotalPoints / 100) + 1
+    // 使用新的等级计算逻辑
+    const newLevel = calculateLevel(newTotalPoints)
 
     const updatedPoints = await prisma.student_points.update({
       where: { studentId },

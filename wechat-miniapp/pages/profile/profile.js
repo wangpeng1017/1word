@@ -184,13 +184,6 @@ Page({
     })
   },
 
-  // 跳转到排行榜页面
-  goToLeaderboard() {
-    wx.navigateTo({
-      url: '/pages/leaderboard/leaderboard'
-    })
-  },
-
   // 退出登录
   logout() {
     wx.showModal({
