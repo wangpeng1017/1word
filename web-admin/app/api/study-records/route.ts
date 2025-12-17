@@ -59,6 +59,7 @@ async function updateMasteries(
             consecutiveCorrect: a.isCorrect ? existing.consecutiveCorrect + 1 : 0,
             isMastered,
             isDifficult: isDifficult(newWrongCount),
+            recentAccuracy: a.isCorrect ? Math.min(1, (existing.recentAccuracy || 0) + 0.1) : Math.max(0, (existing.recentAccuracy || 0) - 0.2),
             lastPracticeAt: now,
             updatedAt: now,
           }

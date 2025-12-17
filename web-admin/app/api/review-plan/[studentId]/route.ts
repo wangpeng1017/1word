@@ -291,28 +291,24 @@ export async function GET(
     })
     const timeSpentSeconds = todayRecord?.totalTime || 0
 
-    // 7. 计算连续学习天数
+    // 7. 计算连续学习天数（P2优化：使用study_streaks表缓存）
     let consecutiveDays = 0
-    const today = getTodayDate()
-    let checkDate = new Date(today)
+    const studyStreak = await prisma.study_streaks.findUnique({
+      where: { studentId },
+    })
 
-    while (true) {
-      const record = await prisma.study_records.findFirst({
-        where: {
-          studentId,
-          taskDate: checkDate,
-          isCompleted: true,
-        },
-      })
+    if (studyStreak) {
+      const lastStudy = studyStreak.lastStudyDate
+      const today = getTodayDate()
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
 
-      if (record) {
-        consecutiveDays++
-        checkDate.setDate(checkDate.getDate() - 1)
-      } else {
-        break
+      if (lastStudy) {
+        const lastStudyStr = new Date(lastStudy).toDateString()
+        if (lastStudyStr === today.toDateString() || lastStudyStr === yesterday.toDateString()) {
+          consecutiveDays = studyStreak.currentStreak
+        }
       }
-
-      if (consecutiveDays >= 365) break // 最多查询一年
     }
 
     // 小程序友好的结构（不破坏原有字段）：
