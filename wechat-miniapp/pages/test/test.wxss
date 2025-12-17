@@ -385,3 +385,81 @@
 .error button {
   margin-top: 32rpx;
 }
+
+
+/* 答题反馈 */
+.feedback-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.feedback-card {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
+  width: 80%;
+  max-width: 600rpx;
+}
+
+.feedback-icon {
+  font-size: 120rpx;
+  margin-bottom: 24rpx;
+}
+
+.feedback-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+}
+
+.feedback-correct {
+  color: #10B981;
+}
+
+.feedback-wrong {
+  color: #EF4444;
+}
+
+.feedback-answer {
+  font-size: 28rpx;
+  color: #6B7280;
+  margin-bottom: 32rpx;
+}
+
+.option.correct {
+  background: #D1FAE5;
+  border-color: #10B981;
+  color: #10B981;
+}
+
+.option.wrong {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+/* 听力题喇叭图标 */
+.listening-icon {
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, #FF7A7A 0%, #FF5A5A 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+}
+
+.listening-icon text {
+  font-size: 60rpx;
+  color: #FFFFFF;
+}

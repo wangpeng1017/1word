@@ -22,6 +22,9 @@ Page({
     progressPercent: 0,
     questionTypeText: '',
     canNext: false,
+    showFeedback: false,
+    isCurrentCorrect: false,
+    correctAnswer: '',
   },
 
   onLoad() {

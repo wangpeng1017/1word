@@ -77,7 +77,16 @@
 
       <view class="question-card">
         <view class="question-type">{{questionTypeText}}</view>
-        <view class="question-content">{{currentQuestion.content}}</view>
+        <!-- 听力题显示喇叭图标 -->
+        <block wx:if="{{currentQuestion.type === 'LISTENING'}}">
+          <view class="listening-icon" bindtap="playAudio">
+            <text>🔊</text>
+          </view>
+          <view class="question-content" style="text-align:center;">点击播放发音，选择正确的单词</view>
+        </block>
+        <block wx:else>
+          <view class="question-content">{{currentQuestion.content}}</view>
+        </block>
 
         <!-- 例句 -->
         <view class="question-sentence" wx:if="{{currentQuestion.sentence}}">
@@ -113,7 +122,22 @@
         </view>
       </view>
 
-      <button class="btn-next" bindtap="nextQuestion" disabled="{{!canNext}}">
+
+      <!-- 答题反馈 -->
+      <view class="feedback-overlay" wx:if="{{showFeedback}}">
+        <view class="feedback-card">
+          <view class="feedback-icon">{{isCurrentCorrect ? '✅' : '❌'}}</view>
+          <view class="feedback-text {{isCurrentCorrect ? 'feedback-correct' : 'feedback-wrong'}}">
+            {{isCurrentCorrect ? '回答正确！' : '回答错误'}}
+          </view>
+          <view class="feedback-answer" wx:if="{{!isCurrentCorrect}}">
+            正确答案：{{correctAnswer}}
+          </view>
+          <button class="btn-primary" style="width:60%;margin:0 auto;" bindtap="continuNext">继续</button>
+        </view>
+      </view>
+
+            <button class="btn-next" bindtap="nextQuestion" disabled="{{!canNext}}">
         {{currentIndex < questions.length - 1 ? '下一题' : '提交测试'}}
       </button>
     </view>
