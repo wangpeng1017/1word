@@ -41,8 +41,8 @@
   <view class="login-footer mt-4 text-center">
     <text class="text-muted">首次登录请使用默认密码 123456</text>
 
-    <!-- 客服按钮 -->
-    <view wx:if="{{hasCustomerService}}" class="customer-service-btn" bindtap="showCustomerService">
+    <!-- 客服按钮（始终显示，点击后根据配置决定显示二维码或提示） -->
+    <view class="customer-service-btn" bindtap="showCustomerService">
       <text class="cs-icon">💬</text>
       <text class="cs-text">联系客服</text>
     </view>
