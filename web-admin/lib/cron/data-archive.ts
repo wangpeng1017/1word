@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { getTodayBeijing } from '@/lib/date-utils'
 
 /**
  * 归档配置
@@ -27,9 +28,8 @@ export const ARCHIVE_CONFIG = {
  */
 export async function archiveQuestionAnswers(retentionDays?: number) {
   const days = retentionDays || ARCHIVE_CONFIG.QUESTION_ANSWERS_RETENTION_DAYS
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - days)
-  cutoffDate.setHours(0, 0, 0, 0)
+  const today = getTodayBeijing()
+  const cutoffDate = new Date(today.getTime() - days * 24 * 60 * 60 * 1000)
 
   try {
     // 先统计要删除的记录数
@@ -91,9 +91,8 @@ export async function archiveQuestionAnswers(retentionDays?: number) {
  */
 export async function archiveWrongQuestions(retentionDays?: number) {
   const days = retentionDays || ARCHIVE_CONFIG.WRONG_QUESTIONS_RETENTION_DAYS
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - days)
-  cutoffDate.setHours(0, 0, 0, 0)
+  const today = getTodayBeijing()
+  const cutoffDate = new Date(today.getTime() - days * 24 * 60 * 60 * 1000)
 
   try {
     const result = await prisma.wrong_questions.deleteMany({
@@ -117,9 +116,8 @@ export async function archiveWrongQuestions(retentionDays?: number) {
  */
 export async function archivePointHistory(retentionDays?: number) {
   const days = retentionDays || ARCHIVE_CONFIG.POINT_HISTORY_RETENTION_DAYS
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - days)
-  cutoffDate.setHours(0, 0, 0, 0)
+  const today = getTodayBeijing()
+  const cutoffDate = new Date(today.getTime() - days * 24 * 60 * 60 * 1000)
 
   try {
     const result = await prisma.point_history.deleteMany({

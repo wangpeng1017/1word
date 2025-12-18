@@ -171,8 +171,7 @@ export async function GET() {
         }
       });
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = getTodayBeijing();
 
       await prisma.dailyTask.create({
         data: {

@@ -2,6 +2,7 @@
  * 浠诲姟涓柇妫€娴? * 妫€娴嬪苟鏍囪瓒呮椂鏈畬鎴愮殑浠诲姟涓?INTERRUPTED 鐘舵€? */
 
 import { prisma } from '@/lib/prisma'
+import { getTodayBeijing } from '@/lib/date-utils'
 
 // 榛樿瓒呮椂鏃堕棿锛堝垎閽燂級
 const DEFAULT_INTERRUPT_TIMEOUT = 10
@@ -64,8 +65,7 @@ export async function detectInterruptedTasks(studentId?: string) {
  * 妫€娴嬭法澶╂湭瀹屾垚鐨勪换鍔★紙姣忔棩鍑屾櫒鎵ц锛? * 瑙勫垯锛氫换鍔℃棩鏈熸棭浜庝粖澶╀笖鐘舵€佷笉鏄?COMPLETED 鎴?INTERRUPTED
  */
 export async function detectCrossDayInterruptedTasks() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = getTodayBeijing()
 
   const result = await prisma.daily_tasks.updateMany({
     where: {
@@ -144,8 +144,7 @@ export async function resumeInterruptedTask(taskId: string) {
  * 鎵归噺鎭㈠瀛︾敓浠婃棩鐨勪腑鏂换鍔? * @param studentId 瀛︾敓ID
  * @returns 鎭㈠鐨勪换鍔℃暟閲? */
 export async function resumeTodayInterruptedTasks(studentId: string) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = getTodayBeijing()
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
 

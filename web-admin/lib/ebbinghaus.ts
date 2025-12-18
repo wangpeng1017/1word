@@ -1,3 +1,5 @@
+import { toBeijingDate, getTodayBeijing } from '@/lib/date-utils'
+
 /**
  * 艾宾浩斯遗忘曲线算法 - 完善版
  * 复习间隔：1天、2天、4天、7天、15天
@@ -111,12 +113,8 @@ export function calculatePriority(
  * @returns 是否需要今天复习
  */
 export function shouldReviewToday(nextReviewDate: Date, today: Date = new Date()): boolean {
-  const todayStart = new Date(today)
-  todayStart.setHours(0, 0, 0, 0)
-
-  const reviewDateStart = new Date(nextReviewDate)
-  reviewDateStart.setHours(0, 0, 0, 0)
-
+  const todayStart = toBeijingDate(today)
+  const reviewDateStart = toBeijingDate(nextReviewDate)
   return reviewDateStart <= todayStart
 }
 
@@ -140,10 +138,8 @@ export function getTodayDate(): Date {
  * 计算两个日期之间的天数
  */
 export function daysBetween(date1: Date, date2: Date): number {
-  const d1 = new Date(date1)
-  const d2 = new Date(date2)
-  d1.setHours(0, 0, 0, 0)
-  d2.setHours(0, 0, 0, 0)
+  const d1 = toBeijingDate(date1)
+  const d2 = toBeijingDate(date2)
   const diffTime = Math.abs(d2.getTime() - d1.getTime())
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
