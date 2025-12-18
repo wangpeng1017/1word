@@ -1,41 +1,41 @@
-﻿import { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 
 /**
- * 鑾峰彇绯荤粺璁剧疆
+ * 获取系统设置
  * GET /api/settings
  */
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('鍙湁鏁欏笀鍙互鏌ョ湅绯荤粺璁剧疆')
+      return unauthorizedResponse('只有教师可以查看系统设置')
     }
 
-    // 鑾峰彇鎵€鏈夎缃?
+    // 获取所有设置
     const settings = await prisma.system_configs.findMany()
 
-    // 杞崲涓洪敭鍊煎鏍煎紡
+    // 转换为键值对格式
     const settingsMap: Record<string, any> = {}
     settings.forEach(setting => {
       try {
-        // 灏濊瘯瑙ｆ瀽JSON鍊?
+        // 尝试解析JSON值
         settingsMap[setting.key] = JSON.parse(setting.value)
       } catch {
-        // 濡傛灉涓嶆槸JSON锛岀洿鎺ヤ娇鐢ㄥ瓧绗︿覆鍊?
+        // 如果不是JSON，直接使用字符串值
         settingsMap[setting.key] = setting.value
       }
     })
 
-    // 濡傛灉娌℃湁璁剧疆锛岃繑鍥為粯璁ゅ€?
+    // 如果没有设置，返回默认值
     if (Object.keys(settingsMap).length === 0) {
       settingsMap.systemInfo = {
-        systemName: '鏅鸿兘璇嶆眹澶嶄範鍔╂墜',
+        systemName: '智能词汇复习助手',
         version: 'v1.0.0',
         defaultPassword: '123456',
       }
@@ -43,36 +43,36 @@ export async function GET(request: NextRequest) {
 
     return successResponse(settingsMap)
   } catch (error) {
-    console.error('鑾峰彇绯荤粺璁剧疆閿欒:', error)
-    return errorResponse('鑾峰彇绯荤粺璁剧疆澶辫触', 500)
+    console.error('获取系统设置错误:', error)
+    return errorResponse('获取系统设置失败', 500)
   }
 }
 
 /**
- * 鏇存柊绯荤粺璁剧疆
+ * 更新系统设置
  * PUT /api/settings
  */
 export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('鍙湁鏁欏笀鍙互淇敼绯荤粺璁剧疆')
+      return unauthorizedResponse('只有教师可以修改系统设置')
     }
 
     const body = await request.json()
     const { key, value, description } = body
 
     if (!key) {
-      return errorResponse('缂哄皯璁剧疆閿悕')
+      return errorResponse('缺少设置键名')
     }
 
-    // 灏嗗€艰浆鎹负JSON瀛楃涓插瓨鍌?
+    // 将值转换为JSON字符串存储
     const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
-    // 鏇存柊鎴栧垱寤鸿缃?
+    // 更新或创建设置
     await prisma.system_configs.upsert({
       where: { key },
       create: {
@@ -86,38 +86,38 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    return successResponse({ key, value }, '璁剧疆宸叉洿鏂?)
+    return successResponse({ key, value }, '设置已更新')
   } catch (error) {
-    console.error('鏇存柊绯荤粺璁剧疆閿欒:', error)
-    return errorResponse('鏇存柊绯荤粺璁剧疆澶辫触', 500)
+    console.error('更新系统设置错误:', error)
+    return errorResponse('更新系统设置失败', 500)
   }
 }
 
 /**
- * 鎵归噺鏇存柊绯荤粺璁剧疆
+ * 批量更新系统设置
  * POST /api/settings/batch
  */
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('鍙湁鏁欏笀鍙互淇敼绯荤粺璁剧疆')
+      return unauthorizedResponse('只有教师可以修改系统设置')
     }
 
     const body = await request.json()
     const { settings } = body
 
     if (!settings || typeof settings !== 'object') {
-      return errorResponse('鏃犳晥鐨勮缃暟鎹?)
+      return errorResponse('无效的设置数据')
     }
 
-    // 鎵归噺鏇存柊璁剧疆
+    // 批量更新设置
     const updates = Object.entries(settings).map(([key, value]) => {
       const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
-      
+
       return prisma.system_configs.upsert({
         where: { key },
         create: {
@@ -132,9 +132,9 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(updates)
 
-    return successResponse(settings, '鎵归噺鏇存柊鎴愬姛')
+    return successResponse(settings, '批量更新成功')
   } catch (error) {
-    console.error('鎵归噺鏇存柊绯荤粺璁剧疆閿欒:', error)
-    return errorResponse('鎵归噺鏇存柊绯荤粺璁剧疆澶辫触', 500)
+    console.error('批量更新系统设置错误:', error)
+    return errorResponse('批量更新系统设置失败', 500)
   }
 }
