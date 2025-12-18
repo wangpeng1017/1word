@@ -122,11 +122,18 @@ export function shouldReviewToday(nextReviewDate: Date, today: Date = new Date()
 
 /**
  * 获取今天的日期（去除时间）
+ * 使用北京时间（UTC+8）确保与用户时区一致
  */
 export function getTodayDate(): Date {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return today
+  const now = new Date()
+  // 转换为北京时间（UTC+8）
+  const beijingOffset = 8 * 60 * 60 * 1000
+  const beijingTime = new Date(now.getTime() + beijingOffset)
+  // 提取北京时间的年月日，创建 UTC 0点的日期
+  const year = beijingTime.getUTCFullYear()
+  const month = beijingTime.getUTCMonth()
+  const day = beijingTime.getUTCDate()
+  return new Date(Date.UTC(year, month, day))
 }
 
 /**
