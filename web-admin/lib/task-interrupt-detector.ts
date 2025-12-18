@@ -1,19 +1,17 @@
-/**
- * 任务中断检测
- * 检测并标记超时未完成的任务为 INTERRUPTED 状态
- */
+﻿/**
+ * 浠诲姟涓柇妫€娴? * 妫€娴嬪苟鏍囪瓒呮椂鏈畬鎴愮殑浠诲姟涓?INTERRUPTED 鐘舵€? */
 
 import { prisma } from '@/lib/prisma'
 
-// 默认超时时间（分钟）
+// 榛樿瓒呮椂鏃堕棿锛堝垎閽燂級
 const DEFAULT_INTERRUPT_TIMEOUT = 10
 
 /**
- * 获取中断超时配置（分钟）
+ * 鑾峰彇涓柇瓒呮椂閰嶇疆锛堝垎閽燂級
  */
 async function getInterruptTimeout(): Promise<number> {
   try {
-    const config = await prisma.systemConfig.findUnique({
+    const config = await prisma.system_configs.findUnique({
       where: { key: 'studyConfig' }
     })
     if (config?.value) {
@@ -21,20 +19,17 @@ async function getInterruptTimeout(): Promise<number> {
       return parsed.interruptTimeout || DEFAULT_INTERRUPT_TIMEOUT
     }
   } catch (e) {
-    console.warn('[TASK] 获取中断超时配置失败，使用默认值', e)
+    console.warn('[TASK] 鑾峰彇涓柇瓒呮椂閰嶇疆澶辫触锛屼娇鐢ㄩ粯璁ゅ€?, e)
   }
   return DEFAULT_INTERRUPT_TIMEOUT
 }
 
 /**
- * 检测并更新中断的任务
- * 规则：
- * 1. 任务状态为 IN_PROGRESS
- * 2. 开始时间距今超过配置的超时时间
+ * 妫€娴嬪苟鏇存柊涓柇鐨勪换鍔? * 瑙勫垯锛? * 1. 浠诲姟鐘舵€佷负 IN_PROGRESS
+ * 2. 寮€濮嬫椂闂磋窛浠婅秴杩囬厤缃殑瓒呮椂鏃堕棿
  *
- * @param studentId 可选，指定学生ID（不传则处理所有学生）
- * @returns 更新的任务数量
- */
+ * @param studentId 鍙€夛紝鎸囧畾瀛︾敓ID锛堜笉浼犲垯澶勭悊鎵€鏈夊鐢燂級
+ * @returns 鏇存柊鐨勪换鍔℃暟閲? */
 export async function detectInterruptedTasks(studentId?: string) {
   const timeoutMinutes = await getInterruptTimeout()
   const timeoutMs = timeoutMinutes * 60 * 1000
@@ -43,8 +38,7 @@ export async function detectInterruptedTasks(studentId?: string) {
   const where: any = {
     status: 'IN_PROGRESS',
     startedAt: {
-      lt: cutoffTime // 开始时间早于超时阈值
-    }
+      lt: cutoffTime // 寮€濮嬫椂闂存棭浜庤秴鏃堕槇鍊?    }
   }
 
   if (studentId) {
@@ -60,15 +54,14 @@ export async function detectInterruptedTasks(studentId?: string) {
   })
 
   if (result.count > 0) {
-    console.log(`[TASK] 检测到 ${result.count} 个超时中断的任务已更新（超时: ${timeoutMinutes}分钟）`)
+    console.log(`[TASK] 妫€娴嬪埌 ${result.count} 涓秴鏃朵腑鏂殑浠诲姟宸叉洿鏂帮紙瓒呮椂: ${timeoutMinutes}鍒嗛挓锛塦)
   }
 
   return result.count
 }
 
 /**
- * 检测跨天未完成的任务（每日凌晨执行）
- * 规则：任务日期早于今天且状态不是 COMPLETED 或 INTERRUPTED
+ * 妫€娴嬭法澶╂湭瀹屾垚鐨勪换鍔★紙姣忔棩鍑屾櫒鎵ц锛? * 瑙勫垯锛氫换鍔℃棩鏈熸棭浜庝粖澶╀笖鐘舵€佷笉鏄?COMPLETED 鎴?INTERRUPTED
  */
 export async function detectCrossDayInterruptedTasks() {
   const today = new Date()
@@ -90,16 +83,15 @@ export async function detectCrossDayInterruptedTasks() {
   })
 
   if (result.count > 0) {
-    console.log(`[TASK] 检测到 ${result.count} 个跨天中断的任务已更新`)
+    console.log(`[TASK] 妫€娴嬪埌 ${result.count} 涓法澶╀腑鏂殑浠诲姟宸叉洿鏂癭)
   }
 
   return result.count
 }
 
 /**
- * 获取学生的中断任务统计
- * @param studentId 学生ID
- * @returns 中断任务统计信息
+ * 鑾峰彇瀛︾敓鐨勪腑鏂换鍔＄粺璁? * @param studentId 瀛︾敓ID
+ * @returns 涓柇浠诲姟缁熻淇℃伅
  */
 export async function getInterruptedTasksStats(studentId: string) {
   const interruptedTasks = await prisma.daily_tasks.findMany({
@@ -134,27 +126,23 @@ export async function getInterruptedTasksStats(studentId: string) {
 }
 
 /**
- * 恢复中断的任务（学生选择继续复习）
- * @param taskId 任务ID
- * @returns 更新后的任务
+ * 鎭㈠涓柇鐨勪换鍔★紙瀛︾敓閫夋嫨缁х画澶嶄範锛? * @param taskId 浠诲姟ID
+ * @returns 鏇存柊鍚庣殑浠诲姟
  */
 export async function resumeInterruptedTask(taskId: string) {
   const task = await prisma.daily_tasks.update({
     where: { id: taskId },
     data: {
       status: 'IN_PROGRESS',
-      startedAt: new Date(), // 重新开始计时
-      updatedAt: new Date()
+      startedAt: new Date(), // 閲嶆柊寮€濮嬭鏃?      updatedAt: new Date()
     }
   })
   return task
 }
 
 /**
- * 批量恢复学生今日的中断任务
- * @param studentId 学生ID
- * @returns 恢复的任务数量
- */
+ * 鎵归噺鎭㈠瀛︾敓浠婃棩鐨勪腑鏂换鍔? * @param studentId 瀛︾敓ID
+ * @returns 鎭㈠鐨勪换鍔℃暟閲? */
 export async function resumeTodayInterruptedTasks(studentId: string) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
