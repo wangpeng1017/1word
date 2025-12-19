@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal, Row, Col } from 'antd'
+import { Card, Form, Input, InputNumber, Button, Divider, Space, Tag, Alert, Upload, Image, Modal, Row, Col, App } from 'antd'
 import { SaveOutlined, SettingOutlined, DeleteOutlined, PlusOutlined, LockOutlined, EyeOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 
 export default function SettingsPage() {
+  const { modal, message } = App.useApp()
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
@@ -82,13 +83,13 @@ export default function SettingsPage() {
 
       const result = await response.json()
       if (result.success) {
-        Modal.success({ title: '保存成功', content: '系统设置已保存' })
+        modal.success({ title: '保存成功', content: '系统设置已保存' })
       } else {
-        Modal.error({ title: '保存失败', content: result.error || '保存失败，请重试' })
+        modal.error({ title: '保存失败', content: result.error || '保存失败，请重试' })
       }
     } catch (error) {
       console.error('保存设置失败:', error)
-      Modal.error({ title: '保存失败', content: '网络错误，请重试' })
+      modal.error({ title: '保存失败', content: '网络错误，请重试' })
     } finally {
       setSaving(false)
     }
@@ -132,7 +133,7 @@ export default function SettingsPage() {
 
   // 删除二维码
   const handleDeleteQrcode = () => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: '确定要删除客服二维码吗？删除后学生将无法看到联系客服按钮。',
       okText: '确认删除',

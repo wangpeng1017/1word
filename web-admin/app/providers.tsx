@@ -1,6 +1,6 @@
 'use client'
 
-import { ConfigProvider } from 'antd'
+import { ConfigProvider, App } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <App>{children}</App>
     </ConfigProvider>
   )
 }
