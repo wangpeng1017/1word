@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal, Row, Col } from 'antd'
-import { SaveOutlined, SettingOutlined, DeleteOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons'
+import { SaveOutlined, SettingOutlined, DeleteOutlined, PlusOutlined, LockOutlined, EyeOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 
 export default function SettingsPage() {
@@ -131,7 +131,7 @@ export default function SettingsPage() {
   }
 
   // 删除二维码
-  const handleDeleteQrcode = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation();
+  const handleDeleteQrcode = () => {
     Modal.confirm({
       title: '确认删除',
       content: '确定要删除客服二维码吗？删除后学生将无法看到联系客服按钮。',
@@ -143,6 +143,11 @@ export default function SettingsPage() {
         message.success('二维码已删除，请点击"保存设置"生效')
       },
     })
+  }
+
+  // 预览二维码
+  const handlePreview = () => {
+    setPreviewOpen(true)
   }
 
   // 更改密码
@@ -322,25 +327,17 @@ export default function SettingsPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                   {qrcodeUrl ? (
-                    <div style={{ position: 'relative' }}>
+                    <div>
                       <Image
                         src={qrcodeUrl}
                         alt="客服二维码"
                         width={120}
                         height={120}
-                        style={{ borderRadius: 8, border: '1px solid #d9d9d9' }}
-                        preview={{
-                          visible: previewOpen,
-                          onVisibleChange: setPreviewOpen,
-                        }}
+                        style={{ borderRadius: 8, border: '1px solid #d9d9d9', display: 'block' }}
+                        preview={false}
                       />
                       <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                        <Button
-                          size="small"
-                          onClick={() => setPreviewOpen(true)}
-                        >
-                          预览
-                        </Button>
+                        <Button size="small" icon={<EyeOutlined />} onClick={handlePreview}>预览</Button>
                         <Button
                           size="small"
                           danger
@@ -350,6 +347,15 @@ export default function SettingsPage() {
                           删除
                         </Button>
                       </div>
+                      {/* 隐藏的 Image 组件用于预览功能 */}
+                      <Image
+                        src={qrcodeUrl}
+                        style={{ display: "none" }}
+                        preview={{
+                          visible: previewOpen,
+                          onVisibleChange: setPreviewOpen,
+                        }}
+                      />
                     </div>
                   ) : (
                     <Upload
