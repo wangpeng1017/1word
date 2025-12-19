@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
@@ -31,11 +32,14 @@ export async function POST(request: NextRequest) {
       return prisma.system_configs.upsert({
         where: { key },
         create: {
+          id: randomUUID(),
           key,
           value: valueStr,
+          updatedAt: new Date(),
         },
         update: {
           value: valueStr,
+          updatedAt: new Date(),
         },
       })
     })
