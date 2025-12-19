@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Card, Form, Input, InputNumber, Button, message, Divider, Space, Tag, Alert, Upload, Image, Modal, Row, Col } from 'antd'
-import { SaveOutlined, ReloadOutlined, SettingOutlined, UploadOutlined, DeleteOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons'
-import type { UploadFile, UploadProps } from 'antd'
+import { SaveOutlined, SettingOutlined, DeleteOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons'
+import type { UploadProps } from 'antd'
 
 export default function SettingsPage() {
   const [form] = Form.useForm()
@@ -82,21 +82,16 @@ export default function SettingsPage() {
 
       const result = await response.json()
       if (result.success) {
-        message.success('设置已保存')
+        Modal.success({ title: '保存成功', content: '系统设置已保存' })
       } else {
-        message.error(result.error || '保存失败')
+        Modal.error({ title: '保存失败', content: result.error || '保存失败，请重试' })
       }
     } catch (error) {
       console.error('保存设置失败:', error)
-      message.error('保存失败')
+      Modal.error({ title: '保存失败', content: '网络错误，请重试' })
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleReset = () => {
-    form.resetFields()
-    loadSettings()
   }
 
   // 处理二维码上传
@@ -136,7 +131,7 @@ export default function SettingsPage() {
   }
 
   // 删除二维码
-  const handleDeleteQrcode = () => {
+  const handleDeleteQrcode = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation();
     Modal.confirm({
       title: '确认删除',
       content: '确定要删除客服二维码吗？删除后学生将无法看到联系客服按钮。',
@@ -396,24 +391,7 @@ export default function SettingsPage() {
             </div>
           </div>{/* 操作按钮 */}
           <Form.Item style={{ marginBottom: 0 }}>
-            <Space>
-              <Button
-                type="primary"
-                size="large"
-                icon={<SaveOutlined />}
-                loading={saving}
-                htmlType="submit"
-              >
-                保存设置
-              </Button>
-              <Button
-                size="large"
-                icon={<ReloadOutlined />}
-                onClick={handleReset}
-              >
-                重置
-              </Button>
-            </Space>
+            <Button type="primary" size="large" icon={<SaveOutlined />} loading={saving} htmlType="submit">保存设置</Button>
           </Form.Item>
         </Form>
       </Card>
