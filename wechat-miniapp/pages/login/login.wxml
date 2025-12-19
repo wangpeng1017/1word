@@ -67,7 +67,6 @@
       <text class="qrcode-tip">长按识别或保存二维码添加客服微信</text>
     </view>
     <view class="qrcode-actions">
-      <button class="qrcode-btn" bindtap="previewQrcode">查看大图</button>
       <button class="qrcode-btn qrcode-btn-primary" bindtap="saveQrcode">保存到相册</button>
     </view>
   </view>
