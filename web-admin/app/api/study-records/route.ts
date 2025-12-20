@@ -6,7 +6,7 @@ import { apiResponse } from '@/lib/response'
 import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 import { getTodayUTC } from '@/lib/date-utils'
 
-// 同步更新掌握度（确保数据一致性）
+// 同步更新掌握度
 async function updateMasteries(
   studentId: string,
   answers: any[],
@@ -69,6 +69,7 @@ async function updateMasteries(
 
     await Promise.all(updates)
 
+    // 更新已掌握词汇的 study_plans 状态
     const masteredVocabIds = answers
       .filter(a => {
         const recent = answersByVocab.get(a.vocabularyId) || []
@@ -79,16 +80,18 @@ async function updateMasteries(
     if (masteredVocabIds.length > 0) {
       await prisma.study_plans.updateMany({
         where: { studentId, vocabularyId: { in: masteredVocabIds } },
-        data: { status: 'MASTERED' },
+        data: { status: 'MASTERED', updatedAt: now },
       })
     }
+
+    return masteredVocabIds
   } catch (err) {
     console.error('更新掌握度失败:', err)
-    throw err // 同步模式下抛出错误
+    throw err
   }
 }
 
-// 异步更新积分（非阻塞）
+// 异步更新积分
 async function updatePointsAsync(
   studentId: string,
   correctCount: number,
@@ -147,7 +150,7 @@ async function updatePointsAsync(
   }
 }
 
-// POST /api/study-records - 提交答题记录（优化版）
+// POST /api/study-records - 提交答题记录
 export async function POST(request: NextRequest) {
   try {
     const token = getTokenFromHeader(request.headers.get('authorization'))
@@ -162,10 +165,9 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
-    // 使用统一的日期工具函数
     const todayUTC = getTodayUTC()
 
-    // 幂等性检查：5秒内相同学生+相同答题数量视为重复提交
+    // 幂等性检查
     const fiveSecondsAgo = new Date(now.getTime() - 5000)
     const recentRecord = await prisma.study_records.findFirst({
       where: {
@@ -178,7 +180,6 @@ export async function POST(request: NextRequest) {
     })
 
     if (recentRecord) {
-      console.log(`[幂等] 检测到重复提交: studentId=${studentId}, existingId=${recentRecord.id}`)
       return apiResponse.success({
         message: '答题记录已存在（重复提交已忽略）',
         studyRecordId: recentRecord.id,
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest) {
     const wrongCount = totalWords - correctCount
     const accuracy = totalWords > 0 ? correctCount / totalWords : 0
     const totalTime = answers.reduce((sum: number, a: any) => sum + (a.timeSpent || 0), 0)
-    const vocabularyIds = [...new Set(answers.map((a: any) => a.vocabularyId))]
+    const vocabularyIds = [...new Set(answers.map((a: any) => a.vocabularyId))] as string[]
 
     const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 
@@ -199,11 +200,11 @@ export async function POST(request: NextRequest) {
       const [existingPlans, existingMasteries] = await Promise.all([
         tx.study_plans.findMany({
           where: { studentId, vocabularyId: { in: vocabularyIds } },
-          select: { id: true, vocabularyId: true, reviewCount: true }
+          select: { id: true, vocabularyId: true, reviewCount: true, lastReviewAt: true }
         }),
         tx.word_masteries.findMany({
           where: { studentId, vocabularyId: { in: vocabularyIds } },
-          select: { id: true, vocabularyId: true, totalWrongCount: true, consecutiveCorrect: true }
+          select: { id: true, vocabularyId: true, totalWrongCount: true, consecutiveCorrect: true, recentAccuracy: true }
         }),
       ])
 
@@ -244,57 +245,66 @@ export async function POST(request: NextRequest) {
       return { studyRecord, planMap, masteryMap }
     }, { timeout: 10000 })
 
-    await prisma.daily_tasks.updateMany({
-      where: {
-        studentId,
-        vocabularyId: { in: vocabularyIds },
-        taskDate: todayUTC,
-      },
-      data: {
-        status: 'COMPLETED',
-        completedAt: now,
-        updatedAt: now,
-      },
-    })
+    // 更新或创建 study_plans
+    const planUpdates: Promise<any>[] = []
+    const plansToCreate: any[] = []
 
-    // P1修复：reviewCount去重 - 同一天同一单词只更新一次
-    const uniqueVocabIds = [...new Set(answers.map((a: any) => a.vocabularyId))]
-    const planUpdates = uniqueVocabIds
-      .filter((vocabId: string) => coreResult.planMap.has(vocabId))
-      .map((vocabId: string) => {
-        const plan = coreResult.planMap.get(vocabId)
-        // 检查今天是否已更新过（lastReviewAt是否是今天）
-        const lastReviewDate = plan.lastReviewAt ? new Date(plan.lastReviewAt).toDateString() : null
+    for (const vocabId of vocabularyIds) {
+      const existingPlan = coreResult.planMap.get(vocabId)
+
+      if (existingPlan) {
+        // 已有记录，更新
+        const lastReviewDate = existingPlan.lastReviewAt ? new Date(existingPlan.lastReviewAt).toDateString() : null
         const todayStr = now.toDateString()
         const alreadyReviewedToday = lastReviewDate === todayStr
+        const newReviewCount = alreadyReviewedToday ? existingPlan.reviewCount : existingPlan.reviewCount + 1
 
-        // 如果今天已复习过，不再增加reviewCount
-        const newReviewCount = alreadyReviewedToday ? plan.reviewCount : plan.reviewCount + 1
-
-        return prisma.study_plans.update({
-          where: { id: plan.id },
-          data: {
-            status: 'IN_PROGRESS',
-            reviewCount: newReviewCount,
-            lastReviewAt: now,
-            nextReviewAt: alreadyReviewedToday ? undefined : calculateNextReviewDate(now, newReviewCount),
-            updatedAt: now,
-          }
+        planUpdates.push(
+          prisma.study_plans.update({
+            where: { id: existingPlan.id },
+            data: {
+              status: 'LEARNING',
+              reviewCount: newReviewCount,
+              lastReviewAt: now,
+              nextReviewAt: alreadyReviewedToday ? undefined : calculateNextReviewDate(now, newReviewCount),
+              updatedAt: now,
+            }
+          })
+        )
+      } else {
+        // 首次学习，创建记录
+        plansToCreate.push({
+          id: `sp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${vocabId.slice(-4)}`,
+          studentId,
+          vocabularyId: vocabId,
+          status: 'LEARNING',
+          reviewCount: 0,
+          lastReviewAt: now,
+          nextReviewAt: calculateNextReviewDate(now, 0),
+          updatedAt: now,
         })
-      })
+      }
+    }
 
     if (planUpdates.length > 0) {
       await Promise.all(planUpdates)
     }
 
-    // 同步更新掌握度（确保数据一致性）
+    if (plansToCreate.length > 0) {
+      await prisma.study_plans.createMany({
+        data: plansToCreate,
+        skipDuplicates: true,
+      })
+    }
+
+    // 同步更新掌握度
     try {
       await updateMasteries(studentId, answers, coreResult.masteryMap, now)
     } catch (err) {
       console.error('掌握度更新失败，但答题记录已保存:', err)
     }
 
-    // 更新连续学习天数（study_streaks）
+    // 更新连续学习天数
     try {
       const existingStreak = await prisma.study_streaks.findUnique({
         where: { studentId },
@@ -310,13 +320,10 @@ export async function POST(request: NextRequest) {
 
         let newStreak = 1
         if (lastStudyStr === todayStr) {
-          // 今天已学习，保持不变
           newStreak = existingStreak.currentStreak
         } else if (lastStudyStr === yesterdayStr) {
-          // 昨天学习过，连续+1
           newStreak = existingStreak.currentStreak + 1
         }
-        // 否则重置为1
 
         await prisma.study_streaks.update({
           where: { studentId },
@@ -328,7 +335,6 @@ export async function POST(request: NextRequest) {
           },
         })
       } else {
-        // 首次学习，创建记录
         await prisma.study_streaks.create({
           data: {
             id: `ss_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -343,7 +349,7 @@ export async function POST(request: NextRequest) {
       console.error('更新连续学习天数失败:', err)
     }
 
-    // 异步更新积分和成就（非关键路径）
+    // 异步更新积分和成就
     const pointsPromise = updatePointsAsync(studentId, correctCount, totalWords, accuracy, srId)
 
     checkAndUnlockAchievements(studentId)

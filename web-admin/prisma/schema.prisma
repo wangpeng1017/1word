@@ -37,23 +37,19 @@ model daily_tasks {
   @@index([studentId, taskDate])
 }
 
+// 班级学习计划（班级×词汇库关联）
 model plan_classes {
   id            String          @id
   class_id      String
-  vocabulary_id String
-  pack_id       String?         // 来源词汇库ID
-  day_number    Int?            // 来源词汇库的第几天
-  status        StudyPlanStatus @default(PENDING)
+  pack_id       String          // 词汇库ID（必填）
+  status        PlanClassStatus @default(ACTIVE)
   start_date    DateTime        @db.Date
-  end_date      DateTime?       @db.Date
   created_at    DateTime        @default(now())
   updated_at    DateTime
   classes       classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  vocabularies  vocabularies    @relation(fields: [vocabulary_id], references: [id], onDelete: Cascade)
-  vocabulary_packs vocabulary_packs? @relation(fields: [pack_id], references: [id], onDelete: SetNull)
-  study_plans   study_plans[]   // 新增：关联的学生学习计划
+  vocabulary_packs vocabulary_packs @relation(fields: [pack_id], references: [id], onDelete: Cascade)
 
-  @@unique([class_id, vocabulary_id])
+  @@unique([class_id, pack_id])
   @@index([class_id])
   @@index([status])
   @@index([pack_id])
@@ -112,12 +108,12 @@ model students {
   @@index([grade])
 }
 
+// 学生学习进度（学生×词汇，首次学习时创建）
 model study_plans {
   id           String          @id
   studentId    String
   vocabularyId String
-  planClassId  String?         // 新增：来源班级计划ID，用于追溯
-  status       StudyPlanStatus @default(PENDING)
+  status       StudyPlanStatus @default(LEARNING)
   reviewCount  Int             @default(0)
   lastReviewAt DateTime?
   nextReviewAt DateTime?
@@ -125,10 +121,10 @@ model study_plans {
   updatedAt    DateTime
   students     students        @relation(fields: [studentId], references: [id], onDelete: Cascade)
   vocabularies vocabularies    @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  plan_classes plan_classes?   @relation(fields: [planClassId], references: [id], onDelete: SetNull)
 
   @@unique([studentId, vocabularyId])
-  @@index([planClassId])
+  @@index([studentId, status])
+  @@index([studentId, nextReviewAt])
 }
 
 model study_records {
@@ -202,16 +198,15 @@ model vocabularies {
   created_at        DateTime          @default(now())
   updated_at        DateTime
   daily_tasks       daily_tasks[]
-  plan_classes      plan_classes[]
   questions         questions[]
   study_plans       study_plans[]
   word_audios       word_audios[]
   word_images       word_images[]
   word_masteries    word_masteries[]
-  word_meanings     word_meanings[]    // 新增: 多词性多释义
+  word_meanings     word_meanings[]
   wrong_questions   wrong_questions[]
-  question_answers  question_answers[] // 新增: 答题记录关联
-  pack_day_words    vocabulary_pack_day_words[] // 词汇库关联
+  question_answers  question_answers[]
+  pack_day_words    vocabulary_pack_day_words[]
 }
 
 model word_audios {
@@ -337,10 +332,14 @@ enum QuestionType {
 }
 
 enum StudyPlanStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
+  LEARNING
   MASTERED
+}
+
+// 班级计划状态
+enum PlanClassStatus {
+  ACTIVE
+  COMPLETED
 }
 
 enum TaskStatus {

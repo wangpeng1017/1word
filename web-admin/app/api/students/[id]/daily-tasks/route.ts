@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
-import { calculateNextReviewDate } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
 import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
-import { getDateRangeUTC } from '@/lib/date-utils'
+import { getDateRangeUTC, getTodayBeijing } from '@/lib/date-utils'
 
-// 统一小程序所需的数据结构：
-// - 将 prisma 返回的 vocabularies/question_options 等字段映射为 vocabulary/options 等
-function mapTasksForMiniapp(dailyTasks: any[]) {
-  return dailyTasks.map((t: any) => {
-    const v = t.vocabularies || t.vocabulary || {}
+// 每日新学单词上限
+const MAX_NEW_WORDS_PER_DAY = 200
+
+// 映射任务数据为小程序格式
+function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
+  return tasks.map((t: any) => {
+    const v = t.vocabulary || t.vocabularies || {}
     const questions = (v.questions || []).map((q: any) => ({
       id: q.id,
       type: q.type,
@@ -18,21 +19,21 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
       sentence: q.sentence,
       audioUrl: q.audioUrl,
       correctAnswer: q.correctAnswer,
-      options: (q.question_options || q.options || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)).map((o: any) => ({
-        id: o.id,
-        content: o.content,
-        isCorrect: o.isCorrect,
-        order: o.order,
-      })),
+      options: (q.question_options || q.options || [])
+        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+        .map((o: any) => ({
+          id: o.id,
+          content: o.content,
+          isCorrect: o.isCorrect,
+          order: o.order,
+        })),
     }))
 
     const audios = v.word_audios || v.audios || []
     const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
     const audioUk = audios.find((a: any) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
-    // 默认优先使用我们库里的 US/UK 音频，外部 audioUrl 仅作为兜底
     const defaultAudio = audioUs ?? audioUk ?? v.audioUrl ?? v.audio_url ?? null
 
-    // 映射多词性多释义
     const meanings = (v.word_meanings || []).map((m: any) => ({
       id: m.id,
       partOfSpeech: m.partOfSpeech ?? m.part_of_speech,
@@ -42,22 +43,17 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
     }))
 
     return {
-      id: t.id,
-      studentId: t.studentId,
-      vocabularyId: t.vocabularyId,
-      taskDate: t.taskDate,
-      status: t.status,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-      // 题型分配与选中题目（用于小程序端按服务端结果出题）
-      targetQuestionType: (t as any).targetQuestionType || null,
-      selectedQuestionId: (t as any).selectedQuestionId || null,
+      id: t.id || `task_${v.id}`,
+      vocabularyId: v.id,
+      isNew: isNewMap.get(v.id) ?? false,
+      targetQuestionType: t.targetQuestionType || null,
+      selectedQuestionId: t.selectedQuestionId || null,
       vocabulary: {
         id: v.id,
         word: v.word,
         primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
         secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
-        meanings, // 新增: 多词性多释义
+        meanings,
         audioUrl: defaultAudio,
         audioUs,
         audioUk,
@@ -69,270 +65,195 @@ function mapTasksForMiniapp(dailyTasks: any[]) {
   })
 }
 
-// GET /api/students/[id]/daily-tasks - 获取学生当日任务
+// GET /api/students/[id]/daily-tasks - 动态生成学生当日任务
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: studentId } = await params
   try {
-    // 验证token
     const token = getTokenFromHeader(request.headers.get('authorization'))
-    if (!token) {
-      return apiResponse.unauthorized('未授权')
-    }
+    if (!token) return apiResponse.unauthorized('未授权')
 
     const payload = verifyToken(token)
-    if (!payload) {
-      return apiResponse.unauthorized('Token无效')
+    if (!payload) return apiResponse.unauthorized('Token无效')
+
+    // 1. 获取学生信息和班级
+    const student = await prisma.students.findUnique({
+      where: { id: studentId },
+      select: { id: true, class_id: true }
+    })
+    if (!student) return apiResponse.error('学生不存在')
+
+    // 2. 获取班级的活跃词汇库计划
+    const planClass = await prisma.plan_classes.findFirst({
+      where: {
+        class_id: student.class_id,
+        status: 'ACTIVE'
+      },
+      include: {
+        vocabulary_packs: {
+          include: {
+            pack_days: {
+              include: {
+                day_words: {
+                  include: {
+                    vocabulary: {
+                      include: {
+                        word_audios: true,
+                        word_meanings: { orderBy: { orderIndex: 'asc' } },
+                        questions: {
+                          include: {
+                            question_options: { orderBy: { order: 'asc' } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              orderBy: { dayNumber: 'asc' }
+            }
+          }
+        }
+      }
+    })
+
+    const { end: endOfToday } = getDateRangeUTC()
+    const today = getTodayBeijing()
+
+    // 3. 获取已掌握的词汇ID
+    const masteredWords = await prisma.word_masteries.findMany({
+      where: { studentId, isMastered: true },
+      select: { vocabularyId: true }
+    })
+    const masteredVocabIds = new Set(masteredWords.map(w => w.vocabularyId))
+
+    // 4. 获取已有学习记录的词汇ID
+    const existingPlans = await prisma.study_plans.findMany({
+      where: { studentId },
+      select: { vocabularyId: true }
+    })
+    const learnedVocabIds = new Set(existingPlans.map(p => p.vocabularyId))
+
+    // 5. 计算今日新学单词
+    let newWords: any[] = []
+    let dayNumber = 0
+    let totalDays = 0
+
+    if (planClass?.vocabulary_packs) {
+      const pack = planClass.vocabulary_packs
+      totalDays = pack.totalDays
+
+      // 计算今天是学习的第几天
+      const startDate = new Date(planClass.start_date)
+      const diffTime = today.getTime() - startDate.getTime()
+      dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+      // 如果在词汇库天数范围内，获取当天的新学单词
+      if (dayNumber >= 1 && dayNumber <= totalDays) {
+        const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
+        if (packDay) {
+          newWords = packDay.day_words
+            .map(dw => dw.vocabulary)
+            .filter(v => v && !masteredVocabIds.has(v.id) && !learnedVocabIds.has(v.id))
+            .filter(v => v.questions && v.questions.length > 0)
+            .slice(0, MAX_NEW_WORDS_PER_DAY)
+        }
+      }
     }
 
-    // 使用统一的日期处理
-    const { start: today, end: endOfToday } = getDateRangeUTC()
-
-    // 获取今日任务
-    const dailyTasks = await prisma.daily_tasks.findMany({
+    // 6. 获取今日复习单词
+    const reviewPlans = await prisma.study_plans.findMany({
       where: {
         studentId,
-        taskDate: { gte: today, lte: endOfToday },
+        status: 'LEARNING',
+        nextReviewAt: { lte: endOfToday }
       },
       include: {
         vocabularies: {
           include: {
             word_audios: true,
-            word_meanings: {
-              orderBy: {
-                orderIndex: 'asc',
-              },
-            },
+            word_meanings: { orderBy: { orderIndex: 'asc' } },
             questions: {
               include: {
-                question_options: {
-                  orderBy: {
-                    order: 'asc',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
+                question_options: { orderBy: { order: 'asc' } }
+              }
+            }
+          }
+        }
+      }
     })
 
-    // 分配题型（80/20），无音频不分配 LISTENING
-    const vocabularyIds = dailyTasks.map(t => t.vocabularyId)
+    // 获取难点词汇用于排序
+    const reviewVocabIds = reviewPlans.map(p => p.vocabularyId)
+    const difficultWords = await prisma.word_masteries.findMany({
+      where: {
+        studentId,
+        vocabularyId: { in: reviewVocabIds },
+        isDifficult: true
+      },
+      select: { vocabularyId: true }
+    })
+    const difficultVocabIds = new Set(difficultWords.map(w => w.vocabularyId))
+
+    // 排序：难点词汇优先
+    const reviewWords = reviewPlans
+      .filter(p => p.vocabularies && p.vocabularies.questions?.length > 0)
+      .sort((a, b) => {
+        const aIsDifficult = difficultVocabIds.has(a.vocabularyId) ? 1 : 0
+        const bIsDifficult = difficultVocabIds.has(b.vocabularyId) ? 1 : 0
+        return bIsDifficult - aIsDifficult
+      })
+      .map(p => ({ vocabulary: p.vocabularies }))
+
+    // 7. 合并任务并标记新学/复习
+    const isNewMap = new Map<string, boolean>()
+    newWords.forEach(v => isNewMap.set(v.id, true))
+    reviewWords.forEach(r => isNewMap.set(r.vocabulary.id, false))
+
+    const allTasks = [
+      ...newWords.map(v => ({ vocabulary: v })),
+      ...reviewWords
+    ]
+
+    // 8. 分配题型
+    const vocabularyIds = allTasks.map(t => t.vocabulary.id)
     const hasAudioMap = new Map<string, boolean>(
-      dailyTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
+      allTasks.map(t => [t.vocabulary.id, (t.vocabulary.word_audios?.length || 0) > 0])
     )
     const allocation = allocateQuestionTypes(vocabularyIds, hasAudioMap)
 
-    // 选择题目ID
-    const tasksWithSelection = dailyTasks.map(t => {
-      const targetType = allocation.get(t.vocabularyId)
+    const tasksWithSelection = allTasks.map(t => {
+      const targetType = allocation.get(t.vocabulary.id)
       const selected = selectQuestionByType(
-        ((t.vocabularies as any)?.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
+        (t.vocabulary.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
         targetType as any
       )
       return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
     })
 
-    const shaped = mapTasksForMiniapp(tasksWithSelection)
-    return apiResponse.success(shaped)
-  } catch (error) {
+    const shaped = mapTasksForMiniapp(tasksWithSelection, isNewMap)
+
+    return apiResponse.success({
+      tasks: shaped,
+      summary: {
+        newCount: newWords.length,
+        reviewCount: reviewWords.length,
+        dayNumber,
+        totalDays
+      }
+    })
+  } catch (error: any) {
     console.error('获取每日任务失败:', error)
-    return apiResponse.error('获取每日任务失败')
+    return apiResponse.error(`获取每日任务失败: ${error?.message || '未知错误'}`)
   }
 }
 
-// POST /api/students/[id]/daily-tasks - 生成学生当日任务
+// POST 保留用于兼容，但逻辑与 GET 相同
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: studentId } = await params
-  try {
-    // 验证token
-    const token = getTokenFromHeader(request.headers.get('authorization'))
-    if (!token) {
-      return apiResponse.unauthorized('未授权')
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return apiResponse.unauthorized('Token无效')
-    }
-
-    // 使用统一的日期处理
-    const { start: today, end: endOfToday } = getDateRangeUTC()
-
-    // 读取今日已存在任务（可能是先前生成的）
-    const existingTasks = await prisma.daily_tasks.findMany({
-      where: {
-        studentId,
-        taskDate: { gte: today, lte: endOfToday },
-      },
-      include: {
-        vocabularies: {
-          include: {
-            word_audios: true,
-            word_meanings: {
-              orderBy: {
-                orderIndex: 'asc',
-              },
-            },
-            questions: {
-              include: {
-                question_options: {
-                  orderBy: { order: 'asc' },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'asc' },
-    })
-
-    // 1. 获取今日已完成的词汇ID（避免重复生成任务）
-    const completedVocabIds = existingTasks
-      .filter(t => t.status === 'COMPLETED')
-      .map(t => t.vocabularyId)
-
-    // 2. 查找需要复习的单词（基于艾宾浩斯曲线，排除今日已完成的）
-    const reviewPlans = await prisma.study_plans.findMany({
-      where: {
-        studentId,
-        status: {
-          in: ['IN_PROGRESS', 'PENDING'],
-        },
-        nextReviewAt: {
-          lte: endOfToday, // 允许当天任意时间的计划进入复习队列
-        },
-        // 排除今日已完成的词汇，避免重复生成任务
-        ...(completedVocabIds.length > 0 && {
-          vocabularyId: { notIn: completedVocabIds },
-        }),
-      },
-      take: 30, // 每天最多30个复习词（与配置一致）
-    })
-
-    // 3. 区分需创建的任务和需重置状态的任务
-    const existingMap = new Map(existingTasks.map(t => [t.vocabularyId, t]))
-
-    const tasksToCreate: any[] = []
-    const taskIdsToReset: string[] = []
-
-    for (const plan of reviewPlans) {
-      const existingTask = existingMap.get(plan.vocabularyId)
-      if (existingTask) {
-        // 只重置 IN_PROGRESS 状态的任务（中断的任务）
-        // 不重置 COMPLETED 状态，避免已完成的任务被重复学习
-        if (existingTask.status === 'IN_PROGRESS') {
-          taskIdsToReset.push(existingTask.id)
-        }
-        // PENDING 和 COMPLETED 状态不做处理
-      } else {
-        tasksToCreate.push({
-          studentId,
-          vocabularyId: plan.vocabularyId,
-          taskDate: today,
-          status: 'PENDING' as const,
-        })
-      }
-    }
-
-    // 4. 执行更新（重置中断的任务）
-    if (taskIdsToReset.length > 0) {
-      await prisma.daily_tasks.updateMany({
-        where: { id: { in: taskIdsToReset } },
-        data: { status: 'PENDING', updatedAt: new Date() },
-      })
-    }
-
-    // 5. 执行创建
-    // 若没有需要新增或重置的任务且已存在任务，直接返回现有任务
-    if (tasksToCreate.length === 0 && taskIdsToReset.length === 0 && existingTasks.length > 0) {
-      const shapedExisting = mapTasksForMiniapp(existingTasks)
-      return apiResponse.success({ message: '今日任务已存在（无新增）', tasks: shapedExisting })
-    }
-
-    if (tasksToCreate.length === 0 && taskIdsToReset.length === 0) {
-      return apiResponse.success({ message: '暂无任务', tasks: [] })
-    }
-
-    if (tasksToCreate.length > 0) {
-      // 为 createMany 生成显式 id
-      const dtTs = Date.now()
-      let dtNum = 0
-      const tasksToInsert = tasksToCreate.map(t => ({
-        id: `dt_${dtTs}_${dtNum++}_${Math.random().toString(36).slice(2, 10)}`,
-        updatedAt: new Date(),
-        ...t,
-      }))
-
-      await prisma.daily_tasks.createMany({
-        data: tasksToInsert,
-        skipDuplicates: true,
-      })
-    }
-
-    // 5. 返回今天的全部任务（带词汇和题目信息）
-    const allTasks = await prisma.daily_tasks.findMany({
-      where: {
-        studentId,
-        taskDate: today,
-      },
-      include: {
-        vocabularies: {
-          include: {
-            word_audios: true,
-            word_meanings: {
-              orderBy: {
-                orderIndex: 'asc',
-              },
-            },
-            questions: {
-              include: {
-                question_options: {
-                  orderBy: {
-                    order: 'asc',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'asc' },
-    })
-
-    // 分配题型并选择题目（考虑有无音频）
-    const vocabularyIds2 = allTasks.map(t => t.vocabularyId)
-    const hasAudioMap2 = new Map<string, boolean>(
-      allTasks.map(t => [t.vocabularyId, (t.vocabularies as any)?.word_audios?.length > 0])
-    )
-    const allocation2 = allocateQuestionTypes(vocabularyIds2, hasAudioMap2)
-
-    const withSel = allTasks.map(t => {
-      const targetType = allocation2.get(t.vocabularyId)
-      const selected = selectQuestionByType(
-        ((t.vocabularies as any)?.questions || []).map((q: any) => ({ id: q.id, type: q.type })),
-        targetType as any
-      )
-      return { ...t, targetQuestionType: targetType, selectedQuestionId: selected }
-    })
-
-    const shaped = mapTasksForMiniapp(withSel)
-    return apiResponse.success({
-      message: `今日任务共 ${withSel.length} 个（其中新增 ${tasksToCreate.length} 个）`,
-      tasks: shaped,
-    })
-  } catch (error: any) {
-    console.error('生成每日任务失败:', error)
-    // 向客户端返回错误详情，方便定位
-    return apiResponse.error(`生成每日任务失败: ${error?.message || '未知错误'}`)
-  }
+  return GET(request, { params })
 }
