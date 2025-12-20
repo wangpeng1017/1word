@@ -9,7 +9,7 @@
   </view>
 
   <block wx:if="{{state==='ready'}}">
-    <!-- 🎮 游戏化任务进度卡片 -->
+    <!-- 今日复习任务卡片 -->
     <view class="task-card">
       <view class="task-header">
         <view class="task-title">📋 今日复习任务</view>
@@ -25,6 +25,37 @@
         <view class="progress-info">
           <text class="progress-done">{{overview.reviewedCount}} / {{overview.dueCount}}</text>
           <text class="progress-percent">{{progressPercent}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 明日预测卡片 -->
+    <view class="forecast-card" wx:if="{{tomorrowReview > 0}}">
+      <view class="forecast-header">
+        <view class="forecast-title">📅 明日预测</view>
+        <view class="forecast-badge {{tomorrowDifficulty}}">{{tomorrowDifficultyText}}</view>
+      </view>
+      <view class="forecast-content">
+        <view class="forecast-num">{{tomorrowReview}}</view>
+        <view class="forecast-label">预计复习单词</view>
+      </view>
+    </view>
+
+    <!-- 复习池统计 -->
+    <view class="pool-card" wx:if="{{pool}}">
+      <view class="pool-title">📊 学习进度</view>
+      <view class="pool-stats">
+        <view class="pool-item">
+          <view class="pool-num">{{pool.totalLearned}}</view>
+          <view class="pool-label">总学习</view>
+        </view>
+        <view class="pool-item">
+          <view class="pool-num">{{pool.mastered}}</view>
+          <view class="pool-label">已掌握</view>
+        </view>
+        <view class="pool-item">
+          <view class="pool-num">{{pool.masteryRate}}%</view>
+          <view class="pool-label">掌握率</view>
         </view>
       </view>
     </view>
@@ -53,9 +84,39 @@
 
   <block wx:elif="{{state==='empty'}}">
     <view class="empty">
-      <view class="done">今日复习已完成</view>
+      <view class="done">🎉 今日复习已完成</view>
       
-      <!-- 完成态也显示完整统计数据 -->
+      <!-- 明日预测卡片 -->
+      <view class="forecast-card" wx:if="{{tomorrowReview > 0}}" style="margin: 30rpx 0;">
+        <view class="forecast-header">
+          <view class="forecast-title">📅 明日预测</view>
+          <view class="forecast-badge {{tomorrowDifficulty}}">{{tomorrowDifficultyText}}</view>
+        </view>
+        <view class="forecast-content">
+          <view class="forecast-num">{{tomorrowReview}}</view>
+          <view class="forecast-label">预计复习单词</view>
+        </view>
+      </view>
+
+      <!-- 复习池统计 -->
+      <view class="pool-card" wx:if="{{pool}}" style="margin: 30rpx 0;">
+        <view class="pool-title">📊 学习进度</view>
+        <view class="pool-stats">
+          <view class="pool-item">
+            <view class="pool-num">{{pool.totalLearned}}</view>
+            <view class="pool-label">总学习</view>
+          </view>
+          <view class="pool-item">
+            <view class="pool-num">{{pool.mastered}}</view>
+            <view class="pool-label">已掌握</view>
+          </view>
+          <view class="pool-item">
+            <view class="pool-num">{{pool.masteryRate}}%</view>
+            <view class="pool-label">掌握率</view>
+          </view>
+        </view>
+      </view>
+      
       <view class="stats" style="margin-top: 40rpx; margin-bottom: 40rpx;">
         <view class="stat">
           <view class="num">{{overview.dueCount}}</view>
