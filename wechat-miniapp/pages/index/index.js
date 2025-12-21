@@ -155,30 +155,64 @@ Page({
       await post('/students/' + studentId + '/daily-tasks')
     } catch (e) {}
 
+    // 清理过期的本地缓存
     const saved = getStudyProgress()
-    if (saved && saved.timestamp) {
-      const savedDate = new Date(saved.timestamp).toDateString()
-      if (savedDate !== new Date().toDateString()) clearStudyProgress()
+    if (saved) {
+      const savedDate = (saved.timestamp || saved.startTime) ? new Date(saved.timestamp || saved.startTime).toDateString() : null
+      const today = new Date().toDateString()
+      if (savedDate !== today) {
+        console.log('[首页] 清除过期的本地学习进度缓存')
+        clearStudyProgress()
+      }
     }
 
     try {
       const data = await get('/review-plan/' + studentId)
       const mi = data && data.miniapp
       if (mi && mi.today) {
-        const saved = getStudyProgress()
         const due = mi.today.dueCount || 0
-        const reviewedFromServer = Math.min(mi.today.completedCount || 0, due)
-        const savedIsToday = saved && saved.startTime && (new Date(saved.startTime).toDateString() === new Date().toDateString())
-        const reviewedFromLocal = savedIsToday ? Math.min(saved.currentIndex || (saved.answers && saved.answers.length) || 0, due) : 0
+        const reviewedFromServer = mi.today.completedCount || 0
+
+        // 重新获取清理后的本地缓存
+        const currentSaved = getStudyProgress()
+        let reviewedFromLocal = 0
+
+        if (currentSaved && currentSaved.startTime) {
+          const savedDate = new Date(currentSaved.startTime).toDateString()
+          const today = new Date().toDateString()
+
+          if (savedDate === today) {
+            const localAnswers = currentSaved.currentIndex || (currentSaved.answers && currentSaved.answers.length) || 0
+            const totalTasks = currentSaved.tasks?.length || 0
+            const isLocalCompleted = totalTasks > 0 && localAnswers >= totalTasks
+
+            // 如果本地显示已完成，但服务器没有记录，说明数据不同步
+            // 清除本地缓存，以服务器数据为准
+            if (isLocalCompleted && reviewedFromServer === 0) {
+              console.log('[首页] 本地进度已完成但服务器无记录，清除本地缓存')
+              clearStudyProgress()
+              reviewedFromLocal = 0
+            } else if (!isLocalCompleted) {
+              // 本地有未完成的进度，保留显示
+              reviewedFromLocal = Math.min(localAnswers, due)
+            }
+          }
+        }
+
+        // 以服务器数据为准，本地数据仅用于显示未提交的进度
+        const finalReviewed = Math.max(reviewedFromServer, reviewedFromLocal)
+
         return {
           bookName: '今日任务',
           dueCount: due,
-          reviewedCount: Math.max(reviewedFromServer, reviewedFromLocal),
+          reviewedCount: Math.min(finalReviewed, due),
           elapsedSeconds: mi.today.timeSpentSeconds || 0,
           timeString: this.formatTime(mi.today.timeSpentSeconds || 0),
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[首页] 获取复习计划失败', e)
+    }
 
     let tasks = []
     try { tasks = await get('/students/' + studentId + '/daily-tasks') } catch (e) {}
