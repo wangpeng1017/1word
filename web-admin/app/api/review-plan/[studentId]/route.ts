@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayDate } from '@/lib/ebbinghaus'
-import { getDateRangeUTC } from '@/lib/date-utils'
+import { getDateRangeUTC, getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
 
 /**
  * 获取学生的复习计划和学习进度
@@ -29,7 +29,7 @@ export async function GET(
       where: { id: studentId },
       include: {
         user: { select: { name: true, email: true } },
-        classes: { select: { name: true, grade: true } },
+        classes: { select: { id: true, name: true, grade: true } },
       },
     })
 
@@ -37,7 +37,7 @@ export async function GET(
       return errorResponse('学生不存在', 404)
     }
 
-    const { end: endOfToday } = getDateRangeUTC()
+    const { start: startOfToday, end: endOfToday } = getDateRangeUTC()
 
     // 2. 获取学习计划统计
     const studyPlans = await prisma.study_plans.findMany({
@@ -100,6 +100,82 @@ export async function GET(
       }
     }
 
+    // 7. 计算今日任务数（新词 + 复习词）- 用于小程序
+    let todayNewCount = 0
+    let todayReviewCount = needReview
+
+    // 获取班级的活跃词汇库计划
+    if (student.classes?.id) {
+      const planClass = await prisma.plan_classes.findFirst({
+        where: {
+          class_id: student.classes.id,
+          status: 'ACTIVE'
+        },
+        include: {
+          vocabulary_packs: {
+            include: {
+              pack_days: {
+                include: {
+                  day_words: { select: { vocabularyId: true } }
+                }
+              }
+            }
+          }
+        }
+      })
+
+      if (planClass?.vocabulary_packs) {
+        const pack = planClass.vocabulary_packs
+        const today = getTodayBeijing()
+        const startDateBeijing = toBeijingDate(planClass.start_date)
+        const diffTime = today.getTime() - startDateBeijing.getTime()
+        const dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+        if (dayNumber >= 1 && dayNumber <= pack.totalDays) {
+          const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
+          if (packDay) {
+            // 获取已掌握的词汇ID
+            const masteredVocabIds = new Set(
+              wordMasteries.filter(m => m.isMastered).map(m => m.vocabularyId)
+            )
+            // 获取已学习的词汇ID
+            const learnedVocabIds = new Set(studyPlans.map(p => p.vocabularyId))
+
+            // 计算新词数（排除已掌握和已学习的）
+            const dayVocabIds = packDay.day_words.map(dw => dw.vocabularyId)
+
+            // 检查这些词汇是否有题目
+            const vocabsWithQuestions = await prisma.vocabularies.findMany({
+              where: {
+                id: { in: dayVocabIds },
+                questions: { some: {} }
+              },
+              select: { id: true }
+            })
+            const vocabIdsWithQuestions = new Set(vocabsWithQuestions.map(v => v.id))
+
+            todayNewCount = dayVocabIds.filter(id =>
+              !masteredVocabIds.has(id) &&
+              !learnedVocabIds.has(id) &&
+              vocabIdsWithQuestions.has(id)
+            ).length
+          }
+        }
+      }
+    }
+
+    // 8. 获取今日已完成数量
+    const todayRecord = await prisma.study_records.findFirst({
+      where: {
+        studentId,
+        taskDate: { gte: startOfToday, lte: endOfToday }
+      }
+    })
+
+    const todayDueCount = todayNewCount + todayReviewCount
+    const todayCompletedCount = todayRecord?.completedWords || 0
+    const todayTimeSpent = todayRecord?.totalTime || 0
+
     return successResponse({
       student: {
         id: student.id,
@@ -125,6 +201,14 @@ export async function GET(
         accuracy: Number((r.accuracy * 100).toFixed(1)),
         timeSpent: r.totalTime,
       })),
+      // 小程序兼容字段
+      miniapp: {
+        today: {
+          dueCount: todayDueCount,
+          completedCount: todayCompletedCount,
+          timeSpentSeconds: todayTimeSpent,
+        }
+      }
     })
   } catch (error) {
     console.error('获取复习计划错误:', error)
