@@ -11,8 +11,11 @@ Page({
       difficultWords: 0,
       studyDays: 0,
     },
-    detailedStats: {
-      accuracy: 0,
+    historyStats: {
+      totalSessions: 0,
+      totalWords: 0,
+      avgAccuracy: 0,
+      totalTimeMinutes: 0,
     },
     pointsInfo: {
       totalPoints: 0,
@@ -30,15 +33,14 @@ Page({
     }
 
     this.loadUserInfo()
-    this.loadStats()
-    this.loadDetailedStats()
+    this.loadHistoryStats()
     this.loadPointsInfo()
     this.loadAchievementCount()
   },
 
   onShow() {
     if (app.globalData.token) {
-      this.loadStats()
+      this.loadHistoryStats()
       this.loadPointsInfo()
       this.loadAchievementCount()
     }
@@ -71,59 +73,45 @@ Page({
     this.setData({ userInfo })
   },
 
-  // 加载基础统计数据（统一使用 word_masteries 作为掌握度数据源）
-  async loadStats() {
-    try {
-      const studentId = app.globalData.userInfo?.studentId
-      if (!studentId) {
-        return
-      }
-
-      // 并行请求，统一使用 word_masteries 作为掌握度数据源
-      const [overview, masteryData] = await Promise.all([
-        get(`/review-plan/${studentId}`),
-        get(`/word-mastery?studentId=${studentId}&limit=1000`)
-      ])
-      const progress = overview?.miniapp?.progress || {}
-
-      // 从 word_masteries 计算真实的已掌握数和难点数
-      const masteryRecords = masteryData?.records || []
-      const realMasteredWords = masteryRecords.filter(m => m.masteredCount > 0).length
-      const realDifficultWords = masteryRecords.filter(m => m.difficultCount > 0).length
-
-      const records = await get(`/study-records?studentId=${studentId}&limit=7`)
-      const wrongCount = Array.isArray(records) ? records.reduce((sum, r) => sum + (r.wrongCount || 0), 0) : 0
-
-      this.setData({
-        stats: {
-          totalWords: progress.totalWords || 0,
-          masteredWords: realMasteredWords || progress.masteredWords || 0,
-          difficultWords: realDifficultWords || progress.difficultWords || 0,
-          studyDays: progress.consecutiveDays || 0,
-          wrongCount,
-        },
-      })
-    } catch (error) {
-      console.error('加载统计数据失败:', error)
-    }
-  },
-
-  // 加载详细统计数据
-  async loadDetailedStats() {
+  // 加载学习历史统计数据（全部时间段）
+  async loadHistoryStats() {
     try {
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) return
 
-      const data = await get(`/statistics/${studentId}?period=all`)
-      if (data && data.overview) {
+      // 获取全部学习记录
+      const records = await get(`/study-records?studentId=${studentId}&limit=1000`)
+
+      if (!records || records.length === 0) {
         this.setData({
-          detailedStats: {
-            accuracy: data.overview.accuracy || 0,
-          },
+          historyStats: {
+            totalSessions: 0,
+            totalWords: 0,
+            avgAccuracy: 0,
+            totalTimeMinutes: 0,
+          }
         })
+        return
       }
+
+      // 计算统计数据
+      const totalSessions = records.length
+      const totalWords = records.reduce((sum, r) => sum + (r.totalWords || 0), 0)
+      const totalCorrect = records.reduce((sum, r) => sum + (r.correctCount || 0), 0)
+      const totalTime = records.reduce((sum, r) => sum + (r.totalTime || 0), 0)
+      const avgAccuracy = totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0
+      const totalTimeMinutes = Math.floor(totalTime / 60)
+
+      this.setData({
+        historyStats: {
+          totalSessions,
+          totalWords,
+          avgAccuracy,
+          totalTimeMinutes,
+        }
+      })
     } catch (error) {
-      console.error('加载详细统计数据失败:', error)
+      console.error('加载学习历史统计失败:', error)
     }
   },
 

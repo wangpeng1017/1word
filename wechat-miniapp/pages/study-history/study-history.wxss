@@ -1,7 +1,7 @@
 /* pages/study-history/study-history.wxss */
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f7fa;
   padding: 20rpx;
   padding-bottom: 40rpx;
 }

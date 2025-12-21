@@ -10,13 +10,11 @@ Page({
     overview: {},
     progressPercent: 0,
     nextReviewHint: '',
+    nextReviewCount: 0,
     defaultCover: 'https://dummyimage.com/120x160/EEF3FF/2F6BFF.png&text=BOOK',
     hasUnfinishedProgress: false,
     unfinishedCount: 0,
     forecast: null,
-    tomorrowReview: 0,
-    tomorrowDifficulty: 'light',
-    tomorrowDifficultyText: '轻松',
     pool: null,
   },
 
@@ -50,11 +48,11 @@ Page({
       ])
 
       if (!ov) {
-        this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint() })
+        this.setData({ state: 'empty' })
         return
       }
       if (ov.dueCount === 0 || (ov.reviewedCount >= ov.dueCount && ov.dueCount > 0)) {
-        this.setData({ state: 'empty', nextReviewHint: this.calcNextReviewHint(), overview: ov, progressPercent: 100 })
+        this.setData({ state: 'empty', overview: ov, progressPercent: 100 })
         return
       }
       const percent = Math.min(100, Math.floor((ov.reviewedCount / ov.dueCount) * 100))
@@ -71,19 +69,56 @@ Page({
 
     try {
       const data = await get('/review-plan/forecast?studentId=' + studentId + '&days=7')
-      if (data && data.forecast && data.forecast.length > 1) {
-        const tomorrow = data.forecast[1]
-        const difficultyTextMap = { light: '轻松', normal: '适中', heavy: '较多' }
+      if (data && data.forecast && data.forecast.length > 0) {
+        // 找到下一个有复习任务的日期
+        let nextReviewDate = null
+        let nextReviewCount = 0
+
+        for (let i = 1; i < data.forecast.length; i++) {
+          const day = data.forecast[i]
+          if (day.reviewCount > 0) {
+            nextReviewDate = day.date
+            nextReviewCount = day.reviewCount
+            break
+          }
+        }
+
+        // 格式化下次复习日期
+        let nextReviewHint = ''
+        if (nextReviewDate) {
+          const d = new Date(nextReviewDate)
+          nextReviewHint = (d.getMonth() + 1) + '月' + d.getDate() + '日'
+        } else {
+          // 如果没有预测数据，默认显示明天
+          const d = new Date()
+          d.setDate(d.getDate() + 1)
+          nextReviewHint = (d.getMonth() + 1) + '月' + d.getDate() + '日'
+        }
+
         this.setData({
           forecast: data.forecast,
-          tomorrowReview: tomorrow.reviewCount,
-          tomorrowDifficulty: tomorrow.difficulty,
-          tomorrowDifficultyText: difficultyTextMap[tomorrow.difficulty] || '轻松',
+          nextReviewHint,
+          nextReviewCount,
           pool: data.pool,
+        })
+      } else {
+        // 没有预测数据时，默认显示明天
+        const d = new Date()
+        d.setDate(d.getDate() + 1)
+        this.setData({
+          nextReviewHint: (d.getMonth() + 1) + '月' + d.getDate() + '日',
+          nextReviewCount: 0,
         })
       }
     } catch (e) {
       console.warn('获取复习量预测失败', e)
+      // 出错时默认显示明天
+      const d = new Date()
+      d.setDate(d.getDate() + 1)
+      this.setData({
+        nextReviewHint: (d.getMonth() + 1) + '月' + d.getDate() + '日',
+        nextReviewCount: 0,
+      })
     }
   },
 
@@ -223,12 +258,6 @@ Page({
       reviewedCount = Math.min(savedProgress.currentIndex || (savedProgress.answers && savedProgress.answers.length) || 0, dueCount)
     }
     return { bookName: '今日任务', dueCount, reviewedCount, elapsedMinutes: 0, timeString: '00:00' }
-  },
-
-  calcNextReviewHint() {
-    const d = new Date()
-    d.setDate(d.getDate() + 1)
-    return (d.getMonth() + 1) + '月' + d.getDate() + '日'
   },
 
   formatDate(d) {

@@ -22,20 +22,20 @@
   <view class="stats-section">
     <view class="stats-grid-compact">
       <view class="stat-card-compact">
-        <text class="stat-value-compact">{{stats.totalWords}}</text>
-        <text class="stat-label-compact">学习词汇</text>
+        <text class="stat-value-compact">{{historyStats.totalSessions}}</text>
+        <text class="stat-label-compact">学习次数</text>
       </view>
       <view class="stat-card-compact">
-        <text class="stat-value-compact">{{stats.masteredWords}}</text>
-        <text class="stat-label-compact">已掌握</text>
+        <text class="stat-value-compact">{{historyStats.totalWords}}</text>
+        <text class="stat-label-compact">总题数</text>
       </view>
       <view class="stat-card-compact accent">
-        <text class="stat-value-compact">{{detailedStats.accuracy}}%</text>
-        <text class="stat-label-compact">正确率</text>
+        <text class="stat-value-compact">{{historyStats.avgAccuracy}}%</text>
+        <text class="stat-label-compact">平均正确率</text>
       </view>
       <view class="stat-card-compact">
-        <text class="stat-value-compact">{{stats.studyDays}}</text>
-        <text class="stat-label-compact">学习天数</text>
+        <text class="stat-value-compact">{{historyStats.totalTimeMinutes}}</text>
+        <text class="stat-label-compact">总用时(分)</text>
       </view>
     </view>
   </view>
