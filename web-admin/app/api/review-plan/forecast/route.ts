@@ -4,12 +4,16 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayBeijing, formatDateBeijing, toBeijingDate } from '@/lib/date-utils'
 
+// 艾宾浩斯复习间隔：学习后第N天需要复习（绝对天数模式）
+const REVIEW_DAYS_FROM_LEARNING = [1, 2, 4, 7, 15]
+
 /**
  * 复习量预测 API
  * GET /api/review-plan/forecast?studentId=xxx&days=7
  *
  * 返回未来 N 天的复习量预测，帮助学生合理安排学习时间
- * 包含：已学单词的复习量 + 每日新学单词量
+ * 采用绝对天数模式：学习后第1、2、4、7、15天需要复习
+ * 无论学生是否完成学习，计划中的单词都按计划日期的记忆曲线安排复习
  */
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const studentId = searchParams.get('studentId')
-    const days = Math.min(parseInt(searchParams.get('days') || '7'), 30) // 最多预测30天
+    const days = Math.min(parseInt(searchParams.get('days') || '7'), 60) // 最多预测60天
 
     if (!studentId) {
       return errorResponse('缺少学生ID')
@@ -39,43 +43,7 @@ export async function GET(request: NextRequest) {
       return errorResponse('学生不存在', 404)
     }
 
-    // 获取所有未掌握的学习计划（用于计算复习量）
-    const plans = await prisma.study_plans.findMany({
-      where: {
-        studentId,
-        status: { not: 'MASTERED' },
-      },
-      select: {
-        id: true,
-        vocabularyId: true,
-        nextReviewAt: true,
-        reviewCount: true,
-        status: true,
-      },
-    })
-
-    // 获取已掌握的单词数量
-    const masteredCount = await prisma.study_plans.count({
-      where: {
-        studentId,
-        status: 'MASTERED',
-      },
-    })
-
-    // 获取总学习单词数
-    const totalLearned = await prisma.study_plans.count({
-      where: { studentId },
-    })
-
-    // 获取已学过的词汇ID（用于排除新学单词）
-    const learnedVocabIds = new Set(
-      (await prisma.study_plans.findMany({
-        where: { studentId },
-        select: { vocabularyId: true },
-      })).map(p => p.vocabularyId)
-    )
-
-    // 获取已掌握的词汇ID
+    // 获取已掌握的词汇ID（这些不需要再学习/复习）
     const masteredVocabIds = new Set(
       (await prisma.word_masteries.findMany({
         where: { studentId, isMastered: true },
@@ -83,7 +51,15 @@ export async function GET(request: NextRequest) {
       })).map(w => w.vocabularyId)
     )
 
-    // 获取班级的活跃词汇库计划（用于计算每日新学单词）
+    // 获取已掌握的单词数量
+    const masteredCount = masteredVocabIds.size
+
+    // 获取总学习单词数
+    const totalLearned = await prisma.study_plans.count({
+      where: { studentId },
+    })
+
+    // 获取班级的活跃词汇库计划
     const planClass = await prisma.plan_classes.findFirst({
       where: {
         class_id: student.class_id,
@@ -114,42 +90,29 @@ export async function GET(request: NextRequest) {
 
     const today = getTodayBeijing()
 
-    // 计算词汇库计划的起始天数
-    let planStartDayNumber = 0
-    let totalDays = 0
-    const dailyNewWordsMap = new Map<string, number>() // date -> newWordsCount
+    // 建立每日计划词汇数Map（基于词汇库计划日期，不受学生是否完成影响）
+    const dailyPlanWords = new Map<string, number>() // date -> wordsCount
 
     if (planClass?.vocabulary_packs) {
       const pack = planClass.vocabulary_packs
-      totalDays = pack.totalDays
+      const planStartDate = toBeijingDate(planClass.start_date)
 
-      // 计算今天是学习的第几天（使用北京时间）
-      const startDateBeijing = toBeijingDate(planClass.start_date)
-      const diffTime = today.getTime() - startDateBeijing.getTime()
-      planStartDayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+      // 遍历词汇库的每一天，计算每天计划的词汇数
+      for (const packDay of pack.pack_days) {
+        // 计划日期 = 开始日期 + (dayNumber - 1) 天
+        const planDate = new Date(planStartDate.getTime() + (packDay.dayNumber - 1) * 24 * 60 * 60 * 1000)
+        const planDateStr = formatDateBeijing(planDate)
 
-      // 计算未来每天的新学单词数量
-      for (let i = 0; i < days; i++) {
-        const targetDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
-        const targetDateStr = formatDateBeijing(targetDate)
-        const dayNumber = planStartDayNumber + i
+        // 计算当天计划的有效词汇数（排除已掌握的）
+        const wordsCount = packDay.day_words.filter(dw => {
+          const vocab = dw.vocabulary
+          return vocab &&
+            !masteredVocabIds.has(vocab.id) &&
+            vocab.questions &&
+            vocab.questions.length > 0
+        }).length
 
-        if (dayNumber >= 1 && dayNumber <= totalDays) {
-          const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
-          if (packDay) {
-            // 计算当天的新学单词数（排除已学和已掌握的）
-            const newWordsCount = packDay.day_words.filter(dw => {
-              const vocab = dw.vocabulary
-              return vocab &&
-                !learnedVocabIds.has(vocab.id) &&
-                !masteredVocabIds.has(vocab.id) &&
-                vocab.questions &&
-                vocab.questions.length > 0
-            }).length
-
-            dailyNewWordsMap.set(targetDateStr, newWordsCount)
-          }
-        }
+        dailyPlanWords.set(planDateStr, wordsCount)
       }
     }
 
@@ -159,26 +122,36 @@ export async function GET(request: NextRequest) {
       newWordsCount: number    // 新学单词数
       reviewWordsCount: number // 复习单词数
       difficulty: 'light' | 'normal' | 'heavy'
+      reviewSources?: string[] // 复习来源（可选，用于调试）
     }> = []
 
-    // 用于追踪已计入的单词（避免重复计算累积）
-    const countedWords = new Set<string>()
-
+    // 计算每天的复习量（基于绝对天数模式）
     for (let i = 0; i < days; i++) {
       const targetDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
       const targetDateStr = formatDateBeijing(targetDate)
 
-      // 统计 nextReviewAt <= targetDate 的复习数量（累积）
+      // 计算当天的复习量（基于计划日期的词汇）
       let reviewWordsCount = 0
+      const reviewSources: string[] = []
 
-      for (const plan of plans) {
-        if (plan.nextReviewAt && new Date(plan.nextReviewAt) <= targetDate) {
-          reviewWordsCount++
+      // 检查每个复习间隔
+      for (const reviewDay of REVIEW_DAYS_FROM_LEARNING) {
+        // 需要在 targetDate 做第N天复习的，是在 targetDate - reviewDay 天计划学习的
+        const learnDate = new Date(targetDate.getTime() - reviewDay * 24 * 60 * 60 * 1000)
+        const learnDateStr = formatDateBeijing(learnDate)
+
+        // 使用计划的词汇数（不受是否完成影响）
+        const wordsPlanedThatDay = dailyPlanWords.get(learnDateStr) || 0
+
+        if (wordsPlanedThatDay > 0) {
+          reviewWordsCount += wordsPlanedThatDay
+          // 简化来源信息，只保留日期和天数
+          reviewSources.push(`${learnDateStr.slice(5)}(${wordsPlanedThatDay}词,第${reviewDay}天)`)
         }
       }
 
-      // 获取当天的新学单词数
-      const newWordsCount = dailyNewWordsMap.get(targetDateStr) || 0
+      // 获取当天的新学单词数（基于计划）
+      const newWordsCount = dailyPlanWords.get(targetDateStr) || 0
 
       // 总任务数 = 复习数 + 新学数
       const totalCount = reviewWordsCount + newWordsCount
@@ -188,7 +161,8 @@ export async function GET(request: NextRequest) {
         reviewCount: totalCount,
         newWordsCount,
         reviewWordsCount,
-        difficulty: totalCount > 300 ? 'heavy' : totalCount > 150 ? 'normal' : 'light',
+        difficulty: totalCount > 30 ? 'heavy' : totalCount > 15 ? 'normal' : 'light',
+        reviewSources: reviewSources.length > 0 ? reviewSources : undefined,
       })
     }
 
@@ -198,10 +172,22 @@ export async function GET(request: NextRequest) {
     const peakCount = Math.max(...reviewCounts)
     const peakDay = forecast.find(f => f.reviewCount === peakCount)?.date || ''
 
-    // 计算复习池状态
-    const pendingReviewCount = plans.filter(p =>
-      p.nextReviewAt && new Date(p.nextReviewAt) <= today
-    ).length
+    // 获取未掌握的学习计划数量
+    const inReviewPoolCount = await prisma.study_plans.count({
+      where: {
+        studentId,
+        status: { not: 'MASTERED' },
+      },
+    })
+
+    // 计算今日待复习（基于实际的study_plans.nextReviewAt）
+    const pendingReviewCount = await prisma.study_plans.count({
+      where: {
+        studentId,
+        status: { not: 'MASTERED' },
+        nextReviewAt: { lte: today },
+      },
+    })
 
     return successResponse({
       forecast,
@@ -213,11 +199,15 @@ export async function GET(request: NextRequest) {
       pool: {
         totalLearned,           // 总学习词数
         mastered: masteredCount, // 已掌握
-        inReviewPool: plans.length, // 复习池中（未掌握）
+        inReviewPool: inReviewPoolCount, // 复习池中（未掌握）
         pendingToday: pendingReviewCount, // 今日待复习
         masteryRate: totalLearned > 0
           ? Math.round((masteredCount / totalLearned) * 100)
           : 0, // 掌握率
+      },
+      algorithm: {
+        mode: 'absolute_days', // 绝对天数模式
+        reviewDays: REVIEW_DAYS_FROM_LEARNING, // 复习间隔
       },
     }, '复习量预测成功')
   } catch (error) {
