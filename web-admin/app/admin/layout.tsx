@@ -16,7 +16,6 @@ import {
   FileTextOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
-  LineChartOutlined,
   FileExclamationOutlined,
   FolderOutlined,
   TrophyOutlined,
@@ -85,11 +84,6 @@ const menuItems: MenuItem[] = [
     key: '/admin/statistics',
     icon: <BarChartOutlined />,
     label: '学习统计',
-  },
-  {
-    key: '/admin/learning-data',
-    icon: <LineChartOutlined />,
-    label: '学习数据',
   },
   {
     key: '/admin/wrong-questions',
