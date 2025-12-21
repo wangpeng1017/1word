@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
-import { getDateRangeUTC, getTodayBeijing } from '@/lib/date-utils'
+import { getDateRangeUTC, getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
 
 // 每日新学单词上限
 const MAX_NEW_WORDS_PER_DAY = 200
@@ -145,9 +145,9 @@ export async function GET(
       const pack = planClass.vocabulary_packs
       totalDays = pack.totalDays
 
-      // 计算今天是学习的第几天
-      const startDate = new Date(planClass.start_date)
-      const diffTime = today.getTime() - startDate.getTime()
+      // 计算今天是学习的第几天（使用北京时间）
+      const startDateBeijing = toBeijingDate(planClass.start_date)
+      const diffTime = today.getTime() - startDateBeijing.getTime()
       dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
 
       // 如果在词汇库天数范围内，获取当天的新学单词
