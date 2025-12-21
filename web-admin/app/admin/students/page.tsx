@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload } from 'antd'
+import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload, Popconfirm } from 'antd'
 import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import type { UploadProps } from 'antd'
@@ -97,21 +97,39 @@ export default function StudentsPage() {
   }
 
   const handleBatchDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要删除的学生')
+      return
+    }
+
+    setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      await Promise.all(
-        selectedRowKeys.map((id) =>
-          fetch(`/api/students/${id}`, {
+      const results = await Promise.all(
+        selectedRowKeys.map(async (id) => {
+          const response = await fetch(`/api/students/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` },
           })
-        )
+          return response.json()
+        })
       )
-      message.success('批量删除成功')
+
+      const successCount = results.filter(r => r.success).length
+      const failCount = results.length - successCount
+
+      if (successCount > 0) {
+        message.success(`成功删除/停用 ${successCount} 个学生${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+      } else {
+        message.error('批量删除失败')
+      }
+
       setSelectedRowKeys([])
       loadData(pagination.current, pagination.pageSize)
     } catch (error) {
       message.error('批量删除失败')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -245,9 +263,18 @@ export default function StudentsPage() {
           批量导入
         </Button>
         {selectedRowKeys.length > 0 && (
-          <Button danger onClick={handleBatchDelete}>
-            批量删除 ({selectedRowKeys.length})
-          </Button>
+          <Popconfirm
+            title="确认批量删除"
+            description={`确定要删除选中的 ${selectedRowKeys.length} 个学生吗？有学习记录的学生将被停用而非删除。`}
+            okText="确认删除"
+            okType="danger"
+            cancelText="取消"
+            onConfirm={handleBatchDelete}
+          >
+            <Button danger>
+              批量删除 ({selectedRowKeys.length})
+            </Button>
+          </Popconfirm>
         )}
       </Space>
       <Table

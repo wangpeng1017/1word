@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Table, Button, Space, message, Card, Modal, Form, Input } from 'antd'
+import { Table, Button, Space, message, Card, Modal, Form, Input, Popconfirm } from 'antd'
 import { PlusOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons'
 
 export default function ClassesPage() {
@@ -165,19 +165,54 @@ export default function ClassesPage() {
           创建班级
         </Button>
         {selectedRowKeys.length > 0 && (
-          <Button danger onClick={async () => {
-            const token = localStorage.getItem('token')
-            try {
-              await Promise.all(selectedRowKeys.map((id) => fetch(`/api/classes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })))
-              message.success('批量删除成功')
-              setSelectedRowKeys([])
-              loadData()
-            } catch {
-              message.error('批量删除失败')
-            }
-          }}>
-            批量删除 ({selectedRowKeys.length})
-          </Button>
+          <Popconfirm
+            title="确认批量删除"
+            description={`确定要删除选中的 ${selectedRowKeys.length} 个班级吗？有学生的班级无法删除。`}
+            okText="确认删除"
+            okType="danger"
+            cancelText="取消"
+            onConfirm={async () => {
+              const token = localStorage.getItem('token')
+              setLoading(true)
+              try {
+                const results = await Promise.all(
+                  selectedRowKeys.map(async (id) => {
+                    const response = await fetch(`/api/classes/${id}`, {
+                      method: 'DELETE',
+                      headers: { Authorization: `Bearer ${token}` },
+                    })
+                    return response.json()
+                  })
+                )
+
+                const successCount = results.filter(r => r.success).length
+                const failCount = results.length - successCount
+                const failedReasons = results.filter(r => !r.success).map(r => r.error)
+
+                if (successCount > 0) {
+                  message.success(`成功删除 ${successCount} 个班级`)
+                }
+                if (failCount > 0) {
+                  Modal.warning({
+                    title: `${failCount} 个班级删除失败`,
+                    content: failedReasons.join('\n') || '部分班级有学生，无法删除',
+                    okText: '我知道了',
+                  })
+                }
+
+                setSelectedRowKeys([])
+                loadData()
+              } catch (error) {
+                message.error('批量删除失败')
+              } finally {
+                setLoading(false)
+              }
+            }}
+          >
+            <Button danger>
+              批量删除 ({selectedRowKeys.length})
+            </Button>
+          </Popconfirm>
         )}
       </Space>
       <Table columns={columns} dataSource={data} rowKey="id" loading={loading} rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }} />
