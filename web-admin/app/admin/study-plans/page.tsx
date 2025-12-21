@@ -6,22 +6,18 @@ import {
   Button,
   Space,
   Tag,
-  Modal,
-  Form,
-  Select,
-  DatePicker,
   message,
   Card,
   Statistic,
   Row,
   Col,
-  Input,
+  Select,
   Popconfirm,
+  DatePicker,
 } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
-  SearchOutlined,
   DeleteOutlined,
   EditOutlined,
 } from '@ant-design/icons'
@@ -29,106 +25,53 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import BatchGenerateDialog from '@/components/BatchGenerateDialog'
 
-// 班级分组模式的数据结构
-interface GroupedStudyPlan {
+interface PlanClass {
   id: string
-  classId: string
-  className: string
-  grade: string
-  students: { id: string; name: string }[]
-  vocabularies: { id: string; word: string; primaryMeaning: string }[]
-  reviewCount: number
-  dayLabel: string
-  nextReviewAt: string | null
-  createdAt: string
-  planIds: string[]
+  class_id: string
+  pack_id: string
+  status: 'ACTIVE' | 'COMPLETED'
+  start_date: string
+  created_at: string
+  updated_at: string
+  classes: { name: string; grade: string }
+  vocabulary_packs: { id: string; name: string; totalDays: number; totalWords: number }
 }
 
-// 可展开的 Tag 列表组件
-function ExpandableTags({ items, labelKey, max = 5 }: { items: any[]; labelKey: string; max?: number }) {
-  const [expanded, setExpanded] = useState(false)
-  const display = expanded ? items : items.slice(0, max)
-  const hasMore = items.length > max
-
-  return (
-    <Space size={[4, 4]} wrap>
-      {display.map((item, idx) => (
-        <Tag key={item.id || idx}>{item[labelKey]}</Tag>
-      ))}
-      {hasMore && !expanded && (
-        <Tag style={{ cursor: 'pointer' }} onClick={() => setExpanded(true)}>
-          +{items.length - max} 更多
-        </Tag>
-      )}
-      {hasMore && expanded && (
-        <Tag style={{ cursor: 'pointer' }} onClick={() => setExpanded(false)}>
-          收起
-        </Tag>
-      )}
-    </Space>
-  )
+const STATUS_CONFIG = {
+  ACTIVE: { label: '进行中', color: 'processing' },
+  COMPLETED: { label: '已完成', color: 'success' },
 }
 
 export default function StudyPlansPage() {
-  const [data, setData] = useState<GroupedStudyPlan[]>([])
+  const [data, setData] = useState<PlanClass[]>([])
   const [loading, setLoading] = useState(false)
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 20,
-    total: 0,
-  })
   const [classes, setClasses] = useState<any[]>([])
   const [vocabularies, setVocabularies] = useState<any[]>([])
-  const [filters, setFilters] = useState<{ studentName?: string; classId?: string; nextReviewRange?: [dayjs.Dayjs, dayjs.Dayjs] | null; createdRange?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({})
+  const [filters, setFilters] = useState<{ classId?: string; status?: string }>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchOpen, setBatchOpen] = useState(false)
-  const [editModalVisible, setEditModalVisible] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<GroupedStudyPlan | null>(null)
-  const [editForm] = Form.useForm()
 
-  // 加载数据
   useEffect(() => {
     fetchData()
     fetchClasses()
     fetchVocabularies()
-  }, [pagination.current, pagination.pageSize])
+  }, [])
 
-  const fetchData = async (override?: { page?: number; pageSize?: number }) => {
+  const fetchData = async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const page = override?.page ?? pagination.current
-      const limit = override?.pageSize ?? pagination.pageSize
-      const qs = new URLSearchParams({
-        page: String(page),
-        limit: String(limit),
-        groupBy: 'class',
-      })
-      if (filters.studentName) qs.append('studentName', filters.studentName)
+      const qs = new URLSearchParams()
       if (filters.classId) qs.append('classId', filters.classId)
-      if (filters.nextReviewRange?.[0]) qs.append('nextReviewStart', filters.nextReviewRange[0].format('YYYY-MM-DD'))
-      if (filters.nextReviewRange?.[1]) qs.append('nextReviewEnd', filters.nextReviewRange[1].format('YYYY-MM-DD'))
-      if (filters.createdRange?.[0]) qs.append('createdStart', filters.createdRange[0].format('YYYY-MM-DD'))
-      if (filters.createdRange?.[1]) qs.append('createdEnd', filters.createdRange[1].format('YYYY-MM-DD'))
+      if (filters.status) qs.append('status', filters.status)
 
-      const response = await fetch(
-        `/api/study-plans?${qs.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      const response = await fetch(`/api/plan-classes?${qs.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
       const result = await response.json()
       if (result.success) {
-        setData(result.data.studyPlans || [])
-        setPagination((prev) => ({
-          ...prev,
-          current: page,
-          pageSize: limit,
-          total: result.data.pagination?.total || 0,
-        }))
+        setData(result.data.planClasses || [])
       }
     } catch (error) {
       message.error('加载失败')
@@ -141,9 +84,7 @@ export default function StudyPlansPage() {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/classes?limit=1000', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
       if (result.success) {
@@ -158,9 +99,7 @@ export default function StudyPlansPage() {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/vocabularies?limit=1000', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
       if (result.success) {
@@ -171,41 +110,12 @@ export default function StudyPlansPage() {
     }
   }
 
-  // 批量更新计划（整组）
-  const handleBatchUpdate = async (values: any) => {
-    if (!editingGroup) return
-    try {
-      const token = localStorage.getItem('token')
-      // 批量更新所有计划的下次复习时间
-      for (const planId of editingGroup.planIds) {
-        await fetch('/api/study-plans', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            planId,
-            nextReviewAt: values.nextReviewAt ? dayjs(values.nextReviewAt).format('YYYY-MM-DD') : null,
-          }),
-        })
-      }
-      message.success('更新成功')
-      setEditModalVisible(false)
-      setEditingGroup(null)
-      editForm.resetFields()
-      fetchData()
-    } catch (error) {
-      message.error('更新失败')
-    }
-  }
-
-  // 删除计划（支持批量删除整组）
   const handleDelete = async (ids: string[]) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/study-plans?ids=${ids.join(',')}`, {
+      const response = await fetch(`/api/plan-classes?ids=${ids.join(',')}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
 
       const result = await response.json()
@@ -221,51 +131,89 @@ export default function StudyPlansPage() {
     }
   }
 
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/plan-classes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, status }),
+      })
 
-  // 班级分组模式的列定义
-  const columns: ColumnsType<GroupedStudyPlan> = [
+      const result = await response.json()
+      if (result.success) {
+        message.success('状态更新成功')
+        fetchData()
+      } else {
+        message.error(result.error || '更新失败')
+      }
+    } catch (error) {
+      message.error('更新失败')
+    }
+  }
+
+  const columns: ColumnsType<PlanClass> = [
     {
       title: '班级',
       key: 'class',
-      width: 120,
+      width: 150,
       render: (_, record) => (
         <div>
-          <div style={{ fontWeight: 'bold' }}>{record.className}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>{record.grade}</div>
+          <div style={{ fontWeight: 'bold' }}>{record.classes?.name}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.classes?.grade}</div>
         </div>
       ),
     },
     {
-      title: '学生',
-      key: 'students',
+      title: '词汇库',
+      key: 'pack',
       width: 200,
       render: (_, record) => (
-        <ExpandableTags items={record.students} labelKey="name" max={5} />
+        <div>
+          <div>{record.vocabulary_packs?.name}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            {record.vocabulary_packs?.totalDays}天 / {record.vocabulary_packs?.totalWords}词
+          </div>
+        </div>
       ),
     },
     {
-      title: '单词',
-      key: 'vocabularies',
-      width: 250,
-      render: (_, record) => (
-        <ExpandableTags items={record.vocabularies} labelKey="word" max={5} />
-      ),
+      title: '开始日期',
+      dataIndex: 'start_date',
+      width: 120,
+      render: (date) => date ? dayjs(date).format('YYYY-MM-DD') : '-',
     },
     {
-      title: '记忆天数',
-      dataIndex: 'dayLabel',
+      title: '当前进度',
+      key: 'progress',
+      width: 120,
+      render: (_, record) => {
+        const startDate = dayjs(record.start_date)
+        const today = dayjs()
+        const dayNumber = today.diff(startDate, 'day') + 1
+        const totalDays = record.vocabulary_packs?.totalDays || 0
+        const progress = Math.min(dayNumber, totalDays)
+        return (
+          <div>
+            <Tag color={dayNumber > totalDays ? 'green' : 'blue'}>
+              第 {progress} / {totalDays} 天
+            </Tag>
+          </div>
+        )
+      },
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
       width: 100,
-      render: (dayLabel) => <Tag color="blue">{dayLabel}</Tag>,
-    },
-    {
-      title: '下次复习',
-      dataIndex: 'nextReviewAt',
-      width: 110,
-      render: (date) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+      render: (status: keyof typeof STATUS_CONFIG) => {
+        const config = STATUS_CONFIG[status] || STATUS_CONFIG.ACTIVE
+        return <Tag color={config.color}>{config.label}</Tag>
+      },
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
+      dataIndex: 'created_at',
       width: 140,
       render: (date: string) => date ? dayjs(date).format('MM-DD HH:mm') : '-',
     },
@@ -273,72 +221,72 @@ export default function StudyPlansPage() {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 120,
+      width: 150,
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
+          <Select
             size="small"
-            icon={<EditOutlined />}
-            onClick={() => {
-              setEditingGroup(record)
-              editForm.setFieldsValue({ nextReviewAt: record.nextReviewAt ? dayjs(record.nextReviewAt) : null })
-              setEditModalVisible(true)
-            }}
-          >
-            编辑
-          </Button>
+            value={record.status}
+            style={{ width: 90 }}
+            onChange={(val) => handleStatusChange(record.id, val)}
+            options={[
+              { label: '进行中', value: 'ACTIVE' },
+              { label: '已完成', value: 'COMPLETED' },
+            ]}
+          />
           <Popconfirm
-            title="确认删除该组学习计划"
-            description={`将删除 ${record.planIds.length} 条学习计划`}
-            okText="确认删除"
+            title="确认删除该班级计划"
+            okText="确认"
             okType="danger"
             cancelText="取消"
-            onConfirm={() => handleDelete(record.planIds)}
+            onConfirm={() => handleDelete([record.id])}
           >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
     },
   ]
 
-  // 统计数据
-  const totalPlans = data.reduce((sum, g) => sum + g.planIds.length, 0)
-  const totalStudents = new Set(data.flatMap(g => g.students.map(s => s.id))).size
-  const totalVocabs = new Set(data.flatMap(g => g.vocabularies.map(v => v.id))).size
-
   return (
     <div>
-      <h2>学习计划管理</h2>
+      <h2>班级学习计划</h2>
 
-      {/* 统计卡片 */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="计划组数" value={data.length} />
+            <Statistic title="计划总数" value={data.length} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="总计划数" value={totalPlans} valueStyle={{ color: '#1890ff' }} />
+            <Statistic
+              title="进行中"
+              value={data.filter(d => d.status === 'ACTIVE').length}
+              valueStyle={{ color: '#1890ff' }}
+            />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="学生数" value={totalStudents} valueStyle={{ color: '#52c41a' }} />
+            <Statistic
+              title="已完成"
+              value={data.filter(d => d.status === 'COMPLETED').length}
+              valueStyle={{ color: '#52c41a' }}
+            />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="单词数" value={totalVocabs} valueStyle={{ color: '#722ed1' }} />
+            <Statistic
+              title="涉及班级"
+              value={new Set(data.map(d => d.class_id)).size}
+              valueStyle={{ color: '#722ed1' }}
+            />
           </Card>
         </Col>
       </Row>
 
-      {/* 操作栏 */}
       <div style={{ marginBottom: 16 }}>
         <Space wrap>
           <Button
@@ -347,16 +295,8 @@ export default function StudyPlansPage() {
             onClick={() => setBatchOpen(true)}
             style={{ color: '#fff' }}
           >
-            批量生成计划
+            新建班级计划
           </Button>
-          <Input
-            placeholder="学生姓名"
-            prefix={<SearchOutlined />}
-            allowClear
-            style={{ width: 180 }}
-            value={filters.studentName}
-            onChange={(e) => setFilters({ ...filters, studentName: e.target.value })}
-          />
           <Select
             placeholder="选择班级"
             allowClear
@@ -370,65 +310,45 @@ export default function StudyPlansPage() {
               </Select.Option>
             ))}
           </Select>
-          <DatePicker.RangePicker
-            placeholder={['下次复习开始', '下次复习结束']}
-            style={{ width: 240 }}
-            value={filters.nextReviewRange}
-            onChange={(dates) => setFilters({ ...filters, nextReviewRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | null })}
+          <Select
+            placeholder="状态筛选"
+            allowClear
+            style={{ width: 120 }}
+            value={filters.status}
+            onChange={(val) => setFilters({ ...filters, status: val || undefined })}
+            options={[
+              { label: '进行中', value: 'ACTIVE' },
+              { label: '已完成', value: 'COMPLETED' },
+            ]}
           />
-          <DatePicker.RangePicker
-            placeholder={['创建时间开始', '创建时间结束']}
-            style={{ width: 240 }}
-            value={filters.createdRange}
-            onChange={(dates) => setFilters({ ...filters, createdRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | null })}
-          />
-          <Button type="primary" onClick={() => { setPagination((p) => ({ ...p, current: 1 })); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>查询</Button>
-          <Button onClick={() => { setFilters({}); setPagination({ ...pagination, current: 1 }); fetchData({ page: 1, pageSize: pagination.pageSize }) }}>重置</Button>
-          <Button icon={<ReloadOutlined />} onClick={() => fetchData()}>
-            刷新
-          </Button>
+          <Button type="primary" onClick={fetchData}>查询</Button>
+          <Button onClick={() => { setFilters({}); fetchData() }}>重置</Button>
+          <Button icon={<ReloadOutlined />} onClick={fetchData}>刷新</Button>
           {selectedRowKeys.length > 0 && (
             <Popconfirm
               title="确认批量删除"
-              description={`确定要删除选中的 ${selectedRowKeys.length} 组学习计划吗？`}
+              description={`确定要删除选中的 ${selectedRowKeys.length} 个班级计划吗？`}
               okText="确认删除"
               okType="danger"
               cancelText="取消"
-              onConfirm={() => {
-                const selectedIds = new Set(selectedRowKeys.map(String))
-                const allPlanIds = data
-                  .filter(g => selectedIds.has(g.id))
-                  .flatMap(g => g.planIds || [])
-                if (allPlanIds.length === 0) {
-                  message.warning('未找到可删除的计划')
-                  return
-                }
-                handleDelete(allPlanIds)
-              }}
+              onConfirm={() => handleDelete(selectedRowKeys.map(String))}
             >
-              <Button danger>
-                批量删除 ({selectedRowKeys.length})
-              </Button>
+              <Button danger>批量删除 ({selectedRowKeys.length})</Button>
             </Popconfirm>
           )}
         </Space>
       </div>
 
-      {/* 表格 */}
       <Table
         columns={columns}
         dataSource={data}
         rowKey="id"
         loading={loading}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1000 }}
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         pagination={{
-          ...pagination,
           showSizeChanger: true,
           showTotal: (total) => `共 ${total} 条`,
-          onChange: (page, pageSize) => {
-            setPagination({ ...pagination, current: page, pageSize })
-          },
         }}
       />
 
@@ -439,27 +359,9 @@ export default function StudyPlansPage() {
         vocabularies={vocabularies}
         onCompleted={async () => {
           setBatchOpen(false)
-          setPagination((p) => ({ ...p, current: 1 }))
-          await fetchData({ page: 1, pageSize: pagination.pageSize })
+          await fetchData()
         }}
       />
-
-      {/* 编辑对话框 */}
-      <Modal
-        title={`编辑学习计划 - ${editingGroup?.className} ${editingGroup?.dayLabel}`}
-        open={editModalVisible}
-        onOk={() => editForm.submit()}
-        onCancel={() => { setEditModalVisible(false); setEditingGroup(null); editForm.resetFields() }}
-      >
-        <Form form={editForm} layout="vertical" onFinish={handleBatchUpdate}>
-          <p style={{ marginBottom: 16, color: '#666' }}>
-            将批量更新 {editingGroup?.planIds.length} 条学习计划
-          </p>
-          <Form.Item label="下次复习时间" name="nextReviewAt">
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   )
 }

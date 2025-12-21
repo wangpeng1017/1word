@@ -6,7 +6,7 @@ import { REVIEW_INTERVALS } from '@/lib/ebbinghaus'
 
 
 // 根据 reviewCount 获取记忆天数标签
-function getDayLabel(reviewCount) {
+function getDayLabel(reviewCount: number) {
   if (reviewCount >= REVIEW_INTERVALS.length) {
     return 'Day ' + REVIEW_INTERVALS[REVIEW_INTERVALS.length - 1] + '+';
   }
