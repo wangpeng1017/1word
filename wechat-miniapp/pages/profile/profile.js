@@ -15,7 +15,7 @@ Page({
       totalSessions: 0,
       totalWords: 0,
       avgAccuracy: 0,
-      totalTimeMinutes: 0,
+      totalTimeString: '00:00',
     },
     pointsInfo: {
       totalPoints: 0,
@@ -88,7 +88,7 @@ Page({
             totalSessions: 0,
             totalWords: 0,
             avgAccuracy: 0,
-            totalTimeMinutes: 0,
+            totalTimeString: '00:00',
           }
         })
         return
@@ -100,14 +100,18 @@ Page({
       const totalCorrect = records.reduce((sum, r) => sum + (r.correctCount || 0), 0)
       const totalTime = records.reduce((sum, r) => sum + (r.totalTime || 0), 0)
       const avgAccuracy = totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0
-      const totalTimeMinutes = Math.floor(totalTime / 60)
+
+      // 格式化总用时为 mm:ss 格式
+      const totalMinutes = Math.floor(totalTime / 60)
+      const totalSeconds = totalTime % 60
+      const totalTimeString = totalMinutes.toString().padStart(2, '0') + ':' + totalSeconds.toString().padStart(2, '0')
 
       this.setData({
         historyStats: {
           totalSessions,
           totalWords,
           avgAccuracy,
-          totalTimeMinutes,
+          totalTimeString,
         }
       })
     } catch (error) {

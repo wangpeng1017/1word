@@ -29,13 +29,13 @@
         <text class="stat-value-compact">{{historyStats.totalWords}}</text>
         <text class="stat-label-compact">总题数</text>
       </view>
-      <view class="stat-card-compact accent">
+      <view class="stat-card-compact">
         <text class="stat-value-compact">{{historyStats.avgAccuracy}}%</text>
         <text class="stat-label-compact">平均正确率</text>
       </view>
       <view class="stat-card-compact">
-        <text class="stat-value-compact">{{historyStats.totalTimeMinutes}}</text>
-        <text class="stat-label-compact">总用时(分)</text>
+        <text class="stat-value-compact">{{historyStats.totalTimeString}}</text>
+        <text class="stat-label-compact">总用时</text>
       </view>
     </view>
   </view>
