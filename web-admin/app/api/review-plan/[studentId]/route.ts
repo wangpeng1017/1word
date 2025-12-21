@@ -67,7 +67,7 @@ export async function GET(
       ? wordMasteries.reduce((sum, m) => sum + (m.recentAccuracy || 0), 0) / wordMasteries.length
       : 0
 
-    // 5. 获取最近7天的学习记录
+    // 5. 获���最近7天的学习记录
     const targetDate = getTodayDate()
     const sevenDaysAgo = new Date(targetDate)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -101,7 +101,7 @@ export async function GET(
     }
 
     // 7. 计算今日任务数（新词 + 复习词）- 用于小程序
-    let todayNewCount = 0
+    let todayTotalTasks = 0  // 今日配置的总任务数（包括已完成的）
     let todayReviewCount = needReview
 
     // 获取班级的活跃词汇库计划
@@ -138,10 +138,8 @@ export async function GET(
             const masteredVocabIds = new Set(
               wordMasteries.filter(m => m.isMastered).map(m => m.vocabularyId)
             )
-            // 获取已学习的词汇ID
-            const learnedVocabIds = new Set(studyPlans.map(p => p.vocabularyId))
 
-            // 计算新词数（排除已掌握和已学习的）
+            // 计算新词数（排除已掌握的，但不排除已学习的）
             const dayVocabIds = packDay.day_words.map(dw => dw.vocabularyId)
 
             // 检查这些词汇是否有题目
@@ -154,9 +152,10 @@ export async function GET(
             })
             const vocabIdsWithQuestions = new Set(vocabsWithQuestions.map(v => v.id))
 
-            todayNewCount = dayVocabIds.filter(id =>
+            // 今日配置的有题目的词汇总数（排除已掌握的，但不排除已学习的）
+            // 这样即使学生完成学习后，dueCount 也不会变成 0
+            todayTotalTasks = dayVocabIds.filter(id =>
               !masteredVocabIds.has(id) &&
-              !learnedVocabIds.has(id) &&
               vocabIdsWithQuestions.has(id)
             ).length
           }
@@ -172,7 +171,10 @@ export async function GET(
       }
     })
 
-    const todayDueCount = todayNewCount + todayReviewCount
+    // dueCount: 今日应完成的总任务数
+    // 优先使用今日学习记录中的 totalWords（如果有的话）
+    // 否则使用计算出的 todayTotalTasks + todayReviewCount
+    const todayDueCount = todayRecord?.totalWords || (todayTotalTasks + todayReviewCount)
     const todayCompletedCount = todayRecord?.completedWords || 0
     const todayTimeSpent = todayRecord?.totalTime || 0
 
@@ -207,6 +209,9 @@ export async function GET(
           dueCount: todayDueCount,
           completedCount: todayCompletedCount,
           timeSpentSeconds: todayTimeSpent,
+        },
+        progress: {
+          consecutiveDays,
         }
       }
     })
