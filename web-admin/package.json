@@ -41,6 +41,7 @@
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "fs-extra": "^11.3.3",
+    "google-tts-api": "^2.0.2",
     "html2pdf.js": "^0.12.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
