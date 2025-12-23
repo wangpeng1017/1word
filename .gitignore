@@ -78,10 +78,10 @@ test_images/
 word_image_mapping*.json
 
 # 忽略已上传的音频和图片文件
-web-admin/public/uploads/vocabulary-audios/*.mp3
-web-admin/public/uploads/vocabulary-images/*.png
-web-admin/public/uploads/vocabulary-images/*.jpg
-web-admin/public/uploads/vocabulary-images/*.jpeg
+public/uploads/vocabulary-audios/
+public/uploads/vocabulary-images/
+web-admin/public/uploads/vocabulary-audios/
+web-admin/public/uploads/vocabulary-images/
 
 # 忽略Excel等办公文档
 *.xlsx
