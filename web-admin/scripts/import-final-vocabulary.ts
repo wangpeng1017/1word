@@ -21,6 +21,7 @@ function generateId(prefix: string): string {
 
 /**
  * 从definition中提取词性和释义
+ * 修复版本：正确处理"v ."等带空格的词性标记
  */
 function parseDefinition(definition: string): {
     partOfSpeech: string[]
@@ -38,54 +39,103 @@ function parseDefinition(definition: string): {
     const parts: string[] = []
     const meanings: Array<{ partOfSpeech: string; meaning: string; order: number }> = []
 
-    // 常见词性标记
-    const posPatterns = ['v .', 'n.', 'n .', 'adj .', 'adj.', 'adv .', 'adv.', 'prep .', 'prep.', 'conj .', 'pron .', 'int.', 'vt .', 'vi .', 'vt.', 'vi.', 'abbr.', 'n/v .', 'n/adj .']
+    // 常见词性标记（包括带空格的）
+    const posPatterns = [
+        'v .', 'n .', 'adj .', 'adv .', 'prep .', 'conj .', 'pron .', 'int .',
+        'vt .', 'vi .', 'n/v .', 'n/adj .', 'abbr .',
+        'v.', 'n.', 'adj.', 'adv.', 'prep.', 'conj.', 'pron.', 'int.',
+        'vt.', 'vi.', 'n/v.', 'n/adj.', 'abbr.'
+    ]
 
-    let currentPos = ''
-    let currentMeaning = ''
+    // 先尝试找到第一个词性标记的位置
+    let firstPosIndex = -1
+    let firstPos = ''
+
+    for (const pos of posPatterns) {
+        const index = definition.indexOf(pos)
+        if (index !== -1 && (firstPosIndex === -1 || index < firstPosIndex)) {
+            firstPosIndex = index
+            firstPos = pos
+        }
+    }
+
+    // 如果找不到词性标记，整个definition作为释义
+    if (firstPosIndex === -1) {
+        parts.push('n.')
+        meanings.push({
+            partOfSpeech: 'n.',
+            meaning: definition.trim(),
+            order: 0
+        })
+        return {
+            partOfSpeech: parts,
+            primaryMeaning: definition.substring(0, 200),
+            meanings
+        }
+    }
+
+    // 从第一个词性标记开始解析
+    let remaining = definition.substring(firstPosIndex)
     let order = 0
 
-    // 按空格和常见分隔符分割
-    const segments = definition.split(/\s+/)
+    while (remaining.length > 0) {
+        // 找到当前词性
+        let currentPos = ''
+        let currentPosLength = 0
 
-    for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i]
-
-        // 检查是否是词性标记
-        if (posPatterns.includes(segment)) {
-            // 保存前一个词性的释义
-            if (currentPos && currentMeaning) {
-                if (!parts.includes(currentPos)) {
-                    parts.push(currentPos)
-                }
-                meanings.push({
-                    partOfSpeech: currentPos,
-                    meaning: currentMeaning.trim().replace(/，$/, '').replace(/；$/, ''),
-                    order: order++
-                })
+        for (const pos of posPatterns) {
+            if (remaining.startsWith(pos)) {
+                currentPos = pos
+                currentPosLength = pos.length
+                break
             }
+        }
 
-            currentPos = segment
-            currentMeaning = ''
+        if (!currentPos) {
+            break
+        }
+
+        // 移除当前词性标记
+        remaining = remaining.substring(currentPosLength).trim()
+
+        // 找到下一个词性标记的位置
+        let nextPosIndex = -1
+        for (const pos of posPatterns) {
+            const index = remaining.indexOf(' ' + pos)
+            if (index !== -1 && (nextPosIndex === -1 || index < nextPosIndex)) {
+                nextPosIndex = index
+            }
+        }
+
+        // 提取释义
+        let meaning = ''
+        if (nextPosIndex === -1) {
+            // 没有下一个词性了，剩余全部是释义
+            meaning = remaining.trim()
+            remaining = ''
         } else {
-            currentMeaning += (currentMeaning ? ' ' : '') + segment
+            // 提取到下一个词性之前的内容
+            meaning = remaining.substring(0, nextPosIndex).trim()
+            remaining = remaining.substring(nextPosIndex).trim()
+        }
+
+        // 清理释义末尾的标点
+        meaning = meaning.replace(/[，；、]+$/, '').trim()
+
+        if (meaning) {
+            if (!parts.includes(currentPos)) {
+                parts.push(currentPos)
+            }
+            meanings.push({
+                partOfSpeech: currentPos,
+                meaning: meaning,
+                order: order++
+            })
         }
     }
 
-    // 保存最后一个
-    if (currentPos && currentMeaning) {
-        if (!parts.includes(currentPos)) {
-            parts.push(currentPos)
-        }
-        meanings.push({
-            partOfSpeech: currentPos,
-            meaning: currentMeaning.trim().replace(/，$/, '').replace(/；$/, ''),
-            order: order++
-        })
-    }
-
-    // 如果没有解析出词性，使用整个definition作为主要释义
-    if (parts.length === 0) {
+    // 如果没有解析出任何释义，使用整个definition
+    if (meanings.length === 0) {
         parts.push('n.')
         meanings.push({
             partOfSpeech: 'n.',
