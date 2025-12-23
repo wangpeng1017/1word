@@ -1,6 +1,9 @@
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
+// 艾宾浩斯复习间隔：学习后第N天需要复习（绝对天数模式）
+const REVIEW_DAYS_FROM_LEARNING = [1, 2, 4, 7, 15]
+
 // 获取北京时间今天的开始
 function getTodayBeijing() {
   const now = new Date()
@@ -28,9 +31,9 @@ function toBeijingDate(date) {
 }
 
 async function checkForecast(studentNo) {
-  console.log(`\n${'='.repeat(60)}`)
+  console.log(`\n${'='.repeat(70)}`)
   console.log(`学生账号: ${studentNo}`)
-  console.log('='.repeat(60))
+  console.log('='.repeat(70))
 
   // 查找学生
   const student = await prisma.students.findFirst({
@@ -47,34 +50,7 @@ async function checkForecast(studentNo) {
   console.log(`学生ID: ${student.id}`)
 
   const studentId = student.id
-  const days = 7
-
-  // 获取所有未掌握的学习计划（用于计算复习量）
-  const plans = await prisma.study_plans.findMany({
-    where: {
-      studentId,
-      status: { not: 'MASTERED' },
-    },
-    select: {
-      id: true,
-      vocabularyId: true,
-      nextReviewAt: true,
-      reviewCount: true,
-      status: true,
-    },
-  })
-
-  console.log(`\n复习池中单词数: ${plans.length}`)
-
-  // 获取已学过的词汇ID
-  const learnedVocabIds = new Set(
-    (await prisma.study_plans.findMany({
-      where: { studentId },
-      select: { vocabularyId: true },
-    })).map(p => p.vocabularyId)
-  )
-
-  console.log(`已学过单词数: ${learnedVocabIds.size}`)
+  const days = 25
 
   // 获取已掌握的词汇ID
   const masteredVocabIds = new Set(
@@ -118,106 +94,73 @@ async function checkForecast(studentNo) {
 
   const today = getTodayBeijing()
   console.log(`\n今天日期(北京时间): ${formatDateBeijing(today)}`)
+  console.log(`复习间隔(艾宾浩斯): 第${REVIEW_DAYS_FROM_LEARNING.join('、')}天`)
 
-  // 计算词汇库计划信息
-  let planStartDayNumber = 0
-  let totalDays = 0
-  const dailyNewWordsMap = new Map()
+  // 建立每日计划词汇数Map
+  const dailyPlanWords = new Map()
 
   if (planClass?.vocabulary_packs) {
     const pack = planClass.vocabulary_packs
-    totalDays = pack.totalDays
+    const planStartDate = toBeijingDate(planClass.start_date)
+
     console.log(`词汇库: ${pack.name}`)
-    console.log(`总天数: ${totalDays}`)
-    console.log(`计划开始日期: ${planClass.start_date}`)
+    console.log(`总天数: ${pack.totalDays}`)
+    console.log(`计划开始日期: ${formatDateBeijing(planStartDate)}`)
 
-    const startDateBeijing = toBeijingDate(planClass.start_date)
-    const diffTime = today.getTime() - startDateBeijing.getTime()
-    planStartDayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-    console.log(`今天是第 ${planStartDayNumber} 天`)
+    // 遍历词汇库的每一天
+    for (const packDay of pack.pack_days) {
+      const planDate = new Date(planStartDate.getTime() + (packDay.dayNumber - 1) * 24 * 60 * 60 * 1000)
+      const planDateStr = formatDateBeijing(planDate)
 
-    // 计算未来每天的新学单词数量
-    for (let i = 0; i < days; i++) {
-      const targetDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
-      const targetDateStr = formatDateBeijing(targetDate)
-      const dayNumber = planStartDayNumber + i
+      const wordsCount = packDay.day_words.filter(dw => {
+        const vocab = dw.vocabulary
+        return vocab &&
+          !masteredVocabIds.has(vocab.id) &&
+          vocab.questions &&
+          vocab.questions.length > 0
+      }).length
 
-      if (dayNumber >= 1 && dayNumber <= totalDays) {
-        const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
-        if (packDay) {
-          const newWords = packDay.day_words.filter(dw => {
-            const vocab = dw.vocabulary
-            return vocab &&
-              !learnedVocabIds.has(vocab.id) &&
-              !masteredVocabIds.has(vocab.id) &&
-              vocab.questions &&
-              vocab.questions.length > 0
-          })
-
-          dailyNewWordsMap.set(targetDateStr, {
-            count: newWords.length,
-            words: newWords.map(dw => dw.vocabulary?.word).filter(Boolean)
-          })
-        }
-      }
+      dailyPlanWords.set(planDateStr, wordsCount)
     }
   } else {
     console.log('没有活跃的词汇库计划')
   }
 
   // 计算预测
-  console.log('\n' + '-'.repeat(60))
-  console.log('未来7天学习预测:')
-  console.log('-'.repeat(60))
-  console.log('日期\t\t\t新学\t复习\t总计')
-  console.log('-'.repeat(60))
+  console.log('\n' + '-'.repeat(70))
+  console.log('未来25天学习预测 (绝对天数模式):')
+  console.log('-'.repeat(70))
+  console.log('日期\t\t\t新学\t复习\t总计\t复习来源')
+  console.log('-'.repeat(70))
 
   for (let i = 0; i < days; i++) {
     const targetDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
     const targetDateStr = formatDateBeijing(targetDate)
 
-    // 统计复习数量
+    // 计算复习量（基于绝对天数模式）
     let reviewWordsCount = 0
-    for (const plan of plans) {
-      if (plan.nextReviewAt && new Date(plan.nextReviewAt) <= targetDate) {
-        reviewWordsCount++
+    const reviewSources = []
+
+    for (const reviewDay of REVIEW_DAYS_FROM_LEARNING) {
+      const learnDate = new Date(targetDate.getTime() - reviewDay * 24 * 60 * 60 * 1000)
+      const learnDateStr = formatDateBeijing(learnDate)
+
+      const wordsPlanedThatDay = dailyPlanWords.get(learnDateStr) || 0
+
+      if (wordsPlanedThatDay > 0) {
+        reviewWordsCount += wordsPlanedThatDay
+        reviewSources.push(`${learnDateStr.slice(5)}(${wordsPlanedThatDay}词,第${reviewDay}天)`)
       }
     }
 
-    // 获取新学单词数
-    const newWordsInfo = dailyNewWordsMap.get(targetDateStr) || { count: 0, words: [] }
-    const newWordsCount = newWordsInfo.count
+    // 获取当天的新学单词数
+    const newWordsCount = dailyPlanWords.get(targetDateStr) || 0
     const totalCount = reviewWordsCount + newWordsCount
 
     const dayLabel = i === 0 ? '(今天)' : i === 1 ? '(明天)' : ''
-    console.log(`${targetDateStr} ${dayLabel}\t${newWordsCount}\t${reviewWordsCount}\t${totalCount}`)
-  }
+    const sourcesStr = reviewSources.length > 0 ? reviewSources.join(', ') : '-'
 
-  // 显示明天的详细信息
-  const tomorrowDate = new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000)
-  const tomorrowDateStr = formatDateBeijing(tomorrowDate)
-  const tomorrowNewWords = dailyNewWordsMap.get(tomorrowDateStr)
-
-  if (tomorrowNewWords && tomorrowNewWords.words.length > 0) {
-    console.log(`\n明天的新学单词 (${tomorrowNewWords.count}个):`)
-    console.log(tomorrowNewWords.words.join(', '))
-  }
-
-  // 显示明天需要复习的单词
-  const tomorrowReviewPlans = plans.filter(p => {
-    if (!p.nextReviewAt) return false
-    const reviewDate = new Date(p.nextReviewAt)
-    return reviewDate <= tomorrowDate
-  })
-
-  if (tomorrowReviewPlans.length > 0) {
-    const reviewVocabIds = tomorrowReviewPlans.map(p => p.vocabularyId)
-    const reviewVocabs = await prisma.vocabularies.findMany({
-      where: { id: { in: reviewVocabIds } },
-      select: { word: true }
-    })
-    console.log(`\n明天需要复习的单词 (${reviewVocabs.length}个):`)
-    console.log(reviewVocabs.map(v => v.word).join(', '))
+    console.log(`${targetDateStr} ${dayLabel}\t${newWordsCount}\t${reviewWordsCount}\t${totalCount}\t${sourcesStr}`)
   }
 }
 

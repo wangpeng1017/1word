@@ -1,0 +1,1109 @@
+[
+    {
+        "word": "bomb",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "轰炸；投弹；失败；炸弹",
+        "phoneticUS": "/bɑːm/",
+        "phoneticUK": "/bɒm/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "轰炸；投弹；失败",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "炸弹",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bless",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "祝福；赐福；祝福；有幸拥有",
+        "phoneticUS": "/bles/",
+        "phoneticUK": "/bles/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "祝福；赐福；祝福；有幸拥有",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "blame",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "责备",
+        "phoneticUS": "/bleɪm/",
+        "phoneticUK": "/bleɪm/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "责备",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "责备；把...归咎于",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "责备；归咎于",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bond",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "粘合；保结合；债券；联系；协定",
+        "phoneticUS": "/bɑːnd/",
+        "phoneticUK": "/bɒnd/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "粘合；保结合；为...作保",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "(使)粘合；(使)结合",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "公债；债券；契约",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "blossom",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "开花；成长；花；全盛期",
+        "phoneticUS": "/ˈblɑːsəm/",
+        "phoneticUK": "/ˈblɒsəm/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "开花；成长",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "花；开花；全盛期",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "blank",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "空白；空白的；茫然的",
+        "phoneticUS": "/blæŋk/",
+        "phoneticUK": "/blæŋk/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "空白；空白的；茫然的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bonus",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "奖金；红利；意外所得之物",
+        "phoneticUS": "/ˈboʊnəs/",
+        "phoneticUK": "/ˈbəʊnəs/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "奖金；红利；意外所得之物；【篮】追加罚篮",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "boast",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "自夸；吹牛；以...为荣",
+        "phoneticUS": "/boʊst/",
+        "phoneticUK": "/bəʊst/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "自夸；吹牛；以...为荣；引以为豪的事物",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "blanket",
+        "partOfSpeech": [
+            "v.",
+            "adj.",
+            "n."
+        ],
+        "primaryMeaning": "覆盖；扑灭",
+        "phoneticUS": "/ˈblæŋkɪt/",
+        "phoneticUK": "/ˈblæŋkɪt/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "覆盖；扑灭",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "通用的；全面的；无一例外的",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "毛毯；覆盖物",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "biographical",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "传记的",
+        "phoneticUS": "/ˌbaɪəˈɡræfɪkl/",
+        "phoneticUK": "/ˌbaɪəˈɡræfɪkl/",
+        "isHighFrequency": false,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "传记的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bid",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "命令；出价；投标",
+        "phoneticUS": "/bɪd/",
+        "phoneticUK": "/bɪd/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "命令；出价；投标",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "出价投标；企图；努力；出价；叫牌",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bestseller",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "畅销书",
+        "phoneticUS": "/ˌbestˈselər/",
+        "phoneticUK": "/ˌbestˈselə(r)/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "畅销书",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bite",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "咬；一口；咬伤；刺痛",
+        "phoneticUS": "/baɪt/",
+        "phoneticUK": "/baɪt/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "咬；一口；咬伤；刺痛",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "咬；咬；上钩",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "billion",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "十亿",
+        "phoneticUS": "/ˈbɪljən/",
+        "phoneticUK": "/ˈbɪljən/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "十亿",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bet",
+        "partOfSpeech": [
+            "n.",
+            "vt."
+        ],
+        "primaryMeaning": "打赌；赌金；赌注",
+        "phoneticUS": "/bet/",
+        "phoneticUK": "/bet/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "打赌；赌金；赌注",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "vt.",
+                "meaning": "用...打赌；下赌注；打赌；敢说；确信",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "赌注；赌博；v. 打赌；确信无疑",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bitter",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "苦的；痛苦的；尖刻的；充满仇恨的",
+        "phoneticUS": "/ˈbɪtər/",
+        "phoneticUK": "/ˈbɪtə(r)/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "苦的；痛苦的；尖刻的；充满仇恨的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bind",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "约束；装订；捆绑；困境",
+        "phoneticUS": "/baɪnd/",
+        "phoneticUK": "/baɪnd/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "约束；装订；捆绑；困境；v. 看管",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bias",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "使偏心；使产生偏见",
+        "phoneticUS": "/ˈbaɪəs/",
+        "phoneticUK": "/ˈbaɪəs/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "使偏心；使产生偏见",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "偏见；偏爱；斜纹；v. 使有",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "偏见；偏心",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "beneath",
+        "partOfSpeech": [
+            "adv.",
+            "prep."
+        ],
+        "primaryMeaning": "在下方；在底下",
+        "phoneticUS": "/bɪˈniːθ/",
+        "phoneticUK": "/bɪˈniːθ/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adv.",
+                "meaning": "在下方；在底下",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "prep.",
+                "meaning": "在...之下；不如；配不上；不值得",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "behaviour",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "行为；举止；品行",
+        "phoneticUS": "/bɪˈheɪvjər/",
+        "phoneticUK": "/bɪˈheɪvjə(r)/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "行为；举止；品行",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "beast",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "兽；畜性",
+        "phoneticUS": "/biːst/",
+        "phoneticUK": "/biːst/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "兽；畜性",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "beneficial",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "有益的；有利的",
+        "phoneticUS": "/ˌbenɪˈfɪʃl/",
+        "phoneticUK": "/ˌbenɪˈfɪʃl/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "有益的；有利的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "belief",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "信仰；信念；相信",
+        "phoneticUS": "/bɪˈliːf/",
+        "phoneticUK": "/bɪˈliːf/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "信仰；信念；相信",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "beg",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "乞讨；恳求",
+        "phoneticUS": "/beɡ/",
+        "phoneticUK": "/beɡ/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "乞讨；恳求",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "abbr.",
+                "meaning": "并始(=begin)",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "请求；恳求",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "besides",
+        "partOfSpeech": [
+            "adv.",
+            "prep."
+        ],
+        "primaryMeaning": "除了(还有)；此外；而且",
+        "phoneticUS": "/bɪˈsaɪdz/",
+        "phoneticUK": "/bɪˈsaɪdz/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adv.",
+                "meaning": "除了(还有)；此外；而且",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "prep.",
+                "meaning": "除...之外",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bend",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "屈；弯曲(身体部位或头)；弯曲；转弯",
+        "phoneticUS": "/bend/",
+        "phoneticUK": "/bend/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "屈；弯曲(身体部位或头)；弯曲；转弯；屈服；使屈从",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "behalf",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "代表；利益；方面",
+        "phoneticUS": "/bɪˈhæf/",
+        "phoneticUK": "/bɪˈhɑːf/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "代表；利益；方面",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "看法；春蕾；代表",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "battle",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "战斗；争斗；与...作战",
+        "phoneticUS": "/ˈbætl/",
+        "phoneticUK": "/ˈbætl/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "战斗；争斗；v. 与...竞争；与...作战",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "斗争；作战",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "战争；斗争",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "basin",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "盆地；流域；盆盆；水池",
+        "phoneticUS": "/ˈbeɪsn/",
+        "phoneticUK": "/ˈbeɪsn/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "盆地；流域；盆盆；水池",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bargain",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "廉价货；交易；契约；合同",
+        "phoneticUS": "/ˈbɑːrɡən/",
+        "phoneticUK": "/ˈbɑːɡən/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "廉价货；交易；契约；合同",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "讨价还价；议价",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bay",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "海湾；月桂树；隔间；大吠；悲鸣",
+        "phoneticUS": "/beɪ/",
+        "phoneticUK": "/beɪ/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "海湾；月桂树；隔间；大吠；悲鸣",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "红褐色的",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "basis",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "基础；根据；基底",
+        "phoneticUS": "/ˈbeɪsɪs/",
+        "phoneticUK": "/ˈbeɪsɪs/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "基础；根据；基底",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "barrier",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "屏障；障碍物；栅栏",
+        "phoneticUS": "/ˈbæriər/",
+        "phoneticUK": "/ˈbæriə(r)/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "屏障；障碍物；栅栏",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "beard",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "公开反对；抓住胡须",
+        "phoneticUS": "/bɪrd/",
+        "phoneticUK": "/bɪəd/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "公开反对；抓住胡须",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "胡须",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "battery",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "电池；一系列；炮兵连；殴打罪",
+        "phoneticUS": "/ˈbætəri/",
+        "phoneticUK": "/ˈbætri/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "电池；一系列；炮兵连；殴打罪",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "电池",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "base",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "根基；基底；底座；基地；基础",
+        "phoneticUS": "/beɪs/",
+        "phoneticUK": "/beɪs/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "根基；基底；底座；基地；基础",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "基于；以...为基础；把...设在(基地)",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "ban",
+        "partOfSpeech": [
+            "v.",
+            "n."
+        ],
+        "primaryMeaning": "禁止；取缔",
+        "phoneticUS": "/bæn/",
+        "phoneticUK": "/bæn/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "禁止；取缔",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "禁止；禁令",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bacon",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "培根；熏肉；鲜肉",
+        "phoneticUS": "/ˈbeɪkən/",
+        "phoneticUK": "/ˈbeɪkən/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "培根；熏肉；鲜肉",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "awesome",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "可怕的；了不起的；表示敬畏的；精彩的",
+        "phoneticUS": "/ˈɔːsəm/",
+        "phoneticUK": "/ˈɔːsəm/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "可怕的；了不起的；表示敬畏的；精彩的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "banner",
+        "partOfSpeech": [
+            "v.",
+            "n.",
+            "adj."
+        ],
+        "primaryMeaning": "用横幅装饰；以大标题刊登",
+        "phoneticUS": "/ˈbænər/",
+        "phoneticUK": "/ˈbænə(r)/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "用横幅装饰；以大标题刊登",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "n.",
+                "meaning": "旗帜；横幅；大标题",
+                "order": 1,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "杰出的；特别好的",
+                "order": 2,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "baggage",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "行李",
+        "phoneticUS": "/ˈbæɡɪdʒ/",
+        "phoneticUK": "/ˈbæɡɪdʒ/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "行李",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "awkward",
+        "partOfSpeech": [
+            "adj."
+        ],
+        "primaryMeaning": "尴尬的；笨拙的；(设计)别扭的",
+        "phoneticUS": "/ˈɔːkwərd/",
+        "phoneticUK": "/ˈɔːkwəd/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "尴尬的；笨拙的；(设计)别扭的",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "barely",
+        "partOfSpeech": [
+            "adv."
+        ],
+        "primaryMeaning": "几乎不；勉强；刚刚；少量地",
+        "phoneticUS": "/ˈberli/",
+        "phoneticUK": "/ˈbeəli/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adv.",
+                "meaning": "几乎不；勉强；刚刚；少量地",
+                "order": 0,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "bake",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "(在烤炉里)烘烤",
+        "phoneticUS": "/beɪk/",
+        "phoneticUK": "/beɪk/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "(在烤炉里)烘烤",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "烤；烘烤；烤干；灼热",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "backward",
+        "partOfSpeech": [
+            "adv.",
+            "adj."
+        ],
+        "primaryMeaning": "向后",
+        "phoneticUS": "/ˈbækwərd/",
+        "phoneticUK": "/ˈbækwəd/",
+        "isHighFrequency": true,
+        "difficulty": "MEDIUM",
+        "meanings": [
+            {
+                "partOfSpeech": "adv.",
+                "meaning": "向后",
+                "order": 0,
+                "examples": []
+            },
+            {
+                "partOfSpeech": "adj.",
+                "meaning": "向后的；落后的",
+                "order": 1,
+                "examples": []
+            }
+        ],
+        "images": []
+    }
+]

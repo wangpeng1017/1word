@@ -1,0 +1,135 @@
+[
+    {
+        "word": "rabbit",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "兔子",
+        "phoneticUS": "/ˈræbɪt/",
+        "phoneticUK": "/ˈræbɪt/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "兔子",
+                "order": 0,
+                "examples": [
+                    "The rabbit hopped across the field.",
+                    "Rabbits are herbivores."
+                ]
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "race",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "比赛；赛跑",
+        "phoneticUS": "/reɪs/",
+        "phoneticUK": "/reɪs/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "比赛；竞赛",
+                "order": 0,
+                "examples": [
+                    "He won the race.",
+                    "The horse race was exciting."
+                ]
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "比赛；赛跑",
+                "order": 1,
+                "examples": [
+                    "They raced to the finish line."
+                ]
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "radio",
+        "partOfSpeech": [
+            "n."
+        ],
+        "primaryMeaning": "收音机；无线电",
+        "phoneticUS": "/ˈreɪdioʊ/",
+        "phoneticUK": "/ˈreɪdiəʊ/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "收音机；无线电",
+                "order": 0,
+                "examples": [
+                    "I listen to the radio every morning.",
+                    "Turn on the radio."
+                ]
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "rain",
+        "partOfSpeech": [
+            "n.",
+            "v."
+        ],
+        "primaryMeaning": "雨；下雨",
+        "phoneticUS": "/reɪn/",
+        "phoneticUK": "/reɪn/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "n.",
+                "meaning": "雨",
+                "order": 0,
+                "examples": [
+                    "It's going to rain today.",
+                    "The rain stopped."
+                ]
+            },
+            {
+                "partOfSpeech": "v.",
+                "meaning": "下雨",
+                "order": 1,
+                "examples": [
+                    "It rained all night."
+                ]
+            }
+        ],
+        "images": []
+    },
+    {
+        "word": "read",
+        "partOfSpeech": [
+            "v."
+        ],
+        "primaryMeaning": "阅读；读",
+        "phoneticUS": "/riːd/",
+        "phoneticUK": "/riːd/",
+        "isHighFrequency": true,
+        "difficulty": "EASY",
+        "meanings": [
+            {
+                "partOfSpeech": "v.",
+                "meaning": "阅读；读",
+                "order": 0,
+                "examples": [
+                    "I read a book every week.",
+                    "Can you read this?"
+                ]
+            }
+        ],
+        "images": []
+    }
+]

@@ -51,3 +51,49 @@ next-env.d.ts
 .vercel
 .env*.local
 nul
+
+# 忽略依赖库
+**/node_modules/
+
+# 忽略提取出来的海量图片
+extracted_images/
+word_images/
+word_images_final/
+word_images_v2/
+word_images_correct/
+test_images/
+
+# 忽略大文件（PDF、压缩包等）
+*.pdf
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# 忽略2000词相关的大数据文件
+2000词*.json
+2000词*.pdf
+*完整数据*.json
+*基础信息*.json
+word_image_mapping*.json
+
+# 忽略已上传的音频和图片文件
+web-admin/public/uploads/vocabulary-audios/*.mp3
+web-admin/public/uploads/vocabulary-images/*.png
+web-admin/public/uploads/vocabulary-images/*.jpg
+web-admin/public/uploads/vocabulary-images/*.jpeg
+
+# 忽略Excel等办公文档
+*.xlsx
+*.xls
+*.doc
+*.docx
+
+# 忽略系统生成文件
+Thumbs.db
+.DS_Store
+
+# 忽略其他中间产物
+*.log
+*.md~
+*.cmd

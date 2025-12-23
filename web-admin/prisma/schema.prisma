@@ -352,12 +352,33 @@ enum TaskStatus {
 enum UserRole {
   TEACHER
   STUDENT
+  ADMIN
 }
 
 enum WordDifficulty {
   EASY
   MEDIUM
   HARD
+}
+
+// 操作日志表
+model operation_logs {
+  id          String   @id @default(cuid())
+  userId      String              // 操作用户ID
+  userName    String              // 操作用户名称（冗余存储）
+  action      String              // 操作类型：CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  module      String              // 模块：accounts, students, vocabularies 等
+  target      String?             // 操作对象描述
+  targetId    String?             // 操作对象ID
+  detail      Json?               // 操作详情（JSON）
+  ip          String?             // 客户端IP
+  userAgent   String?             // 浏览器信息
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
 }
 
 // 学生积分记录表

@@ -3,16 +3,17 @@ import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
 import { LoginRequest } from '@/types'
+import { recordLog, getClientInfo } from '@/lib/log'
 
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json()
-    
+
     // 详细日志：记录收到的请求体
     console.log('=== 登录请求详情 ===')
     console.log('请求体:', JSON.stringify(body, null, 2))
     console.log('请求头:', Object.fromEntries(request.headers.entries()))
-    
+
     const { email, phone, studentNo, password } = body
 
     if (!password) {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     // 支持邮箱/手机号/学号登录
     const loginIdentifier = email || phone || studentNo
     console.log('登录标识符:', loginIdentifier)
-    
+
     if (!loginIdentifier) {
       console.log('❌ 缺少登录标识符')
       return errorResponse('请输入账号（邮箱/手机号/学号）')
@@ -81,6 +82,19 @@ export async function POST(request: NextRequest) {
       role: user.role,
     })
 
+    // 记录登录日志（仅管理员/教师登录）
+    if (user.role === 'TEACHER' || user.role === 'ADMIN') {
+      const clientInfo = getClientInfo(request)
+      await recordLog({
+        userId: user.id,
+        userName: user.name,
+        action: 'LOGIN',
+        module: 'auth',
+        target: `管理后台登录`,
+        ...clientInfo,
+      })
+    }
+
     return successResponse({
       user: {
         id: user.id,
@@ -98,3 +112,4 @@ export async function POST(request: NextRequest) {
     return errorResponse('登录失败', 500)
   }
 }
+
