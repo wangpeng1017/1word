@@ -1,0 +1,10 @@
+  1. 文档 1
+  2. 1. abandon
+  3. ① 抛弃；放弃
+  4. A. abandon
+  5. B. absence
+  6. C. abnormal
+  7. D. absolutely
+Traceback (most recent call last):
+  File "<string>", line 12, in <module>
+UnicodeEncodeError: 'gbk' codec can't encode character '\u0259' in position 16: illegal multibyte sequence

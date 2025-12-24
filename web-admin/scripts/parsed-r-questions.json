@@ -1,0 +1,6828 @@
+[
+  {
+    "word": "receipt",
+    "meaning": "收据；收条",
+    "questions": [
+      {
+        "word": "receipt",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "收据；收条",
+        "options": [
+          {
+            "label": "A",
+            "content": "reception",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "receipt",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "recipe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recite",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "receipt",
+        "type": "FILL_IN_BLANK",
+        "content": "Please keep the ______ in case you need to return the product for a refund within seven days.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reception",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "receipt",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "recipe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recite",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "recently",
+    "meaning": "最近；近来",
+    "questions": [
+      {
+        "word": "recently",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "最近；近来",
+        "options": [
+          {
+            "label": "A",
+            "content": "recently",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regularly",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relatively",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respectively",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recently",
+        "type": "FILL_IN_BLANK",
+        "content": "I haven’t seen my primary school classmate ______; I wonder how he is getting on with his life.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recently",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regularly",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relatively",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respectively",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reception",
+    "meaning": "接待；招待会；接收效果",
+    "questions": [
+      {
+        "word": "reception",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "接待；招待会；接收效果",
+        "options": [
+          {
+            "label": "A",
+            "content": "reception",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "receipt",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recognition",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reception",
+        "type": "FILL_IN_BLANK",
+        "content": "The company held a grand ______ to welcome the new CEO who just took office last week.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reception",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "receipt",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recognition",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "receptionist",
+    "meaning": "接待员；前台",
+    "questions": [
+      {
+        "word": "receptionist",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "接待员；前台",
+        "options": [
+          {
+            "label": "A",
+            "content": "receptionist",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "receiver",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recorder",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reporter",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "receptionist",
+        "type": "FILL_IN_BLANK",
+        "content": "The ______ at the hotel front desk will help you check in and take your luggage to the room.",
+        "options": [
+          {
+            "label": "A",
+            "content": "receptionist",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "receiver",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recorder",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reporter",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "recipe",
+    "meaning": "食谱；配方；秘诀",
+    "questions": [
+      {
+        "word": "recipe",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "食谱；配方；秘诀",
+        "options": [
+          {
+            "label": "A",
+            "content": "receipt",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "recipe",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "recite",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reclaim",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "recipe",
+        "type": "FILL_IN_BLANK",
+        "content": "My grandmother gave me a secret ______ for making delicious dumplings that have been passed down in our family.",
+        "options": [
+          {
+            "label": "A",
+            "content": "receipt",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "recipe",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "recite",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reclaim",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "recite",
+    "meaning": "背诵；吟诵；列举",
+    "questions": [
+      {
+        "word": "recite",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "背诵；吟诵；列举",
+        "options": [
+          {
+            "label": "A",
+            "content": "recite",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "refer",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recite",
+        "type": "FILL_IN_BLANK",
+        "content": "The teacher asked the students to ______ a poem they had learned in class to test their memory.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recite",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "refer",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reclaim",
+    "meaning": "回收利用；开垦；认领",
+    "questions": [
+      {
+        "word": "reclaim",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "回收利用；开垦；认领",
+        "options": [
+          {
+            "label": "A",
+            "content": "reclaim",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "declare",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recommend",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rehearse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reclaim",
+        "type": "FILL_IN_BLANK",
+        "content": "The government plans to ______ the abandoned land near the river and turn it into a public park.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reclaim",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "declare",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recommend",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rehearse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "recognition",
+    "meaning": "承认；认可；识别",
+    "questions": [
+      {
+        "word": "recognition",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "承认；认可；识别",
+        "options": [
+          {
+            "label": "A",
+            "content": "recognition",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reception",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "record",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recreation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recognition",
+        "type": "FILL_IN_BLANK",
+        "content": "The scientist was awarded the Nobel Prize in recognition of his ______ contributions to medical research.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recognition",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reception",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "record",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recreation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "record",
+    "meaning": "记录；唱片；档案",
+    "questions": [
+      {
+        "word": "record",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "记录；唱片；档案",
+        "options": [
+          {
+            "label": "A",
+            "content": "record",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recover",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "relate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "record",
+        "type": "FILL_IN_BLANK",
+        "content": "The journalist managed to ______ every word the witness said to ensure the accuracy of his report.",
+        "options": [
+          {
+            "label": "A",
+            "content": "record",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recover",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "relate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "recover",
+    "meaning": "恢复；康复；找回",
+    "questions": [
+      {
+        "word": "recover",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "恢复；康复；找回",
+        "options": [
+          {
+            "label": "A",
+            "content": "recover",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refresh",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recover",
+        "type": "FILL_IN_BLANK",
+        "content": "It will take her a few weeks to ______ from the knee injury she suffered during the sports meeting.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recover",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refresh",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "recreation",
+    "meaning": "娱乐；消遣；休闲活动",
+    "questions": [
+      {
+        "word": "recreation",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "娱乐；消遣；休闲活动",
+        "options": [
+          {
+            "label": "A",
+            "content": "recreation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reclaim",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recitation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "registration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recreation",
+        "type": "FILL_IN_BLANK",
+        "content": "Hiking and fishing are my favorite forms of ______ that help me relax after a busy week of work.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recreation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reclaim",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recitation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "registration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "recruit",
+    "meaning": "招募；聘用；新兵",
+    "questions": [
+      {
+        "word": "recruit",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "招募；聘用；新兵",
+        "options": [
+          {
+            "label": "A",
+            "content": "recruit",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refund",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "recruit",
+        "type": "FILL_IN_BLANK",
+        "content": "The IT company is planning to ______ more software engineers to expand its research and development team.",
+        "options": [
+          {
+            "label": "A",
+            "content": "recruit",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refund",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "refer",
+    "meaning": "提及；参考；提交",
+    "questions": [
+      {
+        "word": "refer",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "提及；参考；提交",
+        "options": [
+          {
+            "label": "A",
+            "content": "refer",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rehearse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "refer",
+        "type": "FILL_IN_BLANK",
+        "content": "When writing an academic paper, you should ______ to reliable sources to support your arguments.",
+        "options": [
+          {
+            "label": "A",
+            "content": "refer",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rehearse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reference",
+    "meaning": "参考；参照；推荐信",
+    "questions": [
+      {
+        "word": "reference",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "参考；参照；推荐信",
+        "options": [
+          {
+            "label": "A",
+            "content": "reference",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflection",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refugee",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "region",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reference",
+        "type": "FILL_IN_BLANK",
+        "content": "Before applying for the job, make sure to prepare a resume and two letters of ______ from your previous employers.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reference",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflection",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "refugee",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "region",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reflect",
+    "meaning": "反射；反映；深思",
+    "questions": [
+      {
+        "word": "reflect",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "反射；反映；深思",
+        "options": [
+          {
+            "label": "A",
+            "content": "reflect",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "refer",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reclaim",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "refresh",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reflect",
+        "type": "FILL_IN_BLANK",
+        "content": "The calm lake ______ the blue sky and white clouds, creating a picture-perfect scene.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reflect",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "refer",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reclaim",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "refresh",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reform",
+    "meaning": "改革；改良；改正",
+    "questions": [
+      {
+        "word": "reform",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "改革；改良；改正",
+        "options": [
+          {
+            "label": "A",
+            "content": "reform",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recover",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reform",
+        "type": "FILL_IN_BLANK",
+        "content": "The government decided to ______ the tax system to reduce the burden on low-income families.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reform",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recover",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "refresh",
+    "meaning": "使恢复精力；刷新；更新",
+    "questions": [
+      {
+        "word": "refresh",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "使恢复精力；刷新；更新",
+        "options": [
+          {
+            "label": "A",
+            "content": "refresh",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reclaim",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "register",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "refugee",
+    "meaning": "",
+    "questions": [
+      {
+        "word": "refugee",
+        "type": "FILL_IN_BLANK",
+        "content": "The international organization provided food and shelter for thousands of ______ who fled their country due to the war.",
+        "options": [
+          {
+            "label": "A",
+            "content": "refugee",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "receptionist",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "messenger",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "mediator",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "refund",
+    "meaning": "退款；退还",
+    "questions": [
+      {
+        "word": "refund",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "退款；退还",
+        "options": [
+          {
+            "label": "A",
+            "content": "refund",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recreation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reference",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "refund",
+        "type": "FILL_IN_BLANK",
+        "content": "The store promised to ______ the money if the customer was not satisfied with the quality of the product.",
+        "options": [
+          {
+            "label": "A",
+            "content": "refund",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recreation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reference",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "regard",
+    "meaning": "认为；看待；尊重",
+    "questions": [
+      {
+        "word": "regard",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "认为；看待；尊重",
+        "options": [
+          {
+            "label": "A",
+            "content": "regard",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regulate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rehearse",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "regard",
+        "type": "FILL_IN_BLANK",
+        "content": "Most people ______ him as one of the most talented musicians of his generation.",
+        "options": [
+          {
+            "label": "A",
+            "content": "regard",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regulate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rehearse",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reject",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "regardless",
+    "meaning": "不管怎样；无论如何",
+    "questions": [
+      {
+        "word": "regardless",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "不管怎样；无论如何",
+        "options": [
+          {
+            "label": "A",
+            "content": "regardless",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regularly",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relatively",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respectively",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "regardless",
+        "type": "FILL_IN_BLANK",
+        "content": "______ of the bad weather, the football match will be held as scheduled in the stadium.",
+        "options": [
+          {
+            "label": "A",
+            "content": "regardless",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regularly",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relatively",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respectively",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "region",
+    "meaning": "地区；区域；行政区",
+    "questions": [
+      {
+        "word": "region",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "地区；区域；行政区",
+        "options": [
+          {
+            "label": "A",
+            "content": "region",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "field",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "register",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "region",
+        "type": "FILL_IN_BLANK",
+        "content": "The northern ______ of the country is famous for its beautiful mountains and clear lakes.",
+        "options": [
+          {
+            "label": "A",
+            "content": "region",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "field",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "register",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "register",
+    "meaning": "登记；注册；挂号",
+    "questions": [
+      {
+        "word": "register",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "登记；注册；挂号",
+        "options": [
+          {
+            "label": "A",
+            "content": "register",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regulate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "register",
+        "type": "FILL_IN_BLANK",
+        "content": "All visitors must ______ at the security desk before entering the building.",
+        "options": [
+          {
+            "label": "A",
+            "content": "register",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "regulate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reform",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "regular",
+    "meaning": "定期的；有规律的；常规的",
+    "questions": [
+      {
+        "word": "regular",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "定期的；有规律的；常规的",
+        "options": [
+          {
+            "label": "A",
+            "content": "regular",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relative",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "related",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reasonable",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "regular",
+        "type": "FILL_IN_BLANK",
+        "content": "She is a ______ customer of this coffee shop and comes here every morning to buy a latte.",
+        "options": [
+          {
+            "label": "A",
+            "content": "regular",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relative",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "related",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reasonable",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "regulate",
+    "meaning": "调节；控制；管理",
+    "questions": [
+      {
+        "word": "regulate",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "调节；控制；管理",
+        "options": [
+          {
+            "label": "A",
+            "content": "regulate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "register",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reject",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "relate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "regulate",
+        "type": "FILL_IN_BLANK",
+        "content": "The government has introduced new laws to ______ the prices of essential goods and prevent inflation.",
+        "options": [
+          {
+            "label": "A",
+            "content": "regulate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "register",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reject",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "relate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "regulation",
+    "meaning": "规则；条例；管理",
+    "questions": [
+      {
+        "word": "regulation",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "规则；条例；管理",
+        "options": [
+          {
+            "label": "A",
+            "content": "regulation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "registration",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rehearsal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reference",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "regulation",
+        "type": "FILL_IN_BLANK",
+        "content": "According to the school ______, students are not allowed to use mobile phones during class hours.",
+        "options": [
+          {
+            "label": "A",
+            "content": "regulation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "registration",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rehearsal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reference",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rehearsal",
+    "meaning": "排练；彩排；预演",
+    "questions": [
+      {
+        "word": "rehearsal",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "排练；彩排；预演",
+        "options": [
+          {
+            "label": "A",
+            "content": "rehearsal",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recitation",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recovery",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rehearsal",
+        "type": "FILL_IN_BLANK",
+        "content": "The actors spent the whole afternoon on the final ______ before the official performance of the play.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rehearsal",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recitation",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "recovery",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reject",
+    "meaning": "拒绝；排斥；驳回",
+    "questions": [
+      {
+        "word": "reject",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "拒绝；排斥；驳回",
+        "options": [
+          {
+            "label": "A",
+            "content": "reject",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reclaim",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reject",
+        "type": "FILL_IN_BLANK",
+        "content": "The committee decided to ______ the proposal because it was not practical and would cost too much money.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reject",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reflect",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reform",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reclaim",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "relate",
+    "meaning": "联系；关联；讲述",
+    "questions": [
+      {
+        "word": "relate",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "联系；关联；讲述",
+        "options": [
+          {
+            "label": "A",
+            "content": "relate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recite",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "relate",
+        "type": "FILL_IN_BLANK",
+        "content": "The research shows that there is a strong link that ______ air pollution to an increased risk of respiratory diseases.",
+        "options": [
+          {
+            "label": "A",
+            "content": "relate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "recite",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "recruit",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "regulate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "release",
+    "meaning": "释放；发布；发行",
+    "questions": [
+      {
+        "word": "release",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "释放；发布；发行",
+        "options": [
+          {
+            "label": "A",
+            "content": "rely",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "repeat",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "represent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "release",
+        "type": "FILL_IN_BLANK",
+        "content": "The film studio announced that it would ______ the new science fiction movie next month.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rely",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "repeat",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "represent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "relevant",
+    "meaning": "相关的；切题的",
+    "questions": [
+      {
+        "word": "relevant",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "相关的；切题的",
+        "options": [
+          {
+            "label": "A",
+            "content": "relevant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remote",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "relevant",
+        "type": "FILL_IN_BLANK",
+        "content": "When writing an essay, you should only include facts ______ to the topic instead of irrelevant details.",
+        "options": [
+          {
+            "label": "A",
+            "content": "relevant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remote",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reliable",
+    "meaning": "可靠的；可信赖的",
+    "questions": [
+      {
+        "word": "reliable",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "可靠的；可信赖的",
+        "options": [
+          {
+            "label": "A",
+            "content": "reluctant",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "remarkable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reliable",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "relevant",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      },
+      {
+        "word": "reliable",
+        "type": "FILL_IN_BLANK",
+        "content": "My neighbor is a very ______ person—if he promises to help, he will definitely keep his word.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reluctant",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "remarkable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reliable",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "relevant",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      }
+    ]
+  },
+  {
+    "word": "relief",
+    "meaning": "减轻；宽慰；救济",
+    "questions": [
+      {
+        "word": "relief",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "减轻；宽慰；救济",
+        "options": [
+          {
+            "label": "A",
+            "content": "relief",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "religion",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rent",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reputation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "relief",
+        "type": "FILL_IN_BLANK",
+        "content": "To our great ______, the missing child was found safe and sound by the police this morning.",
+        "options": [
+          {
+            "label": "A",
+            "content": "relief",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "religion",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rent",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reputation",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "relieve",
+    "meaning": "减轻；缓解；解除",
+    "questions": [
+      {
+        "word": "relieve",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "减轻；缓解；解除",
+        "options": [
+          {
+            "label": "A",
+            "content": "relieve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replicate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "relieve",
+        "type": "FILL_IN_BLANK",
+        "content": "Taking a walk in the park after dinner can help ______ stress and improve your mood.",
+        "options": [
+          {
+            "label": "A",
+            "content": "relieve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replicate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "religion",
+    "meaning": "宗教；宗教信仰",
+    "questions": [
+      {
+        "word": "religion",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "宗教；宗教信仰",
+        "options": [
+          {
+            "label": "A",
+            "content": "religion",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "representative",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "religion",
+        "type": "FILL_IN_BLANK",
+        "content": "Buddhism is one of the major ______ in the world, with millions of followers across Asia.",
+        "options": [
+          {
+            "label": "A",
+            "content": "religion",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "representative",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "religious",
+    "meaning": "宗教的；虔诚的",
+    "questions": [
+      {
+        "word": "religious",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "宗教的；虔诚的",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "religious",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "repeat",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replace",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "religious",
+        "type": "FILL_IN_BLANK",
+        "content": "The old man leads a ______ life and goes to the temple to pray every morning.",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "religious",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "repeat",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replace",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "reluctant",
+    "meaning": "不情愿的；勉强的",
+    "questions": [
+      {
+        "word": "reluctant",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "不情愿的；勉强的",
+        "options": [
+          {
+            "label": "A",
+            "content": "reluctant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relevant",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remarkable",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reluctant",
+        "type": "FILL_IN_BLANK",
+        "content": "She was ______ to accept the job offer at first, but she changed her mind after learning about the high salary.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reluctant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relevant",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remarkable",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rely",
+    "meaning": "依赖；依靠；信赖",
+    "questions": [
+      {
+        "word": "rely",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "依赖；依靠；信赖",
+        "options": [
+          {
+            "label": "A",
+            "content": "rely",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rely",
+        "type": "FILL_IN_BLANK",
+        "content": "You can ______ on me for help whenever you encounter difficulties in your studies.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rely",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "remark",
+    "meaning": "评论；谈论；言论",
+    "questions": [
+      {
+        "word": "remark",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "评论；谈论；言论",
+        "options": [
+          {
+            "label": "A",
+            "content": "remark",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "remark",
+        "type": "FILL_IN_BLANK",
+        "content": "The teacher made a positive ______ about the student’s progress in his math class.",
+        "options": [
+          {
+            "label": "A",
+            "content": "remark",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "remarkable",
+    "meaning": "显著的；非凡的；引人注目的",
+    "questions": [
+      {
+        "word": "remarkable",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "显著的；非凡的；引人注目的",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "remarkable",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reluctant",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "remarkable",
+        "type": "FILL_IN_BLANK",
+        "content": "The scientist made a ______ discovery that changed people’s understanding of the universe.",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "remarkable",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reluctant",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "remote",
+    "meaning": "遥远的；偏远的；遥控的",
+    "questions": [
+      {
+        "word": "remote",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "遥远的；偏远的；遥控的",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relevant",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "repeat",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "remote",
+        "type": "FILL_IN_BLANK",
+        "content": "The village is located in a ______ mountain area, where the only way to get there is by hiking.",
+        "options": [
+          {
+            "label": "A",
+            "content": "remote",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reliable",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "relevant",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "repeat",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "remove",
+    "meaning": "移除；搬走；消除",
+    "questions": [
+      {
+        "word": "remove",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "移除；搬走；消除",
+        "options": [
+          {
+            "label": "A",
+            "content": "remove",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relieve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "represent",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replicate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "remove",
+        "type": "FILL_IN_BLANK",
+        "content": "Please ______ your shoes before entering the house to keep the floor clean.",
+        "options": [
+          {
+            "label": "A",
+            "content": "remove",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relieve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "represent",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replicate",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "renaissance",
+    "meaning": "文艺复兴；复兴",
+    "questions": [
+      {
+        "word": "renaissance",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "文艺复兴；复兴",
+        "options": [
+          {
+            "label": "A",
+            "content": "renaissance",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reproduction",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reputation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "requirement",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "renaissance",
+        "type": "FILL_IN_BLANK",
+        "content": "The Italian ______ was a period of great cultural and artistic development in European history.",
+        "options": [
+          {
+            "label": "A",
+            "content": "renaissance",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reproduction",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reputation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "requirement",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "renew",
+    "meaning": "更新；续期；重新开始",
+    "questions": [
+      {
+        "word": "renew",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "更新；续期；重新开始",
+        "options": [
+          {
+            "label": "A",
+            "content": "renew",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rent",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "replace",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rely",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "renew",
+        "type": "FILL_IN_BLANK",
+        "content": "He plans to ______ his gym membership because he wants to continue working out there.",
+        "options": [
+          {
+            "label": "A",
+            "content": "renew",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rent",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "replace",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rely",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rent",
+    "meaning": "租金；租用；出租",
+    "questions": [
+      {
+        "word": "rent",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "租金；租用；出租",
+        "options": [
+          {
+            "label": "A",
+            "content": "rent",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replica",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rent",
+        "type": "FILL_IN_BLANK",
+        "content": "They decided to ______ an apartment near the company to save time on commuting.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rent",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replica",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "repeat",
+    "meaning": "重复；复述；重演",
+    "questions": [
+      {
+        "word": "repeat",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "重复；复述；重演",
+        "options": [
+          {
+            "label": "A",
+            "content": "repeat",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "represent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "repeat",
+        "type": "FILL_IN_BLANK",
+        "content": "The teacher asked the students to ______ the sentence to make sure they understood the grammar rule.",
+        "options": [
+          {
+            "label": "A",
+            "content": "repeat",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "represent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "replace",
+    "meaning": "取代；替换；更换",
+    "questions": [
+      {
+        "word": "replace",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "取代；替换；更换",
+        "options": [
+          {
+            "label": "A",
+            "content": "replace",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relieve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "replace",
+        "type": "FILL_IN_BLANK",
+        "content": "We need to ______ the old furniture with new pieces to make the room look more modern.",
+        "options": [
+          {
+            "label": "A",
+            "content": "replace",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relieve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "request",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "replicate",
+    "meaning": "复制；复刻；重现",
+    "questions": [
+      {
+        "word": "replicate",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "复制；复刻；重现",
+        "options": [
+          {
+            "label": "A",
+            "content": "replicate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "replicate",
+        "type": "FILL_IN_BLANK",
+        "content": "The artist tried to ______ the famous painting with great care, using the same materials as the original.",
+        "options": [
+          {
+            "label": "A",
+            "content": "replicate",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "represent",
+    "meaning": "代表；象征；描绘",
+    "questions": [
+      {
+        "word": "represent",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "代表；象征；描绘",
+        "options": [
+          {
+            "label": "A",
+            "content": "represent",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rely",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "represent",
+        "type": "FILL_IN_BLANK",
+        "content": "The five-pointed star ______ the unity of the people from all ethnic groups in the country.",
+        "options": [
+          {
+            "label": "A",
+            "content": "represent",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "remove",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rely",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "representative",
+    "meaning": "代表；典型的；有代表性的",
+    "questions": [
+      {
+        "word": "representative",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "代表；典型的；有代表性的",
+        "options": [
+          {
+            "label": "A",
+            "content": "representative",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "replicate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remote",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "representative",
+        "type": "FILL_IN_BLANK",
+        "content": "Each country has a ______ at the United Nations who speaks on behalf of its government.",
+        "options": [
+          {
+            "label": "A",
+            "content": "representative",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "replicate",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "religious",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "remote",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reproduce",
+    "meaning": "繁殖；生殖；复制",
+    "questions": [
+      {
+        "word": "reproduce",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "繁殖；生殖；复制",
+        "options": [
+          {
+            "label": "A",
+            "content": "reproduce",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "replace",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reproduce",
+        "type": "FILL_IN_BLANK",
+        "content": "Some plants can ______ asexually without the need for seeds or pollen.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reproduce",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "replace",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "renew",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "require",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "republic",
+    "meaning": "共和国；共和政体",
+    "questions": [
+      {
+        "word": "republic",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "共和国；共和政体",
+        "options": [
+          {
+            "label": "A",
+            "content": "republic",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "renaissance",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reputation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "republic",
+        "type": "FILL_IN_BLANK",
+        "content": "France is a ______ where the head of state is elected by the people rather than inherited.",
+        "options": [
+          {
+            "label": "A",
+            "content": "republic",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "renaissance",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reputation",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rent",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reputation",
+    "meaning": "名声；名誉；声誉",
+    "questions": [
+      {
+        "word": "reputation",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "名声；名誉；声誉",
+        "options": [
+          {
+            "label": "A",
+            "content": "reputation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "representative",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replica",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reputation",
+        "type": "FILL_IN_BLANK",
+        "content": "The company has built a good ______ for producing high-quality products at reasonable prices.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reputation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "relief",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "representative",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replica",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "request",
+    "meaning": "请求；要求；申请书",
+    "questions": [
+      {
+        "word": "request",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "请求；要求；申请书",
+        "options": [
+          {
+            "label": "A",
+            "content": "request",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replace",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "request",
+        "type": "FILL_IN_BLANK",
+        "content": "The manager refused the employee’s ______ for a three-day leave because the company was busy with a big project.",
+        "options": [
+          {
+            "label": "A",
+            "content": "request",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "remark",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "release",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "replace",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "require",
+    "meaning": "需要；要求；规定",
+    "questions": [
+      {
+        "word": "require",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "需要；要求；规定",
+        "options": [
+          {
+            "label": "A",
+            "content": "require",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rely",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "repeat",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "require",
+        "type": "FILL_IN_BLANK",
+        "content": "This job ______ candidates to have at least two years of work experience in the related field.",
+        "options": [
+          {
+            "label": "A",
+            "content": "require",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rely",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reproduce",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "repeat",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rescue",
+    "meaning": "营救；救援",
+    "questions": [
+      {
+        "word": "rescue",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "营救；救援",
+        "options": [
+          {
+            "label": "A",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rescue",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restore",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "rescue",
+        "type": "FILL_IN_BLANK",
+        "content": "The firefighters risked their lives to ______ the people trapped in the burning building.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rescue",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restore",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "resemble",
+    "meaning": "像；类似于",
+    "questions": [
+      {
+        "word": "resemble",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "像；类似于",
+        "options": [
+          {
+            "label": "A",
+            "content": "resemble",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reservation",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respond",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resemble",
+        "type": "FILL_IN_BLANK",
+        "content": "The twin sisters look so alike that even their parents sometimes can’t tell how they ______ each other.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resemble",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "respond",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reservation",
+    "meaning": "预订；保留意见",
+    "questions": [
+      {
+        "word": "reservation",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "预订；保留意见",
+        "options": [
+          {
+            "label": "A",
+            "content": "reservation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolution",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retail",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reservation",
+        "type": "FILL_IN_BLANK",
+        "content": "I need to make a ______ for two at the Italian restaurant downtown this weekend.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reservation",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolution",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retail",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reserve",
+    "meaning": "预订；保留；储备",
+    "questions": [
+      {
+        "word": "reserve",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "预订；保留；储备",
+        "options": [
+          {
+            "label": "A",
+            "content": "reserve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reside",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reserve",
+        "type": "FILL_IN_BLANK",
+        "content": "The government plans to ______ more land for the construction of public parks and green spaces.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reserve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reside",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resident",
+    "meaning": "居民；常住的",
+    "questions": [
+      {
+        "word": "resident",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "居民；常住的",
+        "options": [
+          {
+            "label": "A",
+            "content": "resident",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revolutionary",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resident",
+        "type": "FILL_IN_BLANK",
+        "content": "All ______ in this neighborhood are required to show their ID cards when entering the community.",
+        "options": [
+          {
+            "label": "A",
+            "content": "residents",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resilients",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respectives",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revolutionaries",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resign",
+    "meaning": "辞职；辞去；顺从",
+    "questions": [
+      {
+        "word": "resign",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "辞职；辞去；顺从",
+        "options": [
+          {
+            "label": "A",
+            "content": "resign",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resign",
+        "type": "FILL_IN_BLANK",
+        "content": "The manager decided to ______ after the company failed to meet its annual sales target for three years in a row.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resign",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resilient",
+    "meaning": "有韧性的；适应力强的",
+    "questions": [
+      {
+        "word": "resilient",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "有韧性的；适应力强的",
+        "options": [
+          {
+            "label": "A",
+            "content": "responsible",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resilient",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "reserved",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reverse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "resilient",
+        "type": "FILL_IN_BLANK",
+        "content": "Bamboo is a highly ______ plant that can bounce back quickly after being bent or broken.",
+        "options": [
+          {
+            "label": "A",
+            "content": "responsible",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resilient",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "reserved",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reverse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "resist",
+    "meaning": "抵抗；忍住；抗拒",
+    "questions": [
+      {
+        "word": "resist",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "抵抗；忍住；抗拒",
+        "options": [
+          {
+            "label": "A",
+            "content": "resist",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resort",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resume",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resist",
+        "type": "FILL_IN_BLANK",
+        "content": "It is hard to ______ the temptation of delicious food when you are on a diet.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resist",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resort",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resume",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resistance",
+    "meaning": "抵抗；阻力；电阻",
+    "questions": [
+      {
+        "word": "resistance",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "抵抗；阻力；电阻",
+        "options": [
+          {
+            "label": "A",
+            "content": "resistance",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "response",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revenue",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resistance",
+        "type": "FILL_IN_BLANK",
+        "content": "The army put up strong ______ against the enemy’s attack and successfully defended the border.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resistance",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "response",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revenue",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resistant",
+    "meaning": "抵抗的；耐…… 的",
+    "questions": [
+      {
+        "word": "resistant",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "抵抗的；耐…… 的",
+        "options": [
+          {
+            "label": "A",
+            "content": "resistant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restless",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resistant",
+        "type": "FILL_IN_BLANK",
+        "content": "This new type of material is ______ to water and can be used to make waterproof clothing.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resistant",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restless",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resolution",
+    "meaning": "决议；决心；分辨率",
+    "questions": [
+      {
+        "word": "resolution",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "决议；决心；分辨率",
+        "options": [
+          {
+            "label": "A",
+            "content": "resolution",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restoration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resolution",
+        "type": "FILL_IN_BLANK",
+        "content": "The company passed a ______ to invest more money in research and development of new products.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resolution",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restoration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resolve",
+    "meaning": "解决；决心；分解",
+    "questions": [
+      {
+        "word": "resolve",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "解决；决心；分解",
+        "options": [
+          {
+            "label": "A",
+            "content": "resolve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resolve",
+        "type": "FILL_IN_BLANK",
+        "content": "We must ______ to find a solution to the environmental pollution problem before it gets worse.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resolve",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resort",
+    "meaning": "求助；诉诸；度假胜地",
+    "questions": [
+      {
+        "word": "resort",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "求助；诉诸；度假胜地",
+        "options": [
+          {
+            "label": "A",
+            "content": "resort",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reside",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revive",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resort",
+        "type": "FILL_IN_BLANK",
+        "content": "When negotiations fail, some countries may ______ to military force to settle disputes.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resort",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reside",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revive",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resource",
+    "meaning": "资源；财力；智谋",
+    "questions": [
+      {
+        "word": "resource",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "资源；财力；智谋",
+        "options": [
+          {
+            "label": "A",
+            "content": "resource",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolution",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "response",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retail",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resource",
+        "type": "FILL_IN_BLANK",
+        "content": "Oil and natural gas are important natural ______ that play a vital role in the national economy.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resources",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolutions",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "responses",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retails",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "respective",
+    "meaning": "各自的；分别的",
+    "questions": [
+      {
+        "word": "respective",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "各自的；分别的",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resistant",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "revolutionary",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      },
+      {
+        "word": "respective",
+        "type": "FILL_IN_BLANK",
+        "content": "After the meeting, the participants returned to their ______ offices to continue their work.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resistant",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "revolutionary",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      }
+    ]
+  },
+  {
+    "word": "respond",
+    "meaning": "回应；作出反应；应答",
+    "questions": [
+      {
+        "word": "respond",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "回应；作出反应；应答",
+        "options": [
+          {
+            "label": "A",
+            "content": "respond",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retire",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "respond",
+        "type": "FILL_IN_BLANK",
+        "content": "The company failed to ______ to the customer’s complaint in time, which led to a bad review online.",
+        "options": [
+          {
+            "label": "A",
+            "content": "respond",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retire",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "response",
+    "meaning": "回应；答复；反应",
+    "questions": [
+      {
+        "word": "response",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "回应；答复；反应",
+        "options": [
+          {
+            "label": "A",
+            "content": "response",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revenue",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "response",
+        "type": "FILL_IN_BLANK",
+        "content": "The patient’s positive ______ to the treatment surprised all the doctors and nurses in the hospital.",
+        "options": [
+          {
+            "label": "A",
+            "content": "response",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revenue",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "responsibility",
+    "meaning": "责任；职责；义务",
+    "questions": [
+      {
+        "word": "responsibility",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "责任；职责；义务",
+        "options": [
+          {
+            "label": "A",
+            "content": "responsibility",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resistance",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolution",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restoration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "responsibility",
+        "type": "FILL_IN_BLANK",
+        "content": "Parents should teach their children to take ______ for their own actions from an early age.",
+        "options": [
+          {
+            "label": "A",
+            "content": "responsibility",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resistance",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolution",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "restoration",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "restless",
+    "meaning": "不安的；焦躁的；好动的",
+    "questions": [
+      {
+        "word": "restless",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "不安的；焦躁的；好动的",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "restless",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reverse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "restless",
+        "type": "FILL_IN_BLANK",
+        "content": "The ______ child couldn’t sit still for more than five minutes during the long car ride.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "restless",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "respective",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reverse",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "restore",
+    "meaning": "恢复；修复；归还",
+    "questions": [
+      {
+        "word": "restore",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "恢复；修复；归还",
+        "options": [
+          {
+            "label": "A",
+            "content": "restore",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "restore",
+        "type": "FILL_IN_BLANK",
+        "content": "The workers are trying to ______ the old castle to its original appearance before the tourists arrive.",
+        "options": [
+          {
+            "label": "A",
+            "content": "restore",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "restrict",
+    "meaning": "限制；约束；限定",
+    "questions": [
+      {
+        "word": "restrict",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "限制；约束；限定",
+        "options": [
+          {
+            "label": "A",
+            "content": "restrict",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resort",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retire",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "restrict",
+        "type": "FILL_IN_BLANK",
+        "content": "The new law will ______ the sale of cigarettes to people under the age of 18.",
+        "options": [
+          {
+            "label": "A",
+            "content": "restrict",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resort",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retire",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "resume",
+    "meaning": "恢复；重新开始；简历",
+    "questions": [
+      {
+        "word": "resume",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "恢复；重新开始；简历",
+        "options": [
+          {
+            "label": "A",
+            "content": "resume",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "resume",
+        "type": "FILL_IN_BLANK",
+        "content": "The sports meeting will ______ next week after being postponed due to bad weather.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resume",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "retail",
+    "meaning": "零售；零卖",
+    "questions": [
+      {
+        "word": "retail",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "零售；零卖",
+        "options": [
+          {
+            "label": "A",
+            "content": "retail",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "response",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resource",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "retail",
+        "type": "FILL_IN_BLANK",
+        "content": "This clothing brand sells its products both in ______ stores and online platforms.",
+        "options": [
+          {
+            "label": "A",
+            "content": "retail",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "response",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resource",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "retain",
+    "meaning": "保持；保留；持有",
+    "questions": [
+      {
+        "word": "retain",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "保持；保留；持有",
+        "options": [
+          {
+            "label": "A",
+            "content": "retain",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "retain",
+        "type": "FILL_IN_BLANK",
+        "content": "It is important to ______ a positive attitude when facing difficulties and challenges in life.",
+        "options": [
+          {
+            "label": "A",
+            "content": "retain",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "retire",
+    "meaning": "退休；退役；退出",
+    "questions": [
+      {
+        "word": "retire",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "退休；退役；退出",
+        "options": [
+          {
+            "label": "A",
+            "content": "retire",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revive",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "retire",
+        "type": "FILL_IN_BLANK",
+        "content": "My grandfather plans to ______ from his job next year and spend his retirement traveling around the world.",
+        "options": [
+          {
+            "label": "A",
+            "content": "retire",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resign",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revive",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reveal",
+    "meaning": "揭示；透露；展现",
+    "questions": [
+      {
+        "word": "reveal",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "揭示；透露；展现",
+        "options": [
+          {
+            "label": "A",
+            "content": "reveal",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resume",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reveal",
+        "type": "FILL_IN_BLANK",
+        "content": "The investigation finally ______ the truth about the corruption scandal that had shocked the whole country.",
+        "options": [
+          {
+            "label": "A",
+            "content": "revealed",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resisted",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserved",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resumed",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "revenue",
+    "meaning": "收入；税收；收益",
+    "questions": [
+      {
+        "word": "revenue",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "收入；税收；收益",
+        "options": [
+          {
+            "label": "A",
+            "content": "revenue",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resolution",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "revenue",
+        "type": "FILL_IN_BLANK",
+        "content": "The local government’s main ______ comes from taxes and fees paid by local businesses and residents.",
+        "options": [
+          {
+            "label": "A",
+            "content": "revenue",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "responsibility",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resource",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "resolution",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "reverse",
+    "meaning": "反向；颠倒；逆转",
+    "questions": [
+      {
+        "word": "reverse",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "反向；颠倒；逆转",
+        "options": [
+          {
+            "label": "A",
+            "content": "reverse",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reverse",
+        "type": "FILL_IN_BLANK",
+        "content": "The recent economic data shows that the country’s economy has started to ______ the downward trend.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reverse",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reserve",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "revise",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "revise",
+    "meaning": "修订；修改；复习",
+    "questions": [
+      {
+        "word": "revise",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "修订；修改；复习",
+        "options": [
+          {
+            "label": "A",
+            "content": "revise",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "revise",
+        "type": "FILL_IN_BLANK",
+        "content": "You should ______ your essay carefully before submitting it to avoid grammar and spelling mistakes.",
+        "options": [
+          {
+            "label": "A",
+            "content": "revise",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "resolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "resist",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reveal",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "revive",
+    "meaning": "使复苏；复兴；重新上演",
+    "questions": [
+      {
+        "word": "revive",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "使复苏；复兴；重新上演",
+        "options": [
+          {
+            "label": "A",
+            "content": "revive",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retain",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "revive",
+        "type": "FILL_IN_BLANK",
+        "content": "The government has launched a series of policies to ______ the declining manufacturing industry.",
+        "options": [
+          {
+            "label": "A",
+            "content": "revive",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "restore",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "restrict",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "retain",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "revolutionary",
+    "meaning": "革命的；突破性的；革命者",
+    "questions": [
+      {
+        "word": "revolutionary",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "革命的；突破性的；革命者",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resistant",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "revolutionary",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "respective",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      },
+      {
+        "word": "revolutionary",
+        "type": "FILL_IN_BLANK",
+        "content": "The invention of the internet brought about a ______ change in the way people communicate and obtain information.",
+        "options": [
+          {
+            "label": "A",
+            "content": "resilient",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "resistant",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "revolutionary",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "respective",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      }
+    ]
+  },
+  {
+    "word": "revolve",
+    "meaning": "旋转；围绕",
+    "questions": [
+      {
+        "word": "revolve",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "旋转；围绕",
+        "options": [
+          {
+            "label": "A",
+            "content": "reward",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "revolve",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "revolve",
+        "type": "FILL_IN_BLANK",
+        "content": "The Earth ______ around the Sun, and this movement takes about 365 days to complete.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reward",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "revolve",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "reward",
+    "meaning": "奖励；报酬；回报",
+    "questions": [
+      {
+        "word": "reward",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "奖励；报酬；回报",
+        "options": [
+          {
+            "label": "A",
+            "content": "reward",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rhythm",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "riddle",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ritual",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "reward",
+        "type": "FILL_IN_BLANK",
+        "content": "The company will ______ employees who achieve their sales targets with a generous bonus at the end of the year.",
+        "options": [
+          {
+            "label": "A",
+            "content": "reward",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rhythm",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "riddle",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ritual",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rhythm",
+    "meaning": "节奏；韵律；规律",
+    "questions": [
+      {
+        "word": "rhythm",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "节奏；韵律；规律",
+        "options": [
+          {
+            "label": "A",
+            "content": "rival",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rhythm",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "route",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      },
+      {
+        "word": "rhythm",
+        "type": "FILL_IN_BLANK",
+        "content": "Listening to music with a steady ______ can help you relax and reduce stress after a busy day.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rival",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rhythm",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "route",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      }
+    ]
+  },
+  {
+    "word": "riddle",
+    "meaning": "谜；谜语；不解之谜",
+    "questions": [
+      {
+        "word": "riddle",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "谜；谜语；不解之谜",
+        "options": [
+          {
+            "label": "A",
+            "content": "riddle",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "ridicule",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "riddle",
+        "type": "FILL_IN_BLANK",
+        "content": "The detective spent months trying to solve the ______ of the missing painting, which was finally found in an old warehouse.",
+        "options": [
+          {
+            "label": "A",
+            "content": "riddle",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "ridicule",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "ridiculous",
+    "meaning": "荒谬的；可笑的",
+    "questions": [
+      {
+        "word": "ridiculous",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "荒谬的；可笑的",
+        "options": [
+          {
+            "label": "A",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "ridiculous",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rude",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "ridiculous",
+        "type": "FILL_IN_BLANK",
+        "content": "It is ______ to think that you can learn a foreign language fluently in just one week without any practice.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "ridiculous",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rude",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "rigid",
+    "meaning": "僵硬的；死板的；严格的",
+    "questions": [
+      {
+        "word": "rigid",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "僵硬的；死板的；严格的",
+        "options": [
+          {
+            "label": "A",
+            "content": "rigid",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rigid",
+        "type": "FILL_IN_BLANK",
+        "content": "The school has a ______ policy that prohibits students from using mobile phones during class hours.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rigid",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "ripe",
+    "meaning": "成熟的；时机成熟的",
+    "questions": [
+      {
+        "word": "ripe",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "成熟的；时机成熟的",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      },
+      {
+        "word": "ripe",
+        "type": "FILL_IN_BLANK",
+        "content": "The apples on the tree are ______ and ready to be picked; they look red and juicy in the sunlight.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": true
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "C"
+      }
+    ]
+  },
+  {
+    "word": "ritual",
+    "meaning": "仪式；典礼；例行的",
+    "questions": [
+      {
+        "word": "ritual",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "仪式；典礼；例行的",
+        "options": [
+          {
+            "label": "A",
+            "content": "ritual",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roof",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "ritual",
+        "type": "FILL_IN_BLANK",
+        "content": "Every morning, the old man follows his ______ of drinking a cup of tea and reading the newspaper before going out.",
+        "options": [
+          {
+            "label": "A",
+            "content": "ritual",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roof",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rival",
+    "meaning": "竞争对手；与…… 匹敌",
+    "questions": [
+      {
+        "word": "rival",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "竞争对手；与…… 匹敌",
+        "options": [
+          {
+            "label": "A",
+            "content": "rival",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rub",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rival",
+        "type": "FILL_IN_BLANK",
+        "content": "The two companies are fierce ______ in the market, competing for the same customers and market share.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rival",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rub",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roll",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "roar",
+    "meaning": "吼叫；咆哮；轰鸣",
+    "questions": [
+      {
+        "word": "roar",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "吼叫；咆哮；轰鸣",
+        "options": [
+          {
+            "label": "A",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rub",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "roar",
+        "type": "FILL_IN_BLANK",
+        "content": "The lion let out a loud ______ that could be heard from miles away, warning other animals to stay away from its territory.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rub",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "roast",
+    "meaning": "烤；烘；炙烤的",
+    "questions": [
+      {
+        "word": "roast",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "烤；烘；炙烤的",
+        "options": [
+          {
+            "label": "A",
+            "content": "roast",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "roast",
+        "type": "FILL_IN_BLANK",
+        "content": "We plan to ______ a turkey for Thanksgiving dinner, along with some vegetables and mashed potatoes.",
+        "options": [
+          {
+            "label": "A",
+            "content": "roast",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rob",
+    "meaning": "抢劫；盗取；剥夺",
+    "questions": [
+      {
+        "word": "rob",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "抢劫；盗取；剥夺",
+        "options": [
+          {
+            "label": "A",
+            "content": "rob",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "revolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reward",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rub",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rob",
+        "type": "FILL_IN_BLANK",
+        "content": "The thieves tried to ______ the bank last night, but they were caught by the police before they could escape.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rob",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "revolve",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "reward",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rub",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "roll",
+    "meaning": "滚动；卷；名单",
+    "questions": [
+      {
+        "word": "roll",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "滚动；卷；名单",
+        "options": [
+          {
+            "label": "A",
+            "content": "roll",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ridicule",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "roll",
+        "type": "FILL_IN_BLANK",
+        "content": "The child likes to ______ a ball across the park and chase it with his dog on weekends.",
+        "options": [
+          {
+            "label": "A",
+            "content": "roll",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roar",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roast",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ridicule",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "romantic",
+    "meaning": "浪漫的；空想的；浪漫主义的",
+    "questions": [
+      {
+        "word": "romantic",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "浪漫的；空想的；浪漫主义的",
+        "options": [
+          {
+            "label": "A",
+            "content": "romantic",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rough",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "romantic",
+        "type": "FILL_IN_BLANK",
+        "content": "The young couple went on a ______ trip to Paris, visiting famous landmarks like the Eiffel Tower and the Louvre Museum.",
+        "options": [
+          {
+            "label": "A",
+            "content": "romantic",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ripe",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rough",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "roof",
+    "meaning": "屋顶；顶部；覆盖物",
+    "questions": [
+      {
+        "word": "roof",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "屋顶；顶部；覆盖物",
+        "options": [
+          {
+            "label": "A",
+            "content": "roof",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ritual",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "roof",
+        "type": "FILL_IN_BLANK",
+        "content": "The workers are repairing the ______ of the house because it was damaged during the heavy rainstorm last week.",
+        "options": [
+          {
+            "label": "A",
+            "content": "roof",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ritual",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "root",
+    "meaning": "根；根源；生根",
+    "questions": [
+      {
+        "word": "root",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "根；根源；生根",
+        "options": [
+          {
+            "label": "A",
+            "content": "root",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roof",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "root",
+        "type": "FILL_IN_BLANK",
+        "content": "The ______ cause of the problem is the lack of communication between the two departments in the company.",
+        "options": [
+          {
+            "label": "A",
+            "content": "root",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roof",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rough",
+    "meaning": "粗糙的；粗略的；粗暴的",
+    "questions": [
+      {
+        "word": "rough",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "粗糙的；粗略的；粗暴的",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rough",
+        "type": "FILL_IN_BLANK",
+        "content": "The road is ______ and uneven, so you should drive slowly to avoid bumping into potholes.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "route",
+    "meaning": "路线；航线；途径",
+    "questions": [
+      {
+        "word": "route",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "路线；航线；途径",
+        "options": [
+          {
+            "label": "A",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "route",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "route",
+        "type": "FILL_IN_BLANK",
+        "content": "We took a scenic ______ through the mountains, enjoying the beautiful views of forests and lakes along the way.",
+        "options": [
+          {
+            "label": "A",
+            "content": "root",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "route",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rubber",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "routine",
+    "meaning": "常规；惯例；例行的",
+    "questions": [
+      {
+        "word": "routine",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "常规；惯例；例行的",
+        "options": [
+          {
+            "label": "A",
+            "content": "routine",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ritual",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "routine",
+        "type": "FILL_IN_BLANK",
+        "content": "My daily ______ includes getting up at 7 o’clock, having breakfast, and then taking the bus to work.",
+        "options": [
+          {
+            "label": "A",
+            "content": "routine",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "ritual",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ruin",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "royal",
+    "meaning": "皇家的；王室的；盛大的",
+    "questions": [
+      {
+        "word": "royal",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "皇家的；王室的；盛大的",
+        "options": [
+          {
+            "label": "A",
+            "content": "royal",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rude",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ripe",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "royal",
+        "type": "FILL_IN_BLANK",
+        "content": "The ______ family attended the opening ceremony of the new museum, accompanied by a group of bodyguards.",
+        "options": [
+          {
+            "label": "A",
+            "content": "royal",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rude",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "ripe",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rub",
+    "meaning": "摩擦；揉搓；擦破",
+    "questions": [
+      {
+        "word": "rub",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "摩擦；揉搓；擦破",
+        "options": [
+          {
+            "label": "A",
+            "content": "rub",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roast",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rub",
+        "type": "FILL_IN_BLANK",
+        "content": "You can ______ the surface of the leather shoes with a cloth to make them shiny and clean.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rub",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "rob",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "roast",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rubber",
+    "meaning": "橡胶；橡皮；橡胶制品",
+    "questions": [
+      {
+        "word": "rubber",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "橡胶；橡皮；橡胶制品",
+        "options": [
+          {
+            "label": "A",
+            "content": "rubber",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "root",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "rubber",
+        "type": "FILL_IN_BLANK",
+        "content": "The teacher asked the students to bring a pencil and an eraser made of ______ to the exam tomorrow.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rubber",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "route",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "root",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rude",
+    "meaning": "粗鲁的；无礼的；未开化的",
+    "questions": [
+      {
+        "word": "rude",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "粗鲁的；无礼的；未开化的",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rude",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      },
+      {
+        "word": "rude",
+        "type": "FILL_IN_BLANK",
+        "content": "It is ______ to interrupt someone when they are speaking; you should wait until they finish talking.",
+        "options": [
+          {
+            "label": "A",
+            "content": "rough",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "rude",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "content": "rigid",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "word": "ruin",
+    "meaning": "毁灭；废墟；使破产",
+    "questions": [
+      {
+        "word": "ruin",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "毁灭；废墟；使破产",
+        "options": [
+          {
+            "label": "A",
+            "content": "ruin",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rub",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reward",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      },
+      {
+        "word": "ruin",
+        "type": "FILL_IN_BLANK",
+        "content": "His bad habits and lack of self-discipline will eventually ______ his chances of success in the future.",
+        "options": [
+          {
+            "label": "A",
+            "content": "ruin",
+            "isCorrect": true
+          },
+          {
+            "label": "B",
+            "content": "rub",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "roll",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "reward",
+            "isCorrect": false
+          }
+        ],
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "word": "rural",
+    "meaning": "答案：",
+    "questions": [
+      {
+        "word": "rural",
+        "type": "CHINESE_TO_ENGLISH",
+        "content": "乡村的；农村的",
+        "options": [
+          {
+            "label": "A",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": true
+          }
+        ],
+        "correctAnswer": "D"
+      },
+      {
+        "word": "rural",
+        "type": "FILL_IN_BLANK",
+        "content": "Life in ______ areas is usually quieter and more peaceful than in big cities, with fresh air and green fields.",
+        "options": [
+          {
+            "label": "A",
+            "content": "royal",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "content": "romantic",
+            "isCorrect": false
+          },
+          {
+            "label": "C",
+            "content": "routine",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "content": "rural",
+            "isCorrect": true
+          }
+        ],
+        "correctAnswer": "D"
+      }
+    ]
+  }
+]
