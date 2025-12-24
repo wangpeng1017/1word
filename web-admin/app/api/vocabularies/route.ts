@@ -45,6 +45,10 @@ export async function GET(request: NextRequest) {
       where.difficulty = difficulty
     }
 
+    // 排序参数
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const rFirst = searchParams.get('rFirst') === 'true'
+
     // 索引使用: idx_vocabularies_frequency_difficulty, idx_vocabularies_created_at_desc
     const includeOptions: any = {
       // 始终包含 word_meanings，用于获取 primaryMeaning
@@ -66,22 +70,41 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // 构建排序条件
+    let orderByClause: any = { created_at: 'desc' }
+    if (sortBy === 'word') {
+      orderByClause = { word: 'asc' }
+    }
+
     const [vocabularies, total] = await Promise.all([
       prisma.vocabularies.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
+        orderBy: orderByClause,
         include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
       }),
       prisma.vocabularies.count({ where }),
     ])
 
+    // 如果需要 R 开头的词汇优先，在应用层进行排序
+    let sortedVocabularies = vocabularies
+    if (rFirst) {
+      sortedVocabularies = [...vocabularies].sort((a: any, b: any) => {
+        const aStartsWithR = a.word.toLowerCase().startsWith('r')
+        const bStartsWithR = b.word.toLowerCase().startsWith('r')
+        if (aStartsWithR && !bStartsWithR) return -1
+        if (!aStartsWithR && bStartsWithR) return 1
+        return a.word.localeCompare(b.word)
+      })
+    }
+
     // 将 snake_case 映射为前端预期的 camelCase 字段
     // 注意：释义数据已完全迁移到 word_meanings 表
-    const mapped = vocabularies.map((vocab: any) => {
+    const mapped = sortedVocabularies.map((vocab: any) => {
       const meanings = vocab.word_meanings || []
       const firstMeaning = meanings[0]
+
 
       const result: any = {
         id: vocab.id,

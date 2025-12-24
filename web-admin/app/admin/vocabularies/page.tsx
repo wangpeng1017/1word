@@ -87,6 +87,8 @@ export default function VocabulariesPage() {
   const [form] = Form.useForm()
   const [imageFileList, setImageFileList] = useState<UploadFile[]>([])
   const [uploading, setUploading] = useState(false)
+  // R开头优先排序
+  const [rFirst, setRFirst] = useState(true)
 
   // 分页状态
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 })
@@ -104,7 +106,7 @@ export default function VocabulariesPage() {
 
   useEffect(() => {
     loadData()
-  }, [pagination.page, pagination.limit, highFreqFilter, debouncedSearch])
+  }, [pagination.page, pagination.limit, highFreqFilter, debouncedSearch, rFirst])
 
   const loadData = async () => {
     setLoading(true)
@@ -116,6 +118,7 @@ export default function VocabulariesPage() {
         includeMeanings: 'true',
         includeImages: 'true',
         includeAudios: 'true',
+        rFirst: String(rFirst),
       })
       if (debouncedSearch) params.append('search', debouncedSearch)
       if (highFreqFilter !== null) params.append('isHighFrequency', String(highFreqFilter))
@@ -552,7 +555,14 @@ export default function VocabulariesPage() {
           <Button icon={<ReloadOutlined />} onClick={loadData}>
             刷新
           </Button>
+          <Button
+            type={rFirst ? 'primary' : 'default'}
+            onClick={() => setRFirst(!rFirst)}
+          >
+            {rFirst ? 'R开头优先 ✓' : 'R开头优先'}
+          </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+
             添加词汇
           </Button>
           {selectedRowKeys.length > 0 && (
