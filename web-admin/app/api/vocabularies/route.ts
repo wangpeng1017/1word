@@ -228,11 +228,15 @@ export async function POST(request: NextRequest) {
 
     // 使用事务创建词汇和释义（释义存储在 word_meanings 表）
     const vocabulary = await prisma.$transaction(async (tx) => {
-      // 创建词汇（不再使用旧的 part_of_speech, primary_meaning 字段）
+      // 创建词汇（释义存储在 word_meanings 表，但保留 primary_meaning 兼容旧数据）
+      const firstMeaning = meanings[0]
       const vocab = await tx.vocabularies.create({
         data: {
           id: vocabId,
           word: word.toLowerCase(),
+          // 保留向后兼容字段
+          part_of_speech: [firstMeaning?.partOfSpeech || ''],
+          primary_meaning: firstMeaning?.meaning || '',
           phonetic,
           phonetic_us: phoneticUS,
           phonetic_uk: phoneticUK,
@@ -242,6 +246,7 @@ export async function POST(request: NextRequest) {
           updated_at: new Date(),
         },
       })
+
 
       // 创建多释义（释义数据存储在 word_meanings 表）
       await tx.word_meanings.createMany({

@@ -15,17 +15,32 @@ export interface RegisterRequest {
 }
 
 // 词汇相关类型
+export interface VocabularyMeaningInput {
+  partOfSpeech: string
+  meaning: string
+}
+
 export interface VocabularyCreateInput {
   word: string
-  partOfSpeech: string[]
-  primaryMeaning: string
+  // 新的释义数组格式
+  meanings?: VocabularyMeaningInput[]
+  // 向后兼容的旧字段
+  partOfSpeech?: string[]
+  primaryMeaning?: string
   secondaryMeaning?: string
   phonetic?: string
   phoneticUS?: string
   phoneticUK?: string
   isHighFrequency?: boolean
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD'
+  // 音频相关
+  audioUrlUS?: string
+  audioUrlUK?: string
+  // 图片相关
+  imageUrl?: string
+  imageDescription?: string
 }
+
 
 export interface VocabularyWithDetails {
   id: string
