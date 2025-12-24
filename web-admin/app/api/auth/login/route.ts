@@ -1,99 +1,72 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 import { verifyPassword, generateToken } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
 import { LoginRequest } from '@/types'
-import { recordLog, getClientInfo } from '@/lib/log'
 
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json()
-
-    // 详细日志：记录收到的请求体
-    console.log('=== 登录请求详情 ===')
-    console.log('请求体:', JSON.stringify(body, null, 2))
-    console.log('请求头:', Object.fromEntries(request.headers.entries()))
-
     const { email, phone, studentNo, password } = body
 
     if (!password) {
-      console.log('❌ 密码为空')
       return errorResponse('密码不能为空')
     }
 
-    // 支持邮箱/手机号/学号登录
     const loginIdentifier = email || phone || studentNo
-    console.log('登录标识符:', loginIdentifier)
-
     if (!loginIdentifier) {
-      console.log('❌ 缺少登录标识符')
       return errorResponse('请输入账号（邮箱/手机号/学号）')
     }
 
-    // 1) 先按邮箱或手机号查用户
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: loginIdentifier },
-          { phone: loginIdentifier },
-        ],
-      },
-      include: {
-        teachers: { select: { id: true } },
-        students: { select: { id: true } },
-      },
-    })
+    // 1) 按邮箱或手机号查用户
+    let result = await db.query(
+      `SELECT u.*, t.id as teacher_id, s.id as student_id
+       FROM "User" u
+       LEFT JOIN "Teachers" t ON t.user_id = u.id
+       LEFT JOIN "Students" s ON s.user_id = u.id
+       WHERE u.email = $1 OR u.phone = $1
+       LIMIT 1`,
+      [loginIdentifier]
+    )
 
-    // 2) 如果没查到，再按学号查学生→用户
-    if (!user) {
-      const stu = await prisma.students.findUnique({
-        where: { student_no: loginIdentifier },
-        select: { user_id: true },
-      })
-      if (stu) {
-        user = await prisma.user.findUnique({
-          where: { id: stu.user_id },
-          include: {
-            teachers: { select: { id: true } },
-            students: { select: { id: true } },
-          },
-        })
+    // 2) 如果没查到，按学号查
+    if (result.rows.length === 0) {
+      const stuResult = await db.query(
+        `SELECT user_id FROM "Students" WHERE student_no = $1`,
+        [loginIdentifier]
+      )
+      if (stuResult.rows.length > 0) {
+        result = await db.query(
+          `SELECT u.*, t.id as teacher_id, s.id as student_id
+           FROM "User" u
+           LEFT JOIN "Teachers" t ON t.user_id = u.id
+           LEFT JOIN "Students" s ON s.user_id = u.id
+           WHERE u.id = $1`,
+          [stuResult.rows[0].user_id]
+        )
       }
     }
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return errorResponse('用户不存在')
     }
+
+    const user = result.rows[0]
 
     if (!user.is_active) {
       return errorResponse('账号已被禁用')
     }
 
-    // 验证密码
     const isPasswordValid = await verifyPassword(password, user.password)
     if (!isPasswordValid) {
       return errorResponse('密码错误')
     }
 
-    // 生成token
     const token = generateToken({
       userId: user.id,
       email: user.email || undefined,
       role: user.role,
     })
-
-    // 记录登录日志（仅管理员/教师登录）
-    if (user.role === 'TEACHER' || user.role === 'ADMIN') {
-      const clientInfo = getClientInfo(request)
-      await recordLog({
-        userId: user.id,
-        userName: user.name,
-        action: 'LOGIN',
-        module: 'auth',
-        target: `管理后台登录`,
-        ...clientInfo,
-      })
-    }
 
     return successResponse({
       user: {
@@ -102,8 +75,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        teacherId: user.teachers?.id,
-        studentId: user.students?.id,
+        teacherId: user.teacher_id,
+        studentId: user.student_id,
       },
       token,
     }, '登录成功')
@@ -112,4 +85,3 @@ export async function POST(request: NextRequest) {
     return errorResponse('登录失败', 500)
   }
 }
-
