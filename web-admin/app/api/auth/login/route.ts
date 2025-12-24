@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     // 1) 按邮箱或手机号查用户
     let result = await db.query(
       `SELECT u.*, t.id as teacher_id, s.id as student_id
-       FROM "User" u
-       LEFT JOIN "Teachers" t ON t.user_id = u.id
-       LEFT JOIN "Students" s ON s.user_id = u.id
+       FROM users u
+       LEFT JOIN teachers t ON t.user_id = u.id
+       LEFT JOIN students s ON s.user_id = u.id
        WHERE u.email = $1 OR u.phone = $1
        LIMIT 1`,
       [loginIdentifier]
@@ -32,15 +32,15 @@ export async function POST(request: NextRequest) {
     // 2) 如果没查到，按学号查
     if (result.rows.length === 0) {
       const stuResult = await db.query(
-        `SELECT user_id FROM "Students" WHERE student_no = $1`,
+        `SELECT user_id FROM students WHERE student_no = $1`,
         [loginIdentifier]
       )
       if (stuResult.rows.length > 0) {
         result = await db.query(
           `SELECT u.*, t.id as teacher_id, s.id as student_id
-           FROM "User" u
-           LEFT JOIN "Teachers" t ON t.user_id = u.id
-           LEFT JOIN "Students" s ON s.user_id = u.id
+           FROM users u
+           LEFT JOIN teachers t ON t.user_id = u.id
+           LEFT JOIN students s ON s.user_id = u.id
            WHERE u.id = $1`,
           [stuResult.rows[0].user_id]
         )
