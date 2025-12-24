@@ -1,3 +1,10 @@
+/**
+ * @file route.ts
+ * @desc 用户登录 API（使用原生 pg 绕过 Prisma）
+ * @input 依赖: lib/db, lib/auth, lib/response
+ * @output 导出: POST /api/auth/login
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyPassword, generateToken } from '@/lib/auth'
