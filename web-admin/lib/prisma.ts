@@ -9,10 +9,16 @@ const prismaClientSingleton = () => {
     log: process.env.NODE_ENV === 'development'
       ? ['error', 'warn']
       : ['error'],
+    // 强制使用运行时环境变量
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
     // 事务配置
     transactionOptions: {
-      maxWait: 10000,  // 最大等待时间10秒
-      timeout: 30000,  // 事务超时30秒
+      maxWait: 10000,
+      timeout: 30000,
     },
   })
 }
