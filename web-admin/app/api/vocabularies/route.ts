@@ -76,34 +76,58 @@ export async function GET(request: NextRequest) {
       orderByClause = { word: 'asc' }
     }
 
-    const [vocabularies, total] = await Promise.all([
-      prisma.vocabularies.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: orderByClause,
-        include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
-      }),
-      prisma.vocabularies.count({ where }),
-    ])
+    let vocabularies: any[] = []
+    let total = 0
 
-    // 如果需要 R 开头的词汇优先，在应用层进行排序
-    let sortedVocabularies = vocabularies
-    if (rFirst) {
-      sortedVocabularies = [...vocabularies].sort((a: any, b: any) => {
-        const aStartsWithR = a.word.toLowerCase().startsWith('r')
-        const bStartsWithR = b.word.toLowerCase().startsWith('r')
-        if (aStartsWithR && !bStartsWithR) return -1
-        if (!aStartsWithR && bStartsWithR) return 1
-        return a.word.localeCompare(b.word)
-      })
+    if (rFirst && !search) {
+      // R 开头优先：先查 R 开头的，再查其他的，合并结果
+      const rWhere = { ...where, word: { startsWith: 'r', mode: 'insensitive' as const } }
+      const otherWhere = { ...where, NOT: { word: { startsWith: 'r', mode: 'insensitive' as const } } }
+
+      const [rVocabs, rCount] = await Promise.all([
+        prisma.vocabularies.findMany({
+          where: rWhere,
+          orderBy: { word: 'asc' },
+          include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
+        }),
+        prisma.vocabularies.count({ where: rWhere }),
+      ])
+
+      const [otherVocabs, otherCount] = await Promise.all([
+        prisma.vocabularies.findMany({
+          where: otherWhere,
+          orderBy: orderByClause,
+          include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
+        }),
+        prisma.vocabularies.count({ where: otherWhere }),
+      ])
+
+      // 合并并分页
+      const allVocabs = [...rVocabs, ...otherVocabs]
+      vocabularies = allVocabs.slice(skip, skip + limit)
+      total = rCount + otherCount
+    } else {
+      // 正常查询
+      const [vocabs, count] = await Promise.all([
+        prisma.vocabularies.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: orderByClause,
+          include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
+        }),
+        prisma.vocabularies.count({ where }),
+      ])
+      vocabularies = vocabs
+      total = count
     }
 
     // 将 snake_case 映射为前端预期的 camelCase 字段
     // 注意：释义数据已完全迁移到 word_meanings 表
-    const mapped = sortedVocabularies.map((vocab: any) => {
+    const mapped = vocabularies.map((vocab: any) => {
       const meanings = vocab.word_meanings || []
       const firstMeaning = meanings[0]
+
 
 
       const result: any = {
