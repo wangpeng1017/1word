@@ -2,13 +2,34 @@
   "description": "智能词汇复习助手 - 微信小程序",
   "packOptions": {
     "ignore": [
-      { "type": "folder", "value": "backups" },
-      { "type": "folder", "value": ".git" },
-      { "type": "file", "value": "README.md" },
-      { "type": "file", "value": "测试指南.md" },
-      { "type": "file", "value": "答题模式说明.md" },
-      { "type": "file", "value": "配置说明.md" },
-      { "type": "file", "value": ".gitignore" }
+      {
+        "value": "backups",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": "README.md",
+        "type": "file"
+      },
+      {
+        "value": "测试指南.md",
+        "type": "file"
+      },
+      {
+        "value": "答题模式说明.md",
+        "type": "file"
+      },
+      {
+        "value": "配置说明.md",
+        "type": "file"
+      },
+      {
+        "value": ".gitignore",
+        "type": "file"
+      }
     ],
     "include": []
   },
@@ -55,7 +76,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.5.0",
+  "libVersion": "3.11.1",
   "appid": "wx132f0943597b61b7",
   "projectname": "vocab-assistant",
   "condition": {},
