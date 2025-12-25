@@ -4,7 +4,7 @@ const app = getApp()
 
 Page({
   data: {
-    studentNo: '',
+    phone: '',
     password: '',
     loading: false,
     // 客服二维码
@@ -111,9 +111,9 @@ Page({
     }
   },
 
-  onStudentNoInput(e) {
+  onPhoneInput(e) {
     this.setData({
-      studentNo: e.detail.value
+      phone: e.detail.value
     })
   },
 
@@ -124,11 +124,19 @@ Page({
   },
 
   async handleLogin() {
-    const { studentNo, password } = this.data
+    const { phone, password } = this.data
 
-    if (!studentNo) {
+    if (!phone) {
       wx.showToast({
-        title: '请输入学号',
+        title: '请输入手机号',
+        icon: 'none',
+      })
+      return
+    }
+
+    if (phone.length !== 11) {
+      wx.showToast({
+        title: '请输入11位手机号',
         icon: 'none',
       })
       return
@@ -145,9 +153,9 @@ Page({
     this.setData({ loading: true })
 
     try {
-      // 使用学号作为phone字段登录
+      // 使用手机号登录
       const result = await post('/auth/login', {
-        phone: studentNo,
+        phone: phone,
         password: password,
       }, false)
 

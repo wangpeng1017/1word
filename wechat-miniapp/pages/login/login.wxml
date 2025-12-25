@@ -9,12 +9,14 @@
 
   <view class="login-form card mt-5">
     <view class="form-item">
-      <text class="form-label">学号</text>
+      <text class="form-label">手机号</text>
       <input
         class="form-input"
-        placeholder="请输入学号"
-        value="{{studentNo}}"
-        bindinput="onStudentNoInput"
+        placeholder="请输入手机号"
+        type="number"
+        maxlength="11"
+        value="{{phone}}"
+        bindinput="onPhoneInput"
       />
     </view>
 
@@ -39,7 +41,7 @@
   </view>
 
   <view class="login-footer mt-4 text-center">
-    <text class="text-muted">首次登录请使用默认密码 123456</text>
+    <text class="text-muted">首次登录密码为手机号</text>
 
     <!-- 客服按钮（始终显示，点击后根据配置决定显示二维码或提示） -->
     <view class="customer-service-btn" bindtap="showCustomerService">

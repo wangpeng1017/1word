@@ -95,15 +95,21 @@ export async function POST(request: NextRequest) {
     }
 
     // 如果是管理员且没有指定教师，则不关联教师
+    const createData: any = {
+      id: nanoid(),
+      name,
+      grade,
+      updated_at: new Date(),
+    }
+
+    // 只有有教师ID时才关联
+    if (finalTeacherId) {
+      createData.teacher_id = finalTeacherId
+    }
+
     const classData = await prisma.classes.create({
-      data: {
-        id: nanoid(),
-        name,
-        grade,
-        teacher_id: finalTeacherId || null,
-        updated_at: new Date(),
-      },
-      include: {
+      data: createData,
+      include: finalTeacherId ? {
         teachers: {
           include: {
             user: {
@@ -113,7 +119,7 @@ export async function POST(request: NextRequest) {
             },
           },
         },
-      },
+      } : undefined,
     })
 
     // 转换数据格式

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload, Popconfirm } from 'antd'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined, KeyOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import type { UploadProps } from 'antd'
 
@@ -93,6 +93,29 @@ export default function StudentsPage() {
       }
     } catch (error) {
       message.error('删除失败')
+    }
+  }
+
+  const handleResetPassword = async (record: any) => {
+    if (!record.user?.phone) {
+      message.error('该学生没有设置手机号，无法重置密码')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/students/${record.id}/reset-password`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const result = await response.json()
+      if (result.success) {
+        message.success(result.message || '密码已重置')
+      } else {
+        message.error(result.error || '重置失败')
+      }
+    } catch (error) {
+      message.error('重置密码失败')
     }
   }
 
@@ -247,6 +270,21 @@ export default function StudentsPage() {
           >
             编辑
           </Button>
+          <Popconfirm
+            title="重置密码"
+            description={`确定要将 ${record.user?.name || '该学生'} 的密码重置为手机号吗？`}
+            okText="确认"
+            cancelText="取消"
+            onConfirm={() => handleResetPassword(record)}
+          >
+            <Button
+              type="link"
+              icon={<KeyOutlined />}
+              disabled={!record.user?.phone}
+            >
+              重置密码
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },

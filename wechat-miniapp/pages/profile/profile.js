@@ -176,6 +176,13 @@ Page({
     })
   },
 
+  // 跳转到修改密码页面
+  goToChangePassword() {
+    wx.navigateTo({
+      url: '/pages/change-password/change-password'
+    })
+  },
+
   // 退出登录
   logout() {
     wx.showModal({

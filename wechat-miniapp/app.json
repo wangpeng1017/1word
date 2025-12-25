@@ -10,6 +10,7 @@
     "pages/achievements/achievements",
     "pages/leaderboard/leaderboard",
     "pages/points-history/points-history",
+    "pages/change-password/change-password",
     "pages/login/login"
   ],
   "window": {
