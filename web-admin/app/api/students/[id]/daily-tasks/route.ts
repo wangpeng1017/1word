@@ -3,10 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
-import { getDateRangeUTC, getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
+import { getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
 
 // 每日新学单词上限
 const MAX_NEW_WORDS_PER_DAY = 200
+
+// 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
+const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
 
 // 映射任务数据为小程序格式
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
@@ -119,7 +122,6 @@ export async function GET(
       }
     })
 
-    const { end: endOfToday } = getDateRangeUTC()
     const today = getTodayBeijing()
 
     // 3. 获取已掌握的词汇ID
@@ -129,15 +131,9 @@ export async function GET(
     })
     const masteredVocabIds = new Set(masteredWords.map(w => w.vocabularyId))
 
-    // 4. 获取已有学习记录的词汇ID
-    const existingPlans = await prisma.study_plans.findMany({
-      where: { studentId },
-      select: { vocabularyId: true }
-    })
-    const learnedVocabIds = new Set(existingPlans.map(p => p.vocabularyId))
-
-    // 5. 计算今日新学单词
+    // 4. 计算今日新学单词和复习单词
     let newWords: any[] = []
+    let reviewWords: { vocabulary: any }[] = []
     let dayNumber = 0
     let totalDays = 0
 
@@ -150,64 +146,42 @@ export async function GET(
       const diffTime = today.getTime() - startDateBeijing.getTime()
       dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
 
-      // 如果在词汇库天数范围内，获取当天的新学单词
+      // 获取当天的新学单词
       if (dayNumber >= 1 && dayNumber <= totalDays) {
         const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
         if (packDay) {
           newWords = packDay.day_words
             .map(dw => dw.vocabulary)
-            .filter(v => v && !masteredVocabIds.has(v.id) && !learnedVocabIds.has(v.id))
+            .filter(v => v && !masteredVocabIds.has(v.id))
             .filter(v => v.questions && v.questions.length > 0)
             .slice(0, MAX_NEW_WORDS_PER_DAY)
         }
       }
-    }
 
-    // 6. 获取今日复习单词
-    const reviewPlans = await prisma.study_plans.findMany({
-      where: {
-        studentId,
-        status: 'LEARNING',
-        nextReviewAt: { lte: endOfToday }
-      },
-      include: {
-        vocabularies: {
-          include: {
-            word_audios: true,
-            word_meanings: { orderBy: { orderIndex: 'asc' } },
-            questions: {
-              include: {
-                question_options: { orderBy: { order: 'asc' } }
-              }
-            }
+      // 获取需要复习的单词（基于记忆曲线，从过去天数的词汇包中获取）
+      const newWordIds = new Set(newWords.map(v => v.id))
+      const seenVocabIds = new Set<string>()
+
+      for (const interval of REVIEW_INTERVALS) {
+        const targetDay = dayNumber - interval
+        if (targetDay >= 1 && targetDay <= totalDays) {
+          const packDay = pack.pack_days.find(d => d.dayNumber === targetDay)
+          if (packDay) {
+            const dayReviewWords = packDay.day_words
+              .map(dw => dw.vocabulary)
+              .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
+              .filter(v => v.questions && v.questions.length > 0)
+
+            dayReviewWords.forEach(v => {
+              seenVocabIds.add(v.id)
+              reviewWords.push({ vocabulary: v })
+            })
           }
         }
       }
-    })
+    }
 
-    // 获取难点词汇用于排序
-    const reviewVocabIds = reviewPlans.map(p => p.vocabularyId)
-    const difficultWords = await prisma.word_masteries.findMany({
-      where: {
-        studentId,
-        vocabularyId: { in: reviewVocabIds },
-        isDifficult: true
-      },
-      select: { vocabularyId: true }
-    })
-    const difficultVocabIds = new Set(difficultWords.map(w => w.vocabularyId))
-
-    // 排序：难点词汇优先
-    const reviewWords = reviewPlans
-      .filter(p => p.vocabularies && p.vocabularies.questions?.length > 0)
-      .sort((a, b) => {
-        const aIsDifficult = difficultVocabIds.has(a.vocabularyId) ? 1 : 0
-        const bIsDifficult = difficultVocabIds.has(b.vocabularyId) ? 1 : 0
-        return bIsDifficult - aIsDifficult
-      })
-      .map(p => ({ vocabulary: p.vocabularies }))
-
-    // 7. 合并任务并标记新学/复习
+    // 5. 合并任务并标记新学/复习
     const isNewMap = new Map<string, boolean>()
     newWords.forEach(v => isNewMap.set(v.id, true))
     reviewWords.forEach(r => isNewMap.set(r.vocabulary.id, false))
@@ -217,7 +191,7 @@ export async function GET(
       ...reviewWords
     ]
 
-    // 8. 分配题型
+    // 6. 分配题型
     const vocabularyIds = allTasks.map(t => t.vocabulary.id)
     const hasAudioMap = new Map<string, boolean>(
       allTasks.map(t => [t.vocabulary.id, (t.vocabulary.word_audios?.length || 0) > 0])

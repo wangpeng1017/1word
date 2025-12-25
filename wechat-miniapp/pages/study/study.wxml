@@ -8,7 +8,7 @@
     </view>
     <view class="exit-btn" bindtap="exitStudy">×</view>
   </view>
-  
+
   <!-- 趣味进度条 -->
   <view class="fun-progress">
     <view class="progress-track">
@@ -33,7 +33,7 @@
       </view>
       <text class="question-hint">请选择正确的中文释义</text>
     </view>
-    
+
     <!-- 选择题模式2: 汉语 + 4个英文单词选项 -->
     <view wx:elif="{{currentQuestion.type === 'CHINESE_TO_ENGLISH'}}" class="word-display">
       <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="meanings-display">
@@ -45,13 +45,13 @@
       <text wx:else class="word-text chinese-text">暂无释义</text>
       <text class="question-hint">请选择正确的英文单词</text>
     </view>
-    
+
     <!-- 选择题模式3: 英文单词读音 + 4个英文单词选项 -->
     <view wx:elif="{{currentQuestion.type === 'LISTENING'}}" class="word-display">
       <view class="audio-icon" bindtap="playAudio">🔊</view>
       <text class="question-hint">听音选词</text>
     </view>
-    
+
     <!-- 选择题模式4: 选词填空 -->
     <view wx:elif="{{currentQuestion.type === 'FILL_IN_BLANK'}}" class="word-display">
       <view class="sentence-display">
@@ -59,25 +59,25 @@
       </view>
       <text class="question-hint">选择正确的单词填空</text>
     </view>
-    
+
     <!-- 默认显示 -->
     <view wx:else class="word-display">
       <text class="word-text">{{currentTask.vocabulary.word}}</text>
     </view>
 
-    <!-- 选项列表 -->
+    <!-- 选项列表 - 使用 A/B/C/D 标签比较 -->
     <view class="options-list">
-      <view 
-        wx:for="{{currentQuestion.options}}" 
+      <view
+        wx:for="{{currentQuestion.options}}"
         wx:key="id"
-        class="option-item {{selectedAnswer === item.content ? 'selected' : ''}} {{isAnswered && item.content === currentQuestion.correctAnswer ? 'correct' : ''}} {{isAnswered && selectedAnswer === item.content && !isCorrect ? 'wrong' : ''}}"
-        data-answer="{{item.content}}"
+        class="option-item {{selectedAnswer === (index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D') ? 'selected' : ''}} {{isAnswered && (index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D') === currentQuestion.correctAnswer ? 'correct' : ''}} {{isAnswered && selectedAnswer === (index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D') && !isCorrect ? 'wrong' : ''}}"
+        data-answer="{{index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D'}}"
         bindtap="selectAnswer"
       >
         <view class="option-label">{{index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D'}}</view>
         <view class="option-content">{{item.content}}</view>
-        <view wx:if="{{isAnswered && item.content === currentQuestion.correctAnswer}}" class="option-icon">✓</view>
-        <view wx:elif="{{isAnswered && selectedAnswer === item.content && !isCorrect}}" class="option-icon">✗</view>
+        <view wx:if="{{isAnswered && (index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D') === currentQuestion.correctAnswer}}" class="option-icon">✓</view>
+        <view wx:elif="{{isAnswered && selectedAnswer === (index === 0 ? 'A' : index === 1 ? 'B' : index === 2 ? 'C' : 'D') && !isCorrect}}" class="option-icon">✗</view>
       </view>
     </view>
 
@@ -86,13 +86,13 @@
       <view class="result-main">
         <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
         <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
-        
+
         <!-- 错误时显示正确答案 -->
         <view wx:if="{{!isCorrect}}" class="result-detail">
           <text class="result-label">正确答案：</text>
           <text class="result-value">{{currentQuestion.correctAnswer}}</text>
         </view>
-        
+
         <!-- 释义展示（限制高度，可滚动） -->
         <scroll-view scroll-y class="result-meanings-scroll" wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}">
           <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="result-meaning-item">
@@ -117,9 +117,9 @@
       </view>
 
       <!-- 继续按钮（放在result-bar内部，避免被遮挡） -->
-      <button 
-        wx:if="{{!isCorrect}}" 
-        class="continue-btn-inside" 
+      <button
+        wx:if="{{!isCorrect}}"
+        class="continue-btn-inside"
         bindtap="nextQuestion"
       >
         继续
@@ -128,9 +128,9 @@
 
     <!-- 提交按钮（仅在未答题时显示） -->
     <view class="submit-section" wx:if="{{!isAnswered}}">
-      <button 
-        class="submit-btn" 
-        bindtap="submitAnswer" 
+      <button
+        class="submit-btn"
+        bindtap="submitAnswer"
         disabled="{{!selectedAnswer}}"
       >
         提交答案
@@ -150,19 +150,19 @@
       </view>
     </view>
 
-    <!-- 🎮 经验值获取动画 -->
+    <!-- 经验值获取动画 -->
     <view wx:if="{{showExpGain}}" class="exp-gain-animation">
       <text class="exp-text">+{{expGainValue}} 经验</text>
     </view>
 
-    <!-- 🎮 连对次数显示 -->
+    <!-- 连对次数显示 -->
     <view wx:if="{{consecutiveCorrect > 0 && isCorrect}}" class="streak-badge">
       <text class="streak-icon">🔥</text>
       <text class="streak-count">连对 {{consecutiveCorrect}} 题</text>
     </view>
   </view>
 
-  <!-- 🏆 里程碑弹窗 -->
+  <!-- 里程碑弹窗 -->
   <view wx:if="{{showMilestone}}" class="milestone-overlay" bindtap="closeMilestone">
     <view class="milestone-popup">
       <view class="milestone-icon">🔥</view>
