@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { nanoid } from 'nanoid'
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以查看班级')
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 创建班级
+// 创建班级 - 使用原生SQL绕过Prisma的必填字段限制
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -94,36 +95,41 @@ export async function POST(request: NextRequest) {
       finalTeacherId = user.teachers.id
     }
 
-    // 如果是管理员且没有指定教师，则不关联教师
-    const createData: any = {
-      id: nanoid(),
-      name,
-      grade,
-      updated_at: new Date(),
+    // 使用原生SQL创建班级，允许teacher_id为NULL
+    const classId = nanoid()
+    const now = new Date()
+
+    await db.query(
+      `INSERT INTO classes (id, name, grade, teacher_id, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, true, $5, $5)`,
+      [classId, name, grade, finalTeacherId || null, now]
+    )
+
+    // 查询创建的班级
+    const result = await db.query(
+      `SELECT c.*, t.id as teacher_id, t.user_id as teacher_user_id, u.name as teacher_name
+       FROM classes c
+       LEFT JOIN teachers t ON c.teacher_id = t.id
+       LEFT JOIN users u ON t.user_id = u.id
+       WHERE c.id = $1`,
+      [classId]
+    )
+
+    const classData = result.rows[0]
+    const formattedClass = {
+      id: classData.id,
+      name: classData.name,
+      grade: classData.grade,
+      teacherId: classData.teacher_id,
+      isActive: classData.is_active,
+      createdAt: classData.created_at,
+      updatedAt: classData.updated_at,
+      teacher: classData.teacher_id ? {
+        id: classData.teacher_id,
+        userId: classData.teacher_user_id,
+        user: { name: classData.teacher_name }
+      } : null,
     }
-
-    // 只有有教师ID时才关联
-    if (finalTeacherId) {
-      createData.teacher_id = finalTeacherId
-    }
-
-    const classData = await prisma.classes.create({
-      data: createData,
-      include: finalTeacherId ? {
-        teachers: {
-          include: {
-            user: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      } : undefined,
-    })
-
-    // 转换数据格式
-    const formattedClass = formatClassData(classData)
 
     return successResponse(formattedClass, '班级创建成功')
   } catch (error) {
