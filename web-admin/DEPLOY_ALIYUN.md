@@ -1,221 +1,153 @@
 # 阿里云部署指南
 
-## 环境变量配置
+## 服务器信息
 
-部署时需要配置以下环境变量：
+- **IP**: 47.92.96.143
+- **系统**: CentOS 7
+- **配置**: 2核2G
+- **应用目录**: /root/word-app
+- **访问地址**: http://47.92.96.143:3000
 
-### 必需的环境变量
+---
+
+## 快速更新部署
+
+代码更新到 GitHub 后，执行以下命令：
 
 ```bash
-# 数据库连接
-DATABASE_URL="postgresql://用户名:密码@主机:端口/数据库名"
+# 1. 拉取最新代码
+ssh root@47.92.96.143 "cd /root/word-app && git pull origin main"
 
-# JWT密钥（用于用户认证）
-JWT_SECRET="你的JWT密钥，建议32位以上随机字符串"
+# 2. 安装依赖（如有新增）
+ssh root@47.92.96.143 "cd /root/word-app/web-admin && npm install --legacy-peer-deps"
 
-# 定时任务密钥（保护Cron接口）
-CRON_SECRET="你的Cron密钥，建议32位随机字符串"
+# 3. 同步数据库（如有变更）
+ssh root@47.92.96.143 "cd /root/word-app/web-admin && npx prisma db push"
+
+# 4. 重新构建
+ssh root@47.92.96.143 "cd /root/word-app/web-admin && npm run build"
+
+# 5. 重启应用
+ssh root@47.92.96.143 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
+
+# 6. 验证
+curl -s -o /dev/null -w "%{http_code}" http://47.92.96.143:3000
 ```
 
-### 可选的环境变量
+### 一键更新脚本
 
 ```bash
-# Node环境
-NODE_ENV="production"
-
-# 应用端口（如果需要自定义）
-PORT=3000
+ssh root@47.92.96.143 "cd /root/word-app && git pull origin main && cd web-admin && npm install --legacy-peer-deps && npx prisma db push && npm run build && pkill -f 'next start'; nohup npm start > /tmp/app.log 2>&1 &"
 ```
 
-### 生成随机密钥命令
+---
+
+## 首次部署步骤
+
+### 1. 安装 Node.js 18
 
 ```bash
-# 生成32位随机字符串
-openssl rand -base64 32
-
-# 或使用Node.js
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# CentOS 7 需要使用 unofficial build（兼容旧版 glibc）
+cd /tmp
+curl -L -o node18.tar.xz 'https://registry.npmmirror.com/-/binary/node-unofficial-builds/v18.20.4/node-v18.20.4-linux-x64-glibc-217.tar.xz'
+tar -xf node18.tar.xz
+mv node-v18.20.4-linux-x64-glibc-217 /usr/local/node
+ln -sf /usr/local/node/bin/node /usr/bin/node
+ln -sf /usr/local/node/bin/npm /usr/bin/npm
+ln -sf /usr/local/node/bin/npx /usr/bin/npx
+node -v  # 应显示 v18.20.4
 ```
 
----
-
-## 定时任务配置
-
-### 需要配置的定时任务
-
-| 任务 | 接口路径 | 执行频率 | 说明 |
-|-----|---------|---------|------|
-| 积分重置 | `/api/cron/reset-points` | 每天 00:00 | 重置每日/周/月积分 |
-| 数据归档 | `/api/cron/data-archive` | 每周日 03:00 | 清理90天前的旧数据 |
-
-### 阿里云函数计算 (FC) 定时触发器
-
-如果使用阿里云函数计算，配置触发器：
-
-```yaml
-# 积分重置 - 每天凌晨0点（北京时间）
-Cron表达式: 0 0 0 * * *
-# 或: CRON_TZ=Asia/Shanghai 0 0 * * *
-
-# 数据归档 - 每周日凌晨3点（北京时间）
-Cron表达式: 0 0 3 ? * SUN
-# 或: CRON_TZ=Asia/Shanghai 0 3 * * 0
-```
-
-### 阿里云 ARMS/云监控 定时任务
-
-如果使用云监控的定时任务功能：
+### 2. 安装 PostgreSQL 15
 
 ```bash
-# 积分重置
-curl -X POST https://你的域名/api/cron/reset-points \
-  -H "Authorization: Bearer ${CRON_SECRET}"
-
-# 数据归档
-curl -X POST https://你的域名/api/cron/data-archive \
-  -H "Authorization: Bearer ${CRON_SECRET}"
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+yum install -y postgresql15-server
+/usr/pgsql-15/bin/postgresql-15-setup initdb
+systemctl enable postgresql-15
+systemctl start postgresql-15
 ```
 
-### 使用 crontab（ECS服务器）
-
-如果部署在 ECS 服务器，编辑 crontab：
+### 3. 创建数据库
 
 ```bash
-crontab -e
+sudo -u postgres psql -c "CREATE USER word_user WITH PASSWORD 'word_pass_2024';"
+sudo -u postgres psql -c "CREATE DATABASE word_app OWNER word_user;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE word_app TO word_user;"
 ```
 
-添加以下内容：
+### 4. 克隆代码
 
-```cron
-# 积分重置 - 每天凌晨0点
-0 0 * * * curl -X POST https://你的域名/api/cron/reset-points -H "Authorization: Bearer 你的CRON_SECRET" >> /var/log/cron-reset-points.log 2>&1
-
-# 数据归档 - 每周日凌晨3点
-0 3 * * 0 curl -X POST https://你的域名/api/cron/data-archive -H "Authorization: Bearer 你的CRON_SECRET" >> /var/log/cron-data-archive.log 2>&1
+```bash
+cd /root
+git clone https://github.com/wangpeng1017/1word.git word-app
 ```
 
----
+### 5. 配置环境变量
 
-## 部署检查清单
-
-### 部署前
-
-- [ ] 确认 PostgreSQL 数据库已创建并可访问
-- [ ] 确认数据库已执行 Prisma 迁移 (`npx prisma migrate deploy`)
-- [ ] 准备好所有环境变量
-- [ ] 生成 CRON_SECRET 密钥
-
-### 部署时
-
-- [ ] 设置环境变量 `DATABASE_URL`
-- [ ] 设置环境变量 `JWT_SECRET`
-- [ ] 设置环境变量 `CRON_SECRET`
-- [ ] 设置环境变量 `NODE_ENV=production`
-
-### 部署后
-
-- [ ] 验证应用可以正常访问
-- [ ] 验证数据库连接正常
-- [ ] 配置定时任务
-- [ ] 手动测试定时任务接口：
-  ```bash
-  # 测试积分重置
-  curl -X GET https://你的域名/api/cron/reset-points \
-    -H "Authorization: Bearer 你的CRON_SECRET"
-
-  # 测试数据归档统计
-  curl -X GET https://你的域名/api/cron/data-archive \
-    -H "Authorization: Bearer 你的CRON_SECRET"
-  ```
-- [ ] 检查定时任务日志，确认正常执行
-
----
-
-## 接口说明
-
-### 积分重置接口
-
-```
-POST /api/cron/reset-points
-Authorization: Bearer {CRON_SECRET}
-
-响应示例：
-{
-  "success": true,
-  "message": "积分重置完成",
-  "results": {
-    "daily": 50,    // 重置了50个学生的每日积分
-    "weekly": 0,    // 今天不是周一，不重置周积分
-    "monthly": 0    // 今天不是1号，不重置月积分
-  }
-}
+```bash
+cat > /root/word-app/web-admin/.env << 'EOF'
+DATABASE_URL=postgresql://word_user:word_pass_2024@localhost:5432/word_app
+JWT_SECRET=vocab_jwt_secret_2024_production
+NEXT_PUBLIC_API_URL=http://47.92.96.143:3000
+NODE_ENV=production
+EOF
 ```
 
-### 数据归档接口
+### 6. 安装依赖并构建
 
+```bash
+cd /root/word-app/web-admin
+npm config set registry https://registry.npmmirror.com
+npm install --legacy-peer-deps
+npx prisma db push
+npm run build
 ```
-POST /api/cron/data-archive
-Authorization: Bearer {CRON_SECRET}
 
-响应示例：
-{
-  "success": true,
-  "message": "数据归档完成",
-  "archive": {
-    "questionAnswers": { "deleted": 1000, "cutoffDate": "2024-09-12" },
-    "wrongQuestions": { "deleted": 200, "cutoffDate": "2024-06-12" },
-    "pointHistory": { "deleted": 50, "cutoffDate": "2023-12-12" }
-  },
-  "stats": {
-    "before": { "questionAnswers": 5000, ... },
-    "after": { "questionAnswers": 4000, ... }
-  }
-}
+### 7. 启动应用
 
-# 仅获取统计（不执行归档）
-GET /api/cron/data-archive
+```bash
+nohup npm start > /tmp/app.log 2>&1 &
 ```
 
 ---
 
-## 数据保留策略
+## 常用运维命令
 
-| 数据表 | 保留天数 | 说明 |
-|-------|---------|------|
-| `question_answers` | 90天 | 答题记录，掌握判定只需最近3条 |
-| `wrong_questions` | 180天 | 错题记录，保留更长用于分析 |
-| `point_history` | 365天 | 积分历史，保留一年 |
+```bash
+# 查看应用状态
+ssh root@47.92.96.143 "ps aux | grep next"
 
-如需修改保留策略，编辑 `lib/cron/data-archive.ts` 中的 `ARCHIVE_CONFIG`。
+# 查看应用日志
+ssh root@47.92.96.143 "tail -100 /tmp/app.log"
 
----
+# 重启应用
+ssh root@47.92.96.143 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
 
-## 常见问题
+# 查看磁盘空间
+ssh root@47.92.96.143 "df -h /"
 
-### Q: 定时任务没有执行？
-
-1. 检查 `CRON_SECRET` 是否正确配置
-2. 检查定时任务的 Cron 表达式是否正确
-3. 检查网络是否可以访问应用
-
-### Q: 积分没有重置？
-
-1. 检查定时任务是否在凌晨0点触发
-2. 手动调用接口测试：`POST /api/cron/reset-points`
-3. 检查日志输出
-
-### Q: 数据归档删除了不该删的数据？
-
-归档只会删除超过保留期限的旧数据，不会影响：
-- 最近90天的答题记录
-- 最近180天的错题记录
-- 最近365天的积分历史
+# 查看内存使用
+ssh root@47.92.96.143 "free -h"
+```
 
 ---
 
-## 联系支持
+## 环境变量说明
 
-如有问题，请检查：
-1. 应用日志
-2. 数据库连接状态
-3. 定时任务执行日志
+| 变量 | 说明 | 必填 |
+|------|------|------|
+| DATABASE_URL | PostgreSQL 连接字符串 | 是 |
+| JWT_SECRET | JWT 签名密钥 | 是 |
+| NEXT_PUBLIC_API_URL | API 地址 | 是 |
+| NODE_ENV | 环境标识 | 是 |
+| CRON_SECRET | 定时任务密钥 | 否 |
+
+---
+
+## 注意事项
+
+1. **不使用 Docker** - 服务器配置较小(2核2G)，直接部署节省资源
+2. **构建内存** - Next.js 构建需要较多内存，如遇问题可增加 swap
+3. **npm 镜像** - 使用 npmmirror.com 加速依赖下载
+4. **Node.js 版本** - 必须使用 18+，CentOS 7 需用 unofficial build
