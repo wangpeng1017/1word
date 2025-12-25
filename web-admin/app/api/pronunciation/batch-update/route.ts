@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
 
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以执行此操作')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以执行此操作')
     }
 
     const body = await request.json()
