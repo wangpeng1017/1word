@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以查看学生列表')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以查看学生列表')
     }
 
     const { searchParams } = new URL(request.url)
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以创建学生')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以创建学生')
     }
 
     const body: StudentCreateInput = await request.json()
