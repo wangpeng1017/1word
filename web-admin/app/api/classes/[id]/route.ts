@@ -40,8 +40,8 @@ export async function GET(
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以查看班级')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以查看班级')
     }
 
     const classData = await prisma.classes.findUnique({
@@ -93,8 +93,8 @@ export async function PUT(
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以更新班级')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以更新班级')
     }
 
     const body = await request.json()
@@ -148,8 +148,8 @@ export async function DELETE(
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以删除班级')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以删除班级')
     }
 
     // 检查班级是否有学生

@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以创建题目')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以创建题目')
     }
 
     const body = await request.json()
@@ -218,8 +218,8 @@ export async function PUT(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
 
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以更新题目')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以更新题目')
     }
 
     const body = await request.json()
@@ -315,8 +315,8 @@ export async function DELETE(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以删除题目')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以删除题目')
     }
 
     const { searchParams } = new URL(request.url)

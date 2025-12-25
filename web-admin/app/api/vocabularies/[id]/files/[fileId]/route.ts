@@ -17,8 +17,8 @@ export async function DELETE(
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以删除文件')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以删除文件')
     }
 
     const { fileId } = await params

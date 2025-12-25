@@ -1,3 +1,11 @@
+/**
+ * @file route.ts
+ * @desc 词汇库管理 API - 列表查询、创建、更新、删除
+ * @input 依赖: prisma, auth, response
+ * @output 导出: GET/POST/PUT/DELETE /api/vocabulary-packs
+ * @see PRD: docs/vocabulary-packs/PRD.md
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
@@ -53,8 +61,8 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以创建词汇库')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以创建词汇库')
     }
 
     const body = await request.json()
@@ -110,8 +118,8 @@ export async function PUT(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以修改词汇库')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以修改词汇库')
     }
 
     const body = await request.json()
@@ -142,8 +150,8 @@ export async function DELETE(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以删除词汇库')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以删除词汇库')
     }
 
     const { searchParams } = new URL(request.url)

@@ -110,8 +110,8 @@ export async function PUT(
     const token = getTokenFromHeader(authHeader || '')
 
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以更新词汇')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以更新词汇')
     }
 
     const body = await request.json()
@@ -248,8 +248,8 @@ export async function DELETE(
     const token = getTokenFromHeader(authHeader || '')
 
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以删除词汇')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以删除词汇')
     }
 
     await prisma.vocabularies.delete({
