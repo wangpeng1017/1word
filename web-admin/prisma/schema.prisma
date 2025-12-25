@@ -11,11 +11,11 @@ model classes {
   id           String         @id
   name         String
   grade        String
-  teacher_id   String
+  teacher_id   String?        // 可选：班级可以暂时没有老师
   is_active    Boolean        @default(true)
   created_at   DateTime       @default(now())
   updated_at   DateTime
-  teachers     teachers       @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  teachers     teachers?      @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   plan_classes plan_classes[]
   students     students[]
 }
