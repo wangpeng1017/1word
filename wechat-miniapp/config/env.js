@@ -4,7 +4,7 @@
 // preview: Vercel预览环境
 // production: 阿里云生产环境
 
-const ENV = 'preview' // 手动切换环境
+const ENV = 'production' // 手动切换环境
 
 const config = {
   development: {
@@ -18,8 +18,8 @@ const config = {
     name: 'Vercel预览环境'
   },
   production: {
-    apiUrl: 'http://47.92.96.143:3000/api',
-    debug: false,
+    apiUrl: 'http://8.130.182.148:3000/api',
+    debug: true,
     name: '阿里云生产环境'
   }
 }

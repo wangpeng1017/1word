@@ -131,9 +131,16 @@ export async function POST(request: NextRequest) {
     const body: StudentCreateInput = await request.json()
     const { name, studentNo, classId, grade, email, phone, password } = body
 
-    if (!name || !studentNo || !password) {
-      return errorResponse('姓名、学号和密码不能为空')
+    if (!name || !studentNo) {
+      return errorResponse('姓名和学号不能为空')
     }
+
+    if (!phone) {
+      return errorResponse('手机号不能为空（用于登录）')
+    }
+
+    // 默认密码为手机号
+    const actualPassword = password || phone
 
     if (!classId) {
       return errorResponse('必须指定班级')
@@ -174,7 +181,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 加密密码
-    const hashedPassword = await hashPassword(password)
+    const hashedPassword = await hashPassword(actualPassword)
 
     // 创建用户和学生
     const userId = nanoid()

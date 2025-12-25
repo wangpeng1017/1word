@@ -45,7 +45,6 @@ export default function CreateStudentPage() {
       const payload = {
         name: (values.name || '').trim(),
         studentNo: (values.studentNo || '').trim(),
-        password: values.password,
         phone: values.phone ? String(values.phone).trim() : undefined,
         email: values.email ? String(values.email).trim() : undefined,
         grade: values.grade ? String(values.grade).trim() : undefined,
@@ -103,13 +102,9 @@ export default function CreateStudentPage() {
             <Input placeholder="如：2024001" />
           </Form.Item>
 
-          <Form.Item label="密码" name="password" rules={[{ required: true, message: '请输入初始密码' }]}>
-            <Input.Password placeholder="初始密码（学生可后续修改）" />
-          </Form.Item>
-
           <Space size="middle" style={{ display: 'flex' }}>
-            <Form.Item label="手机号" name="phone" style={{ flex: 1 }}>
-              <Input placeholder="可选" />
+            <Form.Item label="手机号" name="phone" style={{ flex: 1 }} rules={[{ required: true, message: '请输入手机号' }]} extra="默认密码为手机号">
+              <Input placeholder="必填，用于登录" />
             </Form.Item>
             <Form.Item label="邮箱" name="email" style={{ flex: 1 }}>
               <Input placeholder="可选" />
