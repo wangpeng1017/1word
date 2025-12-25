@@ -1,3 +1,11 @@
+/**
+ * @file route.ts
+ * @desc 学生管理 API - 列表查询和创建
+ * @input 依赖: prisma, auth, response, types
+ * @output 导出: GET /api/students, POST /api/students
+ * @see PRD: docs/students/PRD.md
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader, hashPassword } from '@/lib/auth'

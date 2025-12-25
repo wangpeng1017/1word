@@ -1,3 +1,11 @@
+/**
+ * @file route.ts
+ * @desc 学生详情 API - 查询、更新、删除单个学生
+ * @input 依赖: prisma, auth, response
+ * @output 导出: GET/PUT/DELETE /api/students/[id]
+ * @see PRD: docs/students/PRD.md
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
