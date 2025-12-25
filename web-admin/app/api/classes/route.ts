@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     const token = getTokenFromHeader(authHeader || '')
     
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以查看班级')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以查看班级')
     }
 
     const classes = await prisma.classes.findMany({
@@ -66,35 +66,41 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
-    if (!payload || payload.role !== 'TEACHER') {
-      return unauthorizedResponse('只有教师可以创建班级')
+    if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+      return unauthorizedResponse('只有教师或管理员可以创建班级')
     }
 
     const body = await request.json()
-    const { name, grade } = body
+    const { name, grade, teacherId } = body
 
     if (!name || !grade) {
       return errorResponse('班级名称和年级不能为空')
     }
 
-    // 获取教师ID
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      include: { teachers: true },
-    })
+    let finalTeacherId = teacherId
 
-    if (!user?.teachers) {
-      return errorResponse('教师信息不存在', 404)
+    // 如果是教师角色，使用自己的教师ID
+    if (payload.role === 'TEACHER') {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: { teachers: true },
+      })
+
+      if (!user?.teachers) {
+        return errorResponse('教师信息不存在', 404)
+      }
+      finalTeacherId = user.teachers.id
     }
 
+    // 如果是管理员且没有指定教师，则不关联教师
     const classData = await prisma.classes.create({
       data: {
         id: nanoid(),
         name,
         grade,
-        teacher_id: user.teachers.id,
+        teacher_id: finalTeacherId || null,
         updated_at: new Date(),
       },
       include: {
