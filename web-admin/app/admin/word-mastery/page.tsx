@@ -88,7 +88,7 @@ export default function WordMasteryPage() {
             })
             const result = await response.json()
             if (result.success) {
-                setStudents(result.data || [])
+                setStudents(result.data?.students || [])
             }
         } catch (error) {
             console.error('加载学生失败:', error)
