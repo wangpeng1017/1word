@@ -155,8 +155,6 @@ export default function WordMasteryPage() {
             '累计错误次数': item.totalWrongCount,
             '最近3次正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '暂无数据',
             '练习人数': item.studentCount,
-            '掌握人数': item.masteredCount,
-            '困难词标记': item.difficultCount,
         }))
 
         const ws = XLSX.utils.json_to_sheet(exportData)
@@ -250,17 +248,6 @@ export default function WordMasteryPage() {
             dataIndex: 'studentCount',
             key: 'studentCount',
             width: 100,
-        },
-        {
-            title: '掌握/困难',
-            key: 'status',
-            width: 120,
-            render: (_, record) => (
-                <Space>
-                    <Tag color="green">{record.masteredCount} 掌握</Tag>
-                    <Tag color="red">{record.difficultCount} 困难</Tag>
-                </Space>
-            ),
         },
     ]
 

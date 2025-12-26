@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
             masteredCount: number
             difficultCount: number
             recentAccuracy: number | null
+            studentIds: string[]  // 收集学生ID用于后续查询
         }>()
 
         for (const record of wordMasteryData) {
@@ -87,10 +88,7 @@ export async function GET(request: NextRequest) {
                 existing.avgConsecutiveCorrect += record.consecutiveCorrect
                 if (record.isMastered) existing.masteredCount += 1
                 if (record.isDifficult) existing.difficultCount += 1
-                // 使用已存储的 recentAccuracy（已在答题时更新）
-                if (record.recentAccuracy !== null && existing.recentAccuracy === null) {
-                    existing.recentAccuracy = record.recentAccuracy
-                }
+                existing.studentIds.push(record.studentId)
             } else {
                 aggregatedData.set(vocabId, {
                     vocabularyId: vocabId,
@@ -104,13 +102,36 @@ export async function GET(request: NextRequest) {
                     avgConsecutiveCorrect: record.consecutiveCorrect,
                     masteredCount: record.isMastered ? 1 : 0,
                     difficultCount: record.isDifficult ? 1 : 0,
-                    recentAccuracy: record.recentAccuracy,  // 直接使用已存储的值
+                    recentAccuracy: null,  // 稍后从 question_answers 计算
+                    studentIds: [record.studentId],
                 })
             }
         }
 
-        // 转换为数组并排序
-        let result = Array.from(aggregatedData.values())
+        // 从 question_answers 表实时计算每个单词的最近3次正确率
+        const vocabIds = Array.from(aggregatedData.keys())
+        for (const vocabId of vocabIds) {
+            const item = aggregatedData.get(vocabId)!
+
+            // 查询该单词的最近3次答题记录（跨所有相关学生）
+            const recentAnswers = await prisma.question_answers.findMany({
+                where: {
+                    vocabularyId: vocabId,
+                    studentId: { in: item.studentIds },
+                },
+                orderBy: { answeredAt: 'desc' },
+                take: 3,
+                select: { isCorrect: true }
+            })
+
+            if (recentAnswers.length > 0) {
+                const correctCount = recentAnswers.filter(a => a.isCorrect).length
+                item.recentAccuracy = Math.round((correctCount / recentAnswers.length) * 100)
+            }
+        }
+
+        // 转换为数组并排序（排除 studentIds 字段）
+        let result = Array.from(aggregatedData.values()).map(({ studentIds, ...rest }) => rest)
 
         // 计算平均值
         result = result.map(item => ({
