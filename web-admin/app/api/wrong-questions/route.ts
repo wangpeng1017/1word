@@ -82,6 +82,14 @@ export async function GET(request: NextRequest) {
                             type: true,
                             content: true,
                             correctAnswer: true,
+                            question_options: {
+                                orderBy: { order: 'asc' },
+                                select: {
+                                    content: true,
+                                    order: true,
+                                    isCorrect: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -89,20 +97,48 @@ export async function GET(request: NextRequest) {
             prisma.question_answers.count({ where }),
         ])
 
+        // 选项字母映射函数：A=0, B=1, C=2, D=3
+        const letterToIndex = (letter: string): number => {
+            const upperLetter = letter?.toUpperCase()
+            if (upperLetter === 'A') return 0
+            if (upperLetter === 'B') return 1
+            if (upperLetter === 'C') return 2
+            if (upperLetter === 'D') return 3
+            return -1
+        }
+
         // 格式化数据
-        const formattedRecords = records.map((record: any) => ({
-            id: record.id,
-            studentId: record.studentId,
-            studentName: record.students?.user?.name || '未知',
-            className: record.students?.classes?.name || '未分配',
-            word: record.vocabularies?.word || '',
-            meaning: record.vocabularies?.word_meanings?.[0]?.meaning || '',
-            questionType: record.questions?.type || '',
-            questionContent: record.questions?.content || '',
-            wrongAnswer: record.answer, // question_answers 表中是 answer 字段
-            correctAnswer: record.questions?.correctAnswer || '',
-            wrongAt: record.answeredAt, // 改用 answeredAt
-        }))
+        const formattedRecords = records.map((record: any) => {
+            const options = record.questions?.question_options || []
+            const wrongAnswerLetter = record.answer // 用户选择的选项字母
+            const correctAnswerLetter = record.questions?.correctAnswer || ''
+
+            // 获取错误答案的具体内容
+            const wrongIndex = letterToIndex(wrongAnswerLetter)
+            const wrongAnswerContent = wrongIndex >= 0 && wrongIndex < options.length
+                ? options[wrongIndex]?.content
+                : wrongAnswerLetter
+
+            // 获取正确答案的具体内容
+            const correctIndex = letterToIndex(correctAnswerLetter)
+            const correctAnswerContent = correctIndex >= 0 && correctIndex < options.length
+                ? options[correctIndex]?.content
+                : correctAnswerLetter
+
+            return {
+                id: record.id,
+                studentId: record.studentId,
+                studentName: record.students?.user?.name || '未知',
+                className: record.students?.classes?.name || '未分配',
+                word: record.vocabularies?.word || '',
+                meaning: record.vocabularies?.word_meanings?.[0]?.meaning || '',
+                questionType: record.questions?.type || '',
+                questionContent: record.questions?.content || '',
+                wrongAnswer: wrongAnswerContent || wrongAnswerLetter || '-',
+                correctAnswer: correctAnswerContent || correctAnswerLetter || '-',
+                wrongAt: record.answeredAt,
+            }
+        })
 
         return successResponse({
             records: formattedRecords,
