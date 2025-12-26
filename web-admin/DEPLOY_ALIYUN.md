@@ -2,11 +2,11 @@
 
 ## 服务器信息
 
-- **IP**: 47.92.96.143
+- **IP**: 8.130.182.148
 - **系统**: CentOS 7
 - **配置**: 2核2G
 - **应用目录**: /root/word-app
-- **访问地址**: http://47.92.96.143:3000
+- **访问地址**: http://8.130.182.148:3000
 
 ---
 
@@ -16,28 +16,28 @@
 
 ```bash
 # 1. 拉取最新代码
-ssh root@47.92.96.143 "cd /root/word-app && git pull origin main"
+ssh root@8.130.182.148 "cd /root/word-app && git pull origin main"
 
 # 2. 安装依赖（如有新增）
-ssh root@47.92.96.143 "cd /root/word-app/web-admin && npm install --legacy-peer-deps"
+ssh root@8.130.182.148 "cd /root/word-app/web-admin && npm install --legacy-peer-deps"
 
 # 3. 同步数据库（如有变更）
-ssh root@47.92.96.143 "cd /root/word-app/web-admin && npx prisma db push"
+ssh root@8.130.182.148 "cd /root/word-app/web-admin && npx prisma db push"
 
 # 4. 重新构建
-ssh root@47.92.96.143 "cd /root/word-app/web-admin && npm run build"
+ssh root@8.130.182.148 "cd /root/word-app/web-admin && npm run build"
 
 # 5. 重启应用
-ssh root@47.92.96.143 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
+ssh root@8.130.182.148 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
 
 # 6. 验证
-curl -s -o /dev/null -w "%{http_code}" http://47.92.96.143:3000
+curl -s -o /dev/null -w "%{http_code}" http://8.130.182.148:3000
 ```
 
 ### 一键更新脚本
 
 ```bash
-ssh root@47.92.96.143 "cd /root/word-app && git pull origin main && cd web-admin && npm install --legacy-peer-deps && npx prisma db push && npm run build && pkill -f 'next start'; nohup npm start > /tmp/app.log 2>&1 &"
+ssh root@8.130.182.148 "cd /root/word-app && git pull origin main && cd web-admin && npm install --legacy-peer-deps && npx prisma db push && npm run build && pkill -f 'next start'; nohup npm start > /tmp/app.log 2>&1 &"
 ```
 
 ---
@@ -89,7 +89,7 @@ git clone https://github.com/wangpeng1017/1word.git word-app
 cat > /root/word-app/web-admin/.env << 'EOF'
 DATABASE_URL=postgresql://word_user:word_pass_2024@localhost:5432/word_app
 JWT_SECRET=vocab_jwt_secret_2024_production
-NEXT_PUBLIC_API_URL=http://47.92.96.143:3000
+NEXT_PUBLIC_API_URL=http://8.130.182.148:3000
 NODE_ENV=production
 EOF
 ```
@@ -116,19 +116,19 @@ nohup npm start > /tmp/app.log 2>&1 &
 
 ```bash
 # 查看应用状态
-ssh root@47.92.96.143 "ps aux | grep next"
+ssh root@8.130.182.148 "ps aux | grep next"
 
 # 查看应用日志
-ssh root@47.92.96.143 "tail -100 /tmp/app.log"
+ssh root@8.130.182.148 "tail -100 /tmp/app.log"
 
 # 重启应用
-ssh root@47.92.96.143 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
+ssh root@8.130.182.148 "pkill -f 'next start'; cd /root/word-app/web-admin && nohup npm start > /tmp/app.log 2>&1 &"
 
 # 查看磁盘空间
-ssh root@47.92.96.143 "df -h /"
+ssh root@8.130.182.148 "df -h /"
 
 # 查看内存使用
-ssh root@47.92.96.143 "free -h"
+ssh root@8.130.182.148 "free -h"
 ```
 
 ---
