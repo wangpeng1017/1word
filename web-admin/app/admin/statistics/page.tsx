@@ -12,12 +12,15 @@ import {
   FireOutlined,
   RiseOutlined,
   FallOutlined,
+  DatabaseOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
+import LearningDataList from './components/LearningDataList'
+import WordMasteryDetail from './components/WordMasteryDetail'
 
 const { RangePicker } = DatePicker
-const { TabPane } = Tabs
 
 interface OverviewData {
   overview: {
@@ -74,6 +77,7 @@ export default function StatisticsPage() {
     dayjs().subtract(30, 'day'),
     dayjs(),
   ])
+  const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     loadClasses()
@@ -402,10 +406,10 @@ export default function StatisticsPage() {
     return [...baseColumns, ...typeSpecificColumns[rankingType]] as ColumnsType<RankingData>
   }
 
-  return (
-    <div>
+  // 渲染概览内容
+  const renderOverviewContent = () => (
+    <>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>学习统计</h1>
         <Space>
           <RangePicker
             value={dateRange}
@@ -488,7 +492,7 @@ export default function StatisticsPage() {
             />
           </Card>
         </Col>
-      </Row>
+      </Row >
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
@@ -641,6 +645,49 @@ export default function StatisticsPage() {
           </Card>
         </Col>
       </Row>
+    </>
+  )
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>学习统计</h1>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        size="large"
+        items={[
+          {
+            key: 'overview',
+            label: (
+              <span>
+                <DatabaseOutlined />
+                数据概览
+              </span>
+            ),
+            children: renderOverviewContent(),
+          },
+          {
+            key: 'learningData',
+            label: (
+              <span>
+                <FileTextOutlined />
+                学习数据列表
+              </span>
+            ),
+            children: <LearningDataList classId={classFilter} />,
+          },
+          {
+            key: 'wordMastery',
+            label: (
+              <span>
+                <BookOutlined />
+                单词掌握详情
+              </span>
+            ),
+            children: <WordMasteryDetail classId={classFilter} />,
+          },
+        ]}
+      />
     </div>
   )
 }
