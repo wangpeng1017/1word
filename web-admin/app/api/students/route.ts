@@ -90,7 +90,6 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
-              grade: true,
             },
           },
         },
@@ -129,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: StudentCreateInput = await request.json()
-    const { name, studentNo, classId, grade, email, phone, password } = body
+    const { name, studentNo, classId, email, phone, password } = body
 
     if (!name || !studentNo) {
       return errorResponse('姓名和学号不能为空')
@@ -146,7 +145,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('必须指定班级')
     }
 
-    // 验证班级是否存在并获取 grade
+    // 验证班级是否存在
     const classData = await prisma.classes.findUnique({
       where: { id: classId },
     })
@@ -202,7 +201,6 @@ export async function POST(request: NextRequest) {
             id: studentId,
             student_no: studentNo,
             class_id: classId,
-            grade: grade || classData.grade,
             updated_at: now,
           },
         },

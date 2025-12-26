@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
           defaultClass = await prisma.classes.create({
             data: {
               name: '未分配班级',
-              grade: '待分配',
-              teacherId: defaultTeacher.id,
+              teacher_id: defaultTeacher.id,
+              updated_at: new Date(),
             },
           })
         } else {
@@ -78,10 +78,10 @@ export async function POST(request: NextRequest) {
 
       await prisma.students.create({
         data: {
-          userId: user.id,
-          studentNo: `STU${Date.now()}`,
-          classId: defaultClass.id,
-          grade: defaultClass.grade,
+          user_id: user.id,
+          student_no: `STU${Date.now()}`,
+          class_id: defaultClass.id,
+          updated_at: new Date(),
         },
       })
     }

@@ -247,7 +247,7 @@ export default function BatchGenerateDialog({ open, onClose, classes, vocabulari
             >
               {classes.map((c: any) => (
                 <Select.Option key={c.id} value={c.id}>
-                  {c.name} ({c.grade}) - {c._count?.students || 0}人
+                  {c.name} - {c._count?.students || 0}人
                 </Select.Option>
               ))}
             </Select>

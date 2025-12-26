@@ -65,7 +65,6 @@ export async function GET(
       id: student.id,
       name: student.user.name,
       studentNo: student.student_no,
-      grade: student.grade,
       class: student.classes,
       email: student.user.email,
       phone: student.user.phone,
@@ -94,7 +93,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, studentNo, classId, grade, phone } = body
+    const { name, studentNo, classId, phone } = body
 
     if (!name || !studentNo) {
       return errorResponse('姓名和学号不能为空')
@@ -138,7 +137,6 @@ export async function PUT(
         data: {
           student_no: studentNo,
           class_id: classId || null,
-          grade,
           updated_at: new Date(),
         },
         include: {
@@ -152,7 +150,6 @@ export async function PUT(
           classes: {
             select: {
               name: true,
-              grade: true,
             },
           },
         },

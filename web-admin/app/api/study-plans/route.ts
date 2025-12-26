@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
           students: {
             include: {
               user: { select: { name: true } },
-              classes: { select: { id: true, name: true, grade: true } },
+              classes: { select: { id: true, name: true } },
             },
           },
           vocabularies: {
@@ -122,7 +122,6 @@ export async function GET(request: NextRequest) {
       const groupMap = new Map<string, {
         classId: string
         className: string
-        grade: string
         students: Map<string, { id: string; name: string }>
         vocabularies: Map<string, { id: string; word: string; primaryMeaning: string }>
         reviewCount: number
@@ -143,7 +142,6 @@ export async function GET(request: NextRequest) {
           groupMap.set(groupKey, {
             classId: classInfo.id,
             className: classInfo.name,
-            grade: classInfo.grade || '',
             students: new Map(),
             vocabularies: new Map(),
             reviewCount: sp.reviewCount,
@@ -183,7 +181,6 @@ export async function GET(request: NextRequest) {
           id: `${g.classId}-${g.reviewCount}`,
           classId: g.classId,
           className: g.className,
-          grade: g.grade,
           students: Array.from(g.students.values()),
           vocabularies: Array.from(g.vocabularies.values()),
           reviewCount: g.reviewCount,

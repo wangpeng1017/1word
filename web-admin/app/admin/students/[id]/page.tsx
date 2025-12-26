@@ -157,7 +157,6 @@ export default function StudentDetailPage() {
           <Descriptions column={2}>
             <Descriptions.Item label="姓名">{student.name}</Descriptions.Item>
             <Descriptions.Item label="学号">{student.studentNo}</Descriptions.Item>
-            <Descriptions.Item label="年级">{student.grade || '-'}</Descriptions.Item>
             <Descriptions.Item label="班级">
               {student.class?.name || '未分配'}
             </Descriptions.Item>

@@ -96,7 +96,6 @@ export interface StudentCreateInput {
   name: string
   studentNo: string
   classId?: string
-  grade?: string
   email?: string
   phone?: string
   password: string
@@ -105,7 +104,6 @@ export interface StudentCreateInput {
 export interface StudentImportRow {
   name: string
   studentNo: string
-  grade?: string
   className?: string
 }
 

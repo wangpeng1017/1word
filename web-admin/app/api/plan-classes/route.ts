@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       orderBy: { created_at: 'desc' },
       include: {
         classes: {
-          select: { name: true, grade: true },
+          select: { name: true },
         },
         vocabulary_packs: {
           select: {
@@ -157,7 +157,7 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: updateData,
       include: {
-        classes: { select: { name: true, grade: true } },
+        classes: { select: { name: true } },
         vocabulary_packs: { select: { id: true, name: true, totalDays: true, totalWords: true } },
       },
     })

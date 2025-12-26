@@ -5,6 +5,9 @@ import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/resp
 import { getTodayDate } from '@/lib/ebbinghaus'
 import { getDateRangeUTC, getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
 
+// 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
+const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
+
 /**
  * 获取学生的复习计划和学习进度
  * GET /api/review-plan/[studentId]
@@ -29,7 +32,7 @@ export async function GET(
       where: { id: studentId },
       include: {
         user: { select: { name: true, email: true } },
-        classes: { select: { id: true, name: true, grade: true } },
+        classes: { select: { id: true, name: true } },
       },
     })
 
@@ -39,7 +42,7 @@ export async function GET(
 
     const { start: startOfToday, end: endOfToday } = getDateRangeUTC()
 
-    // 2. 获取学习计划统计
+    // 2. 获取学习计划统计（用于总体进度显示）
     const studyPlans = await prisma.study_plans.findMany({
       where: { studentId },
     })
@@ -48,26 +51,21 @@ export async function GET(
     const masteredWords = studyPlans.filter(p => p.status === 'MASTERED').length
     const learningWords = studyPlans.filter(p => p.status === 'LEARNING').length
 
-    // 3. 获取需要复习的词汇数量
-    const needReview = await prisma.study_plans.count({
-      where: {
-        studentId,
-        status: 'LEARNING',
-        nextReviewAt: { lte: endOfToday },
-      },
-    })
-
-    // 4. 获取掌握度统计
+    // 3. 获取掌握度统计
     const wordMasteries = await prisma.word_masteries.findMany({
       where: { studentId },
     })
+
+    const masteredVocabIds = new Set(
+      wordMasteries.filter(m => m.isMastered).map(m => m.vocabularyId)
+    )
 
     const difficultWords = wordMasteries.filter(m => m.isDifficult).length
     const avgAccuracy = wordMasteries.length > 0
       ? wordMasteries.reduce((sum, m) => sum + (m.recentAccuracy || 0), 0) / wordMasteries.length
       : 0
 
-    // 5. 获���最近7天的学习记录
+    // 4. 获取最近7天的学习记录
     const targetDate = getTodayDate()
     const sevenDaysAgo = new Date(targetDate)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -80,7 +78,7 @@ export async function GET(
       orderBy: { taskDate: 'asc' },
     })
 
-    // 6. 获取连续学习天数
+    // 5. 获取连续学习天数
     let consecutiveDays = 0
     const studyStreak = await prisma.study_streaks.findUnique({
       where: { studentId },
@@ -100,11 +98,10 @@ export async function GET(
       }
     }
 
-    // 7. 计算今日任务数（新词 + 复习词）- 用于小程序
-    let todayTotalTasks = 0  // 今日配置的总任务数（包括已完成的）
-    let todayReviewCount = needReview
+    // 6. 使用艾宾浩斯记忆曲线计算今日任务数（与 daily-tasks API 保持一致）
+    let todayNewCount = 0
+    let todayReviewCount = 0
 
-    // 获取班级的活跃词汇库计划
     if (student.classes?.id) {
       const planClass = await prisma.plan_classes.findFirst({
         where: {
@@ -116,7 +113,16 @@ export async function GET(
             include: {
               pack_days: {
                 include: {
-                  day_words: { select: { vocabularyId: true } }
+                  day_words: {
+                    include: {
+                      vocabulary: {
+                        select: {
+                          id: true,
+                          questions: { select: { id: true } }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -131,39 +137,52 @@ export async function GET(
         const diffTime = today.getTime() - startDateBeijing.getTime()
         const dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
 
+        // 计算今日新学单词数
         if (dayNumber >= 1 && dayNumber <= pack.totalDays) {
           const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
           if (packDay) {
-            // 获取已掌握的词汇ID
-            const masteredVocabIds = new Set(
-              wordMasteries.filter(m => m.isMastered).map(m => m.vocabularyId)
-            )
+            const newWords = packDay.day_words
+              .filter(dw => dw.vocabulary && !masteredVocabIds.has(dw.vocabulary.id))
+              .filter(dw => dw.vocabulary.questions && dw.vocabulary.questions.length > 0)
+            todayNewCount = newWords.length
+          }
+        }
 
-            // 计算新词数（排除已掌握的，但不排除已学习的）
-            const dayVocabIds = packDay.day_words.map(dw => dw.vocabularyId)
-
-            // 检查这些词汇是否有题目
-            const vocabsWithQuestions = await prisma.vocabularies.findMany({
-              where: {
-                id: { in: dayVocabIds },
-                questions: { some: {} }
-              },
-              select: { id: true }
+        // 计算今日复习单词数（基于艾宾浩斯记忆曲线）
+        const newWordIds = new Set<string>()
+        if (dayNumber >= 1 && dayNumber <= pack.totalDays) {
+          const packDay = pack.pack_days.find(d => d.dayNumber === dayNumber)
+          if (packDay) {
+            packDay.day_words.forEach(dw => {
+              if (dw.vocabulary) newWordIds.add(dw.vocabulary.id)
             })
-            const vocabIdsWithQuestions = new Set(vocabsWithQuestions.map(v => v.id))
+          }
+        }
 
-            // 今日配置的有题目的词汇总数（排除已掌握的，但不排除已学习的）
-            // 这样即使学生完成学习后，dueCount 也不会变成 0
-            todayTotalTasks = dayVocabIds.filter(id =>
-              !masteredVocabIds.has(id) &&
-              vocabIdsWithQuestions.has(id)
-            ).length
+        const seenVocabIds = new Set<string>()
+        for (const interval of REVIEW_INTERVALS) {
+          const targetDay = dayNumber - interval
+          if (targetDay >= 1 && targetDay <= pack.totalDays) {
+            const packDay = pack.pack_days.find(d => d.dayNumber === targetDay)
+            if (packDay) {
+              const dayReviewWords = packDay.day_words
+                .filter(dw => dw.vocabulary &&
+                  !masteredVocabIds.has(dw.vocabulary.id) &&
+                  !newWordIds.has(dw.vocabulary.id) &&
+                  !seenVocabIds.has(dw.vocabulary.id))
+                .filter(dw => dw.vocabulary.questions && dw.vocabulary.questions.length > 0)
+
+              dayReviewWords.forEach(dw => {
+                seenVocabIds.add(dw.vocabulary.id)
+              })
+              todayReviewCount += dayReviewWords.length
+            }
           }
         }
       }
     }
 
-    // 8. 获取今日已完成数量
+    // 7. 获取今日已完成数量
     const todayRecord = await prisma.study_records.findFirst({
       where: {
         studentId,
@@ -171,19 +190,19 @@ export async function GET(
       }
     })
 
-    // dueCount: 今日应完成的总任务数
-    // 优先使用今日学习记录中的 totalWords（如果有的话）
-    // 否则使用计算出的 todayTotalTasks + todayReviewCount
-    const todayDueCount = todayRecord?.totalWords || (todayTotalTasks + todayReviewCount)
+    // dueCount: 今日应完成的总任务数 = 新学 + 复习
+    const todayDueCount = todayNewCount + todayReviewCount
     const todayCompletedCount = todayRecord?.completedWords || 0
     const todayTimeSpent = todayRecord?.totalTime || 0
+
+    // 需要复习的词汇数量（用于后台显示）
+    const needReview = todayReviewCount
 
     return successResponse({
       student: {
         id: student.id,
         name: student.user.name,
         studentNo: student.student_no,
-        grade: student.grade,
         className: student.classes?.name || '-',
       },
       progress: {
@@ -209,6 +228,8 @@ export async function GET(
           dueCount: todayDueCount,
           completedCount: todayCompletedCount,
           timeSpentSeconds: todayTimeSpent,
+          newCount: todayNewCount,
+          reviewCount: todayReviewCount,
         },
         progress: {
           consecutiveDays,

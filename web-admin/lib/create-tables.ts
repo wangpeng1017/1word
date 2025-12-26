@@ -40,7 +40,6 @@ export const createTablesSQLArray = [
     "user_id" TEXT NOT NULL,
     "student_no" TEXT NOT NULL,
     "class_id" TEXT,
-    "grade" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
@@ -52,8 +51,7 @@ export const createTablesSQLArray = [
   `CREATE TABLE IF NOT EXISTS "classes" (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text,
     "name" TEXT NOT NULL,
-    "grade" TEXT NOT NULL,
-    "teacher_id" TEXT NOT NULL,
+    "teacher_id" TEXT,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP

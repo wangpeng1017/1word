@@ -81,10 +81,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, grade, teacherId } = body
+    const { name, teacherId } = body
 
-    if (!name || !grade) {
-      return errorResponse('班级名称和年级不能为空')
+    if (!name) {
+      return errorResponse('班级名称不能为空')
     }
 
     let finalTeacherId = teacherId
@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
       data: {
         id: nanoid(),
         name,
-        grade,
         teacher_id: finalTeacherId || null,
         updated_at: new Date(),
       },

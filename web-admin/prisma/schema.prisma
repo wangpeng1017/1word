@@ -10,7 +10,6 @@ datasource db {
 model classes {
   id           String         @id
   name         String
-  grade        String
   teacher_id   String?        // 可选：班级可以暂时没有老师
   is_active    Boolean        @default(true)
   created_at   DateTime       @default(now())
@@ -86,7 +85,6 @@ model students {
   user_id         String            @unique
   student_no      String            @unique
   class_id        String
-  grade           String
   wechat_id       String?           @unique
   created_at      DateTime          @default(now())
   updated_at      DateTime
@@ -105,7 +103,6 @@ model students {
   question_answers question_answers[] // 新增：答题记录关联
 
   @@index([class_id])
-  @@index([grade])
 }
 
 // 学生学习进度（学生×词汇，首次学习时创建）

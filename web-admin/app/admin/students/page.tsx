@@ -71,7 +71,6 @@ export default function StudentsPage() {
       name: record.user?.name,
       studentNo: record.studentNo,
       phone: record.user?.phone,
-      grade: record.grade,
       classId: record.class?.id,
     })
     setModalVisible(true)
@@ -245,7 +244,6 @@ export default function StudentsPage() {
       key: 'phone',
       render: (phone: string) => phone || '-',
     },
-    { title: '年级', dataIndex: 'grade', key: 'grade' },
     {
       title: '班级',
       dataIndex: ['class', 'name'],
@@ -357,9 +355,6 @@ export default function StudentsPage() {
             ]}
           >
             <Input placeholder="11位手机号码" maxLength={11} />
-          </Form.Item>
-          <Form.Item label="年级" name="grade">
-            <Input placeholder="例如: 高一" />
           </Form.Item>
           <Form.Item label="班级" name="classId">
             <Select placeholder="选择班级" allowClear>

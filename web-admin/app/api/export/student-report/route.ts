@@ -117,7 +117,6 @@ export async function GET(request: NextRequest) {
     const studentInfo = [
       ['姓名', student.user.name],
       ['学号', student.student_no],
-      ['年级', student.grade || '-'],
       ['班级', student.classes?.name || '-'],
       ['统计日期', `${startDate || '开始'} 至 ${endDate || '今天'}`],
     ]

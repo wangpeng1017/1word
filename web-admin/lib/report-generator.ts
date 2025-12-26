@@ -7,7 +7,7 @@ export interface ReportData {
     student: {
         name: string
         studentNo: string
-        grade?: string
+        className?: string
     }
     period: {
         startDate: string
@@ -72,8 +72,8 @@ export async function generatePDFReport(data: ReportData, filepath: string): Pro
             doc.fontSize(12)
             doc.text(`学生姓名: ${data.student.name}`)
             doc.text(`学号: ${data.student.studentNo}`)
-            if (data.student.grade) {
-                doc.text(`年级: ${data.student.grade}`)
+            if (data.student.className) {
+                doc.text(`班级: ${data.student.className}`)
             }
             doc.text(`统计周期: ${data.period.startDate} 至 ${data.period.endDate}`)
             doc.moveDown(1)
@@ -180,12 +180,12 @@ export async function generateWordReport(data: ReportData, filepath: string): Pr
                             new TextRun(data.student.studentNo),
                         ],
                     }),
-                    ...(data.student.grade
+                    ...(data.student.className
                         ? [
                             new Paragraph({
                                 children: [
-                                    new TextRun({ text: '年级: ', bold: true }),
-                                    new TextRun(data.student.grade),
+                                    new TextRun({ text: '班级: ', bold: true }),
+                                    new TextRun(data.student.className),
                                 ],
                             }),
                         ]

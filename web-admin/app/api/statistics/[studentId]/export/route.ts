@@ -98,7 +98,7 @@ async function getReportData(
             where: { id: studentId },
             include: {
                 user: { select: { name: true } },
-                classes: { select: { grade: true } },
+                classes: { select: { name: true } },
             },
         })
 
@@ -195,7 +195,7 @@ async function getReportData(
             student: {
                 name: student.user.name,
                 studentNo: student.student_no,
-                grade: student.classes?.grade,
+                className: student.classes?.name,
             },
             period: {
                 startDate: startDate.toISOString().split('T')[0],

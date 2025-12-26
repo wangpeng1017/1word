@@ -98,17 +98,16 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, grade } = body
+    const { name } = body
 
-    if (!name || !grade) {
-      return errorResponse('班级名称和年级不能为空')
+    if (!name) {
+      return errorResponse('班级名称不能为空')
     }
 
     const classData = await prisma.classes.update({
       where: { id: params.id },
       data: {
         name,
-        grade,
         updated_at: new Date(),
       },
       include: {

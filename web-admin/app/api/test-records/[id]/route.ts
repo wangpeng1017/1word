@@ -38,7 +38,6 @@ export async function GET(
           select: {
             id: true,
             student_no: true,
-            grade: true,
             user: {
               select: {
                 name: true,

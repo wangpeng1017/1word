@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 interface ClassItem {
   id: string
   name: string
-  grade: string
 }
 
 export default function CreateStudentPage() {
@@ -47,7 +46,6 @@ export default function CreateStudentPage() {
         studentNo: (values.studentNo || '').trim(),
         phone: values.phone ? String(values.phone).trim() : undefined,
         email: values.email ? String(values.email).trim() : undefined,
-        grade: values.grade ? String(values.grade).trim() : undefined,
         classId: values.classId || undefined,
       }
 
@@ -111,20 +109,15 @@ export default function CreateStudentPage() {
             </Form.Item>
           </Space>
 
-          <Space size="middle" style={{ display: 'flex' }}>
-            <Form.Item label="年级" name="grade" style={{ flex: 1 }}>
-              <Input placeholder="如：初一/高一（可选）" />
-            </Form.Item>
-            <Form.Item label="班级" name="classId" style={{ flex: 1 }}>
-              <Select allowClear placeholder="可选">
-                {classes.map((c) => (
-                  <Select.Option key={c.id} value={c.id}>
-                    {c.name}（{c.grade}）
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Space>
+          <Form.Item label="班级" name="classId">
+            <Select allowClear placeholder="可选">
+              {classes.map((c) => (
+                <Select.Option key={c.id} value={c.id}>
+                  {c.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block disabled={loading}>

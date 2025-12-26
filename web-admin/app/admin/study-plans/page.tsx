@@ -33,7 +33,7 @@ interface PlanClass {
   start_date: string
   created_at: string
   updated_at: string
-  classes: { name: string; grade: string }
+  classes: { name: string }
   vocabulary_packs: { id: string; name: string; totalDays: number; totalWords: number }
 }
 
@@ -160,7 +160,6 @@ export default function StudyPlansPage() {
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{record.classes?.name}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>{record.classes?.grade}</div>
         </div>
       ),
     },
@@ -306,7 +305,7 @@ export default function StudyPlansPage() {
           >
             {classes.map((c) => (
               <Select.Option key={c.id} value={c.id}>
-                {c.name} ({c.grade})
+                {c.name}
               </Select.Option>
             ))}
           </Select>

@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             student_no: true,
-            grade: true,
             user: { select: { name: true } },
             classes: { select: { name: true } },
           }
@@ -53,7 +52,6 @@ export async function GET(request: NextRequest) {
             studentId: r.studentId,
             studentName: s?.user?.name || '',
             studentNo: s?.student_no || '',
-            grade: s?.grade || '',
             className: s?.classes?.name || '',
             points: r.score,
           }
@@ -87,7 +85,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             student_no: true,
-            grade: true,
             user: { select: { name: true } },
             classes: { select: { name: true } }
           }
@@ -100,7 +97,6 @@ export async function GET(request: NextRequest) {
       studentId: item.studentId,
       studentName: item.students?.user?.name || '',
       studentNo: item.students?.student_no || '',
-      grade: item.students?.grade || '',
       className: item.students?.classes?.name || '',
       points: item[orderByField],
       level: item.level,

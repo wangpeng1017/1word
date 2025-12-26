@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     for (const studentData of students) {
       try {
-        const { name, studentNo, grade, className } = studentData
+        const { name, studentNo, className } = studentData
 
         if (!name || !studentNo) {
           results.failed++
@@ -57,15 +57,13 @@ export async function POST(request: NextRequest) {
 
         // 查找班级，如果没有则使用默认班级
         let classId: string
-        let classGrade: string
-        
+
         if (className) {
           const classData = await prisma.classes.findFirst({
             where: { name: className },
           })
           if (classData) {
             classId = classData.id
-            classGrade = classData.grade
           } else {
             // 班级不存在，使用默认班级
             let defaultClass = await prisma.classes.findFirst({
@@ -80,20 +78,19 @@ export async function POST(request: NextRequest) {
               defaultClass = await prisma.classes.create({
                 data: {
                   name: '未分配班级',
-                  grade: '待分配',
-                  teacherId: defaultTeacher.id,
+                  teacher_id: defaultTeacher.id,
+                  updated_at: new Date(),
                 },
               })
             }
             classId = defaultClass.id
-            classGrade = defaultClass.grade
           }
         } else {
           // 没有指定班级，使用默认班级
           let defaultClass = await prisma.classes.findFirst({
             where: { name: '未分配班级' },
           })
-          
+
           if (!defaultClass) {
             const defaultTeacher = await prisma.teachers.findFirst()
             if (!defaultTeacher) {
@@ -102,13 +99,12 @@ export async function POST(request: NextRequest) {
             defaultClass = await prisma.classes.create({
               data: {
                 name: '未分配班级',
-                grade: '待分配',
-                teacherId: defaultTeacher.id,
+                teacher_id: defaultTeacher.id,
+                updated_at: new Date(),
               },
             })
           }
           classId = defaultClass.id
-          classGrade = defaultClass.grade
         }
 
         // 创建用户和学生
@@ -117,11 +113,12 @@ export async function POST(request: NextRequest) {
             name,
             password: hashedPassword,
             role: 'STUDENT',
+            updated_at: new Date(),
             students: {
               create: {
-                studentNo,
-                classId,
-                grade: grade || classGrade,
+                student_no: studentNo,
+                class_id: classId,
+                updated_at: new Date(),
               },
             },
           },

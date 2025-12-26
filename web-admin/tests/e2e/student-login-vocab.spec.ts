@@ -31,7 +31,6 @@ test('Student login UI -> fetch vocabularies API', async ({ page, request }) => 
       password: '123456',
       phone,
       email,
-      grade: '高一',
     },
   })
   // 可能重复执行导致 400（学号/邮箱已存在），视为可接受
