@@ -1,21 +1,23 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Card, Select, Space, Button, Tag, Progress, Tooltip, message } from 'antd'
-import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Table, Card, Select, Space, Button, Tag, DatePicker, Progress, message } from 'antd'
+import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import * as XLSX from 'xlsx'
+
+const { RangePicker } = DatePicker
 
 interface WordMasteryItem {
     vocabularyId: string
     word: string
     meaning: string
     phonetic: string | null
+    difficulty: string
     totalWrongCount: number
     recentAccuracy: number | null
-    recentAnswers: Array<{ isCorrect: boolean; answeredAt: string }>
-    studentCount: number
+    practiceStudentCount: number
 }
 
 interface ClassInfo {
@@ -32,6 +34,18 @@ interface WordMasteryDetailProps {
     classId?: string
 }
 
+const difficultyColors: Record<string, string> = {
+    EASY: 'green',
+    MEDIUM: 'orange',
+    HARD: 'red',
+}
+
+const difficultyLabels: Record<string, string> = {
+    EASY: '简单',
+    MEDIUM: '中等',
+    HARD: '困难',
+}
+
 export default function WordMasteryDetail({ classId: propClassId }: WordMasteryDetailProps) {
     const [loading, setLoading] = useState(false)
     const [data, setData] = useState<WordMasteryItem[]>([])
@@ -43,6 +57,7 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
     const [students, setStudents] = useState<Student[]>([])
     const [selectedClass, setSelectedClass] = useState<string | undefined>(propClassId)
     const [selectedStudent, setSelectedStudent] = useState<string | undefined>()
+    const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null)
     const [sortBy, setSortBy] = useState<'wrongCount' | 'recentAccuracy'>('wrongCount')
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
@@ -92,6 +107,10 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
 
             if (selectedClass) params.append('classId', selectedClass)
             if (selectedStudent) params.append('studentId', selectedStudent)
+            if (dateRange) {
+                params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
+                params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
+            }
 
             const res = await fetch(`/api/statistics/word-mastery-detail?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -109,7 +128,7 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
         } finally {
             setLoading(false)
         }
-    }, [page, pageSize, selectedClass, selectedStudent, sortBy, sortOrder])
+    }, [page, pageSize, selectedClass, selectedStudent, dateRange, sortBy, sortOrder])
 
     useEffect(() => {
         loadClasses()
@@ -139,9 +158,10 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
             '单词': item.word,
             '音标': item.phonetic || '-',
             '释义': item.meaning,
+            '难度': difficultyLabels[item.difficulty] || item.difficulty,
             '累计错误次数': item.totalWrongCount,
-            '最近3次正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '-',
-            '学习人数': item.studentCount,
+            '正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '-',
+            '练习人数': item.practiceStudentCount,
         }))
 
         const ws = XLSX.utils.json_to_sheet(exportData)
@@ -173,6 +193,17 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
             ellipsis: true,
         },
         {
+            title: '难度',
+            dataIndex: 'difficulty',
+            key: 'difficulty',
+            width: 80,
+            render: (difficulty: string) => (
+                <Tag color={difficultyColors[difficulty]}>
+                    {difficultyLabels[difficulty] || difficulty}
+                </Tag>
+            ),
+        },
+        {
             title: '累计错误次数',
             dataIndex: 'totalWrongCount',
             key: 'totalWrongCount',
@@ -188,48 +219,30 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
             },
         },
         {
-            title: '最近3次正确率',
+            title: '正确率',
             key: 'recentAccuracy',
-            width: 200,
+            width: 120,
             sorter: true,
             render: (_, record) => {
-                if (record.recentAnswers.length === 0) {
-                    return <span style={{ color: '#999' }}>暂无记录</span>
+                if (record.recentAccuracy === null) {
+                    return <span style={{ color: '#999' }}>暂无数据</span>
                 }
-
-                const accuracy = record.recentAccuracy ?? 0
+                const accuracy = record.recentAccuracy
                 const color = accuracy >= 80 ? '#52c41a' : accuracy >= 60 ? '#faad14' : '#ff4d4f'
-
                 return (
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Progress
-                                percent={accuracy}
-                                size="small"
-                                strokeColor={color}
-                                style={{ width: 80, marginBottom: 0 }}
-                                format={() => `${accuracy}%`}
-                            />
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                            {record.recentAnswers.map((a, idx) => (
-                                <Tooltip key={idx} title={dayjs(a.answeredAt).format('YYYY-MM-DD HH:mm:ss')}>
-                                    {a.isCorrect ? (
-                                        <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 4 }} />
-                                    ) : (
-                                        <CloseCircleOutlined style={{ color: '#ff4d4f', marginRight: 4 }} />
-                                    )}
-                                </Tooltip>
-                            ))}
-                        </div>
-                    </div>
+                    <Progress
+                        percent={accuracy}
+                        size="small"
+                        strokeColor={color}
+                        format={() => `${accuracy}%`}
+                    />
                 )
             },
         },
         {
-            title: '学习人数',
-            dataIndex: 'studentCount',
-            key: 'studentCount',
+            title: '练习人数',
+            dataIndex: 'practiceStudentCount',
+            key: 'practiceStudentCount',
             width: 100,
             render: (count: number) => `${count} 人`,
         },
@@ -274,6 +287,15 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
                             </Select.Option>
                         ))}
                     </Select>
+                    <RangePicker
+                        value={dateRange}
+                        onChange={(dates) => {
+                            setDateRange(dates as [Dayjs, Dayjs] | null)
+                            setPage(1)
+                        }}
+                        format="YYYY-MM-DD"
+                        placeholder={['开始日期', '结束日期']}
+                    />
                     <Select
                         value={sortBy}
                         onChange={(val) => {
@@ -289,7 +311,7 @@ export default function WordMasteryDetail({ classId: propClassId }: WordMasteryD
                         刷新
                     </Button>
                     <Button icon={<DownloadOutlined />} onClick={handleExport}>
-                        导出
+                        导出Excel
                     </Button>
                 </Space>
             }
