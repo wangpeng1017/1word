@@ -1,7 +1,9 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
 import {
   BookOutlined,
   UserOutlined,
@@ -23,6 +25,9 @@ import {
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
+
+// 配置 NProgress
+NProgress.configure({ showSpinner: false, speed: 300, minimum: 0.1 })
 
 const { Header, Sider, Content } = Layout
 
@@ -146,9 +151,17 @@ export default function AdminLayout({
     }
   }, [router])
 
-  const handleMenuClick = ({ key }: { key: string }) => {
-    router.push(key)
-  }
+  const handleMenuClick = useCallback(({ key }: { key: string }) => {
+    if (key !== pathname) {
+      NProgress.start()
+      router.push(key)
+    }
+  }, [pathname, router])
+
+  // 路由变化时停止进度条
+  useEffect(() => {
+    NProgress.done()
+  }, [pathname])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
