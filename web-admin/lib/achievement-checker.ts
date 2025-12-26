@@ -70,14 +70,17 @@ async function checkStudyAchievement(studentId: string, condition: any): Promise
   const { totalWords, accuracy } = condition
 
   if (totalWords) {
-    const count = await prisma.study_records.count({
+    // 统计学习的单词总数（累计完成的单词数）
+    const result = await prisma.study_records.aggregate({
       where: {
         studentId,
         isCompleted: true
-      }
+      },
+      _sum: { completedWords: true }
     })
 
-    if (count < totalWords) return false
+    const learnedWords = result._sum.completedWords || 0
+    if (learnedWords < totalWords) return false
   }
 
   if (accuracy) {

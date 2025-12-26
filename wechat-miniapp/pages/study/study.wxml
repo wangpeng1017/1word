@@ -55,7 +55,7 @@
     <!-- 选择题模式4: 选词填空 -->
     <view wx:elif="{{currentQuestion.type === 'FILL_IN_BLANK'}}" class="word-display">
       <view class="sentence-display">
-        <text class="sentence-text">{{currentQuestion.sentence}}</text>
+        <text class="sentence-text">{{currentQuestion.content}}</text>
       </view>
       <text class="question-hint">选择正确的单词填空</text>
     </view>
