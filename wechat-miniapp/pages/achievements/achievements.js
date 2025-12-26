@@ -24,7 +24,6 @@ Page({
     typeFilters: [
       { label: '全部', value: 'all' },
       { label: '学习', value: 'study' },
-      { label: '测试', value: 'test' },
       { label: '连续', value: 'streak' },
       { label: '掌握', value: 'mastery' }
     ],
