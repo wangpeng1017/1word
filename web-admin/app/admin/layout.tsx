@@ -19,6 +19,7 @@ import {
   FileExclamationOutlined,
   FolderOutlined,
   TrophyOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons'
 import { Layout, Menu, theme, Button, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -84,6 +85,11 @@ const menuItems: MenuItem[] = [
     key: '/admin/statistics',
     icon: <BarChartOutlined />,
     label: '学习统计',
+  },
+  {
+    key: '/admin/learning-data',
+    icon: <DatabaseOutlined />,
+    label: '学习数据',
   },
   {
     key: '/admin/wrong-questions',
