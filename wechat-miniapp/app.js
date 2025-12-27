@@ -1,6 +1,7 @@
 // app.js
 const envConfig = require('./config/env.js')
 const { clearAllStudyProgress } = require('./utils/storage.js')
+const { initNetworkListener, syncOfflineQueue } = require('./utils/sync.js')
 
 App({
   globalData: {
@@ -12,6 +13,9 @@ App({
   },
 
   onLaunch() {
+    // 初始化网络监听（用于离线同步）
+    initNetworkListener()
+
     // 检查登录状态
     const token = wx.getStorageSync('token')
     if (token) {
@@ -30,6 +34,8 @@ App({
       success: (res) => {
         if (res.data.success) {
           this.globalData.userInfo = res.data.data
+          // 登录成功后，尝试同步离线数据
+          syncOfflineQueue()
         } else {
           this.logout()
         }

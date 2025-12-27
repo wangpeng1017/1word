@@ -88,6 +88,13 @@ function put(url, data = {}, needAuth = true) {
 }
 
 /**
+ * PATCH请求
+ */
+function patch(url, data = {}, needAuth = true) {
+  return request({ url, method: 'PATCH', data, needAuth })
+}
+
+/**
  * DELETE请求
  */
 function del(url, data = {}, needAuth = true) {
@@ -99,5 +106,6 @@ module.exports = {
   get,
   post,
   put,
+  patch,
   del,
 }
