@@ -68,10 +68,8 @@ export async function GET(request: NextRequest) {
             return unauthorizedResponse('只有教师或管理员可以查看学习数据')
         }
 
-        // 注意：detectAndUpdateInterrupted 功能暂时禁用
-        // 原因：study_records 表缺少 status 和 lastActiveAt 字段
-        // 如需启用，需要先执行数据库迁移添加这些字段
-        // await detectAndUpdateInterrupted()
+        // 检测并更新超时中断的学习记录
+        await detectAndUpdateInterrupted()
 
         const { searchParams } = new URL(request.url)
         const classId = searchParams.get('classId')

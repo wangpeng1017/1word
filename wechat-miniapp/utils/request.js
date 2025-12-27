@@ -1,5 +1,5 @@
 // 网络请求封装
-const app = getApp()
+// 注意：不在模块顶层调用 getApp()，因为模块加载时 App 可能还未初始化
 
 /**
  * 发送HTTP请求
@@ -8,19 +8,23 @@ const app = getApp()
  */
 function request(options) {
   return new Promise((resolve, reject) => {
+    const app = getApp()
     const { url, method = 'GET', data = {}, needAuth = true } = options
 
     const header = {
       'Content-Type': 'application/json',
     }
 
-    // 添加认证token
-    if (needAuth && app.globalData.token) {
+    // 添加认证token（安全检查 app 和 globalData）
+    if (needAuth && app && app.globalData && app.globalData.token) {
       header['Authorization'] = `Bearer ${app.globalData.token}`
     }
 
+    // 获取 API URL，提供默认值
+    const apiUrl = (app && app.globalData && app.globalData.apiUrl) || 'http://8.130.182.148:3000'
+
     wx.request({
-      url: `${app.globalData.apiUrl}${url}`,
+      url: `${apiUrl}${url}`,
       method,
       data,
       header,
@@ -41,7 +45,9 @@ function request(options) {
             title: '请先登录',
             icon: 'none',
           })
-          app.logout()
+          if (app && app.logout) {
+            app.logout()
+          }
           reject('未授权')
         } else {
           // 显示服务器返回的具体错误信息

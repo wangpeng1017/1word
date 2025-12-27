@@ -139,9 +139,12 @@ model study_records {
   isCompleted    Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime
+  status         String?   @default("COMPLETED")
+  lastActiveAt   DateTime?
   students       students  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, taskDate])
+  @@index([studentId, status])
 }
 
 model system_configs {
