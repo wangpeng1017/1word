@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Select, DatePicker, Space, Button, Tag, message } from 'antd'
-import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, ClockCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
 import * as XLSX from 'xlsx'
@@ -170,7 +170,7 @@ export default function LearningDataPage() {
             '答题时长': formatDuration(item.totalTimeSeconds),
             '开始时间': dayjs(item.startedAt).format('YYYY-MM-DD HH:mm:ss'),
             '结束时间': item.completedAt ? dayjs(item.completedAt).format('YYYY-MM-DD HH:mm:ss') : '-',
-            '完成状态': item.isCompleted ? '已完成' : '未完成',
+            '完成状态': item.status === 'COMPLETED' ? '已完成' : item.status === 'IN_PROGRESS' ? '进行中' : '已中断',
         }))
 
         const ws = XLSX.utils.json_to_sheet(exportData)

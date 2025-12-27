@@ -9,6 +9,51 @@ import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/resp
  * @see PRD: docs/statistics/PRD.md#学习数据列表
  */
 
+// 默认中断超时时间（分钟）
+const DEFAULT_INTERRUPT_TIMEOUT = 10
+
+/**
+ * 获取中断超时配置
+ */
+async function getInterruptTimeout(): Promise<number> {
+    try {
+        const config = await prisma.system_configs.findUnique({
+            where: { key: 'studyConfig' }
+        })
+        if (config?.value) {
+            const parsed = JSON.parse(config.value)
+            return parsed.interruptTimeout || DEFAULT_INTERRUPT_TIMEOUT
+        }
+    } catch (e) {
+        console.warn('[TASK] 获取中断超时配置失败，使用默认值', e)
+    }
+    return DEFAULT_INTERRUPT_TIMEOUT
+}
+
+/**
+ * 检测并更新中断的学习记录
+ */
+async function detectAndUpdateInterrupted() {
+    const timeoutMinutes = await getInterruptTimeout()
+    const cutoffTime = new Date(Date.now() - timeoutMinutes * 60 * 1000)
+
+    // 更新超时的进行中记录为中断状态
+    const result = await prisma.study_records.updateMany({
+        where: {
+            status: 'IN_PROGRESS',
+            lastActiveAt: { lt: cutoffTime },
+        },
+        data: {
+            status: 'INTERRUPTED',
+            updatedAt: new Date(),
+        },
+    })
+
+    if (result.count > 0) {
+        console.log(`[学习数据] 检测到 ${result.count} 条超时中断的记录（超时: ${timeoutMinutes}分钟）`)
+    }
+}
+
 /**
  * 获取学习会话列表
  * GET /api/statistics/learning-sessions?classId=xxx&studentId=xxx&startDate=xxx&endDate=xxx&page=1&pageSize=20
@@ -22,6 +67,9 @@ export async function GET(request: NextRequest) {
         if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
             return unauthorizedResponse('只有教师或管理员可以查看学习数据')
         }
+
+        // 先检测并更新中断的记录
+        await detectAndUpdateInterrupted()
 
         const { searchParams } = new URL(request.url)
         const classId = searchParams.get('classId')
@@ -105,10 +153,11 @@ export async function GET(request: NextRequest) {
                 correctCount: record.correctCount,
                 wrongCount: record.wrongCount,
                 accuracy,
-                totalTimeSeconds: record.totalTime, // 精确到秒
+                totalTimeSeconds: record.totalTime,
                 startedAt: record.startedAt.toISOString(),
                 completedAt: record.completedAt?.toISOString() || null,
                 isCompleted: record.isCompleted,
+                status: (record as any).status || (record.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'),
             }
         })
 

@@ -1,5 +1,6 @@
 // app.js
 const envConfig = require('./config/env.js')
+const { clearAllStudyProgress } = require('./utils/storage.js')
 
 App({
   globalData: {
@@ -41,6 +42,9 @@ App({
 
   // 登出
   logout() {
+    // 清除当前用户的学习进度缓存
+    clearAllStudyProgress()
+
     this.globalData.token = null
     this.globalData.userInfo = null
     wx.removeStorageSync('token')

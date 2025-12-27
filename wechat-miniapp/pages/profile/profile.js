@@ -190,14 +190,8 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          app.globalData.token = null
-          app.globalData.userInfo = null
-          wx.removeStorageSync('token')
-          wx.removeStorageSync('userInfo')
-
-          wx.reLaunch({
-            url: '/pages/login/login',
-          })
+          // 使用 app.logout() 统一处理登出逻辑
+          app.logout()
         }
       },
     })
