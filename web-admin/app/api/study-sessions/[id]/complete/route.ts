@@ -1,6 +1,10 @@
 /**
  * @file 完成学习会话 API
  * @desc 学习完成时调用，更新状态并触发后续处理
+ * @input 依赖: prisma, auth, ebbinghaus, achievement-checker
+ * @output 导出: POST /api/study-sessions/[id]/complete
+ * @pos 学习流程核心 - 完成学习时更新掌握度、积分、成就
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
  */
 
 import { NextRequest } from 'next/server'

@@ -1,7 +1,10 @@
 /**
  * @file sync.js
  * @desc 学习进度同步服务 - 关键节点批量同步（优化5000+并发）
- * 同步时机：开始学习、退出/隐藏、完成学习
+ * @input 依赖: request.js, storage.js, getApp()
+ * @output 导出: createSession, syncProgress, completeSession, checkOnline 等
+ * @pos 小程序核心 - 学习会话管理和进度同步
+ * ⚠️ 注意：getApp() 必须在函数内部调用，不能在模块顶层调用
  */
 
 const { post } = require('./request')
