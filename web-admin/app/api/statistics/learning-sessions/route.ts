@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
             include: {
                 students: {
                     include: {
-                        user: { select: { name: true } },
+                        user: { select: { name: true, phone: true } },
                         classes: { select: { name: true } },
                     },
                 },
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
                 id: record.id,
                 studentId: record.studentId,
                 studentName: record.students.user.name,
-                studentNo: record.students.student_no,
+                phone: record.students.user.phone || '',
                 className: record.students.classes.name,
                 taskDate: record.taskDate.toISOString().split('T')[0],
                 totalWords: record.totalWords,

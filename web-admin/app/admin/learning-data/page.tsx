@@ -13,7 +13,7 @@ interface LearningSession {
     id: string
     studentId: string
     studentName: string
-    studentNo: string
+    phone: string
     className: string
     taskDate: string
     totalWords: number
@@ -159,7 +159,7 @@ export default function LearningDataPage() {
         const exportData = data.map((item) => ({
             '班级': item.className,
             '学生姓名': item.studentName,
-            '学号': item.studentNo,
+            '手机号': item.phone,
             '学习日期': item.taskDate,
             '总词数': item.totalWords,
             '已完成': item.completedWords,
@@ -194,10 +194,10 @@ export default function LearningDataPage() {
             width: 100,
         },
         {
-            title: '学号',
-            dataIndex: 'studentNo',
-            key: 'studentNo',
-            width: 100,
+            title: '手机号',
+            dataIndex: 'phone',
+            key: 'phone',
+            width: 120,
         },
         {
             title: '日期',
