@@ -1,6 +1,6 @@
 {
-  "libVersion": "3.11.1",
-  "projectname": "vocab-assistant",
+  "libVersion": "3.13.0",
+  "projectname": "wechat-miniapp",
   "condition": {},
   "setting": {
     "urlCheck": false,

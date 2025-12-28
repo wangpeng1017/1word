@@ -28,18 +28,22 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const todayUTC = getTodayUTC()
 
-    // 检查今天是否已有进行中的会话
+    // 检查今天是否已有会话
     const existingSession = await prisma.study_records.findFirst({
       where: {
         studentId,
         taskDate: todayUTC,
-        status: 'IN_PROGRESS',
+        status: { in: ['IN_PROGRESS', 'COMPLETED'] },
       },
       orderBy: { createdAt: 'desc' },
     })
 
     if (existingSession) {
-      // 返回已有的会话，让客户端恢复
+      if (existingSession.status === 'COMPLETED') {
+        // 今天已完成学习，不允许再开始
+        return apiResponse.error('今天的学习任务已完成，明天再来吧！', 400)
+      }
+      // 返回进行中的会话，让客户端恢复
       return apiResponse.success({
         sessionId: existingSession.id,
         isResumed: true,
