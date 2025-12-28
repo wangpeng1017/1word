@@ -87,11 +87,6 @@ const menuItems: MenuItem[] = [
     label: '测试记录',
   },
   {
-    key: '/admin/statistics',
-    icon: <BarChartOutlined />,
-    label: '学习统计',
-  },
-  {
     key: '/admin/learning-data',
     icon: <DatabaseOutlined />,
     label: '学习数据',
