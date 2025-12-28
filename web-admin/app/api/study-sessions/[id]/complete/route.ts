@@ -180,6 +180,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await Promise.all(masteryUpdates)
 
+    // 更新已掌握单词的 study_plans 状态为 MASTERED
+    const masteredVocabIds = answers
+      .filter(a => {
+        const recent = answersByVocab.get(a.vocabularyId) || []
+        return recent.length >= 3 && recent.every(r => r)
+      })
+      .map(a => a.vocabularyId)
+
+    if (masteredVocabIds.length > 0) {
+      await prisma.study_plans.updateMany({
+        where: { studentId: session.studentId, vocabularyId: { in: masteredVocabIds } },
+        data: { status: 'MASTERED', updatedAt: now },
+      })
+    }
+
     // 更新连续学习天数
     try {
       const existingStreak = await prisma.study_streaks.findUnique({
