@@ -256,14 +256,19 @@ export default function LearningDataPage() {
         },
         {
             title: '状态',
-            dataIndex: 'isCompleted',
-            key: 'isCompleted',
-            width: 80,
-            render: (isCompleted: boolean) => (
-                isCompleted
-                    ? <Tag icon={<CheckCircleOutlined />} color="success">已完成</Tag>
-                    : <Tag icon={<CloseCircleOutlined />} color="default">未完成</Tag>
-            ),
+            dataIndex: 'status',
+            key: 'status',
+            width: 90,
+            render: (status: string) => {
+                if (status === 'COMPLETED') {
+                    return <Tag icon={<CheckCircleOutlined />} color="success">已完成</Tag>
+                } else if (status === 'IN_PROGRESS') {
+                    return <Tag icon={<ClockCircleOutlined />} color="processing">进行中</Tag>
+                } else if (status === 'INTERRUPTED') {
+                    return <Tag icon={<PauseCircleOutlined />} color="warning">已中断</Tag>
+                }
+                return <Tag icon={<CloseCircleOutlined />} color="default">未完成</Tag>
+            },
         },
     ]
 
