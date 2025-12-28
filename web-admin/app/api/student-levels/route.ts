@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('pageSize') || '20')
     const search = searchParams.get('search') || ''
-    const classId = searchParams.get('classId') || ''
+    const class_id = searchParams.get('class_id') || ''
     const sortBy = searchParams.get('sortBy') || 'level'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
@@ -28,18 +28,18 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (search) {
-      where.student = {
+      where.students = {
         OR: [
           { user: { name: { contains: search } } },
-          { studentNo: { contains: search } }
+          { student_no: { contains: search } }
         ]
       }
     }
 
-    if (classId) {
-      where.student = {
+    if (class_id) {
+      where.students = {
         ...where.student,
-        classId
+        class_id
       }
     }
 
@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
     const data = await prisma.student_points.findMany({
       where,
       include: {
-        student: {
+        students: {
           include: {
             user: {
               select: {
                 name: true
               }
             },
-            class: {
+            classes: {
               select: {
                 name: true
               }
@@ -88,9 +88,9 @@ export async function GET(request: NextRequest) {
     const formattedData = data.map(item => ({
       id: item.id,
       studentId: item.studentId,
-      studentName: item.student?.user?.name || '未知',
-      studentNo: item.student?.studentNo || '-',
-      className: item.student?.class?.name || '未分配',
+      studentName: item.students?.user?.name || '未知',
+      studentNo: item.students?.student_no || '-',
+      className: item.students?.classes?.name || '未分配',
       level: item.level,
       totalPoints: item.totalPoints,
       dailyPoints: item.dailyPoints,
