@@ -62,9 +62,11 @@ App({
 
   // 设置登录信息
   setLoginInfo(token, userInfo) {
+    console.log('[DEBUG] setLoginInfo 调用 - token:', token ? '存在' : '不存在', 'userInfo:', userInfo)
     this.globalData.token = token
     this.globalData.userInfo = userInfo
     wx.setStorageSync('token', token)
     wx.setStorageSync('userInfo', userInfo)
+    console.log('[DEBUG] globalData.userInfo 已设置:', this.globalData.userInfo)
   }
 })

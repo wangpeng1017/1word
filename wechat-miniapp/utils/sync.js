@@ -7,7 +7,7 @@
 const { post } = require('./request')
 const { getSyncQueue, clearSyncQueue, addToSyncQueue } = require('./storage')
 
-const app = getApp()
+// 不在模块顶层获取 app，而是在函数内部获取
 
 // 当前学习会话ID
 let currentSessionId = null
@@ -41,15 +41,27 @@ function initNetworkListener() {
  * 创建/恢复学习会话
  */
 async function createSession(totalWords) {
+  const app = getApp() // 在函数内部获取 app
   const studentId = app?.globalData?.userInfo?.studentId
-  if (!studentId || !isOnline) return null
+  console.log('[DEBUG] createSession 调用 - studentId:', studentId, 'isOnline:', isOnline, 'totalWords:', totalWords)
+  console.log('[DEBUG] app.globalData.userInfo:', app?.globalData?.userInfo)
+
+  if (!studentId || !isOnline) {
+    console.log('[DEBUG] createSession 跳过 - studentId:', studentId, 'isOnline:', isOnline)
+    return null
+  }
 
   try {
+    console.log('[DEBUG] 开始请求 /study-sessions')
     const response = await post('/study-sessions', { studentId, totalWords })
+    console.log('[DEBUG] createSession 响应:', response)
+
     if (response?.sessionId) {
       currentSessionId = response.sessionId
+      console.log('[DEBUG] 会话创建成功 - sessionId:', currentSessionId)
       return response
     }
+    console.log('[DEBUG] 响应中没有 sessionId')
   } catch (error) {
     console.error('[会话] 创建失败:', error)
   }

@@ -15,11 +15,37 @@ Page({
     sessionId: null, lastSyncedIndex: -1,
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     if (!app.globalData.token) { wx.reLaunch({ url: '/pages/login/login' }); return }
+
+    // 等待 userInfo 加载完成
+    await this.ensureUserInfo()
+
     this.setData({ startTime: Date.now(), sessionStartTime: Date.now() })
     this.startTimer()
     options.resume === 'true' ? this.resumeProgress() : this.loadTasks()
+  },
+
+  // 确保 userInfo 已加载
+  async ensureUserInfo() {
+    if (app.globalData.userInfo?.studentId) {
+      console.log('[DEBUG] userInfo 已存在:', app.globalData.userInfo)
+      return
+    }
+
+    console.log('[DEBUG] userInfo 未加载，等待中...')
+    // 最多等待 3 秒
+    for (let i = 0; i < 30; i++) {
+      if (app.globalData.userInfo?.studentId) {
+        console.log('[DEBUG] userInfo 加载完成:', app.globalData.userInfo)
+        return
+      }
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
+    // 超时后尝试重新获取
+    console.log('[DEBUG] userInfo 加载超时，尝试重新登录')
+    wx.reLaunch({ url: '/pages/login/login' })
   },
 
   onUnload() { if (this.data.timer) clearInterval(this.data.timer); this.syncBeforeLeave() },
@@ -72,10 +98,14 @@ Page({
       const validTasks = tasks.filter(t => t.vocabulary?.questions?.length > 0)
       if (validTasks.length === 0) { wx.hideLoading(); wx.showModal({ title: '提示', content: '所有任务都没有可用题目', showCancel: false, success: () => wx.navigateBack() }); return }
       let sessionId = null, lastSyncedIndex = -1
+      console.log('[DEBUG] loadTasks - isOffline:', this.data.isOffline, 'validTasks.length:', validTasks.length)
       if (!this.data.isOffline) {
+        console.log('[DEBUG] 准备创建会话 - validTasks.length:', validTasks.length)
         const sr = await createSession(validTasks.length)
+        console.log('[DEBUG] createSession 返回结果:', sr)
         if (sr) { sessionId = sr.sessionId; setCurrentSessionId(sessionId); if (sr.isResumed && sr.completedWords > 0) lastSyncedIndex = sr.completedWords - 1 }
       }
+      console.log('[DEBUG] 最终 sessionId:', sessionId, 'lastSyncedIndex:', lastSyncedIndex)
       this.setData({ tasks: validTasks, totalCount: validTasks.length, isLoading: false, sessionId, lastSyncedIndex })
       wx.hideLoading()
       this.loadCurrentQuestion()
