@@ -28,12 +28,11 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const todayUTC = getTodayUTC()
 
-    // 检查今天是否已有会话
+    // 检查今天是否已有会话（按创建时间倒序，优先找最新的）
     const existingSession = await prisma.study_records.findFirst({
       where: {
         studentId,
         taskDate: todayUTC,
-        status: { in: ['IN_PROGRESS', 'COMPLETED'] },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -43,7 +42,16 @@ export async function POST(request: NextRequest) {
         // 今天已完成学习，不允许再开始
         return apiResponse.error('今天的学习任务已完成，明天再来吧！', 400)
       }
-      // 返回进行中的会话，让客户端恢复
+      
+      // 如果是中断状态，恢复为进行中
+      if (existingSession.status === 'INTERRUPTED') {
+        await prisma.study_records.update({
+          where: { id: existingSession.id },
+          data: { status: 'IN_PROGRESS', lastActiveAt: now, updatedAt: now },
+        })
+      }
+      
+      // 返回已有会话，让客户端恢复（进度累加）
       return apiResponse.success({
         sessionId: existingSession.id,
         isResumed: true,
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
         correctCount: existingSession.correctCount,
         wrongCount: existingSession.wrongCount,
         totalTime: existingSession.totalTime,
-        message: '恢复已有学习会话',
+        message: existingSession.status === 'INTERRUPTED' ? '恢复中断的学习会话' : '恢复已有学习会话',
       })
     }
 
