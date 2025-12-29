@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Table as AntTable, Card, Tag, Button, Space, message, Select, DatePicker, Input } from 'antd'
-import { ReloadOutlined, DownloadOutlined, SearchOutlined, FileWordOutlined } from '@ant-design/icons'
+import { ReloadOutlined, DownloadOutlined, SearchOutlined, FileWordOutlined, PrinterOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
@@ -282,6 +282,106 @@ export default function WrongQuestionsPage() {
         }
     }
 
+    const handlePrint = async () => {
+        try {
+            message.loading({ content: '正在准备打印...', key: 'print' })
+
+            // 获取所有数据
+            const token = localStorage.getItem('token')
+            const params = new URLSearchParams({ limit: '10000' })
+            if (filters.studentId) params.append('studentId', filters.studentId)
+            if (filters.classId) params.append('classId', filters.classId)
+            if (filters.dateRange?.[0]) params.append('startDate', filters.dateRange[0].format('YYYY-MM-DD'))
+            if (filters.dateRange?.[1]) params.append('endDate', filters.dateRange[1].format('YYYY-MM-DD'))
+
+            const response = await fetch(`/api/wrong-questions?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const result = await response.json()
+
+            if (!result.success || !result.data.records.length) {
+                message.error({ content: '没有数据可打印', key: 'print' })
+                return
+            }
+
+            const records: WrongQuestion[] = result.data.records
+
+            // 创建打印内容
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>错题明细</title>
+                    <style>
+                        body { font-family: "Microsoft YaHei", sans-serif; padding: 20px; }
+                        h1 { text-align: center; margin-bottom: 10px; }
+                        .info { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+                        th { background-color: #f0f0f0; font-weight: bold; }
+                        .wrong { color: #ff4d4f; }
+                        .correct { color: #52c41a; }
+                        @media print {
+                            body { padding: 0; }
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>错题明细</h1>
+                    <div class="info">导出时间：${dayjs().format('YYYY-MM-DD HH:mm:ss')} | 共 ${records.length} 条</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>班级</th>
+                                <th>学生</th>
+                                <th>单词</th>
+                                <th>释义</th>
+                                <th>题型</th>
+                                <th>错误答案</th>
+                                <th>正确答案</th>
+                                <th>时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(r => `
+                                <tr>
+                                    <td>${r.className || '-'}</td>
+                                    <td>${r.studentName || '-'}</td>
+                                    <td>${r.word || '-'}</td>
+                                    <td>${r.meaning || '-'}</td>
+                                    <td>${questionTypeMap[r.questionType] || r.questionType || '-'}</td>
+                                    <td class="wrong">${r.wrongAnswer || '-'}</td>
+                                    <td class="correct">${r.correctAnswer || '-'}</td>
+                                    <td>${dayjs(r.wrongAt).format('MM-DD HH:mm')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `
+
+            // 创建打印窗口
+            const printWindow = window.open('', '_blank')
+            if (printWindow) {
+                printWindow.document.write(printContent)
+                printWindow.document.close()
+                printWindow.focus()
+                setTimeout(() => {
+                    printWindow.print()
+                    printWindow.close()
+                }, 250)
+            }
+
+            message.success({ content: '打印窗口已打开', key: 'print' })
+        } catch (error) {
+            console.error('打印失败:', error)
+            message.error({ content: '打印失败', key: 'print' })
+        }
+    }
+
     const columns: ColumnsType<WrongQuestion> = [
         {
             title: '班级',
@@ -388,6 +488,9 @@ export default function WrongQuestionsPage() {
                     </Button>
                     <Button icon={<FileWordOutlined />} onClick={handleExportWord}>
                         导出Word
+                    </Button>
+                    <Button icon={<PrinterOutlined />} onClick={handlePrint}>
+                        打印
                     </Button>
                     <PdfExport
                         title="错题明细"
