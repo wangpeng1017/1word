@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Card, Tag, Button, Space, message, Select, DatePicker, Input } from 'antd'
-import { ReloadOutlined, DownloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { Table as AntTable, Card, Tag, Button, Space, message, Select, DatePicker, Input } from 'antd'
+import { ReloadOutlined, DownloadOutlined, SearchOutlined, FileWordOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
+import { Document, Packer, Paragraph, Table as DocxTable, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle } from 'docx'
+import { saveAs } from 'file-saver'
 import PdfExport from '@/components/PdfExport'
 
 const { RangePicker } = DatePicker
@@ -186,6 +188,100 @@ export default function WrongQuestionsPage() {
         }
     }
 
+    const handleExportWord = async () => {
+        try {
+            message.loading({ content: '正在导出Word...', key: 'exportWord' })
+
+            // 获取所有数据
+            const token = localStorage.getItem('token')
+            const params = new URLSearchParams({ limit: '10000' })
+            if (filters.studentId) params.append('studentId', filters.studentId)
+            if (filters.classId) params.append('classId', filters.classId)
+            if (filters.dateRange?.[0]) params.append('startDate', filters.dateRange[0].format('YYYY-MM-DD'))
+            if (filters.dateRange?.[1]) params.append('endDate', filters.dateRange[1].format('YYYY-MM-DD'))
+
+            const response = await fetch(`/api/wrong-questions?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const result = await response.json()
+
+            if (!result.success || !result.data.records.length) {
+                message.error({ content: '没有数据可导出', key: 'exportWord' })
+                return
+            }
+
+            const records: WrongQuestion[] = result.data.records
+
+            // 创建表格行
+            const tableRows = [
+                // 表头
+                new TableRow({
+                    children: ['班级', '学生', '单词', '释义', '题型', '错误答案', '正确答案', '时间'].map(text =>
+                        new TableCell({
+                            children: [new Paragraph({
+                                children: [new TextRun({ text, bold: true, size: 20 })],
+                                alignment: AlignmentType.CENTER,
+                            })],
+                            shading: { fill: 'E6E6E6' },
+                        })
+                    ),
+                }),
+                // 数据行
+                ...records.map(r =>
+                    new TableRow({
+                        children: [
+                            r.className || '-',
+                            r.studentName || '-',
+                            r.word || '-',
+                            r.meaning || '-',
+                            questionTypeMap[r.questionType] || r.questionType || '-',
+                            r.wrongAnswer || '-',
+                            r.correctAnswer || '-',
+                            dayjs(r.wrongAt).format('MM-DD HH:mm'),
+                        ].map(text =>
+                            new TableCell({
+                                children: [new Paragraph({
+                                    children: [new TextRun({ text, size: 18 })],
+                                })],
+                            })
+                        ),
+                    })
+                ),
+            ]
+
+            // 创建文档
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({
+                            children: [new TextRun({ text: '错题明细', bold: true, size: 32 })],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 300 },
+                        }),
+                        new Paragraph({
+                            children: [new TextRun({ text: `导出时间：${dayjs().format('YYYY-MM-DD HH:mm:ss')}  共 ${records.length} 条`, size: 20, color: '666666' })],
+                            spacing: { after: 200 },
+                        }),
+                        new DocxTable({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            rows: tableRows,
+                        }),
+                    ],
+                }],
+            })
+
+            // 导出文件
+            const blob = await Packer.toBlob(doc)
+            saveAs(blob, `错题明细_${dayjs().format('YYYYMMDD_HHmmss')}.docx`)
+
+            message.success({ content: '导出Word成功', key: 'exportWord' })
+        } catch (error) {
+            console.error('导出Word失败:', error)
+            message.error({ content: '导出Word失败', key: 'exportWord' })
+        }
+    }
+
     const columns: ColumnsType<WrongQuestion> = [
         {
             title: '班级',
@@ -290,6 +386,9 @@ export default function WrongQuestionsPage() {
                     <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel} style={{ color: '#fff' }}>
                         导出Excel
                     </Button>
+                    <Button icon={<FileWordOutlined />} onClick={handleExportWord}>
+                        导出Word
+                    </Button>
                     <PdfExport
                         title="错题明细"
                         data={data.map(item => ({
@@ -304,7 +403,7 @@ export default function WrongQuestionsPage() {
             </div>
 
             {/* 表格 */}
-            <Table
+            <AntTable
                 columns={columns}
                 dataSource={data}
                 rowKey="id"
