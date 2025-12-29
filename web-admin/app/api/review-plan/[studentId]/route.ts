@@ -190,8 +190,8 @@ export async function GET(
       }
     })
 
-    // dueCount: 今日应完成的总任务数 = 新学 + 复习
-    const todayDueCount = todayNewCount + todayReviewCount
+    // dueCount: 如果今天有学习记录，使用记录中的totalWords（避免复习后掌握单词导致数量变化）
+    const todayDueCount = todayRecord?.totalWords || (todayNewCount + todayReviewCount)
     const todayCompletedCount = todayRecord?.completedWords || 0
     const todayTimeSpent = todayRecord?.totalTime || 0
 
