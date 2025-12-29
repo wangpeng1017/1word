@@ -104,6 +104,12 @@ Page({
         const sr = await createSession(validTasks.length)
         console.log('[DEBUG] createSession 返回结果:', sr)
         if (sr) {
+          // 检查是否今天已完成
+          if (sr.isCompleted) {
+            wx.hideLoading()
+            wx.showModal({ title: '提示', content: sr.message || '今天的学习任务已完成', showCancel: false, success: () => wx.navigateBack() })
+            return
+          }
           sessionId = sr.sessionId; setCurrentSessionId(sessionId)
           if (sr.isResumed && sr.completedWords > 0) {
             lastSyncedIndex = sr.completedWords - 1
