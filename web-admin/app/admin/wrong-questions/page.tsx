@@ -8,7 +8,6 @@ import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
 import { Document, Packer, Paragraph, Table as DocxTable, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle } from 'docx'
 import { saveAs } from 'file-saver'
-import PdfExport from '@/components/PdfExport'
 
 const { RangePicker } = DatePicker
 
@@ -492,16 +491,6 @@ export default function WrongQuestionsPage() {
                     <Button icon={<PrinterOutlined />} onClick={handlePrint}>
                         打印
                     </Button>
-                    <PdfExport
-                        title="错题明细"
-                        data={data.map(item => ({
-                            word: item.word,
-                            meaning: item.meaning,
-                            wrongAnswer: item.wrongAnswer,
-                            correctAnswer: item.correctAnswer,
-                            wrongAt: dayjs(item.wrongAt).format('YYYY-MM-DD HH:mm'),
-                        }))}
-                    />
                 </Space>
             </div>
 

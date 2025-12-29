@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Card, Tag, Button, Space, message, Select, Progress, Tooltip } from 'antd'
+import { Table, Card, Button, Space, message, Select, Progress, Tooltip } from 'antd'
 import { ReloadOutlined, DownloadOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import * as XLSX from 'xlsx'
@@ -11,7 +11,6 @@ interface WordMasteryRecord {
     word: string
     meaning: string
     phonetic: string | null
-    difficulty: string
     totalWrongCount: number
     practiceCount: number
     studentCount: number
@@ -29,18 +28,6 @@ interface ClassInfo {
 interface Student {
     id: string
     user: { name: string }
-}
-
-const difficultyColors: Record<string, string> = {
-    EASY: 'green',
-    MEDIUM: 'orange',
-    HARD: 'red',
-}
-
-const difficultyLabels: Record<string, string> = {
-    EASY: '简单',
-    MEDIUM: '中等',
-    HARD: '困难',
 }
 
 export default function WordMasteryPage() {
@@ -151,7 +138,6 @@ export default function WordMasteryPage() {
             '单词': item.word,
             '释义': item.meaning,
             '音标': item.phonetic || '-',
-            '难度': difficultyLabels[item.difficulty] || item.difficulty,
             '累计错误次数': item.totalWrongCount,
             '最近3次正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '暂无数据',
             '练习人数': item.studentCount,
@@ -185,17 +171,6 @@ export default function WordMasteryPage() {
             key: 'meaning',
             width: 200,
             ellipsis: true,
-        },
-        {
-            title: '难度',
-            dataIndex: 'difficulty',
-            key: 'difficulty',
-            width: 80,
-            render: (difficulty: string) => (
-                <Tag color={difficultyColors[difficulty] || 'default'}>
-                    {difficultyLabels[difficulty] || difficulty}
-                </Tag>
-            ),
         },
         {
             title: (
@@ -281,7 +256,6 @@ export default function WordMasteryPage() {
                             { label: '按错误次数', value: 'wrongCount' },
                             { label: '按单词', value: 'word' },
                             { label: '按正确率', value: 'accuracy' },
-                            { label: '按难度', value: 'difficulty' },
                         ]}
                     />
                     <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
