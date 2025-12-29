@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const vocabularyId = searchParams.get('vocabularyId')
     const type = searchParams.get('type')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100) // 最大100条
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 10000) // 最大10000条
     const cursor = searchParams.get('cursor') // 游标ID
     const needCount = searchParams.get('needCount') === 'true' // 是否需要总数
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
