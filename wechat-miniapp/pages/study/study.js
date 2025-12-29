@@ -97,16 +97,25 @@ Page({
       if (!tasks?.length) { wx.hideLoading(); wx.showModal({ title: '提示', content: '暂无学习任务', showCancel: false, success: () => wx.navigateBack() }); return }
       const validTasks = tasks.filter(t => t.vocabulary?.questions?.length > 0)
       if (validTasks.length === 0) { wx.hideLoading(); wx.showModal({ title: '提示', content: '所有任务都没有可用题目', showCancel: false, success: () => wx.navigateBack() }); return }
-      let sessionId = null, lastSyncedIndex = -1
+      let sessionId = null, lastSyncedIndex = -1, resumedIndex = 0, resumedCorrect = 0, resumedWrong = 0
       console.log('[DEBUG] loadTasks - isOffline:', this.data.isOffline, 'validTasks.length:', validTasks.length)
       if (!this.data.isOffline) {
         console.log('[DEBUG] 准备创建会话 - validTasks.length:', validTasks.length)
         const sr = await createSession(validTasks.length)
         console.log('[DEBUG] createSession 返回结果:', sr)
-        if (sr) { sessionId = sr.sessionId; setCurrentSessionId(sessionId); if (sr.isResumed && sr.completedWords > 0) lastSyncedIndex = sr.completedWords - 1 }
+        if (sr) {
+          sessionId = sr.sessionId; setCurrentSessionId(sessionId)
+          if (sr.isResumed && sr.completedWords > 0) {
+            lastSyncedIndex = sr.completedWords - 1
+            resumedIndex = sr.completedWords
+            resumedCorrect = sr.correctCount || 0
+            resumedWrong = sr.wrongCount || 0
+            wx.showToast({ title: '已恢复进度 ' + sr.completedWords + '/' + validTasks.length, icon: 'none', duration: 1500 })
+          }
+        }
       }
-      console.log('[DEBUG] 最终 sessionId:', sessionId, 'lastSyncedIndex:', lastSyncedIndex)
-      this.setData({ tasks: validTasks, totalCount: validTasks.length, isLoading: false, sessionId, lastSyncedIndex })
+      console.log('[DEBUG] 最终 sessionId:', sessionId, 'lastSyncedIndex:', lastSyncedIndex, 'resumedIndex:', resumedIndex)
+      this.setData({ tasks: validTasks, totalCount: validTasks.length, isLoading: false, sessionId, lastSyncedIndex, currentIndex: resumedIndex, correctCount: resumedCorrect, wrongCount: resumedWrong })
       wx.hideLoading()
       this.loadCurrentQuestion()
     } catch (e) { wx.hideLoading(); wx.showModal({ title: '加载失败', content: e.message || '请检查网络', showCancel: false, success: () => wx.navigateBack() }) }
