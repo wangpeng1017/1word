@@ -58,12 +58,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const vocabularyIds = [...new Set(answers.map(a => a.vocabularyId))]
 
-    // 更新会话状态为已完成
+    // 更新会话状态为已完成，确保 completedWords = totalWords
     await prisma.study_records.update({
       where: { id: sessionId },
       data: {
         status: 'COMPLETED',
         isCompleted: true,
+        completedWords: session.totalWords,
         completedAt: now,
         updatedAt: now,
       },
