@@ -194,6 +194,8 @@ export async function GET(
     const todayDueCount = todayRecord?.totalWords || (todayNewCount + todayReviewCount)
     const todayCompletedCount = todayRecord?.completedWords || 0
     const todayTimeSpent = todayRecord?.totalTime || 0
+    const todayCorrectCount = todayRecord?.correctCount || 0
+    const todayWrongCount = todayRecord?.wrongCount || 0
 
     // 需要复习的词汇数量（用于后台显示）
     const needReview = todayReviewCount
@@ -228,6 +230,8 @@ export async function GET(
           dueCount: todayDueCount,
           completedCount: todayCompletedCount,
           timeSpentSeconds: todayTimeSpent,
+          correctCount: todayCorrectCount,
+          wrongCount: todayWrongCount,
           newCount: todayNewCount,
           reviewCount: todayReviewCount,
         },

@@ -15,34 +15,38 @@ Page({
   },
 
   async onLoad(options) {
+    // 先显示URL参数（当次学习数据），然后从服务器获取今日汇总
     const correct = parseInt(options.correct || 0)
     const wrong = parseInt(options.wrong || 0)
     const total = parseInt(options.total || 0)
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
 
-    this.setData({
-      correct,
-      wrong,
-      total,
-      accuracy,
-    })
+    this.setData({ correct, wrong, total, accuracy })
 
-    // 与首页保持一致：从概览获取今日累计用时和连续学习天数
+    // 从服务器获取今日汇总数据
     try {
       const studentId = app.globalData.userInfo?.studentId
       if (studentId) {
         const data = await get(`/review-plan/${studentId}`)
-        const ts = data?.miniapp?.today?.timeSpentSeconds || 0
+        const today = data?.miniapp?.today || {}
         const streakDays = data?.miniapp?.progress?.consecutiveDays || 0
 
-        // 生成连胜预告文案
-        const streakMessage = this.getStreakMessage(streakDays)
+        // 使用服务器汇总数据覆盖
+        const serverTotal = today.completedCount || total
+        const serverCorrect = today.correctCount || correct
+        const serverWrong = today.wrongCount || wrong
+        const serverAccuracy = serverTotal > 0 ? Math.round((serverCorrect / serverTotal) * 100) : 0
+        const ts = today.timeSpentSeconds || 0
 
         this.setData({
+          total: serverTotal,
+          correct: serverCorrect,
+          wrong: serverWrong,
+          accuracy: serverAccuracy,
           timeSeconds: ts,
           timeString: this.formatTime(ts),
           streakDays,
-          streakMessage,
+          streakMessage: this.getStreakMessage(streakDays),
         })
       }
     } catch (e) { }
