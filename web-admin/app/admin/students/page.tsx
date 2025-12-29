@@ -5,6 +5,7 @@ import { Table, Button, Input, Space, message, Card, Modal, Form, Select, Upload
 import { PlusOutlined, SearchOutlined, ReloadOutlined, UploadOutlined, DownloadOutlined, EditOutlined, KeyOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import type { UploadProps } from 'antd'
+import * as XLSX from 'xlsx'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -220,10 +221,15 @@ export default function StudentsPage() {
   }
 
   const downloadTemplate = () => {
-    const link = document.createElement('a')
-    link.href = '/templates/students-template.xlsx'
-    link.download = '学生导入模板.xlsx'
-    link.click()
+    // 动态生成模板
+    const templateData = [
+      { '姓名': '张三', '学号': 'S001', '手机号': '13800138001', '班级名称': '20251225-10天班' },
+      { '姓名': '李四', '学号': 'S002', '手机号': '13800138002', '班级名称': '20251225-10天班' },
+    ]
+    const ws = XLSX.utils.json_to_sheet(templateData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '学生导入模板')
+    XLSX.writeFile(wb, '学生导入模板.xlsx')
   }
 
   const columns = [
