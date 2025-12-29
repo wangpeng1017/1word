@@ -11,7 +11,7 @@ Page({
 
     // 时间段筛选
     periodTabs: ['今日', '本周', '本月', '全部'],
-    currentPeriod: 1, // 默认本周
+    currentPeriod: 3, // 默认全部
 
     // 统计数据
     stats: {

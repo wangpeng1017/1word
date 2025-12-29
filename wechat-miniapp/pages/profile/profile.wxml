@@ -6,7 +6,7 @@
       <view class="user-avatar">👤</view>
       <view class="user-info">
         <text class="user-name">{{userInfo.name || '同学'}}</text>
-        <text class="user-id">学号：{{userInfo.studentNo || '--'}}</text>
+        <text class="user-id">手机：{{userInfo.phone || '--'}}</text>
       </view>
     </view>
     <view class="user-level">
@@ -55,7 +55,6 @@
     <view class="quick-link-item" bindtap="goToAchievements">
       <view class="link-icon">🏆</view>
       <text class="link-title">我的成就</text>
-      <view class="link-badge" wx:if="{{achievementCount > 0}}">{{achievementCount}}</view>
       <text class="link-arrow">›</text>
     </view>
   </view>
