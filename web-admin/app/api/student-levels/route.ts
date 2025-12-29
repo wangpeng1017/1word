@@ -1,3 +1,11 @@
+/**
+ * @file 学生等级数据 API
+ * @desc 获取学生等级、积分数据，今日/本周/本月积分从point_history动态计算
+ * @input 依赖: prisma, auth, student_points, point_history
+ * @output 导出: GET /api/student-levels
+ * @pos API层 - 学生数据统计模块
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'

@@ -1,3 +1,11 @@
+/**
+ * @file 单词掌握数据页面
+ * @desc 展示单词掌握情况统计，支持按班级/学生筛选、导出Excel
+ * @input 依赖: /api/word-mastery, /api/classes, /api/students
+ * @output 导出: 单词掌握数据管理页面组件
+ * @pos 后台管理 - 学习数据分析模块
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 'use client'
 
 import { useState, useEffect } from 'react'

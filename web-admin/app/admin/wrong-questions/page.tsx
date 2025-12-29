@@ -1,3 +1,11 @@
+/**
+ * @file 错题明细页面
+ * @desc 展示学生错题记录，支持筛选、导出Excel/Word、打印
+ * @input 依赖: /api/wrong-questions, /api/students, /api/classes
+ * @output 导出: 错题明细管理页面组件
+ * @pos 后台管理 - 学习数据分析模块
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 'use client'
 
 import { useState, useEffect } from 'react'

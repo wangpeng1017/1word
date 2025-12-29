@@ -1,3 +1,11 @@
+/**
+ * @file 错题明细 API
+ * @desc 获取错题明细列表，从question_answers表查询isCorrect=false的记录
+ * @input 依赖: prisma, auth, question_answers
+ * @output 导出: GET /api/wrong-questions
+ * @pos API层 - 学习数据分析模块
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
