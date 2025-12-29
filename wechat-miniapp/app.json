@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/study/study",
     "pages/study/result",
+    "pages/matching-game/matching-game",
     "pages/wrong/wrong",
     "pages/test/test",
     "pages/profile/profile",

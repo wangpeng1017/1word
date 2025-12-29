@@ -162,7 +162,98 @@ Page({
   playFeedback(c) {},
   showMilestonePopup(count) { this.setData({ showMilestone: true, milestoneCount: count }); setTimeout(() => this.setData({ showMilestone: false }), 2000) },
   closeMilestone() { this.setData({ showMilestone: false }) },
-  nextQuestion() { const { currentIndex, totalCount } = this.data; currentIndex + 1 >= totalCount ? this.finishStudy() : (this.setData({ currentIndex: currentIndex + 1, startTime: Date.now() }), this.loadCurrentQuestion()) },
+  nextQuestion() {
+    const { currentIndex, totalCount, answers } = this.data
+    const nextIndex = currentIndex + 1
+
+    // 每答20题触发一次小游戏（且不是最后一题）
+    if (answers.length > 0 && answers.length % 20 === 0 && nextIndex < totalCount) {
+      const gameWords = this.getGameWords(4)
+      if (gameWords.length >= 3) {
+        wx.navigateTo({
+          url: '/pages/matching-game/matching-game?words=' + encodeURIComponent(JSON.stringify(gameWords))
+        })
+        // 继续下一题（游戏返回后自动显示）
+        this.setData({ currentIndex: nextIndex, startTime: Date.now() })
+        this.loadCurrentQuestion()
+        return
+      }
+    }
+
+    // 原有逻辑
+    nextIndex >= totalCount ? this.finishStudy() : (this.setData({ currentIndex: nextIndex, startTime: Date.now() }), this.loadCurrentQuestion())
+  },
+
+  // 获取小游戏单词（从最近答题中随机抽取）
+  getGameWords(count) {
+    const { tasks, answers, currentIndex } = this.data
+
+    // 获取已答过的单词ID
+    const answeredVocabIds = answers.map(a => a.vocabularyId)
+    // 获取即将学习的单词（从当前位置往后）
+    const upcomingTasks = tasks.slice(currentIndex)
+
+    // 合并：已答过的 + 即将学习的
+    const allCandidates = []
+
+    // 先添加已答过的（优先）
+    tasks.forEach(t => {
+      if (answeredVocabIds.includes(t.vocabularyId)) {
+        const meaning = this.getShortMeaning(t.vocabulary)
+        if (meaning) {  // 只添加有效中文释义的
+          allCandidates.push({ task: t, meaning })
+        }
+      }
+    })
+
+    // 如果不够，再添加即将学习的
+    if (allCandidates.length < count) {
+      upcomingTasks.forEach(t => {
+        if (!answeredVocabIds.includes(t.vocabularyId)) {
+          const meaning = this.getShortMeaning(t.vocabulary)
+          if (meaning) {
+            allCandidates.push({ task: t, meaning })
+          }
+        }
+      })
+    }
+
+    // 随机抽取指定数量
+    const shuffled = allCandidates.sort(() => Math.random() - 0.5)
+    const selected = shuffled.slice(0, Math.min(count, shuffled.length))
+
+    return selected.map(item => ({
+      id: item.task.vocabularyId,
+      word: item.task.vocabulary.word,
+      meaning: item.meaning
+    }))
+  },
+
+  // 获取简短释义（只返回中文，过滤英文内容）
+  getShortMeaning(vocabulary) {
+    // 尝试多个来源获取中文释义
+    const sources = [
+      vocabulary.meanings?.[0]?.meaning,
+      vocabulary.primary_meaning,
+      vocabulary.meanings?.[1]?.meaning
+    ].filter(Boolean)
+
+    for (const source of sources) {
+      // 去除词性标记 (n. v. adj. 等)
+      let cleaned = source.replace(/^[a-z]+\.\s*/i, '')
+      // 取第一个分隔符前的内容
+      let short = cleaned.split(/[；;，,、]/)[0].trim()
+      // 去除括号内的英文注释 如 [the R-]
+      short = short.replace(/\[[^\]]*\]/g, '').trim()
+      // 检查是否包含中文
+      if (/[\u4e00-\u9fa5]/.test(short) && short.length > 0) {
+        return short.length > 8 ? short.substring(0, 8) : short
+      }
+    }
+
+    // 如果没找到中文，返回空字符串（会被过滤掉）
+    return ''
+  },
 
   async finishStudy() {
     if (this.data.isSubmitting) return

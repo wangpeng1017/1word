@@ -1,0 +1,76 @@
+<!--pages/matching-game/matching-game.wxml-->
+<view class="container">
+  <!-- 头部 -->
+  <view class="header">
+    <view class="close-btn" bindtap="onClose">×</view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+  </view>
+
+  <view class="title">选择配对</view>
+
+  <!-- 配对区域 -->
+  <view class="matching-area">
+    <view class="columns">
+      <!-- 左侧：中文释义 -->
+      <view class="column left-column">
+        <view
+          wx:for="{{leftItems}}"
+          wx:key="id"
+          class="card {{item.matched ? 'matched' : ''}} {{leftSelected === index ? 'selected' : ''}}"
+          data-index="{{index}}"
+          data-side="left"
+          bindtap="onCardTap"
+        >
+          <text class="card-text">{{item.meaning}}</text>
+        </view>
+      </view>
+
+      <!-- 右侧：英文单词 -->
+      <view class="column right-column">
+        <view
+          wx:for="{{rightItems}}"
+          wx:key="id"
+          class="card {{item.matched ? 'matched' : ''}} {{rightSelected === index ? 'selected' : ''}}"
+          data-index="{{index}}"
+          data-side="right"
+          bindtap="onCardTap"
+        >
+          <text class="card-text">{{item.word}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 检查按钮 -->
+  <view class="bottom-area">
+    <button
+      class="check-btn {{canCheck ? 'active' : 'disabled'}}"
+      bindtap="onCheck"
+      disabled="{{!canCheck}}"
+    >
+      检查
+    </button>
+  </view>
+
+  <!-- 结果反馈栏 -->
+  <view wx:if="{{showResult}}" class="result-bar {{isCorrect ? 'ok' : 'bad'}}">
+    <view class="result-main">
+      <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
+      <text class="result-text">{{isCorrect ? '正确！' : '不正确'}}</text>
+    </view>
+    <view wx:if="{{!isCorrect}}" class="result-hint">再试一次吧</view>
+    <button wx:if="{{!isCorrect}}" class="continue-btn" bindtap="onDismissResult">知道了</button>
+  </view>
+
+  <!-- 完成弹窗 -->
+  <view wx:if="{{showComplete}}" class="complete-overlay">
+    <view class="complete-popup">
+      <view class="complete-icon">🎉</view>
+      <view class="complete-title">太棒了！</view>
+      <view class="complete-subtitle">全部配对完成</view>
+      <button class="complete-btn" bindtap="onComplete">继续学习</button>
+    </view>
+  </view>
+</view>
