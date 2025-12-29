@@ -1,4 +1,7 @@
 // pages/matching-game/matching-game.js
+// @input: 从 study.js 跳转传入的 words 数组 [{id, word, meaning}]
+// @output: 完成配对后返回 study 页面继续学习
+// @pos: 学习流程中的调剂小游戏，每20题触发一次
 
 Page({
   data: {
