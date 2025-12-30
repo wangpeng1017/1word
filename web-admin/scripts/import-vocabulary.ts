@@ -233,8 +233,8 @@ async function createRVocabularyPack(): Promise<void> {
     const rWords = await prisma.vocabularies.findMany({
         where: {
             word: {
-                startsWith: 'r',
-                mode: 'insensitive' // 不区分大小写
+                startsWith: 'r'
+                // MySQL utf8mb4_unicode_ci 默认大小写不敏感
             }
         },
         orderBy: {

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { word: { contains: search, mode: 'insensitive' } },
+        { word: { contains: search } },  // MySQL utf8mb4_unicode_ci 默认大小写不敏感
         // 搜索 word_meanings 表中的释义
         { word_meanings: { some: { meaning: { contains: search } } } },
       ]
@@ -81,8 +81,9 @@ export async function GET(request: NextRequest) {
 
     if (rFirst && !search) {
       // R 开头优先：先查 R 开头的，再查其他的，合并结果
-      const rWhere = { ...where, word: { startsWith: 'r', mode: 'insensitive' as const } }
-      const otherWhere = { ...where, NOT: { word: { startsWith: 'r', mode: 'insensitive' as const } } }
+      // MySQL utf8mb4_unicode_ci 默认大小写不敏感
+      const rWhere = { ...where, word: { startsWith: 'r' } }
+      const otherWhere = { ...where, NOT: { word: { startsWith: 'r' } } }
 
       const [rVocabs, rCount] = await Promise.all([
         prisma.vocabularies.findMany({

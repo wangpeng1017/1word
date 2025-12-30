@@ -180,7 +180,7 @@ async function importSpecificWords(words) {
     for (const word of words) {
       // 查找词汇
       const vocabulary = await prisma.vocabulary.findFirst({
-        where: { word: { equals: word, mode: 'insensitive' } }
+        where: { word: { equals: word } }  // MySQL 默认大小写不敏感
       });
 
       if (!vocabulary) {

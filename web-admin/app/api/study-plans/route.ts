@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       studentsWhere.class_id = classId
     }
     if (studentName) {
-      studentsWhere.user = { name: { contains: studentName, mode: 'insensitive' } }
+      studentsWhere.user = { name: { contains: studentName } }  // MySQL 默认大小写不敏感
     }
     if (Object.keys(studentsWhere).length > 0) {
       where.students = studentsWhere

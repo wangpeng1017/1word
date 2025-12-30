@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -186,8 +186,8 @@ model user {
 model vocabularies {
   id                String            @id
   word              String            @unique
-  part_of_speech    String[]
-  primary_meaning   String
+  part_of_speech    Json              @default("[]")
+  primary_meaning   String            @db.Text
   secondary_meaning String?
   phonetic          String?
   phonetic_us       String?
@@ -232,9 +232,9 @@ model word_meanings {
   id             String       @id
   vocabularyId   String
   partOfSpeech   String       // 词性: n., v., adj., adv., prep., conj., pron., etc.
-  meaning        String       // 该词性下的释义
+  meaning        String       @db.Text // 该词性下的释义
   orderIndex     Int          @default(0) // 显示顺序
-  examples       String[]     @default([]) // 例句数组
+  examples       Json         @default("[]") // 例句数组（MySQL 用 JSON）
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   vocabularies   vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
@@ -283,8 +283,8 @@ model wrong_questions {
 model proficiency_tests {
   id           String        @id
   name         String        // 测试名称，如"高考核心词汇测试"
-  description  String?       // 测试描述
-  vocabularyIds String[]     // 测试包含的词汇ID列表
+  description  String?       @db.Text // 测试描述
+  vocabularyIds Json         @default("[]") // 测试包含的词汇ID列表（MySQL 用 JSON）
   totalWords   Int           // 总词汇数
   passScore    Int           @default(60) // 及格分数
   duration     Int?          // 测试时长（分钟），null表示不限时
