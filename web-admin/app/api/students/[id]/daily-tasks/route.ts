@@ -60,6 +60,7 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
         audioUrl: defaultAudio,
         audioUs,
         audioUk,
+        imageUrl: v.word_images?.[0]?.imageUrl ?? null, // 单词实物图片
         difficulty: v.difficulty,
         isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
         questions,
@@ -104,6 +105,7 @@ export async function GET(
                     vocabulary: {
                       include: {
                         word_audios: true,
+                        word_images: { take: 1 }, // 只取第一张图片
                         word_meanings: { orderBy: { orderIndex: 'asc' } },
                         questions: {
                           include: {

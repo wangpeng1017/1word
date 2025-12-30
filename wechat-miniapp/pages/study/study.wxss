@@ -162,6 +162,16 @@
   margin-top: 16rpx;
 }
 
+/* 单词实物图片（紧凑显示，确保一屏完整显示） */
+.word-image {
+  width: 160rpx;
+  height: 120rpx;
+  margin: 12rpx auto 8rpx;
+  border-radius: 12rpx;
+  background: #F3F4F6;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
 /* 音频图标（听力题） */
 .audio-icon {
   width: 160rpx;

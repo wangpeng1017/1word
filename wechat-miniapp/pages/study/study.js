@@ -144,7 +144,12 @@ Page({
     this.setData({ currentTask, currentQuestion: question, selectedAnswer: '', isAnswered: false, isCorrect: false, showResult: false, progress: Math.round(((currentIndex + 1) / tasks.length) * 100) })
   },
 
-  selectAnswer(e) { if (!this.data.isAnswered) this.setData({ selectedAnswer: e.currentTarget.dataset.answer }) },
+  selectAnswer(e) {
+    if (!this.data.isAnswered) {
+      wx.vibrateShort({ type: 'light' }) // 选择选项时轻振动
+      this.setData({ selectedAnswer: e.currentTarget.dataset.answer })
+    }
+  },
 
   submitAnswer() {
     const { selectedAnswer, currentQuestion, currentTask, consecutiveCorrect } = this.data
@@ -158,6 +163,8 @@ Page({
     let expGain = isCorrect ? 1 : 0
     const isMilestone = isCorrect && newCC > 0 && newCC % 5 === 0
     if (isMilestone) expGain += Math.floor(newCC / 5)
+    // 振动反馈：正确轻振动，错误重振动
+    wx.vibrateShort({ type: isCorrect ? 'light' : 'heavy' })
     this.setData({ isAnswered: true, isCorrect, showResult: true, answers, correctCount, wrongCount, consecutiveCorrect: newCC, showExpGain: isCorrect, expGainValue: expGain })
     this.saveProgress()
     if (isMilestone) setTimeout(() => this.showMilestonePopup(newCC), 300)
