@@ -206,9 +206,17 @@ function QuestionsContent() {
 
       // 解析选项
       const optionLines = values.options?.split('\n').filter((line: string) => line.trim()) || []
+      const correctAnswer = values.correctAnswer?.trim() || ''
+
+      // 判断正确答案是 A/B/C/D 还是实际内容
+      const isLetterAnswer = /^[A-Da-d]$/.test(correctAnswer)
+      const correctIndex = isLetterAnswer ? correctAnswer.toUpperCase().charCodeAt(0) - 65 : -1
+
       const options = optionLines.map((line: string, index: number) => ({
         content: line.trim(),
-        isCorrect: line.trim() === values.correctAnswer.trim(),
+        isCorrect: isLetterAnswer
+          ? index === correctIndex  // A=0, B=1, C=2, D=3
+          : line.trim() === correctAnswer,  // 内容匹配
         order: index,
       }))
 
