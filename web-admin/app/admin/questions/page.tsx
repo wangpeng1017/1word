@@ -16,6 +16,7 @@ interface Question {
   sentence?: string
   audioUrl?: string
   correctAnswer: string
+  vocabularyId: string
   vocabulary: {
     word: string
     primaryMeaning: string
@@ -159,7 +160,8 @@ function QuestionsContent() {
   const handleEdit = (record: Question) => {
     setEditingQuestion(record)
     form.setFieldsValue({
-      vocabularyId: record.vocabulary.word,
+      vocabularyId: record.vocabularyId, // 使用真正的 ID
+      vocabularyWord: record.vocabulary.word, // 用于显示
       type: record.type,
       content: record.content,
       sentence: record.sentence,
@@ -504,13 +506,32 @@ function QuestionsContent() {
         width={800}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="vocabularyId"
-            label="词汇"
-            rules={[{ required: true, message: '请输入词汇ID或单词' }]}
-          >
-            <Input placeholder="请输入词汇ID或单词" />
-          </Form.Item>
+          {editingQuestion ? (
+            // 编辑模式：显示词汇名称（只读）
+            <Form.Item label="词汇">
+              <Input value={form.getFieldValue('vocabularyWord')} disabled />
+              <Form.Item name="vocabularyId" hidden><Input /></Form.Item>
+            </Form.Item>
+          ) : (
+            // 新建模式：可选择词汇
+            <Form.Item
+              name="vocabularyId"
+              label="词汇"
+              rules={[{ required: true, message: '请选择词汇' }]}
+            >
+              <Select
+                showSearch
+                placeholder="搜索并选择词汇"
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={vocabularies.map(v => ({
+                  label: v.word,
+                  value: v.id,
+                }))}
+              />
+            </Form.Item>
+          )}
           <Form.Item
             name="type"
             label="题型"
