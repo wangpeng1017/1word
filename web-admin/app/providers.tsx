@@ -2,6 +2,7 @@
 
 import { ConfigProvider, App } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
+import { SWRProvider } from '../lib/swr-config'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <App>{children}</App>
+      <App>
+        <SWRProvider>{children}</SWRProvider>
+      </App>
     </ConfigProvider>
   )
 }
