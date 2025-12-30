@@ -242,7 +242,24 @@ function QuestionsContent() {
       if (data.success) {
         message.success(editingQuestion ? '更新成功' : '创建成功')
         setModalVisible(false)
-        fetchQuestions()
+
+        if (editingQuestion && data.data) {
+          // 编辑模式：直接在本地更新数据，保持原有位置
+          setQuestions(prev => prev.map(q =>
+            q.id === editingQuestion.id ? {
+              ...q,
+              type: data.data.type,
+              content: data.data.content,
+              sentence: data.data.sentence,
+              audioUrl: data.data.audioUrl,
+              correctAnswer: data.data.correctAnswer,
+              options: data.data.options || [],
+            } : q
+          ))
+        } else {
+          // 新增模式：重新获取以显示新题目
+          fetchQuestions()
+        }
       } else {
         message.error(data.message || '操作失败')
       }
