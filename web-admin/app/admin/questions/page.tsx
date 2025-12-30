@@ -91,7 +91,7 @@ function QuestionsContent() {
   const fetchVocabularies = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/vocabularies?limit=1000', {
+      const response = await fetch('/api/vocabularies?limit=5000', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
