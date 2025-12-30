@@ -653,14 +653,14 @@ export default function VocabulariesPage() {
                       label="词性"
                     >
                       <Select placeholder="选择词性">
-                        <Option value="n.">名词on. </Option>
-                        <Option value="v.">动词on. </Option>
-                        <Option value="adj.">形容词on.adj. </Option>
-                        <Option value="adv.">副词on.adv. </Option>
-                        <Option value="prep.">介词on.prep. </Option>
-                        <Option value="pron.">代词on.pron. </Option>
-                        <Option value="conj.">连词on.conj. </Option>
-                        <Option value="interj.">感叹词on.interj. </Option>
+                        <Option value="n.">n. 名词</Option>
+                        <Option value="v.">v. 动词</Option>
+                        <Option value="adj.">adj. 形容词</Option>
+                        <Option value="adv.">adv. 副词</Option>
+                        <Option value="prep.">prep. 介词</Option>
+                        <Option value="pron.">pron. 代词</Option>
+                        <Option value="conj.">conj. 连词</Option>
+                        <Option value="interj.">interj. 感叹词</Option>
                       </Select>
                     </Form.Item>
                     <Form.Item

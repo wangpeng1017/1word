@@ -157,7 +157,7 @@ export default function AdminDashboard() {
           <Col xs={24} sm={12} md={6}>
             <Button
               block
-              onClick={() => router.push('/admin/statistics')}
+              onClick={() => router.push('/admin/learning-data')}
             >
               查看学习数据
             </Button>
