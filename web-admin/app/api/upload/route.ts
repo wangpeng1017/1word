@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { put, del } from '@vercel/blob'
+import { NextRequest } from 'next/server'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { unauthorizedResponse, errorResponse, successResponse } from '@/lib/response'
+import { writeFile, mkdir } from 'fs/promises'
+import path from 'path'
 
 /**
- * 上传文件到Vercel Blob
+ * 上传文件到本地存储
  * POST /api/upload
  */
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以上传文件')
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const type = formData.get('type') as string || 'general' // audio, image, general
+    const type = formData.get('type') as string || 'general' // audio, image, qrcode, general
 
     if (!file) {
       return errorResponse('请选择文件')
@@ -47,28 +48,30 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     const extension = file.name.split('.').pop()
-    const filename = `${type}/${timestamp}-${randomStr}.${extension}`
+    const filename = `${timestamp}-${randomStr}.${extension}`
 
-    // 上传到Vercel Blob
-    const blob = await put(filename, file, {
-      access: 'public',
-      addRandomSuffix: false,
-    })
+    // 保存到本地 public/uploads/{type}/ 目录
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', type)
+
+    // 确保目录存在
+    await mkdir(uploadDir, { recursive: true })
+
+    // 写入文件
+    const filePath = path.join(uploadDir, filename)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await writeFile(filePath, buffer)
+
+    // 返回相对URL（可通过 /uploads/{type}/{filename} 访问）
+    const url = `/uploads/${type}/${filename}`
 
     return successResponse({
-      url: blob.url,
+      url,
       filename: file.name,
       size: file.size,
       type: file.type,
     }, '文件上传成功')
   } catch (error: any) {
     console.error('文件上传错误:', error)
-    
-    // 如果是Vercel Blob配置错误
-    if (error.message?.includes('BLOB_READ_WRITE_TOKEN')) {
-      return errorResponse('文件存储服务未配置，请在Vercel项目设置中添加Blob Storage')
-    }
-    
     return errorResponse('文件上传失败', 500)
   }
 }
@@ -81,7 +84,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以删除文件')
@@ -94,8 +97,16 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少文件URL')
     }
 
-    // 从Vercel Blob删除文件
-    await del(url)
+    // 只处理本地上传的文件（以 /uploads/ 开头）
+    if (url.startsWith('/uploads/')) {
+      const { unlink } = await import('fs/promises')
+      const filePath = path.join(process.cwd(), 'public', url)
+      try {
+        await unlink(filePath)
+      } catch (e) {
+        // 文件可能不存在，忽略错误
+      }
+    }
 
     return successResponse(null, '文件删除成功')
   } catch (error) {
