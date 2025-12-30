@@ -96,11 +96,6 @@ export default function LoginPage() {
             </Button>
           </Form.Item>
         </Form>
-
-        <div className="text-center text-sm text-gray-500 mt-4">
-          <p>测试账号：admin@vocab.com</p>
-          <p>密码：admin123456</p>
-        </div>
       </Card>
     </div>
   )
