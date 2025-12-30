@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     const extension = file.name.split('.').pop()
     const filename = `${timestamp}-${randomStr}.${extension}`
 
-    // 保存到本地 public/uploads/{type}/ 目录
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', type)
+    // 保存到 data/uploads/{type}/ 目录（不在 public 下，通过 API 动态服务）
+    const uploadDir = path.join(process.cwd(), 'data', 'uploads', type)
 
     // 确保目录存在
     await mkdir(uploadDir, { recursive: true })
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
-    // 返回相对URL（可通过 /uploads/{type}/{filename} 访问）
-    const url = `/uploads/${type}/${filename}`
+    // 返回 API 路由 URL（通过 /api/files/{type}/{filename} 动态访问）
+    const url = `/api/files/${type}/${filename}`
 
     return successResponse({
       url,
@@ -97,8 +97,19 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少文件URL')
     }
 
-    // 只处理本地上传的文件（以 /uploads/ 开头）
-    if (url.startsWith('/uploads/')) {
+    // 处理 API 路由 URL（以 /api/files/ 开头）和旧的静态 URL（以 /uploads/ 开头）
+    if (url.startsWith('/api/files/')) {
+      const { unlink } = await import('fs/promises')
+      // /api/files/image/xxx.jpg -> data/uploads/image/xxx.jpg
+      const relativePath = url.replace('/api/files/', '')
+      const filePath = path.join(process.cwd(), 'data', 'uploads', relativePath)
+      try {
+        await unlink(filePath)
+      } catch (e) {
+        // 文件可能不存在，忽略错误
+      }
+    } else if (url.startsWith('/uploads/')) {
+      // 兼容旧的静态文件 URL
       const { unlink } = await import('fs/promises')
       const filePath = path.join(process.cwd(), 'public', url)
       try {
