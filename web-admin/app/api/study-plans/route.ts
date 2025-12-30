@@ -1,3 +1,12 @@
+/**
+ * @file 学习计划 API
+ * @desc GET 获取学习计划列表（支持筛选班级、学生、状态）
+ * @input 依赖: prisma, auth, response, ebbinghaus
+ * @output 导出: GET
+ * @pos 学习模块核心 API
+ * ⚠️ 更新我时，请同步更新本注释
+ */
+
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'

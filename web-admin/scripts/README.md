@@ -1,5 +1,29 @@
 # 数据库迁移脚本使用指南
 
+## PostgreSQL → MySQL 迁移（2025-12-30）
+
+新增迁移脚本 `migrate-pg-to-mysql.js`，用于将数据从 PostgreSQL 迁移到 MySQL。
+
+```bash
+# 导出 PostgreSQL 数据
+node scripts/migrate-pg-to-mysql.js export
+
+# 导入到 MySQL
+node scripts/migrate-pg-to-mysql.js import
+
+# 验证迁移结果
+node scripts/migrate-pg-to-mysql.js verify
+
+# 执行完整迁移（导出→导入→验证）
+node scripts/migrate-pg-to-mysql.js all
+```
+
+**环境变量：**
+- `PG_DATABASE_URL` - PostgreSQL 连接字符串
+- `MYSQL_HOST/PORT/USER/PASSWORD/DATABASE` - MySQL 连接信息
+
+---
+
 ## 快速执行迁移
 
 由于 Prisma Studio 没有 SQL 编辑器，我们创建了一个 Node.js 脚本来执行迁移。

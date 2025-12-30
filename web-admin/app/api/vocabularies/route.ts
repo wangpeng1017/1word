@@ -1,3 +1,12 @@
+/**
+ * @file 词汇管理 API
+ * @desc GET 获取词汇列表（支持搜索、过滤、分页）, POST 创建词汇
+ * @input 依赖: prisma, auth, response
+ * @output 导出: GET, POST
+ * @pos 词汇模块核心 API
+ * ⚠️ 更新我时，请同步更新本注释
+ */
+
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
