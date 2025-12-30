@@ -482,6 +482,7 @@ export default function VocabulariesPage() {
             height={40}
             style={{ objectFit: 'cover', borderRadius: 4 }}
             preview={{ mask: '查看' }}
+            fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1NSUiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiNjY2MiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuaXoOWbvjwvdGV4dD48L3N2Zz4="
           />
         ) : (
           <span style={{ color: '#999', fontSize: 12 }}>-</span>

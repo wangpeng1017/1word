@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    // 性能优化: 默认limit从10000降低到50，减少内存占用
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+    // 性能优化: 默认limit为50，筛选下拉框使用limit=10000
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 10000)
     const search = searchParams.get('search') || ''
     const isHighFrequency = searchParams.get('isHighFrequency')
     const difficulty = searchParams.get('difficulty')
