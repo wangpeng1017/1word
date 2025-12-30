@@ -61,11 +61,13 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
-    // 返回 API 路由 URL（通过 /api/files/{type}/{filename} 动态访问）
-    const url = `/api/files/${type}/${filename}`
+    // 构建完整 URL（小程序需要完整 URL，不能使用相对路径）
+    const host = request.headers.get('host') || 'localhost:3000'
+    const protocol = host.includes('localhost') ? 'http' : 'http' // 阿里云服务器暂用 http
+    const fullUrl = `${protocol}://${host}/api/files/${type}/${filename}`
 
     return successResponse({
-      url,
+      url: fullUrl,
       filename: file.name,
       size: file.size,
       type: file.type,
@@ -97,21 +99,34 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('缺少文件URL')
     }
 
-    // 处理 API 路由 URL（以 /api/files/ 开头）和旧的静态 URL（以 /uploads/ 开头）
-    if (url.startsWith('/api/files/')) {
+    // 处理完整 URL 或相对路径
+    let relativePath = url
+
+    // 如果是完整 URL，提取路径部分
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const urlObj = new URL(url)
+        relativePath = urlObj.pathname
+      } catch {
+        return errorResponse('无效的文件URL')
+      }
+    }
+
+    // 处理 API 路由 URL（以 /api/files/ 开头）
+    if (relativePath.startsWith('/api/files/')) {
       const { unlink } = await import('fs/promises')
       // /api/files/image/xxx.jpg -> data/uploads/image/xxx.jpg
-      const relativePath = url.replace('/api/files/', '')
-      const filePath = path.join(process.cwd(), 'data', 'uploads', relativePath)
+      const filePart = relativePath.replace('/api/files/', '')
+      const filePath = path.join(process.cwd(), 'data', 'uploads', filePart)
       try {
         await unlink(filePath)
       } catch (e) {
         // 文件可能不存在，忽略错误
       }
-    } else if (url.startsWith('/uploads/')) {
+    } else if (relativePath.startsWith('/uploads/')) {
       // 兼容旧的静态文件 URL
       const { unlink } = await import('fs/promises')
-      const filePath = path.join(process.cwd(), 'public', url)
+      const filePath = path.join(process.cwd(), 'public', relativePath)
       try {
         await unlink(filePath)
       } catch (e) {
