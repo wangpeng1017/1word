@@ -83,7 +83,7 @@ export default function StudyPlansPage() {
   const fetchClasses = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/classes?limit=1000', {
+      const response = await fetch('/api/classes?limit=5000', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
@@ -98,7 +98,7 @@ export default function StudyPlansPage() {
   const fetchVocabularies = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/vocabularies?limit=1000', {
+      const response = await fetch('/api/vocabularies?limit=5000', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()

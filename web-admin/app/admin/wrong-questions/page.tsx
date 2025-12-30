@@ -78,7 +78,7 @@ export default function WrongQuestionsPage() {
     const loadStudents = async () => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch('/api/students?limit=1000', {
+            const response = await fetch('/api/students?limit=5000', {
                 headers: { Authorization: `Bearer ${token}` },
             })
             const result = await response.json()

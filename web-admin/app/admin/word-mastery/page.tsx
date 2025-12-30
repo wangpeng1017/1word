@@ -135,27 +135,49 @@ export default function WordMasteryPage() {
         }
     }
 
-    const handleExportExcel = () => {
-        if (data.length === 0) {
-            message.warning('没有数据可导出')
-            return
+    const handleExportExcel = async () => {
+        message.loading({ content: '正在导出...', key: 'export' })
+
+        try {
+            const token = localStorage.getItem('token')
+            // 获取所有筛选条件下的数据（不分页）
+            const params = new URLSearchParams({
+                limit: '10000',  // 获取所有数据
+                sortBy,
+                sortOrder: 'desc',
+            })
+
+            if (selectedClass) params.append('classId', selectedClass)
+            if (selectedStudent) params.append('studentId', selectedStudent)
+
+            const response = await fetch(`/api/word-mastery?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const result = await response.json()
+
+            if (!result.success || !result.data.records?.length) {
+                message.warning({ content: '没有数据可导出', key: 'export' })
+                return
+            }
+
+            const exportData = result.data.records.map((item: WordMasteryRecord, index: number) => ({
+                '序号': index + 1,
+                '单词': item.word,
+                '释义': item.meaning,
+                '音标': item.phonetic || '-',
+                '累计错误次数': item.totalWrongCount,
+                '最近3次正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '暂无数据',
+                '练习人数': item.studentCount,
+            }))
+
+            const ws = XLSX.utils.json_to_sheet(exportData)
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, '单词掌握数据')
+            XLSX.writeFile(wb, `单词掌握数据_${new Date().toISOString().split('T')[0]}.xlsx`)
+            message.success({ content: `导出成功，共 ${exportData.length} 条数据`, key: 'export' })
+        } catch (error) {
+            message.error({ content: '导出失败', key: 'export' })
         }
-
-        const exportData = data.map((item, index) => ({
-            '序号': index + 1,
-            '单词': item.word,
-            '释义': item.meaning,
-            '音标': item.phonetic || '-',
-            '累计错误次数': item.totalWrongCount,
-            '最近3次正确率': item.recentAccuracy !== null ? `${item.recentAccuracy}%` : '暂无数据',
-            '练习人数': item.studentCount,
-        }))
-
-        const ws = XLSX.utils.json_to_sheet(exportData)
-        const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, '单词掌握数据')
-        XLSX.writeFile(wb, `单词掌握数据_${new Date().toISOString().split('T')[0]}.xlsx`)
-        message.success('导出成功')
     }
 
     const columns: ColumnsType<WordMasteryRecord> = [
