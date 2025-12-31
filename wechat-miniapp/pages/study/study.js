@@ -274,7 +274,8 @@ Page({
 
   async finishStudy() {
     if (this.data.isSubmitting) return
-    this.setData({ isSubmitting: true })
+    // 标记为已完成，防止 onUnload 时 syncBeforeLeave 再次保存进度
+    this.setData({ isSubmitting: true, currentIndex: this.data.totalCount })
     const { answers, correctCount, wrongCount, sessionId, lastSyncedIndex } = this.data
     if (answers.length === 0) { wx.navigateBack(); return }
     try {
