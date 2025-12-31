@@ -1,4 +1,8 @@
 <!--pages/study/study.wxml-->
+<!-- @input: study.js 提供的数据 (currentTask, currentQuestion, isNew等)
+     @output: 用户交互事件 (selectAnswer, submitAnswer, playAudio等)
+     @pos: 学习页面视图层，展示题目、选项、图片(仅新学单词显示)
+     ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md -->
 <view class="container study-page {{isCorrect && showResult ? 'celebrate' : ''}}">
   <!-- 头部信息 -->
   <view class="study-header">

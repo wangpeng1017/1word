@@ -1,7 +1,7 @@
 // pages/study/study.js
 // @input: API获取每日学习任务，本地缓存支持离线
 // @output: 答题结果同步到服务器，完成后跳转result页
-// @pos: 小程序核心学习页面，包含答题、进度、配对游戏触发
+// @pos: 小程序核心学习页面，包含答题、进度、配对游戏触发、图片URL拼接
 // ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
 
 const { get, post } = require('../../utils/request')

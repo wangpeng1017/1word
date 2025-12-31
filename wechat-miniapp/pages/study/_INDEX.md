@@ -27,3 +27,9 @@ study.js (答题循环)
     ├── 每20题 → matching-game (配对游戏)
     └── 全部完成 → result.js (结果页)
 ```
+
+## 图片展示逻辑
+
+- 仅**新学单词**(isNew=true)显示实物图片
+- 复习单词(isNew=false)不显示图片
+- 图片URL自动从相对路径拼接为完整URL
