@@ -31,9 +31,9 @@
         <text class="word-text">{{currentTask.vocabulary.word}}</text>
         <view class="speaker" bindtap="playAudio">🔊</view>
       </view>
-      <!-- 单词实物图片（紧凑显示） -->
+      <!-- 单词实物图片（仅新学单词显示，复习单词不显示） -->
       <image
-        wx:if="{{currentTask.vocabulary.imageUrl}}"
+        wx:if="{{currentTask.isNew && currentTask.vocabulary.imageUrl}}"
         class="word-image"
         src="{{currentTask.vocabulary.imageUrl}}"
         mode="aspectFit"

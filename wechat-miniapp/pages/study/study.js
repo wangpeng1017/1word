@@ -136,6 +136,11 @@ Page({
     const { tasks, currentIndex } = this.data
     if (currentIndex >= tasks.length) { this.finishStudy(); return }
     const currentTask = tasks[currentIndex], vocabulary = currentTask.vocabulary
+    // 处理图片URL：相对路径转完整URL
+    if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
+      const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
+      vocabulary.imageUrl = baseUrl + vocabulary.imageUrl
+    }
     let question = null
     if (currentTask.selectedQuestionId) question = vocabulary.questions.find(q => q.id === currentTask.selectedQuestionId)
     if (!question && currentTask.targetQuestionType) question = vocabulary.questions.find(q => q.type === currentTask.targetQuestionType)
