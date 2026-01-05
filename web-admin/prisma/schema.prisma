@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -36,7 +36,6 @@ model daily_tasks {
   @@index([studentId, taskDate])
 }
 
-// 班级学习计划（班级×词汇库关联）
 model plan_classes {
   id            String          @id
   class_id      String
@@ -77,7 +76,7 @@ model questions {
   question_options question_options[]
   vocabularies     vocabularies       @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
   wrong_questions  wrong_questions[]
-  question_answers question_answers[] // 新增：答题记录关联
+  question_answers question_answers[]
 }
 
 model students {
@@ -100,12 +99,11 @@ model students {
   point_history   point_history[]
   student_achievements student_achievements[]
   study_streaks   study_streaks?
-  question_answers question_answers[] // 新增：答题记录关联
+  question_answers question_answers[]
 
   @@index([class_id])
 }
 
-// 学生学习进度（学生×词汇，首次学习时创建）
 model study_plans {
   id           String          @id
   studentId    String
@@ -179,15 +177,15 @@ model user {
   updated_at DateTime
   students   students?
   teachers   teachers?
-  
+
   @@map("users")
 }
 
 model vocabularies {
   id                String            @id
   word              String            @unique
-  part_of_speech    Json              @default("[]")
-  primary_meaning   String            @db.Text
+  part_of_speech    String[]
+  primary_meaning   String
   secondary_meaning String?
   phonetic          String?
   phonetic_us       String?
@@ -232,9 +230,9 @@ model word_meanings {
   id             String       @id
   vocabularyId   String
   partOfSpeech   String       // 词性: n., v., adj., adv., prep., conj., pron., etc.
-  meaning        String       @db.Text // 该词性下的释义
+  meaning        String       // 该词性下的释义
   orderIndex     Int          @default(0) // 显示顺序
-  examples       Json         @default("[]") // 例句数组（MySQL 用 JSON）
+  examples       String[]     @default([]) // 例句数组
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   vocabularies   vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
@@ -279,12 +277,11 @@ model wrong_questions {
   @@index([studentId, vocabularyId])
 }
 
-// 词汇熟练度测试表
 model proficiency_tests {
   id           String        @id
   name         String        // 测试名称，如"高考核心词汇测试"
-  description  String?       @db.Text // 测试描述
-  vocabularyIds Json         @default("[]") // 测试包含的词汇ID列表（MySQL 用 JSON）
+  description  String?       // 测试描述
+  vocabularyIds String[]     // 测试包含的词汇ID列表
   totalWords   Int           // 总词汇数
   passScore    Int           @default(60) // 及格分数
   duration     Int?          // 测试时长（分钟），null表示不限时
@@ -298,7 +295,6 @@ model proficiency_tests {
   @@index([createdBy])
 }
 
-// 测试记录表
 model test_records {
   id              String            @id
   testId          String            // 测试ID
@@ -336,7 +332,6 @@ enum StudyPlanStatus {
   MASTERED
 }
 
-// 班级计划状态
 enum PlanClassStatus {
   ACTIVE
   COMPLETED
@@ -361,7 +356,6 @@ enum WordDifficulty {
   HARD
 }
 
-// 操作日志表
 model operation_logs {
   id          String   @id @default(cuid())
   userId      String              // 操作用户ID
@@ -381,7 +375,6 @@ model operation_logs {
   @@index([createdAt])
 }
 
-// 学生积分记录表
 model student_points {
   id          String   @id
   studentId   String
@@ -399,7 +392,6 @@ model student_points {
   @@index([level])
 }
 
-// 积分历史记录表
 model point_history {
   id          String   @id
   studentId   String
@@ -414,7 +406,6 @@ model point_history {
   @@index([createdAt])
 }
 
-// 成就定义表
 model achievements {
   id          String   @id
   name        String   // 成就名称
@@ -432,7 +423,6 @@ model achievements {
   @@index([isActive])
 }
 
-// 学生成就记录表
 model student_achievements {
   id            String       @id
   studentId     String
@@ -446,7 +436,6 @@ model student_achievements {
   @@index([unlockedAt])
 }
 
-// 连续学习记录表
 model study_streaks {
   id            String   @id
   studentId     String
@@ -461,7 +450,6 @@ model study_streaks {
   @@index([currentStreak])
 }
 
-// 答题记录表（记录每次答题，包括正确的）
 model question_answers {
   id           String       @id
   studentId    String
@@ -479,7 +467,6 @@ model question_answers {
   @@index([studentId, answeredAt])
 }
 
-// 词汇库（课程模板，如"10天班"、"20天班"）
 model vocabulary_packs {
   id          String   @id
   name        String   @unique  // "高考核心词汇10天班"
@@ -498,7 +485,6 @@ model vocabulary_packs {
   @@index([createdBy])
 }
 
-// 词汇库每日配置
 model vocabulary_pack_days {
   id         String   @id
   packId     String
@@ -515,7 +501,6 @@ model vocabulary_pack_days {
   @@index([packId])
 }
 
-// 每日词汇关联
 model vocabulary_pack_day_words {
   id           String @id
   packDayId    String
