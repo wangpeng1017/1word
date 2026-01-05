@@ -212,3 +212,12 @@
   font-size: 32rpx;
   color: #9CA3AF;
 }
+
+/* 音效开关样式 */
+.menu-item.sound-toggle {
+  padding: 20rpx 24rpx;
+}
+
+.menu-item.sound-toggle switch {
+  transform: scale(0.85);
+}

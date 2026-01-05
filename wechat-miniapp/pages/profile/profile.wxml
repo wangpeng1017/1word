@@ -59,8 +59,13 @@
     </view>
   </view>
 
-  <!-- 退出登录 -->
+  <!-- 设置选项 -->
   <view class="menu-section">
+    <view class="menu-item sound-toggle">
+      <text class="menu-icon">🔊</text>
+      <text class="menu-label">音效</text>
+      <switch checked="{{soundEnabled}}" bindchange="toggleSound" color="#FF7A7A" />
+    </view>
     <view class="menu-item" bindtap="goToChangePassword">
       <text class="menu-icon">🔐</text>
       <text class="menu-label">修改密码</text>

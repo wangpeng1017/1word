@@ -7,6 +7,7 @@
 const { get, post } = require('../../utils/request')
 const { createSession, syncProgress, completeSession, checkOnline, setCurrentSessionId } = require('../../utils/sync')
 const { saveStudyProgress, getStudyProgress, clearStudyProgress, saveTodayWords, getTodayWords, addToSyncQueue } = require('../../utils/storage')
+const { SoundType, playSound, preloadSounds } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -28,6 +29,7 @@ Page({
 
     this.setData({ startTime: Date.now(), sessionStartTime: Date.now() })
     this.startTimer()
+    preloadSounds()  // 预加载音效
     options.resume === 'true' ? this.resumeProgress() : this.loadTasks()
   },
 
@@ -70,7 +72,7 @@ Page({
   startTimer() {
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.data.sessionStartTime) / 1000)
-      this.setData({ elapsedTime: String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0') })
+      this.setData({ elapsedTime: String(Math.floor(elapsed / 60)).padStart(2, '0') + ':' + String(elapsed % 60).padStart(2, '0') })
     }, 1000)
     this.setData({ timer })
   },
@@ -170,13 +172,21 @@ Page({
     if (isMilestone) expGain += Math.floor(newCC / 5)
     // 振动反馈：正确轻振动，错误重振动
     wx.vibrateShort({ type: isCorrect ? 'light' : 'heavy' })
+    // 音效反馈
+    if (isCorrect) {
+      if (newCC === 10) playSound(SoundType.STREAK_10)      // 连对10题
+      else if (newCC === 5) playSound(SoundType.STREAK_5)   // 连对5题
+      else playSound(SoundType.CORRECT)                     // 普通答对
+    } else {
+      playSound(SoundType.WRONG)                            // 答错
+    }
     this.setData({ isAnswered: true, isCorrect, showResult: true, answers, correctCount, wrongCount, consecutiveCorrect: newCC, showExpGain: isCorrect, expGainValue: expGain })
     this.saveProgress()
     if (isMilestone) setTimeout(() => this.showMilestonePopup(newCC), 300)
     if (isCorrect) { setTimeout(() => this.setData({ showExpGain: false }), 1000); setTimeout(() => this.nextQuestion(), isMilestone ? 2500 : 1500) }
   },
 
-  playFeedback(c) {},
+  playFeedback(c) { },
   showMilestonePopup(count) { this.setData({ showMilestone: true, milestoneCount: count }); setTimeout(() => this.setData({ showMilestone: false }), 2000) },
   closeMilestone() { this.setData({ showMilestone: false }) },
   nextQuestion() {
@@ -291,6 +301,7 @@ Page({
       if (newAnswers.length > 0 && sessionId) await syncProgress(newAnswers)
       if (sessionId) await completeSession()
       else await post('/study-records', { studentId, answers })
+      playSound(SoundType.COMPLETE)  // 完成学习音效
       clearStudyProgress(); wx.hideLoading()
       wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length })
     } catch (e) {

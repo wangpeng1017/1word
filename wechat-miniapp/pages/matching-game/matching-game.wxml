@@ -43,15 +43,9 @@
     </view>
   </view>
 
-  <!-- 检查按钮 -->
-  <view class="bottom-area">
-    <button
-      class="check-btn {{canCheck ? 'active' : 'disabled'}}"
-      bindtap="onCheck"
-      disabled="{{!canCheck}}"
-    >
-      检查
-    </button>
+  <!-- 提示文字（替代原来的检查按钮） -->
+  <view class="bottom-hint">
+    <text>点击左右各一项进行配对</text>
   </view>
 
   <!-- 结果反馈栏 -->

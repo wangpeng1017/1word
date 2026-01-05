@@ -3,6 +3,8 @@
 // @output: 完成配对后返回 study 页面继续学习
 // @pos: 学习流程中的调剂小游戏，每20题触发一次
 
+const { SoundType, playSound } = require('../../utils/audio')
+
 Page({
   data: {
     words: [],           // 原始单词数据
@@ -63,12 +65,12 @@ Page({
     const result = [...array]
     for (let i = result.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-      ;[result[i], result[j]] = [result[j], result[i]]
+        ;[result[i], result[j]] = [result[j], result[i]]
     }
     return result
   },
 
-  // 卡片点击
+  // 卡片点击 - 选中左右各一个后自动检查配对
   onCardTap(e) {
     if (this.data.showResult) return
 
@@ -84,6 +86,11 @@ Page({
       this.setData({
         leftSelected: newSelected,
         canCheck: newSelected !== null && this.data.rightSelected !== null
+      }, () => {
+        // 如果左右都已选中，自动检查配对
+        if (newSelected !== null && this.data.rightSelected !== null) {
+          this.autoCheck()
+        }
       })
     } else {
       // 点击右侧
@@ -91,7 +98,84 @@ Page({
       this.setData({
         rightSelected: newSelected,
         canCheck: this.data.leftSelected !== null && newSelected !== null
+      }, () => {
+        // 如果左右都已选中，自动检查配对
+        if (this.data.leftSelected !== null && newSelected !== null) {
+          this.autoCheck()
+        }
       })
+    }
+  },
+
+  // 自动检查配对（选中后立即触发）
+  autoCheck() {
+    const { leftItems, rightItems, leftSelected, rightSelected, matchedIds, words } = this.data
+
+    if (leftSelected === null || rightSelected === null) return
+
+    const leftItem = leftItems[leftSelected]
+    const rightItem = rightItems[rightSelected]
+
+    // 检查是否匹配（id 相同）
+    const isCorrect = leftItem.id === rightItem.id
+
+    if (isCorrect) {
+      // 配对成功 - 立即消除
+      const newMatchedIds = [...matchedIds, leftItem.id]
+      const newLeftItems = leftItems.map(item =>
+        item.id === leftItem.id ? { ...item, matched: true } : item
+      )
+      const newRightItems = rightItems.map(item =>
+        item.id === rightItem.id ? { ...item, matched: true } : item
+      )
+
+      const progress = Math.round((newMatchedIds.length / words.length) * 100)
+
+      this.setData({
+        leftItems: newLeftItems,
+        rightItems: newRightItems,
+        matchedIds: newMatchedIds,
+        leftSelected: null,
+        rightSelected: null,
+        canCheck: false,
+        showResult: true,
+        isCorrect: true,
+        progress
+      })
+
+      // 播放配对成功音效
+      playSound(SoundType.CORRECT)
+
+      // 正确时短暂显示反馈后自动关闭
+      setTimeout(() => {
+        this.setData({ showResult: false })
+
+        // 检查是否全部完成
+        if (newMatchedIds.length === words.length) {
+          playSound(SoundType.COMPLETE)  // 全部完成音效
+          setTimeout(() => {
+            this.setData({ showComplete: true })
+          }, 300)
+        }
+      }, 500)  // 缩短反馈时间，更流畅
+    } else {
+      // 配对失败 - 显示错误反馈，短暂后自动清除选中状态
+      this.setData({
+        showResult: true,
+        isCorrect: false
+      })
+
+      // 播放配对失败音效
+      playSound(SoundType.WRONG)
+
+      setTimeout(() => {
+        this.setData({
+          showResult: false,
+          leftSelected: null,
+          rightSelected: null,
+          canCheck: false
+        })
+      }, 800)
     }
   },
 

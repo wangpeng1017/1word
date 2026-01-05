@@ -1,5 +1,6 @@
 // pages/profile/profile.js
 const { get } = require('../../utils/request')
+const { isSoundEnabled, setSoundEnabled } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -22,6 +23,7 @@ Page({
       level: 1
     },
     achievementCount: 0,
+    soundEnabled: true,  // 音效开关
   },
 
   onLoad() {
@@ -36,6 +38,7 @@ Page({
     this.loadHistoryStats()
     this.loadPointsInfo()
     this.loadAchievementCount()
+    this.loadSoundSetting()  // 加载音效设置
   },
 
   onShow() {
@@ -194,6 +197,23 @@ Page({
           app.logout()
         }
       },
+    })
+  },
+
+  // 加载音效设置
+  loadSoundSetting() {
+    this.setData({ soundEnabled: isSoundEnabled() })
+  },
+
+  // 切换音效开关
+  toggleSound(e) {
+    const enabled = e.detail.value
+    setSoundEnabled(enabled)
+    this.setData({ soundEnabled: enabled })
+    wx.showToast({
+      title: enabled ? '音效已开启' : '音效已关闭',
+      icon: 'none',
+      duration: 1500
     })
   },
 })
