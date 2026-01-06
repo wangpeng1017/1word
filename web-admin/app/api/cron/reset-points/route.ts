@@ -2,13 +2,13 @@
  * 定时任务 API - 积分重置
  * POST /api/cron/reset-points
  *
- * 配置 Vercel Cron (vercel.json):
- * {
- *   "crons": [{
- *     "path": "/api/cron/reset-points",
- *     "schedule": "0 0 * * *"
- *   }]
- * }
+ * 部署说明：
+ * 1. 设置环境变量 CRON_SECRET 作为 API 密钥
+ * 2. 使用 Linux crontab 或其他定时工具调用此 API
+ * 3. 请求头: Authorization: Bearer {CRON_SECRET}
+ *
+ * Crontab 示例 (每天凌晨0点):
+ * 0 0 * * * curl -X POST http://localhost:3000/api/cron/reset-points -H "Authorization: Bearer $CRON_SECRET"
  */
 
 import { NextRequest } from 'next/server'
@@ -22,11 +22,7 @@ export async function POST(request: NextRequest) {
 
     // 如果设置了 CRON_SECRET，则验证
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      // 也允许 Vercel Cron 的内部调用
-      const isVercelCron = request.headers.get('x-vercel-cron') === '1'
-      if (!isVercelCron) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const results = await smartResetPoints()

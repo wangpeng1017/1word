@@ -27,9 +27,6 @@ yarn-error.log*
 .env
 .env.production
 
-# vercel
-.vercel
-
 # uploaded files (served via API)
 /data/uploads
 
@@ -40,5 +37,8 @@ next-env.d.ts
 # prisma
 /prisma/migrations
 
-.vercel
-.env*.local
+# Runtime generated files
+public/images/
+public/uploads/
+warmup.sh
+ecosystem.config.js

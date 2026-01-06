@@ -2,13 +2,13 @@
  * 定时任务 API - 数据归档
  * POST /api/cron/data-archive
  *
- * 配置 Vercel Cron (vercel.json):
- * {
- *   "crons": [{
- *     "path": "/api/cron/data-archive",
- *     "schedule": "0 3 * * 0"  // 每周日凌晨3点执行
- *   }]
- * }
+ * 部署说明：
+ * 1. 设置环境变量 CRON_SECRET 作为 API 密钥
+ * 2. 使用 Linux crontab 或其他定时工具调用此 API
+ * 3. 请求头: Authorization: Bearer {CRON_SECRET}
+ *
+ * Crontab 示例 (每周日凌晨3点):
+ * 0 3 * * 0 curl -X POST http://localhost:3000/api/cron/data-archive -H "Authorization: Bearer $CRON_SECRET"
  */
 
 import { NextRequest } from 'next/server'
@@ -21,10 +21,7 @@ export async function POST(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      const isVercelCron = request.headers.get('x-vercel-cron') === '1'
-      if (!isVercelCron) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // 获取归档前的统计
