@@ -49,7 +49,7 @@
     <!-- 选择题模式2: 汉语 + 4个英文单词选项 -->
     <view wx:elif="{{currentQuestion.type === 'CHINESE_TO_ENGLISH'}}" class="word-display">
       <view wx:if="{{currentTask.vocabulary.meanings && currentTask.vocabulary.meanings.length > 0}}" class="meanings-display">
-        <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" class="meaning-item">
+        <view wx:for="{{currentTask.vocabulary.meanings}}" wx:key="id" wx:if="{{index < 2}}" class="meaning-item">
           <text class="pos-tag">{{item.partOfSpeech}}</text>
           <text class="meaning-text">{{item.meaning}}</text>
         </view>

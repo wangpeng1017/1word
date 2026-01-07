@@ -1,6 +1,6 @@
 /**
  * 题型分配工具
- * 按照 80% 选择题 + 20% 选词填空的比例分配题型
+ * 比例：选词填空 20%、听音选词 10%、汉选英 ~23%、英选汉 ~47%
  */
 
 export enum QuestionTypeEnum {
@@ -20,48 +20,60 @@ export function allocateQuestionTypes(
   hasAudioMap?: Map<string, boolean>
 ): Map<string, QuestionTypeEnum> {
   const allocation = new Map<string, QuestionTypeEnum>()
-  
+
   if (vocabularyIds.length === 0) {
     return allocation
   }
 
-  // 计算题型数量
+  // 计算各题型数量
   const total = vocabularyIds.length
-  const fillInBlankCount = Math.floor(total * 0.2) // 20% 选词填空
-  const choiceCount = total - fillInBlankCount      // 80% 选择题
-
-  // 选择题的三种类型（英选汉、汉选英、听音选词）
-  const choiceTypes = [
-    QuestionTypeEnum.ENGLISH_TO_CHINESE,
-    QuestionTypeEnum.CHINESE_TO_ENGLISH,
-    QuestionTypeEnum.LISTENING,
-  ]
+  const fillInBlankCount = Math.floor(total * 0.2)   // 20% 选词填空
+  const listeningCount = Math.floor(total * 0.1)     // 10% 听音选词
+  const chineseToEnglishCount = Math.floor(total * 0.23) // ~23% 汉选英
+  // 剩余全部给英选汉 (~47%)
 
   // 洗牌算法（Fisher-Yates）- 随机打乱词汇顺序
   const shuffled = [...vocabularyIds]
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
 
   // 分配题型
-  shuffled.forEach((vocabId, index) => {
-    if (index < fillInBlankCount) {
-      // 前20%分配选词填空
+  let fillInBlankAssigned = 0
+  let listeningAssigned = 0
+  let chineseToEnglishAssigned = 0
+
+  shuffled.forEach((vocabId) => {
+    // 优先分配选词填空
+    if (fillInBlankAssigned < fillInBlankCount) {
       allocation.set(vocabId, QuestionTypeEnum.FILL_IN_BLANK)
-    } else {
-      // 后80%随机分配选择题类型；若无音频则不分配 LISTENING
-      let pool = choiceTypes
-      if (hasAudioMap && hasAudioMap.get(vocabId) === false) {
-        pool = [QuestionTypeEnum.ENGLISH_TO_CHINESE, QuestionTypeEnum.CHINESE_TO_ENGLISH]
-      }
-      const randomChoiceType = pool[Math.floor(Math.random() * pool.length)]
-      allocation.set(vocabId, randomChoiceType)
+      fillInBlankAssigned++
+      return
     }
+
+    // 分配听音选词（需要有音频）
+    const hasAudio = hasAudioMap ? hasAudioMap.get(vocabId) !== false : true
+    if (listeningAssigned < listeningCount && hasAudio) {
+      allocation.set(vocabId, QuestionTypeEnum.LISTENING)
+      listeningAssigned++
+      return
+    }
+
+    // 分配汉选英
+    if (chineseToEnglishAssigned < chineseToEnglishCount) {
+      allocation.set(vocabId, QuestionTypeEnum.CHINESE_TO_ENGLISH)
+      chineseToEnglishAssigned++
+      return
+    }
+
+    // 剩余全部给英选汉
+    allocation.set(vocabId, QuestionTypeEnum.ENGLISH_TO_CHINESE)
   })
 
   return allocation
 }
+
 
 /**
  * 统计题型分布
