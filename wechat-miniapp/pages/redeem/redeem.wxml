@@ -1,0 +1,48 @@
+<!--pages/redeem/redeem.wxml-->
+<view class="container">
+  <!-- 积分余额卡片 -->
+  <view class="points-card">
+    <view class="points-icon">💎</view>
+    <view class="points-info">
+      <text class="points-label">当前积分</text>
+      <text class="points-value">{{currentPoints}}</text>
+    </view>
+  </view>
+
+  <!-- 可兑换成就列表 -->
+  <view class="achievements-list">
+    <view 
+      wx:for="{{achievements}}" 
+      wx:key="id"
+      class="achievement-card {{item.isRedeemed ? 'redeemed' : ''}}"
+    >
+      <view class="achievement-icon">{{item.icon}}</view>
+      <view class="achievement-info">
+        <text class="achievement-name">{{item.name}}</text>
+        <text class="achievement-desc">{{item.description}}</text>
+        <view class="achievement-cost">
+          <text class="cost-icon">💎</text>
+          <text class="cost-value">{{item.pointsCost}}</text>
+        </view>
+      </view>
+      <button 
+        wx:if="{{!item.isRedeemed}}"
+        class="redeem-btn {{currentPoints >= item.pointsCost ? '' : 'disabled'}}"
+        bindtap="redeemAchievement"
+        data-id="{{item.id}}"
+        data-cost="{{item.pointsCost}}"
+        data-name="{{item.name}}"
+        disabled="{{currentPoints < item.pointsCost}}"
+      >
+        兑换
+      </button>
+      <view wx:else class="redeemed-mark">已拥有</view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{achievements.length === 0}}" class="empty">
+    <text class="empty-icon">🛒</text>
+    <text class="empty-text">暂无可兑换成就</text>
+  </view>
+</view>

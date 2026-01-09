@@ -40,11 +40,28 @@
   flex-direction: column;
 }
 
+.user-name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+
 .user-name {
   font-size: 34rpx;
   font-weight: 600;
   color: #FFFFFF;
-  margin-bottom: 6rpx;
+  margin-right: 12rpx;
+}
+
+.user-badges {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.badge-icon {
+  font-size: 28rpx;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
 }
 
 .user-id {

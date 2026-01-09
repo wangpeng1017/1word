@@ -23,6 +23,7 @@ Page({
       level: 1
     },
     achievementCount: 0,
+    displayedBadges: [], // 显示的勋章(最多3个)
     soundEnabled: true,  // 音效开关
   },
 
@@ -38,6 +39,7 @@ Page({
     this.loadHistoryStats()
     this.loadPointsInfo()
     this.loadAchievementCount()
+    this.loadBadges() // 加载勋章
     this.loadSoundSetting()  // 加载音效设置
   },
 
@@ -46,6 +48,7 @@ Page({
       this.loadHistoryStats()
       this.loadPointsInfo()
       this.loadAchievementCount()
+      this.loadBadges() // 刷新勋章
     }
   },
 
@@ -214,6 +217,35 @@ Page({
       title: enabled ? '音效已开启' : '音效已关闭',
       icon: 'none',
       duration: 1500
+    })
+  },
+
+  // 加载勋章
+  async loadBadges() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const res = await get(`/students/${studentId}/badges`)
+      if (res && res.success && res.data) {
+        this.setData({ displayedBadges: res.data.displayed || [] })
+      }
+    } catch (error) {
+      console.error('加载勋章失败:', error)
+    }
+  },
+
+  // 跳转到勋章墙
+  goToBadges() {
+    wx.navigateTo({
+      url: '/pages/badges/badges'
+    })
+  },
+
+  // 跳转到积分商城
+  goToRedeem() {
+    wx.navigateTo({
+      url: '/pages/redeem/redeem'
     })
   },
 })

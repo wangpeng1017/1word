@@ -100,6 +100,8 @@ model students {
   student_achievements student_achievements[]
   study_streaks   study_streaks?
   question_answers question_answers[]
+  student_badges  student_badges[]
+  achievement_redemptions achievement_redemptions[]
 
   @@index([class_id])
 }
@@ -269,13 +271,19 @@ model wrong_questions {
   questionId    String
   wrongAnswer   String
   correctAnswer String
+  wrongCount    Int          @default(1) // 答错次数
+  correctCount  Int          @default(0) // 重测答对次数
+  status        WrongQuestionStatus @default(ACTIVE) // 错题状态
   wrongAt       DateTime     @default(now())
+  lastReviewAt  DateTime?    // 最后复习时间
   questions     questions    @relation(fields: [questionId], references: [id], onDelete: Cascade)
   students      students     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   vocabularies  vocabularies @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
   @@index([studentId, vocabularyId])
+  @@index([studentId, status])
 }
+
 
 model proficiency_tests {
   id           String        @id
@@ -411,13 +419,14 @@ model achievements {
   name        String   // 成就名称
   description String   // 成就描述
   icon        String   // 成就图标
-  type        String   // 成就类型（study, test, streak, mastery等）
-  condition   Json     // 达成条件（JSON格式）
+  type        String   // 成就类型(study, test, streak, mastery等)
+  condition   Json     // 达成条件(JSON格式)
   points      Int      @default(0) // 奖励积分
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   student_achievements student_achievements[]
+  badges      badges[] // 关联的勋章
 
   @@index([type])
   @@index([isActive])
@@ -513,3 +522,85 @@ model vocabulary_pack_day_words {
   @@unique([packDayId, vocabularyId])
   @@index([packDayId])
 }
+
+// 勋章定义表
+model badges {
+  id            String   @id
+  name          String   // 勋章名称
+  icon          String   // 勋章图标 emoji
+  description   String   // 勋章描述
+  rarity        BadgeRarity // 稀有度
+  achievementId String?  // 关联的成就ID(可选)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  achievements  achievements? @relation(fields: [achievementId], references: [id], onDelete: SetNull)
+  student_badges student_badges[]
+
+  @@index([rarity])
+  @@index([isActive])
+}
+
+// 学生勋章表
+model student_badges {
+  id           String   @id
+  studentId    String
+  badgeId      String
+  unlockedAt   DateTime @default(now())
+  isDisplayed  Boolean  @default(true) // 是否在用户名旁显示
+  displayOrder Int      @default(0) // 显示顺序(1-3)
+  students     students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badges       badges   @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, badgeId])
+  @@index([studentId, isDisplayed])
+  @@index([studentId, displayOrder])
+}
+
+// 可兑换成就表
+model redeemable_achievements {
+  id          String   @id
+  name        String   // 成就名称
+  icon        String   // 图标
+  description String   // 描述
+  pointsCost  Int      // 所需积分
+  category    String   @default("decoration") // 类别: decoration, badge等
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  redemptions achievement_redemptions[]
+
+  @@index([isActive])
+  @@index([pointsCost])
+}
+
+// 成就兑换记录表
+model achievement_redemptions {
+  id            String   @id
+  studentId     String
+  achievementId String
+  pointsSpent   Int      // 消耗的积分
+  redeemedAt    DateTime @default(now())
+  students      students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  redeemable_achievements redeemable_achievements @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, achievementId])
+  @@index([studentId])
+  @@index([redeemedAt])
+}
+
+// 勋章稀有度枚举
+enum BadgeRarity {
+  COMMON    // 普通
+  RARE      // 稀有
+  EPIC      // 史诗
+  LEGENDARY // 传说
+}
+
+// 错题状态枚举
+enum WrongQuestionStatus {
+  ACTIVE     // 活跃(仍在错题本中)
+  CONFIRMED  // 待确认(答对1次)
+  MASTERED   // 已掌握(答对2次,已移除)
+}
+

@@ -1,92 +1,80 @@
 <!--pages/index/index.wxml-->
 <view class="page">
-  <view class="header">
-    <view class="date">{{dateStr}}</view>
-    <view class="title">今日复习</view>
-    <view class="book" wx:if="{{overview.bookName}}">
-      <text class="book-name">{{overview.bookName}}</text>
+  <!-- 欢迎动画 (首次打开) -->
+  <view class="welcome-animation" wx:if="{{showWelcome}}">
+    <view class="mascot">👋</view>
+    <view class="welcome-text">欢迎回来,{{userInfo.name || '同学'}}!</view>
+    <view class="welcome-sub">继续你的学习之旅</view>
+  </view>
+
+  <!-- 顶部统计栏 -->
+  <view class="top-stats" wx:if="{{!showWelcome}}">
+    <view class="stat-item">
+      <text class="stat-icon">🔥</text>
+      <text class="stat-value">{{studyDaysData.streak || 0}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-icon">💎</text>
+      <text class="stat-value">{{totalPoints || 0}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-icon">💖</text>
+      <text class="stat-value">{{lives || 5}}</text>
     </view>
   </view>
 
-  <block wx:if="{{state==='ready'}}">
-    <!-- 今日复习任务卡片 -->
-    <view class="task-card">
-      <view class="task-header">
-        <view class="task-title">📋 今日复习任务</view>
-        <view class="task-badge" wx:if="{{overview.dueCount > 0}}">
-          待完成 {{overview.dueCount - overview.reviewedCount}}
-        </view>
-      </view>
+  <!-- 时间轴容器 -->
+  <scroll-view 
+    class="timeline-container" 
+    scroll-y 
+    scroll-into-view="{{scrollTarget}}"
+    wx:if="{{!showWelcome && studyDaysData}}"
+  >
+    <view class="timeline">
+      <!-- DAY卡片 -->
+      <view 
+        wx:for="{{studyDaysData.days}}" 
+        wx:key="day"
+        id="day-{{item.day}}"
+        class="day-card {{item.status}}"
+        bindtap="handleDayClick"
+        data-day="{{item}}"
+      >
+        <!-- 连接线 -->
+        <view class="connector" wx:if="{{index < studyDaysData.days.length - 1}}"></view>
+        
+        <!-- 卡片内容 -->
+        <view class="card-content">
+          <!-- 状态图标 -->
+          <view class="status-icon">
+            <text wx:if="{{item.status === 'completed'}}">✅</text>
+            <text wx:elif="{{item.status === 'current'}}">🔄</text>
+            <text wx:elif="{{item.status === 'missed'}}">⚠️</text>
+            <text wx:else>🔒</text>
+          </view>
 
-      <view class="task-progress">
-        <view class="progress-bar">
-          <view class="progress-fill" style="width: {{progressPercent}}%"></view>
-        </view>
-        <view class="progress-info">
-          <text class="progress-done">{{overview.reviewedCount}} / {{overview.dueCount}}</text>
-          <text class="progress-percent">{{progressPercent}}%</text>
+          <!-- DAY信息 -->
+          <view class="day-info">
+            <view class="day-number">DAY {{item.day}}</view>
+            <view class="day-date">{{formatDate(item.date)}}</view>
+            
+            <!-- 已完成显示统计 -->
+            <view class="day-stats" wx:if="{{item.status === 'completed'}}">
+              <text class="stat-text">{{item.wordsCount}}词 · {{item.accuracy}}%</text>
+            </view>
+            
+            <!-- 进行中显示按钮 -->
+            <view class="day-action" wx:if="{{item.status === 'current'}}">
+              <button class="start-btn" size="mini" bindtap="startReview">开始复习</button>
+            </view>
+          </view>
         </view>
       </view>
     </view>
+  </scroll-view>
 
-    <view class="stats">
-      <view class="stat">
-        <view class="num">{{overview.dueCount}}</view>
-        <view class="label">今日应复习</view>
-      </view>
-      <view class="divider"></view>
-      <view class="stat">
-        <view class="num">{{overview.reviewedCount}}</view>
-        <view class="label">已复习</view>
-      </view>
-      <view class="divider"></view>
-      <view class="stat">
-        <view class="num">{{overview.timeString}}</view>
-        <view class="label">今日用时</view>
-      </view>
-    </view>
-
-    <button class="cta" type="primary" bindtap="startReview">
-      {{overview.reviewedCount>0 && overview.reviewedCount<overview.dueCount ? '继续复习' : '开始复习'}}
-    </button>
-  </block>
-
-  <block wx:elif="{{state==='empty'}}">
-    <view class="empty">
-      <view class="done">🎉 今日复习已完成</view>
-
-      <view class="stats" style="margin-top: 40rpx; margin-bottom: 40rpx;">
-        <view class="stat">
-          <view class="num">{{overview.dueCount}}</view>
-          <view class="label">今日应复习</view>
-        </view>
-        <view class="divider"></view>
-        <view class="stat">
-          <view class="num">{{overview.reviewedCount}}</view>
-          <view class="label">已复习</view>
-        </view>
-        <view class="divider"></view>
-        <view class="stat">
-          <view class="num">{{overview.timeString}}</view>
-          <view class="label">今日用时</view>
-        </view>
-      </view>
-
-      <view class="next-review-info">
-        <view class="sub">下次复习预计：{{nextReviewHint}}</view>
-        <view class="sub" wx:if="{{nextReviewCount > 0}}">下次复习单词：{{nextReviewCount}}个</view>
-      </view>
-    </view>
-  </block>
-
-  <block wx:elif="{{state==='loading'}}">
-    <view class="skeleton"></view>
-  </block>
-
-  <block wx:elif="{{state==='error'}}">
-    <view class="error">
-      <text>加载失败</text>
-      <button size="mini" bindtap="reload">重试</button>
-    </view>
-  </block>
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{!studyDaysData && !showWelcome}}">
+    <text>加载中...</text>
+  </view>
 </view>

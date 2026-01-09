@@ -56,7 +56,7 @@ Page({
     } catch (error) {
       wx.hideLoading()
       console.error('加载错题失败:', error)
-      
+
       this.setData({
         isLoading: false,
         isEmpty: true,
@@ -118,6 +118,59 @@ Page({
   onPullDownRefresh() {
     this.loadWrongQuestions().then(() => {
       wx.stopPullDownRefresh()
+    })
+  },
+
+  // 全部重测
+  retestAll() {
+    const { wrongQuestions } = this.data
+
+    if (wrongQuestions.length === 0) {
+      wx.showToast({ title: '暂无错题', icon: 'none' })
+      return
+    }
+
+    wx.showModal({
+      title: '确认重测',
+      content: `确定要重测全部 ${wrongQuestions.length} 道错题吗?`,
+      success: (res) => {
+        if (res.confirm) {
+          this.startRetest(wrongQuestions)
+        }
+      },
+    })
+  },
+
+  // 筛选重测
+  retestFiltered() {
+    const { filteredQuestions, currentFilter } = this.data
+
+    if (filteredQuestions.length === 0) {
+      wx.showToast({ title: '暂无错题', icon: 'none' })
+      return
+    }
+
+    const filterName = this.getQuestionTypeName(currentFilter)
+
+    wx.showModal({
+      title: '确认重测',
+      content: `确定要重测 ${filterName === currentFilter ? '当前筛选的' : filterName} ${filteredQuestions.length} 道错题吗?`,
+      success: (res) => {
+        if (res.confirm) {
+          this.startRetest(filteredQuestions)
+        }
+      },
+    })
+  },
+
+  // 开始重测
+  startRetest(questions) {
+    // 提取题目ID列表
+    const questionIds = questions.map(q => q.questionId)
+
+    // 跳转到答题页面,传递错题重测模式
+    wx.navigateTo({
+      url: `/pages/study/study?mode=retest&questionIds=${questionIds.join(',')}`
     })
   },
 })

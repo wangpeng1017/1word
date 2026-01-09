@@ -5,7 +5,13 @@
     <view class="user-left">
       <view class="user-avatar">👤</view>
       <view class="user-info">
-        <text class="user-name">{{userInfo.name || '同学'}}</text>
+        <view class="user-name-row">
+          <text class="user-name">{{userInfo.name || '同学'}}</text>
+          <!-- 勋章显示(最多3个) -->
+          <view class="user-badges" wx:if="{{displayedBadges.length > 0}}">
+            <text wx:for="{{displayedBadges}}" wx:key="id" class="badge-icon">{{item.icon}}</text>
+          </view>
+        </view>
         <text class="user-id">手机：{{userInfo.phone || '--'}}</text>
       </view>
     </view>
@@ -55,6 +61,16 @@
     <view class="quick-link-item" bindtap="goToAchievements">
       <view class="link-icon">🏆</view>
       <text class="link-title">我的成就</text>
+      <text class="link-arrow">›</text>
+    </view>
+    <view class="quick-link-item" bindtap="goToBadges">
+      <view class="link-icon">🎖️</view>
+      <text class="link-title">勋章墙</text>
+      <text class="link-arrow">›</text>
+    </view>
+    <view class="quick-link-item" bindtap="goToRedeem">
+      <view class="link-icon">🛒</view>
+      <text class="link-title">积分商城</text>
       <text class="link-arrow">›</text>
     </view>
   </view>

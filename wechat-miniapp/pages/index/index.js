@@ -16,6 +16,12 @@ Page({
     unfinishedCount: 0,
     forecast: null,
     pool: null,
+    studyDaysData: null, // 学习天数数据
+    totalPoints: 0, // 总积分
+    lives: 5, // 生命值(固定显示)
+    userInfo: {}, // 用户信息
+    showWelcome: false, // 显示欢迎动画
+    scrollTarget: '', // 滚动目标
   },
 
   onLoad() {
@@ -23,7 +29,27 @@ Page({
       wx.reLaunch({ url: '/pages/login/login' })
       return
     }
-    this.init()
+
+    // 设置用户信息
+    this.setData({ userInfo: app.globalData.userInfo || {} })
+
+    // 检查是否首次打开(今天)
+    const lastWelcome = wx.getStorageSync('lastWelcomeDate')
+    const today = new Date().toDateString()
+
+    if (lastWelcome !== today) {
+      // 显示欢迎动画
+      this.setData({ showWelcome: true })
+      wx.setStorageSync('lastWelcomeDate', today)
+
+      // 2秒后隐藏欢迎动画
+      setTimeout(() => {
+        this.setData({ showWelcome: false })
+        this.init()
+      }, 2000)
+    } else {
+      this.init()
+    }
   },
 
   onShow() {
@@ -45,6 +71,8 @@ Page({
       const [ov] = await Promise.all([
         this.getTodayOverview(),
         this.getForecast(),
+        this.loadStudyDays(), // 加载学习天数
+        this.loadPoints(), // 加载积分
       ])
 
       if (!ov) {
@@ -188,7 +216,7 @@ Page({
 
     try {
       await post('/students/' + studentId + '/daily-tasks')
-    } catch (e) {}
+    } catch (e) { }
 
     // 清理过期的本地缓存
     const saved = getStudyProgress()
@@ -250,7 +278,7 @@ Page({
     }
 
     let tasks = []
-    try { tasks = await get('/students/' + studentId + '/daily-tasks') } catch (e) {}
+    try { tasks = await get('/students/' + studentId + '/daily-tasks') } catch (e) { }
     const dueCount = Array.isArray(tasks) ? tasks.length : 0
     const savedProgress = getStudyProgress()
     let reviewedCount = 0
@@ -269,5 +297,82 @@ Page({
     const m = Math.floor(seconds / 60)
     const s = seconds % 60
     return m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0')
+  },
+
+  // 加载学习天数数据
+  async loadStudyDays() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const res = await get(`/study-days?studentId=${studentId}`)
+      if (res && res.success && res.data) {
+        this.setData({ studyDaysData: res.data })
+
+        // 延迟滚动到当前DAY
+        setTimeout(() => {
+          this.scrollToCurrentDay()
+        }, 300)
+      }
+    } catch (error) {
+      console.error('加载学习天数失败:', error)
+    }
+  },
+
+  // 加载积分
+  async loadPoints() {
+    try {
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) return
+
+      const res = await get(`/points?studentId=${studentId}`)
+      if (res && res.points) {
+        this.setData({ totalPoints: res.points.totalPoints || 0 })
+      }
+    } catch (error) {
+      console.error('加载积分失败:', error)
+    }
+  },
+
+  // 格式化日期
+  formatDate(dateStr) {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    return `${month}月${day}日`
+  },
+
+  // 处理DAY点击
+  handleDayClick(e) {
+    const day = e.currentTarget.dataset.day
+
+    if (day.status === 'current') {
+      // 当前DAY,开始复习
+      this.startReview()
+    } else if (day.status === 'completed') {
+      // 已完成,显示详情
+      wx.showModal({
+        title: `DAY ${day.day} 已完成`,
+        content: `学习单词: ${day.wordsCount}个\n正确率: ${day.accuracy}%\n用时: ${this.formatTime(day.totalTime)}`,
+        showCancel: false
+      })
+    } else if (day.status === 'locked') {
+      wx.showToast({
+        title: '请先完成前面的学习',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 自动滚动到当前DAY
+  scrollToCurrentDay() {
+    const { studyDaysData } = this.data
+    if (!studyDaysData || !studyDaysData.days) return
+
+    const currentDay = studyDaysData.days.find(d => d.status === 'current')
+    if (currentDay) {
+      this.setData({ scrollTarget: `day-${currentDay.day}` })
+    }
   },
 })

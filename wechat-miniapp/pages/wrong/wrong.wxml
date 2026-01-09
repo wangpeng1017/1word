@@ -2,8 +2,20 @@
 <view class="container">
   <!-- 标题栏 -->
   <view class="header">
-    <text class="header-title">错题本</text>
+    <text class="header-title">📖 错题本</text>
     <text class="header-count">共 {{filteredQuestions.length}} 题</text>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons" wx:if="{{filteredQuestions.length > 0}}">
+    <button class="action-btn primary" bindtap="retestAll">
+      <text class="btn-icon">🔄</text>
+      <text>全部重测</text>
+    </button>
+    <button class="action-btn" bindtap="retestFiltered">
+      <text class="btn-icon">📝</text>
+      <text>筛选重测</text>
+    </button>
   </view>
 
   <!-- 加载中 -->

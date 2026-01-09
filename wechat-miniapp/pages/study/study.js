@@ -19,6 +19,9 @@ Page({
     audioContext: null, consecutiveCorrect: 0, showMilestone: false, milestoneCount: 0,
     showExpGain: false, expGainValue: 0, isOffline: false, isSubmitting: false,
     sessionId: null, lastSyncedIndex: -1,
+    isRetestMode: false, // 错题重测模式
+    retestQuestionIds: [], // 重测的题目ID列表
+    wrongQuestionMap: {}, // questionId -> wrongQuestionId 映射
   },
 
   async onLoad(options) {
@@ -30,7 +33,16 @@ Page({
     this.setData({ startTime: Date.now(), sessionStartTime: Date.now() })
     this.startTimer()
     preloadSounds()  // 预加载音效
-    options.resume === 'true' ? this.resumeProgress() : this.loadTasks()
+
+    // 检查是否是错题重测模式
+    if (options.mode === 'retest' && options.questionIds) {
+      this.setData({ isRetestMode: true, retestQuestionIds: options.questionIds.split(',') })
+      this.loadRetestQuestions()
+    } else if (options.resume === 'true') {
+      this.resumeProgress()
+    } else {
+      this.loadTasks()
+    }
   },
 
   // 确保 userInfo 已加载
@@ -182,6 +194,12 @@ Page({
     }
     this.setData({ isAnswered: true, isCorrect, showResult: true, answers, correctCount, wrongCount, consecutiveCorrect: newCC, showExpGain: isCorrect, expGainValue: expGain })
     this.saveProgress()
+
+    // 如果是重测模式且答对了,删除错题记录
+    if (this.data.isRetestMode && isCorrect) {
+      this.removeWrongQuestion(currentQuestion.id)
+    }
+
     if (isMilestone) setTimeout(() => this.showMilestonePopup(newCC), 300)
     if (isCorrect) { setTimeout(() => this.setData({ showExpGain: false }), 1000); setTimeout(() => this.nextQuestion(), isMilestone ? 2500 : 1500) }
   },
@@ -354,5 +372,86 @@ Page({
       this.data.audioContext.src = currentTask.vocabulary.audioUrl
       this.data.audioContext.play()
     } else wx.showToast({ title: '正在加载音频...', icon: 'loading', duration: 1000 })
+  },
+
+  // ========== 错题重测相关方法 ==========
+
+  // 加载错题列表
+  async loadRetestQuestions() {
+    try {
+      wx.showLoading({ title: '加载错题中...' })
+      const studentId = app.globalData.userInfo?.studentId
+      if (!studentId) throw new Error('未找到学生ID')
+
+      // 获取错题列表
+      const response = await get(`/students/${studentId}/wrong-questions?limit=100`)
+      const { wrongQuestions } = response
+
+      if (!wrongQuestions || wrongQuestions.length === 0) {
+        wx.hideLoading()
+        wx.showModal({
+          title: '提示',
+          content: '暂无错题',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
+      }
+
+      // 构建 wrongQuestionMap (questionId -> wrongQuestionId)
+      const wrongQuestionMap = {}
+      wrongQuestions.forEach(wq => {
+        wrongQuestionMap[wq.questionId] = wq.id
+      })
+
+      // 转换为 tasks 格式
+      const tasks = wrongQuestions.map(wq => ({
+        id: wq.id,
+        vocabularyId: wq.vocabularyId,
+        vocabulary: wq.vocabulary,
+        selectedQuestionId: wq.questionId
+      }))
+
+      this.setData({
+        tasks,
+        totalCount: tasks.length,
+        isLoading: false,
+        wrongQuestionMap
+      })
+
+      wx.hideLoading()
+      this.loadCurrentQuestion()
+    } catch (error) {
+      wx.hideLoading()
+      console.error('加载错题失败:', error)
+      wx.showModal({
+        title: '加载失败',
+        content: error.message || '请检查网络',
+        showCancel: false,
+        success: () => wx.navigateBack()
+      })
+    }
+  },
+
+  // 删除错题记录
+  async removeWrongQuestion(questionId) {
+    try {
+      const { wrongQuestionMap } = this.data
+      const wrongQuestionId = wrongQuestionMap[questionId]
+
+      if (!wrongQuestionId) {
+        console.warn('未找到错题记录ID:', questionId)
+        return
+      }
+
+      // 调用删除API
+      const { del } = require('../../utils/request')
+      await del(`/wrong-questions/${wrongQuestionId}`)
+
+      console.log('错题已删除:', wrongQuestionId)
+    } catch (error) {
+      console.error('删除错题失败:', error)
+      // 不阻塞流程,继续答题
+    }
   },
 })

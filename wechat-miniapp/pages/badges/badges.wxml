@@ -1,0 +1,48 @@
+<!--pages/badges/badges.wxml-->
+<view class="container">
+  <!-- 头部统计 -->
+  <view class="header-stats">
+    <view class="stat-item">
+      <text class="stat-value">{{unlockedCount}}</text>
+      <text class="stat-label">已解锁</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">{{totalCount}}</text>
+      <text class="stat-label">总勋章</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">{{completionRate}}%</text>
+      <text class="stat-label">完成度</text>
+    </view>
+  </view>
+
+  <!-- 勋章列表 -->
+  <view class="badges-grid">
+    <view 
+      wx:for="{{badges}}" 
+      wx:key="id" 
+      class="badge-card {{item.isUnlocked ? '' : 'locked'}}"
+      bindtap="showBadgeDetail"
+      data-badge="{{item}}"
+    >
+      <view class="badge-icon-large">{{item.icon}}</view>
+      <view class="badge-name">{{item.name}}</view>
+      <view class="badge-rarity rarity-{{item.rarity}}">
+        <text wx:if="{{item.rarity === 'COMMON'}}">普通</text>
+        <text wx:elif="{{item.rarity === 'RARE'}}">稀有</text>
+        <text wx:elif="{{item.rarity === 'EPIC'}}">史诗</text>
+        <text wx:elif="{{item.rarity === 'LEGENDARY'}}">传说</text>
+      </view>
+      <view wx:if="{{item.isUnlocked}}" class="unlocked-mark">✓</view>
+      <view wx:else class="locked-overlay">🔒</view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{badges.length === 0}}" class="empty">
+    <text class="empty-icon">🎖️</text>
+    <text class="empty-text">暂无勋章</text>
+  </view>
+</view>

@@ -9,6 +9,8 @@
     "pages/profile/profile",
     "pages/study-history/study-history",
     "pages/achievements/achievements",
+    "pages/badges/badges",
+    "pages/redeem/redeem",
     "pages/leaderboard/leaderboard",
     "pages/points-history/points-history",
     "pages/change-password/change-password",

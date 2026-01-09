@@ -37,7 +37,7 @@ let audioContexts = {}
  */
 function playSound(type) {
     try {
-        // 检查音效开关设置（默认开启）
+        // 检查音效开关设置(默认开启)
         const soundEnabled = wx.getStorageSync('soundEnabled')
         if (soundEnabled === false) return  // 明确关闭才不播放
 
@@ -58,9 +58,17 @@ function playSound(type) {
             })
         }
 
-        // 从头播放
-        audioContexts[type].seek(0)
-        audioContexts[type].play()
+        const ctx = audioContexts[type]
+
+        // 修复: 先停止再播放,避免重复播放错误
+        ctx.stop()
+
+        // 延迟一小段时间再播放,确保停止完成
+        setTimeout(() => {
+            ctx.seek(0)
+            ctx.play()
+        }, 50)
+
     } catch (e) {
         console.warn('[Audio] 音效播放异常:', e)
     }
