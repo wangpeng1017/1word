@@ -4,16 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // GET /api/students/[id]/badges - 获取学生勋章
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await context.params
         const studentId = params.id
 
         // 获取学生的所有勋章
@@ -78,9 +77,10 @@ export async function GET(
 // PUT /api/students/[id]/badges - 更新勋章显示顺序
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await context.params
         const studentId = params.id
         const body = await request.json()
         const { badgeIds } = body // [badgeId1, badgeId2, badgeId3]

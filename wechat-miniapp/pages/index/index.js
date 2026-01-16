@@ -306,8 +306,8 @@ Page({
       if (!studentId) return
 
       const res = await get(`/study-days?studentId=${studentId}`)
-      if (res && res.success && res.data) {
-        this.setData({ studyDaysData: res.data })
+      if (res && res.days) {
+        this.setData({ studyDaysData: res })
 
         // 延迟滚动到当前DAY
         setTimeout(() => {
