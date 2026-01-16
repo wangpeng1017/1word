@@ -75,6 +75,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: studentId } = await params
+  console.log('[daily-tasks] 开始处理, studentId:', studentId)
   try {
     const token = getTokenFromHeader(request.headers.get('authorization'))
     if (!token) return apiResponse.unauthorized('未授权')
@@ -87,6 +88,7 @@ export async function GET(
       where: { id: studentId },
       select: { id: true, class_id: true }
     })
+    console.log('[daily-tasks] 学生信息:', student)
     if (!student) return apiResponse.error('学生不存在')
 
     // 2. 获取班级的活跃词汇库计划
@@ -123,6 +125,7 @@ export async function GET(
         }
       }
     })
+    console.log('[daily-tasks] planClass found:', !!planClass, 'pack:', planClass?.vocabulary_packs?.name)
 
     const today = getTodayBeijing()
 
@@ -147,6 +150,7 @@ export async function GET(
       const startDateBeijing = toBeijingDate(planClass.start_date)
       const diffTime = today.getTime() - startDateBeijing.getTime()
       dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+      console.log('[daily-tasks] dayNumber:', dayNumber, 'totalDays:', totalDays)
 
       // 获取当天的新学单词
       if (dayNumber >= 1 && dayNumber <= totalDays) {
@@ -210,6 +214,7 @@ export async function GET(
     })
 
     const shaped = mapTasksForMiniapp(tasksWithSelection, isNewMap)
+    console.log('[daily-tasks] 返回任务数:', shaped.length, 'newCount:', newWords.length, 'reviewCount:', reviewWords.length)
 
     return apiResponse.success({
       tasks: shaped,
