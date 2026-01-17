@@ -404,11 +404,14 @@ Page({
         wrongQuestionMap[wq.questionId] = wq.id
       })
 
-      // 转换为 tasks 格式
+      // 转换为 tasks 格式（将 question 放入 vocabulary.questions 数组以兼容 loadCurrentQuestion）
       const tasks = wrongQuestions.map(wq => ({
         id: wq.id,
         vocabularyId: wq.vocabularyId,
-        vocabulary: wq.vocabulary,
+        vocabulary: {
+          ...wq.vocabulary,
+          questions: wq.question ? [wq.question] : []
+        },
         selectedQuestionId: wq.questionId
       }))
 
