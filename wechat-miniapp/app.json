@@ -38,8 +38,8 @@
       {
         "pagePath": "pages/wrong/wrong",
         "text": "错题本",
-        "iconPath": "images/wrong.png",
-        "selectedIconPath": "images/wrong-active.png"
+        "iconPath": "images/book.png",
+        "selectedIconPath": "images/book-active.png"
       },
       {
         "pagePath": "pages/profile/profile",
