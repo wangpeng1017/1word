@@ -1,80 +1,109 @@
 <!--pages/index/index.wxml-->
 <view class="page">
   <!-- 欢迎动画 (首次打开) -->
-  <view class="welcome-animation" wx:if="{{showWelcome}}">
-    <view class="mascot">👋</view>
-    <view class="welcome-text">欢迎回来,{{userInfo.name || '同学'}}!</view>
-    <view class="welcome-sub">继续你的学习之旅</view>
-  </view>
+  <view class="welcome-overlay" wx:if="{{showWelcome}}">
+    <view class="welcome-close" bindtap="hideWelcome">×</view>
+    <view class="welcome-content">
+      <!-- 吉祥物 -->
+      <view class="mascot-container">
+        <view class="mascot-emoji">🐦</view>
+        <view class="mascot-shadow"></view>
+      </view>
 
-  <!-- 顶部统计栏 -->
-  <view class="top-stats" wx:if="{{!showWelcome}}">
-    <view class="stat-item">
-      <text class="stat-icon">🔥</text>
-      <text class="stat-value">{{studyDaysData.streak || 0}}</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-icon">💎</text>
-      <text class="stat-value">{{totalPoints || 0}}</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-icon">💖</text>
-      <text class="stat-value">{{lives || 5}}</text>
+      <!-- 欢迎文字 -->
+      <view class="welcome-text">欢迎回来，{{userInfo.name || '同学'}}！</view>
+      <view class="welcome-sub">看到你熟悉的脸庞多儿好开心！</view>
+
+      <!-- 开始按钮 -->
+      <view class="welcome-btn" bindtap="hideWelcome">开始今日学习</view>
     </view>
   </view>
 
-  <!-- 时间轴容器 -->
-  <scroll-view 
-    class="timeline-container" 
-    scroll-y 
-    scroll-into-view="{{scrollTarget}}"
-    wx:if="{{!showWelcome && studyDaysData}}"
-  >
-    <view class="timeline">
-      <!-- DAY卡片 -->
-      <view 
-        wx:for="{{studyDaysData.days}}" 
-        wx:key="day"
-        id="day-{{item.day}}"
-        class="day-card {{item.status}}"
-        bindtap="handleDayClick"
-        data-day="{{item}}"
-      >
-        <!-- 连接线 -->
-        <view class="connector" wx:if="{{index < studyDaysData.days.length - 1}}"></view>
-        
-        <!-- 卡片内容 -->
-        <view class="card-content">
-          <!-- 状态图标 -->
-          <view class="status-icon">
-            <text wx:if="{{item.status === 'completed'}}">✅</text>
-            <text wx:elif="{{item.status === 'current'}}">🔄</text>
-            <text wx:elif="{{item.status === 'missed'}}">⚠️</text>
-            <text wx:else>🔒</text>
+  <!-- 主界面 -->
+  <view class="main-content" wx:if="{{!showWelcome}}">
+    <!-- 顶部统计栏 -->
+    <view class="top-bar">
+      <view class="stat-item flame">
+        <text class="stat-icon">🔥</text>
+        <text class="stat-value">{{studyDaysData.streak || 0}}</text>
+      </view>
+      <view class="stat-item gem">
+        <text class="stat-icon">💎</text>
+        <text class="stat-value">{{totalPoints || 0}}</text>
+      </view>
+      <view class="stat-item heart">
+        <text class="stat-icon">❤️</text>
+        <text class="stat-value">{{lives || 5}}</text>
+      </view>
+    </view>
+
+    <!-- 当前阶段提示 -->
+    <view class="stage-banner" wx:if="{{studyDaysData.packName}}">
+      <view class="stage-info">
+        <view class="stage-label">当前词库</view>
+        <view class="stage-name">{{studyDaysData.packName}}</view>
+      </view>
+      <view class="stage-icon">📚</view>
+    </view>
+
+    <!-- 学习路径 -->
+    <scroll-view
+      class="path-container"
+      scroll-y
+      scroll-into-view="{{scrollTarget}}"
+      wx:if="{{studyDaysData && studyDaysData.days.length > 0}}"
+    >
+      <view class="learning-path">
+        <view
+          wx:for="{{studyDaysData.days}}"
+          wx:key="day"
+          id="day-{{item.day}}"
+          class="path-node {{item.status}} {{index % 2 === 0 ? 'left' : 'right'}}"
+          bindtap="handleDayClick"
+          data-day="{{item}}"
+        >
+          <!-- 连接曲线 -->
+          <view class="path-curve" wx:if="{{index < studyDaysData.days.length - 1}}">
+            <view class="curve-line {{item.status}}"></view>
           </view>
 
-          <!-- DAY信息 -->
-          <view class="day-info">
-            <view class="day-number">DAY {{item.day}}</view>
-            <view class="day-date">{{formatDate(item.date)}}</view>
-            
-            <!-- 已完成显示统计 -->
-            <view class="day-stats" wx:if="{{item.status === 'completed'}}">
-              <text class="stat-text">{{item.wordsCount}}词 · {{item.accuracy}}%</text>
+          <!-- 圆形节点 -->
+          <view class="node-circle {{item.status}}">
+            <view class="node-inner">
+              <text class="node-icon" wx:if="{{item.status === 'completed'}}">✓</text>
+              <text class="node-icon" wx:elif="{{item.status === 'current'}}">▶</text>
+              <text class="node-icon" wx:elif="{{item.status === 'missed'}}">!</text>
+              <text class="node-icon" wx:else>🔒</text>
             </view>
-            
-            <!-- 进行中显示按钮 -->
-            <view class="day-action" wx:if="{{item.status === 'current'}}">
-              <button class="start-btn" size="mini" bindtap="startReview">开始复习</button>
-            </view>
+            <!-- 进度环 -->
+            <view class="progress-ring" wx:if="{{item.status === 'current'}}"></view>
+          </view>
+
+          <!-- 节点标签 -->
+          <view class="node-label">
+            <view class="day-title">Day {{item.day}}</view>
+            <view class="day-date-full">{{item.dateFormatted || item.date}}</view>
+            <view class="day-words" wx:if="{{item.status === 'completed'}}">{{item.wordsCount}}个单词</view>
+            <view class="day-words current-hint" wx:elif="{{item.status === 'current'}}">点击开始</view>
           </view>
         </view>
       </view>
+
+      <!-- 底部留白 -->
+      <view class="path-footer"></view>
+    </scroll-view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!studyDaysData || studyDaysData.days.length === 0}}">
+      <view class="empty-icon">📖</view>
+      <view class="empty-text">暂无学习计划</view>
+      <view class="empty-sub">请联系老师分配学习任务</view>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 加载状态 -->
-  <view class="loading" wx:if="{{!studyDaysData && !showWelcome}}">
-    <text>加载中...</text>
+  <view class="loading-state" wx:if="{{state === 'loading' && !showWelcome}}">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">加载中...</view>
   </view>
 </view>
