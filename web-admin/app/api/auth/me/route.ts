@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
       phone: user.phone,
       role: user.role,
       isActive: user.is_active,
+      teacherId: user.teachers?.id || null,
+      studentId: user.students?.id || null,
       teacher: user.teachers,
       student: user.students,
     })
