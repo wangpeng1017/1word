@@ -16,12 +16,17 @@ import { smartResetPoints } from '@/lib/cron/reset-points'
 
 export async function POST(request: NextRequest) {
   try {
-    // 验证 Cron 密钥（防止恶意调用）
+    // 验证 Cron 密钥（必须设置且匹配）
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    // 如果设置了 CRON_SECRET，则验证
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // CRON_SECRET 必须设置，否则拒绝访问
+    if (!cronSecret) {
+      console.error('[CRON] CRON_SECRET 环境变量未设置')
+      return Response.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

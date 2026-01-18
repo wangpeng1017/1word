@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
 
     // 构建完整 URL（小程序需要完整 URL，不能使用相对路径）
     const host = request.headers.get('host') || 'localhost:3000'
-    const protocol = host.includes('localhost') ? 'http' : 'http' // 阿里云服务器暂用 http
+    // 根据环境决定协议：生产环境使用 https，开发环境使用 http
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
     const fullUrl = `${protocol}://${host}/api/files/${type}/${filename}`
 
     return successResponse({

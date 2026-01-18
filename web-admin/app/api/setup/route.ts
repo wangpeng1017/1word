@@ -7,6 +7,14 @@ import { createEnumsSQLArray, createTablesSQLArray, addForeignKeysSQLArray, alte
 // 数据库初始化接口
 export async function POST(request: NextRequest) {
   try {
+    // 生产环境禁用初始化 API（防止恶意重置）
+    if (process.env.NODE_ENV === 'production') {
+      // 如果需要在生产环境初始化，需要设置 ALLOW_SETUP=true
+      if (process.env.ALLOW_SETUP !== 'true') {
+        return errorResponse('生产环境已禁用初始化 API，如需执行请设置 ALLOW_SETUP=true', 403)
+      }
+    }
+
     // 无论当前状态如何，优先确保：补齐缺失列 + 创建枚举类型 + 迁移列类型
     try {
       // 0) 补齐缺失列（幂等）

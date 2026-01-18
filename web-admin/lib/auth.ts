@@ -2,7 +2,12 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { cacheGet, cacheSet } from './redis'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+// JWT 密钥必须通过环境变量设置
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('生产环境必须设置 JWT_SECRET 环境变量')
+}
+const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'dev-only-secret-key-do-not-use-in-production'
 
 // 内存缓存（Redis不可用时的降级方案）
 const tokenCache = new Map<string, { payload: JWTPayload; expireAt: number }>()
@@ -26,7 +31,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 // 生成JWT Token
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(payload, EFFECTIVE_JWT_SECRET, { expiresIn: '7d' })
 }
 
 // 验证JWT Token（带内存缓存）
@@ -38,7 +43,7 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
+    const payload = jwt.verify(token, EFFECTIVE_JWT_SECRET) as JWTPayload
     tokenCache.set(cacheKey, { payload, expireAt: Date.now() + MEMORY_CACHE_TTL })
     // 清理过期缓存
     if (tokenCache.size > 1000) {
@@ -60,7 +65,7 @@ export async function verifyTokenAsync(token: string): Promise<JWTPayload | null
   if (cached) return cached
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
+    const payload = jwt.verify(token, EFFECTIVE_JWT_SECRET) as JWTPayload
     await cacheSet(cacheKey, payload, 300)
     return payload
   } catch (error) {

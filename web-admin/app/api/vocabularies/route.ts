@@ -24,9 +24,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    // 性能优化: 默认limit为50，筛选下拉框使用limit=10000
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 10000)
+    // 分页参数验证：确保 page >= 1，limit 在 1-1000 范围内
+    const rawPage = parseInt(searchParams.get('page') || '1')
+    const rawLimit = parseInt(searchParams.get('limit') || '50')
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+    const limit = isNaN(rawLimit) ? 50 : Math.max(1, Math.min(rawLimit, 1000))
     const search = searchParams.get('search') || ''
     const isHighFrequency = searchParams.get('isHighFrequency')
     const difficulty = searchParams.get('difficulty')

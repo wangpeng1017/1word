@@ -33,6 +33,11 @@ export async function GET(request: NextRequest) {
       return unauthorizedResponse('用户不存在')
     }
 
+    // 检查用户是否已被禁用
+    if (!user.is_active) {
+      return unauthorizedResponse('账号已被禁用，请联系管理员')
+    }
+
     return successResponse({
       id: user.id,
       name: user.name,
