@@ -39,11 +39,19 @@ export async function generatePDFReport(data: ReportData, filepath: string): Pro
             const stream = fs.createWriteStream(filepath)
             doc.pipe(stream)
 
-            // 配置中文字体 - 使用Windows系统字体
+            // 配置中文字体 - 支持 Windows 和 Linux
             const chineseFontPaths = [
-                'C:\\\\Windows\\\\Fonts\\\\msyh.ttc',    // 微软雅黑
-                'C:\\\\Windows\\\\Fonts\\\\simsun.ttc',  // 宋体
-                'C:\\\\Windows\\\\Fonts\\\\simhei.ttf',  // 黑体
+                // Linux 字体路径（阿里云服务器）
+                '/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc',
+                '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+                '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+                '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+                '/usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc',
+                '/usr/share/fonts/wqy-microhei/wqy-microhei.ttc',
+                // Windows 字体路径
+                'C:\\Windows\\Fonts\\msyh.ttc',    // 微软雅黑
+                'C:\\Windows\\Fonts\\simsun.ttc',  // 宋体
+                'C:\\Windows\\Fonts\\simhei.ttf',  // 黑体
             ]
 
             let fontConfigured = false
