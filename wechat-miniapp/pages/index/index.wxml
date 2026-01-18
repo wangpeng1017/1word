@@ -21,31 +21,6 @@
 
   <!-- 主界面 -->
   <view class="main-content" wx:if="{{!showWelcome}}">
-    <!-- 顶部统计栏 -->
-    <view class="top-bar">
-      <view class="stat-item flame">
-        <text class="stat-icon">🔥</text>
-        <text class="stat-value">{{studyDaysData.streak || 0}}</text>
-      </view>
-      <view class="stat-item gem">
-        <text class="stat-icon">💎</text>
-        <text class="stat-value">{{totalPoints || 0}}</text>
-      </view>
-      <view class="stat-item heart">
-        <text class="stat-icon">❤️</text>
-        <text class="stat-value">{{lives || 5}}</text>
-      </view>
-    </view>
-
-    <!-- 当前阶段提示 -->
-    <view class="stage-banner" wx:if="{{studyDaysData.packName}}">
-      <view class="stage-info">
-        <view class="stage-label">当前词库</view>
-        <view class="stage-name">{{studyDaysData.packName}}</view>
-      </view>
-      <view class="stage-icon">📚</view>
-    </view>
-
     <!-- 学习路径 -->
     <scroll-view
       class="path-container"

@@ -129,68 +129,10 @@
   flex-direction: column;
 }
 
-/* 顶部统计栏 */
-.top-bar {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 24rpx 40rpx;
-  background: #FFFFFF;
-  border-bottom: 2rpx solid #E5E5E5;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.stat-icon {
-  font-size: 40rpx;
-}
-
-.stat-value {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #3C3C3C;
-}
-
-/* 阶段提示横幅 */
-.stage-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 24rpx;
-  padding: 28rpx 32rpx;
-  background: linear-gradient(135deg, #FF9600 0%, #FF7A00 100%);
-  border-radius: 20rpx;
-  box-shadow: 0 4rpx 0 #CC6200;
-}
-
-.stage-info {
-  flex: 1;
-}
-
-.stage-label {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 4rpx;
-}
-
-.stage-name {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.stage-icon {
-  font-size: 48rpx;
-}
-
 /* ========== 学习路径 ========== */
 .path-container {
   flex: 1;
-  height: calc(100vh - 280rpx);
+  height: calc(100vh - 120rpx);
 }
 
 .learning-path {
