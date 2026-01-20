@@ -33,17 +33,40 @@ function getPGPool() {
   return pgPool
 }
 
-// 将 PostgreSQL 风格的 $1, $2 转换为 MySQL 的 ?
-function convertToMySQLQuery(text: string): string {
-  return text.replace(/\$(\d+)/g, '?')
+/**
+ * 将 PostgreSQL 风格的 $1, $2 转换为 MySQL 的 ?
+ * 并扩展参数数组以匹配重复使用的占位符
+ *
+ * 例如:
+ *   text: "WHERE a = $1 OR b = $1"
+ *   params: ['value']
+ * 转换为:
+ *   query: "WHERE a = ? OR b = ?"
+ *   params: ['value', 'value']
+ */
+function convertToMySQLQuery(text: string, params?: unknown[]): { query: string; params: unknown[] } {
+  if (!params || params.length === 0) {
+    return { query: text.replace(/\$(\d+)/g, '?'), params: [] }
+  }
+
+  const newParams: unknown[] = []
+  const query = text.replace(/\$(\d+)/g, (_, index) => {
+    const paramIndex = parseInt(index, 10) - 1 // PostgreSQL uses 1-based index
+    if (paramIndex >= 0 && paramIndex < params.length) {
+      newParams.push(params[paramIndex])
+    }
+    return '?'
+  })
+
+  return { query, params: newParams }
 }
 
 export const db = {
   async query(text: string, params?: unknown[]) {
     if (isMySQL) {
       const pool = await getMySQLPool()
-      const mysqlQuery = convertToMySQLQuery(text)
-      const [rows] = await pool.query(mysqlQuery, params)
+      const { query, params: mysqlParams } = convertToMySQLQuery(text, params)
+      const [rows] = await pool.query(query, mysqlParams)
       // 模拟 pg 的返回格式 { rows: [...] }
       return { rows: Array.isArray(rows) ? rows : [rows] }
     } else {
