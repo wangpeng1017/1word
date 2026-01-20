@@ -38,7 +38,17 @@ async function exportData() {
       'point_history',
       'achievements',
       'student_achievements',
-      'study_streaks'
+      'study_streaks',
+      // 新增的表
+      'operation_logs',
+      'question_answers',
+      'vocabulary_packs',
+      'vocabulary_pack_days',
+      'vocabulary_pack_day_words',
+      'badges',
+      'student_badges',
+      'redeemable_achievements',
+      'achievement_redemptions'
     ];
 
     const data = {};

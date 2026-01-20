@@ -3,8 +3,9 @@
 // development: 本地开发环境
 // preview: Vercel预览环境
 // production: 阿里云生产环境
+// xdf: 新东方客户环境
 
-const ENV = 'production' // 手动切换环境
+const ENV = 'xdf' // 手动切换环境
 
 const config = {
   development: {
@@ -21,6 +22,11 @@ const config = {
     apiUrl: 'http://8.130.182.148:3000/api',
     debug: true,
     name: '阿里云生产环境'
+  },
+  xdf: {
+    apiUrl: 'https://ienglish.xdf.cn/api',
+    debug: false,
+    name: '新东方生产环境'
   }
 }
 
