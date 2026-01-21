@@ -1,6 +1,10 @@
 /**
  * @file link-audios.js
  * @desc 批量关联音频到数据库
+ * @input 服务器音频目录: public/audios/words/*.mp3
+ * @output 更新 word_audios 表
+ * @pos 数据处理脚本，在服务器执行
+ * ⚠️ 更新我时，请同步更新本注释及 scripts/_INDEX.md
  */
 
 const { PrismaClient } = require('@prisma/client')

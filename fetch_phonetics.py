@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-批量获取并更新缺失的音标
-使用 Free Dictionary API
+@file fetch_phonetics.py
+@desc 批量获取缺失的音标 (Free Dictionary API)
+@input missing_phonetic_words.txt
+@output phonetics_update.sql
+@pos 数据处理工具，用于补充缺失的词汇音标
+⚠️ 更新我时，请同步更新本注释
 """
 
 import asyncio

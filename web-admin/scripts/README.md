@@ -1,5 +1,21 @@
 # 数据库迁移脚本使用指南
 
+## 词汇数据完善脚本（2026-01-21）
+
+| 脚本 | 功能 | 执行位置 |
+|------|------|----------|
+| `link-images.js` | 批量关联图片到 word_images 表 | 服务器 |
+| `link-audios.js` | 批量关联音频到 word_audios 表 | 服务器 |
+
+```bash
+# 在服务器执行
+cd /root/word-app/web-admin
+node scripts/link-images.js   # 关联图片
+node scripts/link-audios.js   # 关联音频
+```
+
+---
+
 ## PostgreSQL → MySQL 迁移（2025-12-30）
 
 新增迁移脚本 `migrate-pg-to-mysql.js`，用于将数据从 PostgreSQL 迁移到 MySQL。

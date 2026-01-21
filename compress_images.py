@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-图片批量压缩脚本
-输入: word_images_final/*.png (2.1GB)
-输出: word_images_compressed/*.webp (~100-150MB)
-参数: 最大宽度 600px, WebP 质量 75%
+@file compress_images.py
+@desc 图片批量压缩脚本 (PNG→WebP)
+@input word_images_final/*.png (2.1GB)
+@output word_images_compressed/*.webp (~36MB)
+@pos 数据处理工具，用于压缩词汇图片
+⚠️ 更新我时，请同步更新本注释
 """
 
 import os

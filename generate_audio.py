@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-批量获取单词音频
-优先使用 Free Dictionary API 获取真人发音
-备选使用 Edge TTS 生成
+@file generate_audio.py
+@desc 批量获取单词音频 (词典API + Edge TTS)
+@input missing_audio_words.txt
+@output word_audios/*.mp3
+@pos 数据处理工具，用于获取缺失的词汇音频
+⚠️ 更新我时，请同步更新本注释
 """
 
 import asyncio
