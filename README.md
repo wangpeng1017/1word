@@ -231,9 +231,13 @@ crontab -e
 
 ## 文档
 
-- [PRD.md](docs/PRD.md) - 产品需求文档
-- [部署指南.md](docs/部署指南.md) - 部署说明
-- [web-admin说明.md](docs/web-admin说明.md) - 管理后台说明
+### 核心文档
+- [PRD.md](docs/PRD.md) - 产品需求文档（单一真相来源）
+- [XDF_部署方案_完整版.md](docs/XDF_部署方案_完整版.md) - **新东方服务器完整部署方案**
+- [web-admin说明.md](docs/web-admin说明.md) - 管理后台架构说明
+
+### 更多文档
+查看 [docs/_INDEX.md](docs/_INDEX.md) 获取完整文档索引
 
 ## 许可证
 

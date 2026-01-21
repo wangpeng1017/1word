@@ -26,11 +26,11 @@ REPO_URL="https://github.com/wangpeng1017/1word.git"
 PORT=3000
 
 # 数据库配置
-DB_HOST="rm-2ze2n9xofwd6lu1oz.mysql.rds.aliyuncs.com"
+DB_HOST="rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com"
 DB_PORT="3306"
-DB_NAME="zytbydt"
-DB_USER="PRO_RDS_zytbydt_RW"
-DB_PASS="YpgtW4A9lAvdTRbs"
+DB_NAME="bdcxcx"
+DB_USER="PRO_RDS_bdcxcx_RW"
+DB_PASS="4n8anApuMflp3cRr"
 DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
 # JWT 密钥
