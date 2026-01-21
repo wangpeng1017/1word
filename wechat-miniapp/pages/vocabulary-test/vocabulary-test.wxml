@@ -1,0 +1,207 @@
+<!--pages/vocabulary-test/vocabulary-test.wxml-->
+<!-- @input: vocabulary-test.js 提供的数据
+     @output: 用户交互事件 (startTest, selectAnswer, submitAnswer等)
+     @pos: 词汇量测试视图层，参考study.wxml的交互风格
+     ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md -->
+<view class="container vocabulary-test-page">
+  <!-- 介绍页 -->
+  <view wx:if="{{state === 'intro'}}" class="intro-section">
+    <view class="intro-icon">📊</view>
+    <view class="intro-title">词汇量测试</view>
+    <view class="intro-desc">
+      本测试共50道题，用于评估您的词汇量水平。
+      测试结果将帮助我们为您推荐合适的学习内容。
+    </view>
+    <view class="intro-tips">
+      <view class="tip-item">⏱️ 预计用时：10-15分钟</view>
+      <view class="tip-item">📝 题型：选择题</view>
+      <view class="tip-item">🎯 评估范围：2000词</view>
+    </view>
+    <button class="start-btn" bindtap="startTest">开始测试</button>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:elif="{{state === 'loading'}}" class="loading-section">
+    <view class="loading-icon">⏳</view>
+    <text>加载中...</text>
+  </view>
+
+  <!-- 答题区域 -->
+  <view wx:elif="{{state === 'testing'}}" class="test-section">
+    <!-- 头部信息 -->
+    <view class="test-header">
+      <view class="header-info">
+        <text class="question-count">第 {{currentIndex + 1}}/{{totalCount}} 题</text>
+        <text class="time-spent">{{elapsedTime}}</text>
+      </view>
+      <view class="exit-btn" bindtap="exitTest">×</view>
+    </view>
+
+    <!-- 进度条 -->
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+
+    <!-- 题目内容 -->
+    <view class="question-area">
+      <!-- 英译汉：显示单词 -->
+      <view wx:if="{{currentQuestion.questionType === 'ENGLISH_TO_CHINESE'}}" class="word-display">
+        <text class="word-text">{{currentQuestion.word}}</text>
+        <text class="question-hint">请选择正确的中文释义</text>
+      </view>
+
+      <!-- 汉译英：显示中文题目 -->
+      <view wx:elif="{{currentQuestion.questionType === 'CHINESE_TO_ENGLISH'}}" class="word-display">
+        <text class="question-text">{{currentQuestion.questionText}}</text>
+        <text class="question-hint">请选择正确的英文单词</text>
+      </view>
+
+      <!-- 形近词辨析 -->
+      <view wx:else class="word-display">
+        <text wx:if="{{currentQuestion.word}}" class="word-text">{{currentQuestion.word}}</text>
+        <text wx:if="{{currentQuestion.questionText}}" class="question-text">{{currentQuestion.questionText}}</text>
+        <text class="question-hint">请选择正确答案</text>
+      </view>
+    </view>
+
+    <!-- 选项列表 -->
+    <view class="options-list">
+      <view
+        class="option-item {{selectedAnswer === 'A' ? 'selected' : ''}} {{isAnswered && 'A' === currentQuestion.correctOption ? 'correct' : ''}} {{isAnswered && selectedAnswer === 'A' && !isCorrect ? 'wrong' : ''}}"
+        data-answer="A"
+        bindtap="selectAnswer"
+      >
+        <view class="option-label">A</view>
+        <view class="option-content">{{currentQuestion.optionA}}</view>
+        <view wx:if="{{isAnswered && 'A' === currentQuestion.correctOption}}" class="option-icon">✓</view>
+        <view wx:elif="{{isAnswered && selectedAnswer === 'A' && !isCorrect}}" class="option-icon">✗</view>
+      </view>
+
+      <view
+        class="option-item {{selectedAnswer === 'B' ? 'selected' : ''}} {{isAnswered && 'B' === currentQuestion.correctOption ? 'correct' : ''}} {{isAnswered && selectedAnswer === 'B' && !isCorrect ? 'wrong' : ''}}"
+        data-answer="B"
+        bindtap="selectAnswer"
+      >
+        <view class="option-label">B</view>
+        <view class="option-content">{{currentQuestion.optionB}}</view>
+        <view wx:if="{{isAnswered && 'B' === currentQuestion.correctOption}}" class="option-icon">✓</view>
+        <view wx:elif="{{isAnswered && selectedAnswer === 'B' && !isCorrect}}" class="option-icon">✗</view>
+      </view>
+
+      <view
+        class="option-item {{selectedAnswer === 'C' ? 'selected' : ''}} {{isAnswered && 'C' === currentQuestion.correctOption ? 'correct' : ''}} {{isAnswered && selectedAnswer === 'C' && !isCorrect ? 'wrong' : ''}}"
+        data-answer="C"
+        bindtap="selectAnswer"
+      >
+        <view class="option-label">C</view>
+        <view class="option-content">{{currentQuestion.optionC}}</view>
+        <view wx:if="{{isAnswered && 'C' === currentQuestion.correctOption}}" class="option-icon">✓</view>
+        <view wx:elif="{{isAnswered && selectedAnswer === 'C' && !isCorrect}}" class="option-icon">✗</view>
+      </view>
+
+      <view
+        class="option-item {{selectedAnswer === 'D' ? 'selected' : ''}} {{isAnswered && 'D' === currentQuestion.correctOption ? 'correct' : ''}} {{isAnswered && selectedAnswer === 'D' && !isCorrect ? 'wrong' : ''}}"
+        data-answer="D"
+        bindtap="selectAnswer"
+      >
+        <view class="option-label">D</view>
+        <view class="option-content">{{currentQuestion.optionD}}</view>
+        <view wx:if="{{isAnswered && 'D' === currentQuestion.correctOption}}" class="option-icon">✓</view>
+        <view wx:elif="{{isAnswered && selectedAnswer === 'D' && !isCorrect}}" class="option-icon">✗</view>
+      </view>
+
+      <view
+        class="option-item option-unknown {{selectedAnswer === 'E' ? 'selected' : ''}}"
+        data-answer="E"
+        bindtap="selectAnswer"
+      >
+        <view class="option-label">E</view>
+        <view class="option-content">{{currentQuestion.optionE || '不认识'}}</view>
+      </view>
+    </view>
+
+    <!-- 结果反馈 -->
+    <view wx:if="{{showResult}}" class="result-bar {{isCorrect ? 'ok' : 'bad'}}">
+      <view class="result-main">
+        <text class="result-icon">{{isCorrect ? '✓' : '✗'}}</text>
+        <text class="result-text">{{isCorrect ? '回答正确' : '答错了'}}</text>
+        <view wx:if="{{!isCorrect}}" class="result-detail">
+          <text class="result-label">正确答案：</text>
+          <text class="result-value">{{currentQuestion.correctOption}}</text>
+        </view>
+      </view>
+      <button wx:if="{{!isCorrect}}" class="continue-btn" bindtap="nextQuestion">继续</button>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-section" wx:if="{{!isAnswered}}">
+      <button class="submit-btn" bindtap="submitAnswer" disabled="{{!selectedAnswer}}">
+        提交答案
+      </button>
+    </view>
+
+    <!-- 统计信息 -->
+    <view class="stats-section" wx:if="{{!showResult}}">
+      <view class="stat-item">
+        <text class="stat-value correct-color">{{correctCount}}</text>
+        <text class="stat-label">正确</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-value wrong-color">{{wrongCount}}</text>
+        <text class="stat-label">错误</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-value unknown-color">{{unknownCount}}</text>
+        <text class="stat-label">不认识</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 结果页 -->
+  <view wx:elif="{{state === 'result'}}" class="result-section">
+    <view class="result-header">
+      <view class="result-emoji">🎉</view>
+      <view class="result-title">测试完成！</view>
+    </view>
+
+    <view class="vocab-card">
+      <view class="vocab-label">您的估算词汇量</view>
+      <view class="vocab-value">{{estimatedVocab}}</view>
+      <view class="vocab-unit">词</view>
+    </view>
+
+    <view class="stats-card">
+      <view class="stats-row">
+        <view class="stats-item">
+          <text class="stats-num">{{correctCount}}</text>
+          <text class="stats-label">正确</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{wrongCount}}</text>
+          <text class="stats-label">错误</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{unknownCount}}</text>
+          <text class="stats-label">不认识</text>
+        </view>
+      </view>
+      <view class="stats-row">
+        <view class="stats-item">
+          <text class="stats-num">{{accuracy}}%</text>
+          <text class="stats-label">正确率</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{totalTime}}s</text>
+          <text class="stats-label">用时</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="action-buttons">
+      <button class="action-btn primary" bindtap="restartTest">再测一次</button>
+      <button class="action-btn" bindtap="goHome">返回首页</button>
+    </view>
+  </view>
+</view>

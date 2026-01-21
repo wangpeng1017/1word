@@ -53,9 +53,14 @@
       <text class="link-title">学习历史</text>
       <text class="link-arrow">›</text>
     </view>
+    <view class="quick-link-item" bindtap="goToVocabularyTest">
+      <view class="link-icon">📊</view>
+      <text class="link-title">词汇量测试</text>
+      <text class="link-arrow">›</text>
+    </view>
     <view class="quick-link-item" bindtap="goToTest">
       <view class="link-icon">✍️</view>
-      <text class="link-title">词汇测试</text>
+      <text class="link-title">水平测验</text>
       <text class="link-arrow">›</text>
     </view>
     <view class="quick-link-item" bindtap="goToAchievements">

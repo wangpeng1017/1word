@@ -168,7 +168,14 @@ Page({
     })
   },
 
-  // 跳转到词汇测试页面
+  // 跳转到词汇量测试页面
+  goToVocabularyTest() {
+    wx.navigateTo({
+      url: '/pages/vocabulary-test/vocabulary-test'
+    })
+  },
+
+  // 跳转到水平测验页面
   goToTest() {
     wx.navigateTo({
       url: '/pages/test/test'

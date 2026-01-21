@@ -102,6 +102,7 @@ model students {
   question_answers question_answers[]
   student_badges  student_badges[]
   achievement_redemptions achievement_redemptions[]
+  vocabulary_quiz_records vocabulary_quiz_records[]
 
   @@index([class_id])
 }
@@ -604,3 +605,74 @@ enum WrongQuestionStatus {
   MASTERED   // 已掌握(答对2次,已移除)
 }
 
+// 词汇量测试题型枚举
+enum VocabularyQuizType {
+  ENGLISH_TO_CHINESE   // 英译汉：给单词选中文释义
+  CHINESE_TO_ENGLISH   // 汉译英：给中文选正确单词
+  CONFUSABLE_WORDS     // 形近词辨析
+}
+
+// 词汇量测试题目表
+model vocabulary_quiz_questions {
+  id            String             @id
+  questionNo    Int                // 题号 1-50
+  word          String?            // 单词（英译汉题型必填）
+  questionText  String?            // 题目文本（汉译英题型必填）
+  questionType  VocabularyQuizType @default(ENGLISH_TO_CHINESE)
+  optionA       String             // 选项A
+  optionB       String             // 选项B
+  optionC       String             // 选项C
+  optionD       String             @default("以上都不对")
+  optionE       String             @default("不认识")
+  correctOption String             // 正确选项 A/B/C/D
+  difficulty    Int                @default(1) // 难度等级 1-3
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  quiz_answers vocabulary_quiz_answers[]
+
+  @@index([word])
+  @@index([questionType])
+  @@index([difficulty])
+  @@index([isActive])
+}
+
+// 词汇量测试记录表
+model vocabulary_quiz_records {
+  id              String    @id
+  studentId       String
+  totalQuestions  Int       // 总题数
+  correctCount    Int       // 正确数
+  wrongCount      Int       // 错误数
+  unknownCount    Int       @default(0) // 选"不认识"数量
+  estimatedVocab  Int       // 估算词汇量
+  accuracy        Float     // 正确率
+  totalTime       Int       // 总用时（秒）
+  startedAt       DateTime
+  completedAt     DateTime?
+  isCompleted     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  students students                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers  vocabulary_quiz_answers[]
+
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+// 词汇量测试答题详情表
+model vocabulary_quiz_answers {
+  id           String  @id
+  recordId     String
+  questionId   String
+  userAnswer   String  // 用户选择 A/B/C/D/E
+  isCorrect    Boolean
+  timeSpent    Int?    // 答题耗时（秒）
+
+  record   vocabulary_quiz_records   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  question vocabulary_quiz_questions @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+  @@index([questionId])
+}
