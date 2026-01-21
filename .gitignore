@@ -100,3 +100,8 @@ Thumbs.db
 
 .vercel
 .env*.local
+
+# Generated media files (too large for git)
+word_audios/
+word_images_compressed/
+word_images_final/
