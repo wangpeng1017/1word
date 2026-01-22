@@ -1,0 +1,45 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+
+spawn ssh root@8.130.182.148 "rm -f /root/QUERY_TODAY_TASKS.js"
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}
+
+spawn scp /Users/wangpeng/Downloads/1word/web-admin/QUERY_TODAY_TASKS.js root@8.130.182.148:/root/
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}
+
+spawn ssh root@8.130.182.148 "cd /root/word-app/web-admin && mv /root/QUERY_TODAY_TASKS.js . && node QUERY_TODAY_TASKS.js"
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}

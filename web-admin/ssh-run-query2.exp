@@ -1,0 +1,18 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+
+# 移动脚本到正确目录并执行
+spawn ssh root@8.130.182.148 "cd /root/word-app/web-admin && mv /root/QUERY_STUDENTS_ON_SERVER.js . && node QUERY_STUDENTS_ON_SERVER.js"
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}

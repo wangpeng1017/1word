@@ -74,11 +74,6 @@ const menuItems: MenuItem[] = [
     label: <Link href="/admin/study-plans" prefetch={true}>学习计划</Link>,
   },
   {
-    key: '/admin/proficiency-tests',
-    icon: <ExperimentOutlined />,
-    label: <Link href="/admin/proficiency-tests" prefetch={true}>测试题库</Link>,
-  },
-  {
     key: '/admin/vocabulary-quiz',
     icon: <FileTextOutlined />,
     label: <Link href="/admin/vocabulary-quiz" prefetch={true}>词汇量测试</Link>,

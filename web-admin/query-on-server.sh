@@ -1,0 +1,70 @@
+#!/bin/bash
+# 在服务器上执行此脚本查询学生学习任务
+
+echo "正在查询 13099990003 和 13099990004 明天(1月7日)的学习任务..."
+echo ""
+
+cd /root/word-app/web-admin
+
+node -e "
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function query() {
+  const phones = ['13099990003', '13099990004'];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  console.log('查询日期: ' + tomorrow.toISOString().split('T')[0] + ' (明天)');
+  console.log('='.repeat(60));
+
+  for (const phone of phones) {
+    console.log('\\n📱 手机号: ' + phone);
+    console.log('-'.repeat(60));
+
+    const user = await prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      console.log('❌ 用户不存在');
+      continue;
+    }
+    console.log('✅ 找到用户: ' + user.name);
+
+    const student = await prisma.students.findUnique({
+      where: { user_id: user.id },
+      include: { classes: true }
+    });
+    if (!student) {
+      console.log('❌ 学生信息不存在');
+      continue;
+    }
+    console.log('✅ 找到学生: 学号 ' + student.student_no + ', 班级: ' + (student.classes?.name || '未分配'));
+
+    const dailyTasks = await prisma.daily_tasks.count({
+      where: { studentId: student.id, taskDate: tomorrow }
+    });
+
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const studyPlans = await prisma.study_plans.count({
+      where: {
+        studentId: student.id,
+        status: 'LEARNING',
+        nextReviewAt: {
+          gte: new Date(tomorrowStr + 'T00:00:00.000Z'),
+          lt: new Date(tomorrowStr + 'T23:59:59.999Z')
+        }
+      }
+    });
+
+    console.log('\\n📚 明天学习任务:');
+    console.log('  - 新学单词: ' + dailyTasks + ' 个');
+    console.log('  - 复习单词: ' + studyPlans + ' 个');
+    console.log('  - 总计: ' + (dailyTasks + studyPlans) + ' 个');
+    console.log('='.repeat(60));
+  }
+
+  await prisma.\$disconnect();
+}
+
+query().catch(console.error);
+"

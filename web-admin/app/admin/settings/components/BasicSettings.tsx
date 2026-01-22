@@ -34,8 +34,6 @@ export default function BasicSettings() {
         const settings = result.data
 
         form.setFieldsValue({
-          systemName: settings.systemInfo?.systemName || '智能词汇复习助手',
-          defaultPassword: settings.systemInfo?.defaultPassword || '123456',
           interruptTimeout: settings.studyConfig?.interruptTimeout || 10,
         })
 
@@ -59,11 +57,6 @@ export default function BasicSettings() {
       const token = localStorage.getItem('token')
 
       const settings = {
-        systemInfo: {
-          systemName: values.systemName,
-          version: 'v1.0.0',
-          defaultPassword: values.defaultPassword,
-        },
         studyConfig: {
           interruptTimeout: values.interruptTimeout,
         },
@@ -194,41 +187,6 @@ export default function BasicSettings() {
           layout="vertical"
           onFinish={handleSave}
         >
-          {/* 系统信息设置 */}
-          <div>
-            <Divider orientation="left">
-              <Space>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>系统信息</span>
-                <Tag color="green">基本信息</Tag>
-              </Space>
-            </Divider>
-
-            <div style={{
-              background: '#f5f7fa',
-              padding: 16,
-              borderRadius: 8,
-              marginBottom: 24,
-            }}>
-              <Form.Item
-                label="系统名称"
-                name="systemName"
-                rules={[{ required: true, message: '请输入系统名称' }]}
-              >
-                <Input placeholder="例如: 智能词汇复习助手" />
-              </Form.Item>
-
-              <Form.Item
-                label="默认密码"
-                name="defaultPassword"
-                tooltip="新建学生账号时的默认密码"
-                rules={[{ required: true, message: '请输入默认密码' }]}
-                style={{ marginBottom: 0 }}
-              >
-                <Input.Password placeholder="例如: 123456" />
-              </Form.Item>
-            </div>
-          </div>
-
           {/* 账号安全 */}
           <div>
             <Divider orientation="left">

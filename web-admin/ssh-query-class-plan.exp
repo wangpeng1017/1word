@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+
+# 上传新脚本
+spawn scp /Users/wangpeng/Downloads/1word/web-admin/QUERY_CLASS_PLAN.js root@8.130.182.148:/root/
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}
+
+# 执行脚本
+spawn ssh root@8.130.182.148 "cd /root/word-app/web-admin && mv /root/QUERY_CLASS_PLAN.js . && node QUERY_CLASS_PLAN.js"
+
+expect {
+  "password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  "Password:" {
+    send "xx198910170014Z\r"
+    exp_continue
+  }
+  eof
+}

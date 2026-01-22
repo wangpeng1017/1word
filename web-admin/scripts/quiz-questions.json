@@ -361,7 +361,7 @@
   },
   {
     "questionNo": 31,
-    "questionText": "以下哪个单词是"剥去"的含义",
+    "questionText": "以下哪个单词是'剥去'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "strip",
     "optionB": "stripe",
@@ -373,7 +373,7 @@
   },
   {
     "questionNo": 32,
-    "questionText": "以下哪个单词是"地位"的含义",
+    "questionText": "以下哪个单词是'地位'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "statue",
     "optionB": "status",
@@ -385,7 +385,7 @@
   },
   {
     "questionNo": 33,
-    "questionText": "以下哪个单词是"明智的"的含义",
+    "questionText": "以下哪个单词是'明智的'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "sensible",
     "optionB": "sensitive",
@@ -397,7 +397,7 @@
   },
   {
     "questionNo": 34,
-    "questionText": "以下哪个单词是"文具"的含义",
+    "questionText": "以下哪个单词是'文具'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "stationary",
     "optionB": "stationery",
@@ -409,7 +409,7 @@
   },
   {
     "questionNo": 35,
-    "questionText": "以下哪个单词是"原则"的含义",
+    "questionText": "以下哪个单词是'原则'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "principle",
     "optionB": "principal",
@@ -421,7 +421,7 @@
   },
   {
     "questionNo": 36,
-    "questionText": "以下哪个单词是"道德的"的含义",
+    "questionText": "以下哪个单词是'道德的'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "moral",
     "optionB": "morale",
@@ -433,7 +433,7 @@
   },
   {
     "questionNo": 37,
-    "questionText": "以下哪个单词是"掌控"的含义",
+    "questionText": "以下哪个单词是'掌控'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "command",
     "optionB": "commend",
@@ -445,7 +445,7 @@
   },
   {
     "questionNo": 38,
-    "questionText": "以下哪个单词是"良心"的含义",
+    "questionText": "以下哪个单词是'良心'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "conscious",
     "optionB": "conscience",
@@ -457,7 +457,7 @@
   },
   {
     "questionNo": 39,
-    "questionText": "以下哪个单词是"文学的"的含义",
+    "questionText": "以下哪个单词是'文学的'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "literal",
     "optionB": "literary",
@@ -469,7 +469,7 @@
   },
   {
     "questionNo": 40,
-    "questionText": "以下哪个单词是"赞赏"的含义",
+    "questionText": "以下哪个单词是'赞赏'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "complement",
     "optionB": "compliment",
@@ -481,7 +481,7 @@
   },
   {
     "questionNo": 41,
-    "questionText": "以下哪个单词是"体面的"的含义",
+    "questionText": "以下哪个单词是'体面的'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "descend",
     "optionB": "descent",
@@ -493,7 +493,7 @@
   },
   {
     "questionNo": 42,
-    "questionText": "以下哪个单词是"委员会"的含义",
+    "questionText": "以下哪个单词是'委员会'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "council",
     "optionB": "counsel",
@@ -505,7 +505,7 @@
   },
   {
     "questionNo": 43,
-    "questionText": "以下哪个单词是"内阁"的含义",
+    "questionText": "以下哪个单词是'内阁'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "cabin",
     "optionB": "cabinet",
@@ -517,7 +517,7 @@
   },
   {
     "questionNo": 44,
-    "questionText": "以下哪个单词是"角度"的含义",
+    "questionText": "以下哪个单词是'角度'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "ankle",
     "optionB": "angel",
@@ -529,7 +529,7 @@
   },
   {
     "questionNo": 45,
-    "questionText": "以下哪个单词是"上升"的含义",
+    "questionText": "以下哪个单词是'上升'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "ascent",
     "optionB": "accent",
@@ -541,7 +541,7 @@
   },
   {
     "questionNo": 46,
-    "questionText": "以下哪个单词是"相当重要的"的含义",
+    "questionText": "以下哪个单词是'相当重要的'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "considerable",
     "optionB": "considerate",
@@ -553,7 +553,7 @@
   },
   {
     "questionNo": 47,
-    "questionText": "以下哪个单词是"尤其地"的含义",
+    "questionText": "以下哪个单词是'尤其地'的含义",
     "questionType": "CHINESE_TO_ENGLISH",
     "optionA": "particularly",
     "optionB": "previously",
@@ -566,7 +566,7 @@
   {
     "questionNo": 48,
     "word": "lessen",
-    "questionText": "以下哪个单词是"课程"的含义？（形近词辨析）",
+    "questionText": "以下哪个单词是'课程'的含义？（形近词辨析）",
     "questionType": "CONFUSABLE_WORDS",
     "optionA": "课程",
     "optionB": "班级",

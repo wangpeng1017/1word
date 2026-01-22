@@ -1,11 +1,12 @@
 /**
  * @file migrate-data.js
- * @desc 从 Vercel 数据库迁移数据到阿里云
+ * @desc 从 Vercel 数据库迁移数据到阿里云 (已废弃 - 迁移已完成)
+ * @note 正式数据库地址: 8.130.182.148
  */
 const { PrismaClient } = require('@prisma/client');
 
 const SOURCE_URL = "postgres://70b463f0b437de031fed82ef1e60a31c4764574b5b85f2971518520d47db953d:sk_ppgr1YQhsciDLwChczX1t@db.prisma.io:5432/postgres?sslmode=require";
-const TARGET_URL = "postgresql://word_user:word_pass_2024@47.92.96.143:5432/word_app";
+const TARGET_URL = "postgresql://word_user:word_pass_2024@8.130.182.148:5432/word_app";
 
 async function migrate() {
   console.log('连接源数据库...');

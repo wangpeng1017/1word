@@ -387,7 +387,7 @@ export default function VocabularyQuizPage() {
                     </Form.Item>
 
                     <Form.Item name="questionText" label="题目文本（汉译英题型必填）">
-                        <Input placeholder="如：以下哪个单词是" 深思熟虑的"的含义" />
+                        <Input placeholder='如：以下哪个单词是 "深思熟虑的" 的含义' />
                     </Form.Item>
 
                     <Form.Item
