@@ -90,7 +90,13 @@ export async function POST(request: NextRequest) {
       token,
     }, '登录成功')
   } catch (error) {
-    console.error('登录错误:', error)
+    console.error('[LOGIN_ERROR_DETAILS] 登录失败详情:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name,
+      code: (error as any).code, // Prisma error code
+      meta: (error as any).meta, // Prisma error meta
+    })
     return errorResponse('登录失败', 500)
   }
 }
