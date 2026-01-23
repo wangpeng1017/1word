@@ -13,7 +13,22 @@ import { LoginRequest } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const body: LoginRequest = await request.json()
+    // 先读取原始文本用于调试
+    const rawBody = await request.text()
+    console.log('[LOGIN_DEBUG] Raw body:', rawBody)
+    console.log('[LOGIN_DEBUG] Raw body length:', rawBody.length)
+    console.log('[LOGIN_DEBUG] First char code:', rawBody.charCodeAt(0))
+
+    // 尝试解析JSON
+    let body: LoginRequest
+    try {
+      body = JSON.parse(rawBody)
+    } catch (parseError: any) {
+      console.error('[LOGIN_DEBUG] JSON parse failed:', parseError.message)
+      console.error('[LOGIN_DEBUG] Raw body hex:', Buffer.from(rawBody).toString('hex'))
+      throw parseError
+    }
+
     const { email, phone, studentNo, password } = body
 
     if (!password) {
