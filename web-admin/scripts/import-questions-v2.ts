@@ -28,10 +28,13 @@ async function importQuestionsV2() {
     console.log('  导入练习题数据 (v2)')
     console.log('=========================================\n')
 
-    // 读取解析后的数据（优先使用v3，如果不存在则用v2）
-    let dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v3.json')
+    // 读取解析后的数据（优先使用v4，其次v3，最后v2）
+    let dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v4.json')
     if (!fs.existsSync(dataPath)) {
-        dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v2.json')
+        dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v3.json')
+        if (!fs.existsSync(dataPath)) {
+            dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v2.json')
+        }
     }
     const parsedData: ParsedWordQuestions[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
 
@@ -42,6 +45,8 @@ async function importQuestionsV2() {
         select: {
             id: true,
             word: true,
+            primary_meaning: true,
+            secondary_meaning: true,
             word_audios: {
                 select: { audioUrl: true, accent: true }
             }
@@ -80,6 +85,41 @@ async function importQuestionsV2() {
 
         // 导入文档中的题目
         for (const q of wordData.questions) {
+            let finalCorrectAnswer = q.correctAnswer
+            // 复制选项数组以防修改原始引用
+            const finalOptions = q.options.map(o => ({ ...o }))
+
+            // 如果答案未知（通常是无编号格式导入的汉选英题），尝试用数据库中的释义来匹配
+            if (finalCorrectAnswer === 'UNKNOWN' && (q.type === 'ENGLISH_TO_CHINESE' || q.type === 'CHINESE_TO_ENGLISH')) {
+                const dbMeanings = [vocabInfo.primary_meaning, vocabInfo.secondary_meaning]
+                    .filter(m => m) // 过滤null/undefined
+                    .join('；')     // 统一连接
+                    .split(/[；;,，\s]+/) // 分割成关键词
+                    .filter(m => m && m.length > 0)
+
+                // 遍历选项寻找匹配
+                for (const opt of finalOptions) {
+                    // 如果选项内容包含任何一个释义关键词，或被释义关键词包含
+                    const isMatch = dbMeanings.some(m => opt.content.includes(m) || m.includes(opt.content))
+                    if (isMatch) {
+                        finalCorrectAnswer = opt.label
+                        opt.isCorrect = true
+                        // 更新题目内容为匹配到的释义（如果是汉选英且内容未定）
+                        if (q.meaning === 'UNKNOWN') {
+                            q.meaning = opt.content
+                            q.content = q.word // 题目内容保持为单词
+                        }
+                        break
+                    }
+                }
+            }
+
+            if (finalCorrectAnswer === 'UNKNOWN') {
+                // 如果仍然无法确定答案，跳过此题
+                // console.log(`  跳过无法确定答案的题目: ${wordData.word}`)
+                continue
+            }
+
             const questionId = `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
             await prisma.questions.create({
@@ -89,7 +129,7 @@ async function importQuestionsV2() {
                     type: q.type,
                     content: q.content,
                     sentence: q.type === 'FILL_IN_BLANK' ? q.content : null,
-                    correctAnswer: q.correctAnswer,
+                    correctAnswer: finalCorrectAnswer,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 }
@@ -97,8 +137,8 @@ async function importQuestionsV2() {
             importedQuestions++
 
             // 创建选项
-            for (let i = 0; i < q.options.length; i++) {
-                const opt = q.options[i]
+            for (let i = 0; i < finalOptions.length; i++) {
+                const opt = finalOptions[i]
                 await prisma.question_options.create({
                     data: {
                         id: `qo_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
