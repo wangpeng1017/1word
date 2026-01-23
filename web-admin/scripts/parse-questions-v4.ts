@@ -1,6 +1,6 @@
 /**
  * @file parse-questions-v4.ts
- * @desc 解析练习题文档（支持三种格式：换行/紧凑/无编号）
+ * @desc 解析练习题文档（支持三种格式：换行/紧凑/无编号）+ UNKNOWN答案处理
  */
 
 import * as fs from 'fs'
@@ -146,78 +146,97 @@ function parseCompactFormat(lines: string[]): ParsedWordQuestions[] {
     return results
 }
 
-// 格式3: 无编号紧凑格式 (originA. 独创的（adj.）B. 起源（n.）C. ...D. ...)
+// 格式3: 无编号格式 (混合模式：支持 originA. ... 和 origin \n A. ... )
 function parseNoNumberFormat(lines: string[]): ParsedWordQuestions[] {
     const results: ParsedWordQuestions[] = []
 
-    // 匹配: 单词A. 选项1B. 选项2C. 选项3D. 选项4
-    // 允许单词以小写字母开头，后面接A.
-    const regex = /^([a-zA-Z][a-zA-Z\-']+)A[\.\s]+(.+?)B[\.\s]+(.+?)C[\.\s]+(.+?)D[\.\s]+(.+?)$/
+    // 内联模式正则: 单词A. 选项1B. 选项2...
+    const inlineRegex = /^([a-zA-Z][a-zA-Z\-']+)A[\.\s]+(.+?)B[\.\s]+(.+?)C[\.\s]+(.+?)D[\.\s]+(.+?)$/
 
-    for (const line of lines) {
-        const match = line.match(regex)
-        if (!match) continue
+    let i = 0
+    while (i < lines.length) {
+        const line = lines[i].trim()
 
-        const [, word, optA, optB, optC, optD] = match
-        const wordLower = word.toLowerCase()
-
-        const options = [
-            { label: 'A', content: optA.trim() },
-            { label: 'B', content: optB.trim() },
-            { label: 'C', content: optC.trim() },
-            { label: 'D', content: optD.trim() },
-        ]
-
-        // 找正确答案：选项内容是单词本身（英选汉题型）
-        const correctOption = options.find(o =>
-            o.content.toLowerCase() === wordLower ||
-            o.content.toLowerCase().startsWith(wordLower)
-        )
-
-        // 即使没找到正确答案（可能因为是汉选英题目），也要保存题目，标记为UNKNOWN
-        const correctAnswer = correctOption ? correctOption.label : 'UNKNOWN'
-
-        // 找释义
-        let meaning = ''
-        if (correctOption) {
-            // 如果找到了正确答案（即选项是单词），那么释义在其他选项中？
-            // 不对，如果选项是单词，那么这是“汉选英”？不对。
-            // 如果题目是 word，选项也是 word，那没意义。
-            // 这里的情况是：题目是 word (English)，选项是 Chinese。
-            // 所以 correctOption（选项内容=单词）这种情况其实是不应该发生的（除非选项是英文）。
-
-            // 让我们回看数据：originA. 独创的...
-            // Word: origin
-            // Option A: 独创的 (Chinese)
-            // 所以 strict equality test (opt.content === word) will FAIL.
-
-            // 所以之前的逻辑 `correctOption` 总是 undefined，导致 `if (correctOption)` 进不去，结果为空。
-            // 这就是为什么解析结果为0！
-
-            // 正确逻辑：
-            // 题目是英文单词。选项是中文释义。
-            // 我们无法从文本中知道哪个中文释义是正确的（除非我们懂中文或查词典）。
-            // 所以必须标记为 UNKNOWN，并在导入时查词典。
-
-            meaning = 'UNKNOWN'
-        } else {
-            meaning = 'UNKNOWN'
+        // 1. 尝试内联模式
+        const inlineMatch = line.match(inlineRegex)
+        if (inlineMatch) {
+            const [, word, optA, optB, optC, optD] = inlineMatch
+            const wordLower = word.toLowerCase()
+            const options = [
+                { label: 'A', content: optA.trim() },
+                { label: 'B', content: optB.trim() },
+                { label: 'C', content: optC.trim() },
+                { label: 'D', content: optD.trim() },
+            ]
+            pushQuestion(results, wordLower, options)
+            i++
+            continue
         }
 
-        results.push({
-            word: wordLower,
-            meaning,
-            questions: [{
-                word: wordLower,
-                type: 'ENGLISH_TO_CHINESE', // 给英文单词选中文释义
-                content: wordLower,
-                meaning,
-                options: options.map(o => ({ ...o, isCorrect: o.label === correctAnswer })),
-                correctAnswer
-            }]
-        })
+        // 2. 尝试多行模式 (当前行是单词)
+        if (/^[a-zA-Z][a-zA-Z\-']*$/.test(line) && !['A', 'B', 'C', 'D'].includes(line)) {
+            const wordLower = line.toLowerCase()
+            const options: { label: string; content: string }[] = []
+
+            // 预读后续行找选项
+            let j = i + 1
+            while (j < lines.length && options.length < 4) {
+                const subLine = lines[j].trim()
+                const optMatch = subLine.match(/^([A-D])[\.\s]+(.+)$/)
+                if (optMatch) {
+                    options.push({ label: optMatch[1], content: optMatch[2].trim() })
+                    j++
+                } else if (/^[a-zA-Z][a-zA-Z\-']*$/.test(subLine) && !['A', 'B', 'C', 'D'].includes(subLine) && !subLine.match(inlineRegex)) {
+                    // 遇到下一个新单词（且不是选项也不是内联行），停止
+                    break
+                } else {
+                    j++ // 跳过无关行
+                }
+            }
+
+            if (options.length === 4) {
+                pushQuestion(results, wordLower, options)
+                i = j // 跳过已处理的行
+                continue
+            }
+        }
+
+        i++
     }
+
     return results
+}
+
+function pushQuestion(results: ParsedWordQuestions[], wordLower: string, options: { label: string; content: string }[]) {
+    // 找正确答案：选项内容是单词本身（英选汉题型）
+    const correctOption = options.find(o =>
+        o.content.toLowerCase() === wordLower ||
+        o.content.toLowerCase().startsWith(wordLower)
+    )
+
+    // 即使没找到正确答案（可能因为是汉选英题目），也要保存题目，标记为UNKNOWN
+    const correctAnswer = correctOption ? correctOption.label : 'UNKNOWN'
+
+    // 找释义
+    let meaning = ''
+    if (correctOption) {
+        meaning = options.find(o => o.label !== correctOption!.label)?.content || ''
+    } else {
+        meaning = 'UNKNOWN'
+    }
+
+    results.push({
+        word: wordLower,
+        meaning,
+        questions: [{
+            word: wordLower,
+            type: 'ENGLISH_TO_CHINESE', // 给英文单词选中文释义
+            content: wordLower,
+            meaning,
+            options: options.map(o => ({ ...o, isCorrect: o.label === correctAnswer })),
+            correctAnswer
+        }]
+    })
 }
 
 async function parseAllDocuments(): Promise<ParsedWordQuestions[]> {
@@ -259,7 +278,7 @@ async function parseAllDocuments(): Promise<ParsedWordQuestions[]> {
             stats.compact += results.length
             console.log(`  -> 紧凑格式，解析 ${results.length} 个单词`)
         } else {
-            // 无编号格式
+            // 无编号格式 (Hybrid)
             console.log(`  -> 检测为无编号格式 (lines: ${lines.length})`)
             results = parseNoNumberFormat(lines)
             stats.noNumber += results.length
