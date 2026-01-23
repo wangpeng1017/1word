@@ -3,13 +3,14 @@
  * @desc 用户登录 API（使用 Prisma）
  * @input 依赖: lib/prisma, lib/auth, lib/response
  * @output 导出: POST /api/auth/login
- * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹 of _INDEX.md
  */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
 import { LoginRequest } from '@/types'
+import fs from 'fs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,13 +91,27 @@ export async function POST(request: NextRequest) {
       token,
     }, '登录成功')
   } catch (error) {
-    console.error('[LOGIN_ERROR_DETAILS] 登录失败详情:', {
+    const errorLog = {
+      timestamp: new Date().toISOString(),
+      endpoint: '/api/auth/login',
       message: (error as Error).message,
       stack: (error as Error).stack,
       name: (error as Error).name,
-      code: (error as any).code, // Prisma error code
-      meta: (error as any).meta, // Prisma error meta
-    })
+      code: (error as any).code,
+      meta: (error as any).meta,
+      env: {
+        DATABASE_URL: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'),
+        NODE_ENV: process.env.NODE_ENV
+      }
+    }
+
+    try {
+      fs.appendFileSync('/tmp/backend-debug.log', JSON.stringify(errorLog, null, 2) + '\n---\n')
+    } catch (e: any) {
+      console.error('Failed to write to log file:', e.message)
+    }
+
+    console.error('[LOGIN_ERROR_DETAILS] 登录失败详情:', errorLog)
     return errorResponse('登录失败', 500)
   }
 }
