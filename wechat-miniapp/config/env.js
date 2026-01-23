@@ -5,7 +5,7 @@
 // production: 阿里云生产环境
 // xdf: 新东方客户环境
 
-const ENV = 'xdf' // 手动切换环境
+const ENV = 'production' // 手动切换环境（阿里云测试环境）
 
 const config = {
   development: {
