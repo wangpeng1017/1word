@@ -10,7 +10,6 @@ import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
 import { LoginRequest } from '@/types'
-import fs from 'fs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -91,27 +90,7 @@ export async function POST(request: NextRequest) {
       token,
     }, '登录成功')
   } catch (error) {
-    const errorLog = {
-      timestamp: new Date().toISOString(),
-      endpoint: '/api/auth/login',
-      message: (error as Error).message,
-      stack: (error as Error).stack,
-      name: (error as Error).name,
-      code: (error as any).code,
-      meta: (error as any).meta,
-      env: {
-        DATABASE_URL: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'),
-        NODE_ENV: process.env.NODE_ENV
-      }
-    }
-
-    try {
-      fs.appendFileSync('/tmp/backend-debug.log', JSON.stringify(errorLog, null, 2) + '\n---\n')
-    } catch (e: any) {
-      console.error('Failed to write to log file:', e.message)
-    }
-
-    console.error('[LOGIN_ERROR_DETAILS] 登录失败详情:', errorLog)
+    console.error('登录错误:', error)
     return errorResponse('登录失败', 500)
   }
 }
