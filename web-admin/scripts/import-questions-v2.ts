@@ -28,8 +28,11 @@ async function importQuestionsV2() {
     console.log('  导入练习题数据 (v2)')
     console.log('=========================================\n')
 
-    // 读取解析后的数据
-    const dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v2.json')
+    // 读取解析后的数据（优先使用v3，如果不存在则用v2）
+    let dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v3.json')
+    if (!fs.existsSync(dataPath)) {
+        dataPath = path.join(process.cwd(), 'scripts', 'parsed-questions-v2.json')
+    }
     const parsedData: ParsedWordQuestions[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
 
     console.log(`读取到 ${parsedData.length} 个单词的题目数据\n`)
