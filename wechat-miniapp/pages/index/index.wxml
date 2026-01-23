@@ -6,9 +6,7 @@
     <view class="welcome-content">
       <!-- 吉祥物 -->
       <view class="mascot-container">
-        <view class="mascot-img-container">
-          <image class="mascot-img" src="/images/success_horse_red_v3.png" mode="aspectFit"></image>
-        </view>
+        <image class="mascot-img" src="/images/success_horse_red_v3.png" mode="aspectFit"></image>
         <view class="mascot-shadow"></view>
       </view>
 
