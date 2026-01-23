@@ -64,12 +64,13 @@
   max-width: 400rpx;
   height: 96rpx;
   line-height: 96rpx;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   color: #fff;
   font-size: 32rpx;
   font-weight: 600;
   border-radius: 48rpx;
   border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255, 122, 122, 0.3);
 }
 
 /* 加载中 */
@@ -140,7 +141,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, #FF7A7A 0%, #FF9E9E 50%, #FFC1C1 100%);
   transition: width 0.3s ease;
 }
 
@@ -191,8 +192,8 @@
 }
 
 .option-item.selected {
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #FF7A7A;
+  background: #FFF1F1;
 }
 
 .option-item.correct {
@@ -226,7 +227,7 @@
 }
 
 .option-item.selected .option-label {
-  background: #6366f1;
+  background: #FF7A7A;
   color: #fff;
 }
 
@@ -259,70 +260,109 @@
   color: #ef4444;
 }
 
-/* 结果反馈栏 */
+/* 结果反馈栏 - 参考 study.wxss 淡色背景风格 */
 .result-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 32rpx;
-  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  padding: 20rpx 32rpx calc(env(safe-area-inset-bottom) + 20rpx);
   z-index: 100;
+  animation: slideUpBar 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  max-height: 50vh;
+  overflow-y: auto;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
 }
 
+@keyframes slideUpBar {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 正确：淡绿色填充背景 */
 .result-bar.ok {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: #D9FFC4;
+  color: #1F2937;
 }
 
+/* 错误：淡粉色填充背景 */
 .result-bar.bad {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #FFE1E1;
+  color: #1F2937;
 }
 
 .result-main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
+  gap: 8rpx;
+  line-height: 1.5;
 }
 
 .result-icon {
-  font-size: 40rpx;
-  color: #fff;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-right: 4rpx;
+}
+
+.result-bar.ok .result-icon {
+  color: #10B981;
+}
+
+.result-bar.bad .result-icon {
+  color: #DC2626;
 }
 
 .result-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #fff;
+  font-size: 28rpx;
+  font-weight: 700;
+  margin-right: 8rpx;
+}
+
+.result-bar.ok .result-text {
+  color: #059669;
+}
+
+.result-bar.bad .result-text {
+  color: #DC2626;
 }
 
 .result-detail {
-  width: 100%;
-  margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4rpx;
 }
 
 .result-label {
   font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: #4B5563;
+  font-weight: 500;
 }
 
 .result-value {
-  font-size: 28rpx;
+  font-size: 26rpx;
+  color: #DC2626;
   font-weight: 600;
-  color: #fff;
 }
 
 .continue-btn {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 30rpx;
+  height: 88rpx;
+  margin-top: 20rpx;
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
+  color: #FFFFFF;
+  font-size: 32rpx;
   font-weight: 600;
-  border-radius: 16rpx;
+  border-radius: 44rpx;
   border: none;
+  box-shadow: 0 6rpx 16rpx rgba(255, 122, 122, 0.3);
 }
 
 /* 提交按钮 */
@@ -339,12 +379,13 @@
 .submit-btn {
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   color: #fff;
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 600;
-  border-radius: 24rpx;
+  border-radius: 48rpx;
   border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255, 122, 122, 0.3);
 }
 
 .submit-btn[disabled] {
@@ -426,12 +467,12 @@
 
 /* 词汇量卡片 */
 .vocab-card {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   border-radius: 32rpx;
   padding: 48rpx 64rpx;
   text-align: center;
   margin-bottom: 48rpx;
-  box-shadow: 0 8rpx 32rpx rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(255, 122, 122, 0.3);
 }
 
 .vocab-label {
@@ -512,6 +553,7 @@
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #FF7A7A 0%, #D65D5D 100%);
   color: #fff;
+  box-shadow: 0 8rpx 20rpx rgba(255, 122, 122, 0.3);
 }

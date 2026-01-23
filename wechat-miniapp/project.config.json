@@ -76,7 +76,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.11.1",
+  "libVersion": "3.13.0",
   "appid": "wx132f0943597b61b7",
   "projectname": "vocab-assistant",
   "condition": {},
