@@ -57,9 +57,17 @@
   line-height: 1;
 }
 
+.mascot-img-container {
+  width: 280rpx;
+  height: 230rpx; /* Reduced height to crop top text */
+  overflow: hidden;
+  position: relative;
+}
+
 .mascot-img {
   width: 280rpx;
   height: 280rpx;
+  margin-top: -50rpx; /* Shift image up to hide "Great Job" text */
 }
 
 .mascot-shadow {
