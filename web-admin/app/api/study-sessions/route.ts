@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const todayUTC = getTodayUTC()
 
-    // 检查今天是否已有会话（按创建时间倒序，优先找最新的）
+    // 检查今天是否已有会话（排除错题重测记录，按创建时间倒序）
     const existingSession = await prisma.study_records.findFirst({
       where: {
         studentId,
         taskDate: todayUTC,
+        isRetestMode: false, // 排除错题重测记录
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -122,12 +123,13 @@ export async function GET(request: NextRequest) {
 
     const todayUTC = getTodayUTC()
 
-    // 查找今天进行中的会话
+    // 查找今天进行中的会话（排除错题重测记录）
     const session = await prisma.study_records.findFirst({
       where: {
         studentId,
         taskDate: todayUTC,
         status: 'IN_PROGRESS',
+        isRetestMode: false, // 排除错题重测记录
       },
       orderBy: { createdAt: 'desc' },
     })
