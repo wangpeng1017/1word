@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getTodayBeijing, toBeijingDate, formatDateBeijing } from '@/lib/date-utils'
 
 // GET /api/study-days?studentId=xxx - 获取学生学习天数数据
 export async function GET(request: NextRequest) {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
         const totalDays = planClass.vocabulary_packs?.totalDays || 10
         const startDate = new Date(planClass.start_date)
 
-        // 3. 获取学生在计划期间的学习记录
+        // 3. 获取学生在计划期间的学习记录（排除错题重测记录）
         const endDate = new Date(startDate)
         endDate.setDate(endDate.getDate() + totalDays)
 
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
                 studentId,
                 taskDate: { gte: startDate, lte: endDate },
                 isCompleted: true,
+                isRetestMode: false, // 排除错题重测记录
             },
             select: {
                 taskDate: true,
@@ -74,7 +76,7 @@ export async function GET(request: NextRequest) {
         // 按日期分组
         const recordMap = new Map<string, any>()
         studyRecords.forEach((record) => {
-            const dateStr = new Date(record.taskDate).toISOString().split('T')[0]
+            const dateStr = formatDateBeijing(new Date(record.taskDate))
             if (!recordMap.has(dateStr)) {
                 recordMap.set(dateStr, {
                     wordsCount: record.completedWords || 0,
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
         })
 
         // 4. 生成 DAY 列表
-        const today = new Date().toISOString().split('T')[0]
+        const today = formatDateBeijing(new Date())
         const days = []
         let streak = 0
         let lastCompletedDate: string | null = null
@@ -99,7 +101,7 @@ export async function GET(request: NextRequest) {
             const dayNumber = i + 1
             const targetDate = new Date(startDate)
             targetDate.setDate(targetDate.getDate() + i)
-            const dateStr = targetDate.toISOString().split('T')[0]
+            const dateStr = formatDateBeijing(targetDate)
 
             const dayData = recordMap.get(dateStr)
             let status = 'locked'
