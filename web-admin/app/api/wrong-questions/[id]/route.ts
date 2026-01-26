@@ -14,6 +14,19 @@ export async function DELETE(
     try {
         const { id: wrongQuestionId } = await params
 
+        // 先检查记录是否存在（幂等性处理）
+        const existing = await prisma.wrong_questions.findUnique({
+            where: { id: wrongQuestionId },
+        })
+
+        // 如果记录不存在，直接返回成功（幂等性）
+        if (!existing) {
+            return NextResponse.json({
+                success: true,
+                message: '错题已移除（记录不存在）',
+            })
+        }
+
         // 删除错题记录
         await prisma.wrong_questions.delete({
             where: { id: wrongQuestionId },
