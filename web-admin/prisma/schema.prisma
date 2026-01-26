@@ -531,6 +531,8 @@ model badges {
   icon          String   // 勋章图标 emoji
   description   String   // 勋章描述
   rarity        BadgeRarity // 稀有度
+  type          String   @default("PRESET") // 类型: PRESET(预置)/EXCHANGE(兑换)
+  pointsCost    Int?     // 兑换所需积分(仅兑换类勋章)
   achievementId String?  // 关联的成就ID(可选)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -540,6 +542,7 @@ model badges {
 
   @@index([rarity])
   @@index([isActive])
+  @@index([type])
 }
 
 // 学生勋章表

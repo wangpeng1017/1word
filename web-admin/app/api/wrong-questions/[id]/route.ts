@@ -4,17 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // DELETE /api/wrong-questions/[id] - 删除错题记录
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const wrongQuestionId = params.id
+        const { id: wrongQuestionId } = await params
 
         // 删除错题记录
         await prisma.wrong_questions.delete({
