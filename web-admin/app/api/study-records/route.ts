@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
-import { calculateNextReviewDate, isDifficult } from '@/lib/ebbinghaus'
+import { calculateNextReviewDate, getNextReviewCount, isDifficult } from '@/lib/ebbinghaus'
 import { apiResponse } from '@/lib/response'
 import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 import { getTodayUTC } from '@/lib/date-utils'
+import { validateAnswers, isDuplicatePointsAward, calculatePoints } from '@/lib/points-validator'
 
 // 同步更新掌握度
 async function updateMasteries(
@@ -91,7 +92,7 @@ async function updateMasteries(
   }
 }
 
-// 异步更新积分
+// 异步更新积分（带防重复检查）
 async function updatePointsAsync(
   studentId: string,
   correctCount: number,
@@ -100,10 +101,19 @@ async function updatePointsAsync(
   relatedId: string
 ) {
   try {
-    const basePoints = correctCount
-    const completionBonus = 5
-    const perfectBonus = accuracy === 1 ? 3 : 0
-    const totalPoints = basePoints + completionBonus + perfectBonus
+    // 防止重复发放积分
+    const isDuplicate = await isDuplicatePointsAward(studentId, 'study_record', relatedId)
+    if (isDuplicate) {
+      console.log(`跳过重复积分发放: studentId=${studentId}, relatedId=${relatedId}`)
+      return null
+    }
+
+    // 使用统一的积分计算函数
+    const { basePoints, completionBonus, perfectBonus, totalPoints } = calculatePoints({
+      correctCount,
+      totalWords,
+      accuracy,
+    })
 
     const points = await prisma.student_points.upsert({
       where: { studentId },
@@ -159,22 +169,25 @@ export async function POST(request: NextRequest) {
     const payload = verifyToken(token)
     if (!payload) return apiResponse.unauthorized('Token无效')
 
-    const { studentId, answers } = await request.json()
-    if (!studentId || !answers?.length) {
+    const { studentId, answers: clientAnswers } = await request.json()
+    if (!studentId || !clientAnswers?.length) {
       return apiResponse.error('参数错误', 400)
     }
 
     const now = new Date()
     const todayUTC = getTodayUTC()
 
-    // 幂等性检查
-    const fiveSecondsAgo = new Date(now.getTime() - 5000)
+    // 🔒 服务端验证答案 - 防止客户端伪造 isCorrect
+    const validatedAnswers = await validateAnswers(clientAnswers)
+
+    // 幂等性检查（延长到30秒防止快速重复提交）
+    const thirtySecondsAgo = new Date(now.getTime() - 30000)
     const recentRecord = await prisma.study_records.findFirst({
       where: {
         studentId,
         taskDate: todayUTC,
-        totalWords: answers.length,
-        createdAt: { gte: fiveSecondsAgo },
+        totalWords: validatedAnswers.length,
+        createdAt: { gte: thirtySecondsAgo },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -187,12 +200,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const totalWords = answers.length
-    const correctCount = answers.filter((a: any) => a.isCorrect).length
+    // 使用服务端验证后的结果计算统计数据
+    const totalWords = validatedAnswers.length
+    const correctCount = validatedAnswers.filter(a => a.isCorrect).length
     const wrongCount = totalWords - correctCount
     const accuracy = totalWords > 0 ? correctCount / totalWords : 0
-    const totalTime = answers.reduce((sum: number, a: any) => sum + (a.timeSpent || 0), 0)
-    const vocabularyIds = [...new Set(answers.map((a: any) => a.vocabularyId))] as string[]
+    const totalTime = validatedAnswers.reduce((sum, a) => sum + (a.timeSpent || 0), 0)
+    const vocabularyIds = [...new Set(validatedAnswers.map(a => a.vocabularyId))] as string[]
 
     const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 
@@ -229,13 +243,14 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      const qaData = answers.map((a: any, i: number) => ({
+      // 使用服务端验证后的 isCorrect
+      const qaData = validatedAnswers.map((a, i) => ({
         id: `qa_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
         studentId,
-        vocabularyId: a.vocabularyId,
+        vocabularyId: a.vocabularyId || '',
         questionId: a.questionId,
         answer: a.answer,
-        isCorrect: a.isCorrect,
+        isCorrect: a.isCorrect, // 服务端验证后的结果
         timeSpent: a.timeSpent || null,
         answeredAt: now,
       }))
@@ -249,15 +264,25 @@ export async function POST(request: NextRequest) {
     const planUpdates: Promise<any>[] = []
     const plansToCreate: any[] = []
 
+    // 构建每个词汇的答题结果（有一题错则视为该词汇答错）- 使用服务端验证后的结果
+    const vocabCorrectMap = new Map<string, boolean>()
+    for (const a of validatedAnswers) {
+      if (!a.vocabularyId) continue
+      const current = vocabCorrectMap.get(a.vocabularyId)
+      vocabCorrectMap.set(a.vocabularyId, current === false ? false : a.isCorrect)
+    }
+
     for (const vocabId of vocabularyIds) {
       const existingPlan = coreResult.planMap.get(vocabId)
+      const isCorrect = vocabCorrectMap.get(vocabId) ?? true
 
       if (existingPlan) {
-        // 已有记录，更新
         const lastReviewDate = existingPlan.lastReviewAt ? new Date(existingPlan.lastReviewAt).toDateString() : null
         const todayStr = now.toDateString()
         const alreadyReviewedToday = lastReviewDate === todayStr
-        const newReviewCount = alreadyReviewedToday ? existingPlan.reviewCount : existingPlan.reviewCount + 1
+        const newReviewCount = alreadyReviewedToday
+          ? existingPlan.reviewCount
+          : getNextReviewCount(existingPlan.reviewCount, isCorrect)
 
         planUpdates.push(
           prisma.study_plans.update({
@@ -272,7 +297,6 @@ export async function POST(request: NextRequest) {
           })
         )
       } else {
-        // 首次学习，创建记录
         plansToCreate.push({
           id: `sp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${vocabId.slice(-4)}`,
           studentId,
@@ -297,9 +321,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 同步更新掌握度
+    // 同步更新掌握度 - 使用服务端验证后的结果
     try {
-      await updateMasteries(studentId, answers, coreResult.masteryMap, now)
+      await updateMasteries(studentId, validatedAnswers, coreResult.masteryMap, now)
     } catch (err) {
       console.error('掌握度更新失败，但答题记录已保存:', err)
     }
@@ -349,7 +373,7 @@ export async function POST(request: NextRequest) {
       console.error('更新连续学习天数失败:', err)
     }
 
-    // 异步更新积分和成就
+    // 异步更新积分和成就（带防重复检查）
     const pointsPromise = updatePointsAsync(studentId, correctCount, totalWords, accuracy, srId)
 
     checkAndUnlockAchievements(studentId)

@@ -1,7 +1,7 @@
 /**
  * @file route.ts
- * @desc 用户登录 API（使用 Prisma）
- * @input 依赖: lib/prisma, lib/auth, lib/response
+ * @desc 用户登录 API（带速率限制）
+ * @input 依赖: lib/prisma, lib/auth, lib/response, lib/rate-limiter
  * @output 导出: POST /api/auth/login
  * ⚠️ 更新我时，请同步更新本注释及所属文件夹 of _INDEX.md
  */
@@ -10,14 +10,15 @@ import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/response'
 import { LoginRequest } from '@/types'
+import { checkLoginRateLimit, resetLoginRateLimit, getClientIp } from '@/lib/rate-limiter'
 
 export async function POST(request: NextRequest) {
+  // 获取客户端 IP
+  const clientIp = getClientIp(request)
+
   try {
     // 先读取原始文本用于调试
     const rawBody = await request.text()
-    console.log('[LOGIN_DEBUG] Raw body:', rawBody)
-    console.log('[LOGIN_DEBUG] Raw body length:', rawBody.length)
-    console.log('[LOGIN_DEBUG] First char code:', rawBody.charCodeAt(0))
 
     // 尝试解析JSON
     let body: LoginRequest
@@ -25,7 +26,6 @@ export async function POST(request: NextRequest) {
       body = JSON.parse(rawBody)
     } catch (parseError: any) {
       console.error('[LOGIN_DEBUG] JSON parse failed:', parseError.message)
-      console.error('[LOGIN_DEBUG] Raw body hex:', Buffer.from(rawBody).toString('hex'))
       throw parseError
     }
 
@@ -38,6 +38,13 @@ export async function POST(request: NextRequest) {
     const loginIdentifier = email || phone || studentNo
     if (!loginIdentifier) {
       return errorResponse('请输入账号（邮箱/手机号/学号）')
+    }
+
+    // 🔒 速率限制检查
+    const rateLimitResult = await checkLoginRateLimit(clientIp, loginIdentifier)
+    if (!rateLimitResult.allowed) {
+      const retrySeconds = Math.ceil((rateLimitResult.retryAfterMs || 60000) / 1000)
+      return errorResponse(`登录尝试次数过多，请 ${retrySeconds} 秒后重试`, 429)
     }
 
     // 1) 查找用户
@@ -85,6 +92,9 @@ export async function POST(request: NextRequest) {
     if (!isPasswordValid) {
       return errorResponse('密码错误')
     }
+
+    // ✅ 登录成功，重置速率限制
+    resetLoginRateLimit(clientIp, loginIdentifier)
 
     const token = generateToken({
       userId: user.id,

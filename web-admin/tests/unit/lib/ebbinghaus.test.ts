@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   REVIEW_INTERVALS,
   calculateNextReviewDate,
+  getNextReviewCount,
   isMastered,
   isDifficult,
   calculateRecentAccuracy,
@@ -19,7 +20,7 @@ describe('ebbinghaus', () => {
 
   describe('calculateNextReviewDate', () => {
     it('should add 1 day for first review (reviewCount=0)', () => {
-      const lastReview = new Date(2024, 0, 1) // 本地时间
+      const lastReview = new Date(2024, 0, 1)
       const next = calculateNextReviewDate(lastReview, 0)
       expect(next.getDate()).toBe(2)
       expect(next.getMonth()).toBe(0)
@@ -48,6 +49,27 @@ describe('ebbinghaus', () => {
       const next = calculateNextReviewDate(lastReview, 0)
       expect(next.getHours()).toBe(0)
       expect(next.getMinutes()).toBe(0)
+    })
+  })
+
+  // TDD: getNextReviewCount - 答错时重置复习间隔
+  describe('getNextReviewCount', () => {
+    it('should increment reviewCount when answer is correct', () => {
+      expect(getNextReviewCount(0, true)).toBe(1)
+      expect(getNextReviewCount(1, true)).toBe(2)
+      expect(getNextReviewCount(5, true)).toBe(6)
+    })
+
+    it('should reset reviewCount to 0 when answer is wrong', () => {
+      expect(getNextReviewCount(0, false)).toBe(0)
+      expect(getNextReviewCount(1, false)).toBe(0)
+      expect(getNextReviewCount(5, false)).toBe(0)
+      expect(getNextReviewCount(10, false)).toBe(0)
+    })
+
+    it('should handle edge case: negative reviewCount', () => {
+      expect(getNextReviewCount(-1, true)).toBe(0)
+      expect(getNextReviewCount(-1, false)).toBe(0)
     })
   })
 

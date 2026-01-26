@@ -35,6 +35,25 @@ export function calculateNextReviewDate(
 }
 
 /**
+ * 根据答题结果计算下次复习计数
+ * 核心逻辑：答对则 +1，答错则重置为 0（重新开始艾宾浩斯曲线）
+ * @param currentReviewCount 当前复习次数
+ * @param isCorrect 本次答题是否正确
+ * @returns 下次复习计数
+ */
+export function getNextReviewCount(
+  currentReviewCount: number,
+  isCorrect: boolean
+): number {
+  // 处理边界情况：负数重置为 0
+  if (currentReviewCount < 0) {
+    return 0
+  }
+  // 答对：+1，答错：重置为 0
+  return isCorrect ? currentReviewCount + 1 : 0
+}
+
+/**
  * 判断单词是否已掌握
  *
  * @deprecated 此函数已废弃，请使用 question_answers 表最近3条记录进行判定。

@@ -11,7 +11,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
-import { calculateNextReviewDate, isDifficult } from '@/lib/ebbinghaus'
+import { calculateNextReviewDate, getNextReviewCount, isDifficult } from '@/lib/ebbinghaus'
 import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 import { getTodayUTC } from '@/lib/date-utils'
 
@@ -79,14 +79,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const planUpdates: Promise<any>[] = []
     const plansToCreate: any[] = []
 
+    // 构建每个词汇的答题结果
+    const vocabCorrectMap = new Map<string, boolean>()
+    for (const a of answers) {
+      const current = vocabCorrectMap.get(a.vocabularyId)
+      vocabCorrectMap.set(a.vocabularyId, current === false ? false : a.isCorrect)
+    }
+
     for (const vocabId of vocabularyIds) {
       const existingPlan = planMap.get(vocabId)
+      const isCorrect = vocabCorrectMap.get(vocabId) ?? true
 
       if (existingPlan) {
         const lastReviewDate = existingPlan.lastReviewAt ? new Date(existingPlan.lastReviewAt).toDateString() : null
         const todayStr = now.toDateString()
         const alreadyReviewedToday = lastReviewDate === todayStr
-        const newReviewCount = alreadyReviewedToday ? existingPlan.reviewCount : existingPlan.reviewCount + 1
+        const newReviewCount = alreadyReviewedToday 
+          ? existingPlan.reviewCount 
+          : getNextReviewCount(existingPlan.reviewCount, isCorrect)
 
         planUpdates.push(
           prisma.study_plans.update({
