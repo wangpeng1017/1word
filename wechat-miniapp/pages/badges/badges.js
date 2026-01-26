@@ -26,8 +26,9 @@ Page({
 
             const res = await get(`/students/${studentId}/badges`)
 
-            if (res && res.success && res.data) {
-                const { all, unlockedCount, totalCount } = res.data
+            // get() 返回的是 API 响应中的 data 部分，直接访问字段
+            if (res && res.all) {
+                const { all, unlockedCount, totalCount } = res
                 const completionRate = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0
 
                 this.setData({

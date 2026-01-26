@@ -28,10 +28,11 @@ Page({
 
             const res = await get(`/achievements/redeem?studentId=${studentId}`)
 
-            if (res && res.success && res.data) {
+            // get() 返回的是 API 响应中的 data 部分，直接访问字段
+            if (res && res.achievements) {
                 this.setData({
-                    achievements: res.data.achievements || [],
-                    currentPoints: res.data.currentPoints || 0,
+                    achievements: res.achievements || [],
+                    currentPoints: res.currentPoints || 0,
                 })
             }
 
@@ -69,7 +70,8 @@ Page({
 
             wx.hideLoading()
 
-            if (res && res.success) {
+            // post() 返回的是 API 响应中的 data 部分
+            if (res) {
                 wx.showToast({
                     title: '兑换成功!',
                     icon: 'success',
@@ -79,11 +81,6 @@ Page({
                 setTimeout(() => {
                     this.loadRedeemableAchievements()
                 }, 1500)
-            } else {
-                wx.showToast({
-                    title: res.error || '兑换失败',
-                    icon: 'none',
-                })
             }
         } catch (error) {
             wx.hideLoading()

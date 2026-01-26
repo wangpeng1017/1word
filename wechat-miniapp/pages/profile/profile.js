@@ -234,8 +234,9 @@ Page({
       if (!studentId) return
 
       const res = await get(`/students/${studentId}/badges`)
-      if (res && res.success && res.data) {
-        this.setData({ displayedBadges: res.data.displayed || [] })
+      // get() 返回的是 API 响应中的 data 部分，直接访问字段
+      if (res && res.displayed) {
+        this.setData({ displayedBadges: res.displayed || [] })
       }
     } catch (error) {
       console.error('加载勋章失败:', error)
