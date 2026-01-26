@@ -20,4 +20,9 @@
 | report-generator.ts | 报告生成器 |
 | task-interrupt-detector.ts | 任务中断检测 |
 | create-tables.ts | 数据库表创建脚本 |
+| auto-grant-badge.ts | 勋章自动授予工具 |
+| badge-service.ts | 勋章服务（墙展示、兑换、显示设置） |
+| wrong-questions-retest.ts | 错题重测逻辑 |
+| points-validator.ts | 积分验证器（防刷取） |
+| rate-limiter.ts | 登录限流器 |
 | cron/ | 定时任务目录 |

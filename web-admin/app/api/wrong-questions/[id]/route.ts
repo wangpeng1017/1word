@@ -1,6 +1,10 @@
 /**
  * @file route.ts
- * @desc 删除错题记录API
+ * @desc 删除错题记录API（支持幂等性）
+ * @input 依赖: prisma, wrong_questions表
+ * @output 导出: DELETE /api/wrong-questions/[id]
+ * @pos 错题管理模块 - 删除单条错题
+ * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
  */
 
 import { NextRequest, NextResponse } from 'next/server'
