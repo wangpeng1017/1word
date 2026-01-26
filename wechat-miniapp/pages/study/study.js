@@ -318,7 +318,7 @@ Page({
       const newAnswers = answers.slice(lastSyncedIndex + 1)
       if (newAnswers.length > 0 && sessionId) await syncProgress(newAnswers)
       if (sessionId) await completeSession()
-      else await post('/study-records', { studentId, answers })
+      else await post('/study-records', { studentId, answers, isRetestMode: this.data.isRetestMode })
       playSound(SoundType.COMPLETE)  // 完成学习音效
       clearStudyProgress(); wx.hideLoading()
       wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length })

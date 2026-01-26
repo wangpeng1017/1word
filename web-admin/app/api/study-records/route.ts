@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
     const payload = verifyToken(token)
     if (!payload) return apiResponse.unauthorized('Token无效')
 
-    const { studentId, answers: clientAnswers } = await request.json()
+    const { studentId, answers: clientAnswers, isRetestMode } = await request.json()
     if (!studentId || !clientAnswers?.length) {
       return apiResponse.error('参数错误', 400)
     }
@@ -412,11 +412,13 @@ export async function POST(request: NextRequest) {
       console.error('掌握度更新失败，但答题记录已保存:', err)
     }
 
-    // 写入错题记录 - 使用服务端验证后的结果
-    const wrongAnswers = validatedAnswers.filter(a => !a.isCorrect)
-    if (wrongAnswers.length > 0) {
-      createWrongQuestions(studentId, wrongAnswers, now)
-        .catch(err => console.error('错题记录写入失败:', err))
+    // 写入错题记录 - 使用服务端验证后的结果（重测模式下跳过，因为错题已在错题本中）
+    if (!isRetestMode) {
+      const wrongAnswers = validatedAnswers.filter(a => !a.isCorrect)
+      if (wrongAnswers.length > 0) {
+        createWrongQuestions(studentId, wrongAnswers, now)
+          .catch(err => console.error('错题记录写入失败:', err))
+      }
     }
 
     // 更新连续学习天数
