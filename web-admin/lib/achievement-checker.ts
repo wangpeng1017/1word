@@ -252,6 +252,34 @@ async function unlockAchievement(studentId: string, achievementId: string) {
       })
     }
 
+    // 自动发放关联的勋章
+    const relatedBadge = await prisma.badges.findFirst({
+      where: { achievementId }
+    })
+
+    if (relatedBadge) {
+      const existingBadge = await prisma.student_badges.findUnique({
+        where: {
+          studentId_badgeId: {
+            studentId,
+            badgeId: relatedBadge.id
+          }
+        }
+      })
+
+      if (!existingBadge) {
+        const badgeId = `sb_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+        await prisma.student_badges.create({
+          data: {
+            id: badgeId,
+            studentId,
+            badgeId: relatedBadge.id
+          }
+        })
+        console.log(`勋章发放成功: ${relatedBadge.name} (学生: ${studentId})`)
+      }
+    }
+
     console.log(`成就解锁成功: ${achievement.name} (学生: ${studentId})`)
   } catch (error) {
     console.error('解锁成就失败:', error)
