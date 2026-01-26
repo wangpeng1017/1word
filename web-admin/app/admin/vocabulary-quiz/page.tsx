@@ -241,6 +241,7 @@ export default function VocabularyQuizPage() {
                     <div>B. {record.optionB} {record.correctOption === 'B' && <Tag color="green" size="small">✓</Tag>}</div>
                     <div>C. {record.optionC} {record.correctOption === 'C' && <Tag color="green" size="small">✓</Tag>}</div>
                     <div>D. {record.optionD} {record.correctOption === 'D' && <Tag color="green" size="small">✓</Tag>}</div>
+                    <div>E. {record.optionE} {record.correctOption === 'E' && <Tag color="green" size="small">✓</Tag>}</div>
                 </div>
             ),
         },
@@ -432,6 +433,7 @@ export default function VocabularyQuizPage() {
                             <Select.Option value="B">B</Select.Option>
                             <Select.Option value="C">C</Select.Option>
                             <Select.Option value="D">D</Select.Option>
+                            <Select.Option value="E">E</Select.Option>
                         </Select>
                     </Form.Item>
 
