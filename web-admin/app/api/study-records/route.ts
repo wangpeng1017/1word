@@ -92,6 +92,90 @@ async function updateMasteries(
   }
 }
 
+// 写入错题记录
+async function createWrongQuestions(
+  studentId: string,
+  wrongAnswers: any[],
+  now: Date
+) {
+  if (wrongAnswers.length === 0) return
+
+  try {
+    // 获取题目的正确答案
+    const questionIds = wrongAnswers.map(a => a.questionId)
+    const questions = await prisma.questions.findMany({
+      where: { id: { in: questionIds } },
+      select: { id: true, correctAnswer: true },
+    })
+    const questionMap = new Map(questions.map(q => [q.id, q.correctAnswer]))
+
+    // 检查已存在的错题记录
+    const existingWrongs = await prisma.wrong_questions.findMany({
+      where: {
+        studentId,
+        questionId: { in: questionIds },
+      },
+      select: { id: true, questionId: true, wrongCount: true },
+    })
+    const existingMap = new Map(existingWrongs.map(w => [w.questionId, w]))
+
+    // 分离需要创建和更新的记录
+    const toCreate: any[] = []
+    const toUpdate: Promise<any>[] = []
+
+    for (const answer of wrongAnswers) {
+      const correctAnswer = questionMap.get(answer.questionId) || ''
+      const existing = existingMap.get(answer.questionId)
+
+      if (existing) {
+        // 更新已存在的错题记录
+        toUpdate.push(
+          prisma.wrong_questions.update({
+            where: { id: existing.id },
+            data: {
+              wrongCount: existing.wrongCount + 1,
+              wrongAnswer: answer.answer,
+              wrongAt: now,
+              status: 'ACTIVE',
+            },
+          })
+        )
+      } else {
+        // 创建新的错题记录
+        toCreate.push({
+          id: `wq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          studentId,
+          vocabularyId: answer.vocabularyId || '',
+          questionId: answer.questionId,
+          wrongAnswer: answer.answer,
+          correctAnswer,
+          wrongAt: now,
+          wrongCount: 1,
+          correctCount: 0,
+          status: 'ACTIVE',
+        })
+      }
+    }
+
+    // 批量执行
+    if (toCreate.length > 0) {
+      await prisma.wrong_questions.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      })
+    }
+
+    if (toUpdate.length > 0) {
+      await Promise.all(toUpdate)
+    }
+
+    console.log(`错题记录: 新增 ${toCreate.length}, 更新 ${toUpdate.length}`)
+  } catch (err) {
+    console.error('写入错题记录失败:', err)
+    // 不抛出错误，避免影响主流程
+  }
+}
+
 // 异步更新积分（带防重复检查）
 async function updatePointsAsync(
   studentId: string,
@@ -326,6 +410,13 @@ export async function POST(request: NextRequest) {
       await updateMasteries(studentId, validatedAnswers, coreResult.masteryMap, now)
     } catch (err) {
       console.error('掌握度更新失败，但答题记录已保存:', err)
+    }
+
+    // 写入错题记录 - 使用服务端验证后的结果
+    const wrongAnswers = validatedAnswers.filter(a => !a.isCorrect)
+    if (wrongAnswers.length > 0) {
+      createWrongQuestions(studentId, wrongAnswers, now)
+        .catch(err => console.error('错题记录写入失败:', err))
     }
 
     // 更新连续学习天数
