@@ -23,43 +23,90 @@ function generatePlaceholder(columnName, prefix = '') {
   return `no-${columnName}-${prefix || Date.now()}-${placeholderCounter[columnName]++}`;
 }
 
+// 所有需要默认值的 NOT NULL 字段
+const DEFAULT_VALUES = {
+  // 字符串字段
+  'email': () => generatePlaceholder('email'),
+  'phone': () => '',
+  'wechat_id': () => generatePlaceholder('wechat_id'),
+  'avatar': () => '',
+  'teacher_id': () => '',
+  'targetId': () => generatePlaceholder('targetId'),
+  'sentence': () => '',
+  'audioUrl': () => '',
+  'questionText': () => '',
+  'description': () => '',
+  'achievementId': () => generatePlaceholder('achievementId'),
+  'ip': () => '127.0.0.1',
+  'condition': () => '{}',
+  // 数字字段
+  'pointsCost': () => 0,
+  'duration': () => 0,
+  'recentAccuracy': () => 0,
+  // 日期字段
+  'lastActiveAt': () => new Date().toISOString().slice(0, 19).replace('T', ' '),
+  'lastReviewAt': () => new Date().toISOString().slice(0, 19).replace('T', ' '),
+  'createdAt': () => new Date().toISOString().slice(0, 19).replace('T', ' '),
+  'updatedAt': () => new Date().toISOString().slice(0, 19).replace('T', ' '),
+};
+
 // 处理字段值
 function processValue(value, columnName, recordId) {
   // null/undefined 处理
   if (value === null || value === undefined) {
-    // 对于 NOT NULL 的字符串字段，使用占位符或空字符串
-    const notNullStringFields = ['email', 'phone', 'wechat_id', 'avatar', 'teacher_id', 'targetId', 'sentence', 'lastActiveAt', 'lastReviewAt', 'pointsCost'];
-    if (notNullStringFields.includes(columnName)) {
-      if (columnName === 'email' || columnName === 'wechat_id') {
-        return generatePlaceholder(columnName, recordId);
-      }
-      if (columnName === 'pointsCost') return 0;
-      return '';
+    if (DEFAULT_VALUES[columnName]) {
+      return DEFAULT_VALUES[columnName]();
     }
     return null;
   }
 
   // 空字符串处理
   if (value === '') {
-    const notNullFields = ['email', 'wechat_id', 'pointsCost'];
-    if (notNullFields.includes(columnName)) {
-      if (columnName === 'pointsCost') return 0;
-      return generatePlaceholder(columnName, recordId);
+    if (DEFAULT_VALUES[columnName]) {
+      return DEFAULT_VALUES[columnName]();
     }
     return '';
   }
 
   // 日期转换
   if (typeof value === 'string') {
+    // ISO 8601 日期
     if (value.includes('T') && value.includes('Z')) {
       return convertDate(value);
+    }
+    // 空日期字符串
+    if (value === '' && (columnName.endsWith('At') || columnName.endsWith('_at') || columnName.endsWith('Date'))) {
+      if (DEFAULT_VALUES[columnName]) {
+        return DEFAULT_VALUES[columnName]();
+      }
+      return new Date().toISOString().slice(0, 19).replace('T', ' ');
     }
     // 处理布尔值字符串
     if (value === 'true') return true;
     if (value === 'false') return false;
   }
 
+  // JSON 对象转换（处理 condition 字段）
+  if (typeof value === 'object' && value !== null) {
+    const jsonStr = JSON.stringify(value);
+    // 验证 JSON 格式
+    try {
+      JSON.parse(jsonStr);
+      return jsonStr;
+    } catch {
+      return '{}';
+    }
+  }
+
   return value;
+}
+
+// 使用字段名列表方式插入，避免特殊字符问题
+async function insertRecord(connection, tableName, values) {
+  const columns = Object.keys(values);
+  const placeholders = columns.map(() => '?').join(', ');
+  const sql = `INSERT INTO \`${tableName}\` (\`${columns.join('`, `')}\`) VALUES (${placeholders})`;
+  await connection.query(sql, Object.values(values));
 }
 
 // 清空表数据（按外键依赖顺序）
@@ -69,11 +116,14 @@ async function clearTables(connection) {
     'student_badges', 'badges', 'achievements',
     'point_history', 'student_points',
     'wrong_questions', 'question_answers', 'question_options', 'questions',
+    'vocabulary_quiz_records', 'vocabulary_quiz_answers', 'vocabulary_quiz_questions',
+    'word_masteries', 'study_records', 'word_meanings', 'word_images', 'word_audios',
+    'vocabulary_pack_day_words', 'vocabulary_pack_days', 'vocabulary_packs', 'vocabularies',
     'student_daily_tasks', 'daily_tasks', 'proficiency_tests',
-    'study_records', 'study_sessions',
+    'study_plans', 'study_streaks',
     'plan_classes', 'classes', 'students', 'teachers', 'users',
-    'vocabulary_images', 'vocabularies',
-    'operation_logs'
+    'vocabulary_images',
+    'system_configs', 'operation_logs'
   ];
 
   for (const table of tables) {
@@ -87,7 +137,7 @@ async function clearTables(connection) {
 }
 
 async function main() {
-  console.log('=== 开始完整数据迁移 ===\n');
+  console.log('=== 开始完整数据迁移 v2 ===\n');
 
   // 读取数据文件
   console.log('1. 读取数据文件...');
@@ -104,7 +154,7 @@ async function main() {
     password: '4n8anApuMflp3cRr',
     database: 'bdcxcx',
     ssl: false,
-    multipleStatements: true
+    multipleStatements: false
   });
   console.log('   ✓ 连接成功\n');
 
@@ -118,6 +168,7 @@ async function main() {
   const tables = Object.keys(data.tables);
   let totalImported = 0;
   let failedTables = [];
+  let successTables = [];
 
   for (const tableName of tables) {
     const records = data.tables[tableName];
@@ -133,64 +184,71 @@ async function main() {
       const [tableCheck] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
       if (tableCheck.length === 0) {
         console.log(`     - 表不存在，跳过`);
+        failedTables.push({ table: tableName, error: '表不存在' });
         continue;
       }
 
       // 获取表结构
       const [columns] = await connection.query(`SHOW COLUMNS FROM \`${tableName}\``);
       const columnNames = columns.map(c => c.Field);
+      const nullableCols = new Set(columns.filter(c => c.Null === 'YES').map(c => c.Field));
 
       let imported = 0;
-      let batchValues = [];
-      const batchSize = 100;
+      let errorCount = 0;
 
       for (const record of records) {
-        const values = {};
-        const recordId = record.id || tableName;
+        try {
+          const values = {};
+          const recordId = record.id || tableName;
 
-        for (const col of columnNames) {
-          if (record.hasOwnProperty(col)) {
-            const processed = processValue(record[col], col, recordId);
-            if (processed !== undefined) {
-              values[col] = processed;
+          for (const col of columnNames) {
+            if (record.hasOwnProperty(col)) {
+              let processed = processValue(record[col], col, recordId);
+              // 如果字段 NOT NULL 且处理后仍为 null，使用默认值
+              if (processed === null && !nullableCols.has(col) && DEFAULT_VALUES[col]) {
+                processed = DEFAULT_VALUES[col]();
+              }
+              if (processed !== undefined) {
+                values[col] = processed;
+              }
             }
           }
-        }
 
-        if (Object.keys(values).length > 0) {
-          batchValues.push(values);
-          if (batchValues.length >= batchSize) {
-            for (const v of batchValues) {
-              await connection.query(`INSERT INTO \`${tableName}\` SET ?`, [v]);
-              imported++;
-            }
-            batchValues = [];
+          if (Object.keys(values).length > 0) {
+            await insertRecord(connection, tableName, values);
+            imported++;
           }
+        } catch (err) {
+          errorCount++;
         }
       }
 
-      // 插入剩余记录
-      for (const v of batchValues) {
-        await connection.query(`INSERT INTO \`${tableName}\` SET ?`, [v]);
-        imported++;
+      if (imported > 0) {
+        console.log(`     ✓ 成功导入 ${imported} 条记录${errorCount > 0 ? ` (失败 ${errorCount})` : ''}`);
+        totalImported += imported;
+        successTables.push(tableName);
+      } else {
+        console.log(`     ✗ 全部失败`);
+        failedTables.push({ table: tableName, error: '全部记录导入失败' });
       }
-
-      console.log(`     ✓ 成功导入 ${imported} 条记录`);
-      totalImported += imported;
     } catch (error) {
-      console.log(`     ✗ 失败: ${error.message.substring(0, 80)}`);
+      console.log(`     ✗ 失败: ${error.message.substring(0, 100)}`);
       failedTables.push({ table: tableName, error: error.message });
     }
   }
 
   console.log(`\n5. 导入完成！`);
   console.log(`   总计导入: ${totalImported} 条记录`);
+  console.log(`   成功表: ${successTables.length}`);
+  console.log(`   失败表: ${failedTables.length}`);
 
   if (failedTables.length > 0) {
-    console.log(`\n   失败的表 (${failedTables.length}):`);
+    console.log(`\n   失败的表:`);
     failedTables.forEach(f => {
-      console.log(`   - ${f.table}: ${f.error.substring(0, 50)}`);
+      console.log(`   - ${f.table}: ${f.error.substring(0, 60)}`);
     });
+  } else {
+    console.log(`\n   🎉 所有表导入成功！`);
   }
 
   await connection.end();
