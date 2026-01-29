@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 
-const DATA_FILE = `${__dirname}/../../xdf-migration-data.json`;
+const DATA_FILE = `${__dirname}/../../../xdf-migration-data.json`;
 
 async function main() {
   console.log('开始导入数据...');
