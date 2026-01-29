@@ -5,7 +5,7 @@
 // production: 阿里云生产环境
 // xdf: 新东方客户环境
 
-const ENV = 'production' // 手动切换环境（阿里云测试环境）
+const ENV = 'xdf' // 新东方生产环境
 
 const config = {
   development: {
@@ -22,6 +22,11 @@ const config = {
     apiUrl: 'http://8.130.182.148:3000/api',
     debug: true,
     name: '阿里云生产环境'
+  },
+  linklike: {
+    apiUrl: 'https://word.linklike.com.cn/api',
+    debug: true,
+    name: 'Linklike测试环境'
   },
   xdf: {
     apiUrl: 'https://ienglish.xdf.cn/api',
