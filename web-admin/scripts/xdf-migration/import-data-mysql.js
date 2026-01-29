@@ -3,6 +3,31 @@ const fs = require('fs');
 
 const DATA_FILE = `${__dirname}/../../xdf-migration-data.json`;
 
+// 转换日期格式：ISO 8601 -> MySQL DATETIME
+function convertDate(value) {
+  if (!value) return null;
+  if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    return value.replace('T', ' ').replace(/\.\d+Z$/, '');
+  }
+  return value;
+}
+
+// 处理值：null -> 空字符串（对于 NOT NULL 字段）
+function processValue(value, columnName) {
+  if (value === null || value === undefined) {
+    // 对于可能为空的字符串字段，返回空字符串
+    if (['email', 'phone', 'wechat_id', 'avatar', 'teacher_id'].includes(columnName)) {
+      return '';
+    }
+    return null;
+  }
+  // 转换日期格式
+  if (typeof value === 'string' && (value.includes('T') && value.includes('Z'))) {
+    return convertDate(value);
+  }
+  return value;
+}
+
 async function main() {
   console.log('开始导入数据...');
 
@@ -10,7 +35,7 @@ async function main() {
   const rawData = fs.readFileSync(DATA_FILE, 'utf-8');
   const data = JSON.parse(rawData);
 
-  console.log(`导出的数据包含 ${Object.keys(data.data).length} 个表`);
+  console.log(`导出的数据包含 ${Object.keys(data.tables).length} 个表`);
 
   // 创建数据库连接
   const connection = await mysql.createConnection({
@@ -19,7 +44,7 @@ async function main() {
     user: 'PRO_RDS_bdcxcx_RW',
     password: '4n8anApuMflp3cRr',
     database: 'bdcxcx',
-    ssl: {}
+    ssl: false
   });
 
   console.log('数据库连接成功');
@@ -28,13 +53,17 @@ async function main() {
   const tables = [
     'users', 'teachers', 'students', 'classes', 'plan_classes',
     'vocabularies', 'questions', 'question_options', 'student_daily_tasks',
-    'daily_tasks', 'proficiency_tests', 'question_answers'
+    'daily_tasks', 'proficiency_tests', 'question_answers', 'study_sessions',
+    'study_records', 'wrong_questions', 'badges', 'student_badges',
+    'achievements', 'student_achievements', 'redeemable_achievements',
+    'achievement_redemptions', 'student_points', 'point_history',
+    'operation_logs', 'vocabulary_images'
   ];
 
   let totalImported = 0;
 
   for (const tableName of tables) {
-    const records = data.data[tableName];
+    const records = data.tables[tableName];
     if (!records || records.length === 0) {
       console.log(`跳过表 ${tableName} (无数据)`);
       continue;
@@ -49,11 +78,11 @@ async function main() {
 
       let imported = 0;
       for (const record of records) {
-        // 只插入表中存在的列
+        // 只插入表中存在的列，并处理值
         const values = {};
         for (const col of columnNames) {
           if (record.hasOwnProperty(col)) {
-            values[col] = record[col];
+            values[col] = processValue(record[col], col);
           }
         }
 
