@@ -1,20 +1,22 @@
 # 新东方服务器部署方案（完整版）
 
 > **项目**: 英语词汇学习助手 (iEnglish)
-> **版本**: v1.2
-> **更新日期**: 2026-01-22
-> **状态**: ✅ 应用已部署，域名已配置，外部访问正常
+> **版本**: v1.3
+> **更新日期**: 2026-01-30
+> **状态**: ✅ 生产运行中，图片API已部署
 
 ---
 
 ## 📋 目录
 
 - [一、环境信息](#一环境信息)
-- [二、首次部署流程](#二首次部署流程)
-- [三、域名与 SSL 配置](#三域名与-ssl-配置)
-- [四、更新部署流程](#四更新部署流程)
-- [五、运维管理](#五运维管理)
-- [六、故障排查](#六故障排查)
+- [二、本地开发工作流（重要）](#二本地开发工作流重要)
+- [三、首次部署流程](#三首次部署流程)
+- [四、数据迁移流程](#四数据迁移流程)
+- [五、更新部署流程](#五更新部署流程)
+- [六、常见问题处理](#六常见问题处理)
+- [七、运维管理](#七运维管理)
+- [八、故障排查](#八故障排查)
 
 ---
 
@@ -60,7 +62,7 @@
 | **目标域名** | ienglish.xdf.cn | ✅ 已配置 |
 | **DNS 解析** | 腾讯 EO 边缘节点 IP | ✅ 正常 |
 | **负载均衡** | 集团统一负载均衡 → 172.20.234.44:80 | ✅ 已配置 |
-| **服务器监听** | Nginx 80 端口 → 应用 3000 端口 | ⏳ 待验证 |
+| **服务器监听** | Nginx 80 端口 → 应用 3000 端口 | ✅ 正常 |
 
 #### 网络架构
 
@@ -78,11 +80,96 @@ Next.js 应用 (3000端口)
 
 > **说明**: ping `ienglish.xdf.cn` 返回的是腾讯 EO 边缘节点 IP，不是服务器真实 IP，这是正常的。
 
+### 1.5 关键架构决策
+
+| 决策点 | 方案 | 原因 |
+|--------|------|------|
+| 静态文件访问 | 通过 `/api/images/*` 提供访问 | Nginx只代理`/api/*`，避免配置复杂化 |
+| 大文件传输 | 通过Git仓库中转 | 服务器间无法直接scp/rsync |
+| 数据库同步 | DBA手动执行SQL | 无外部数据库访问权限 |
+
 ---
 
-## 二、首次部署流程
+## 二、本地开发工作流（重要）
 
-### 2.1 安装 Node.js（无 sudo 权限）
+### 2.1 GitHub 访问问题
+
+**问题**: 本地访问 GitHub 需要翻墙，服务器可以直接访问。
+
+| 环境 | GitHub 访问 | 解决方案 |
+|------|-------------|----------|
+| 本地开发机 | ❌ 需要翻墙 | 开启VPN后操作 |
+| XDF 服务器 | ✅ 直连 | 无需VPN |
+
+### 2.2 本地开发到部署流程
+
+```bash
+# ┌─────────────────────────────────────────────────────────┐
+# │  本地开发阶段（需要翻墙）                                  │
+# └─────────────────────────────────────────────────────────┘
+
+# 1. 确保VPN已开启，测试GitHub连接
+git ls-remote https://github.com/wangpeng1017/1word.git
+
+# 2. 拉取最新代码
+git pull origin main
+
+# 3. 本地开发、测试
+npm run dev
+
+# 4. 提交代码
+git add -A
+git commit -m "feat: xxx"
+git push origin main
+
+
+# ┌─────────────────────────────────────────────────────────┐
+# │  服务器部署阶段（通过Web堡垒机SSH，无需翻墙）              │
+# └─────────────────────────────────────────────────────────┘
+
+# 5. SSH登录到XDF服务器
+# 通过 pandora.staff.xdf.cn 连接 dontovertime@172.20.234.44
+
+# 6. 拉取并部署
+cd ~/apps/1word/web-admin
+git pull origin main
+npm run build
+pm2 restart word-app
+```
+
+### 2.3 大文件迁移流程（图片等）
+
+当需要迁移大量图片或其他静态文件时：
+
+```bash
+# ┌─────────────────────────────────────────────────────────┐
+# │  步骤1：原服务器推送到GitHub（需要翻墙）                    │
+# └─────────────────────────────────────────────────────────┘
+
+# 在原服务器（如阿里云 8.130.182.148）
+cd /root/word-app
+git add -f web-admin/public/images/
+git commit -m "feat: 添加图片文件"
+git push origin main
+
+
+# ┌─────────────────────────────────────────────────────────┐
+# │  步骤2：XDF服务器拉取（无需翻墙）                          │
+# └─────────────────────────────────────────────────────────┘
+
+# 在XDF服务器
+cd ~/apps/1word
+git pull origin main
+
+# 验证文件
+ls -la web-admin/public/images/words/ | wc -l
+```
+
+---
+
+## 三、首次部署流程
+
+### 3.1 安装 Node.js（无 sudo 权限）
 
 ```bash
 # 1. 下载 Node.js 18 二进制包
@@ -101,7 +188,7 @@ node -v  # 应显示 v18.20.4
 npm -v   # 应显示 10.7.0
 ```
 
-### 2.2 克隆代码
+### 3.2 克隆代码
 
 ```bash
 # 1. 创建应用目录
@@ -114,7 +201,7 @@ git clone https://github.com/wangpeng1017/1word.git
 cd 1word/web-admin
 ```
 
-### 2.3 配置环境变量
+### 3.3 配置环境变量
 
 ```bash
 # 创建 .env 文件（使用 echo 方式避免 heredoc 问题）
@@ -127,7 +214,7 @@ echo 'NODE_ENV="production"' >> .env
 cat .env
 ```
 
-### 2.4 安装依赖并构建
+### 3.4 安装依赖并构建
 
 ```bash
 # 1. 设置 npm 镜像
@@ -139,14 +226,14 @@ npm install --legacy-peer-deps
 # 3. 生成 Prisma Client
 npx prisma generate
 
-# 4. 同步数据库表结构
+# 4. 同步数据库表结构（DBA已提前创建好表）
 npx prisma db push
 
 # 5. 构建应用
 npm run build
 ```
 
-### 2.5 安装 PM2 并启动应用
+### 3.5 安装 PM2 并启动应用
 
 ```bash
 # 1. 全局安装 PM2
@@ -158,10 +245,13 @@ pm2 start npm --name "word-app" -- start
 # 3. 保存 PM2 配置
 pm2 save
 
-# 4. 查看状态
+# 4. 设置开机自启
+pm2 startup
+
+# 5. 查看状态
 pm2 status
 
-# 5. 验证应用运行
+# 6. 验证应用运行
 curl -I http://127.0.0.1:3000
 ```
 
@@ -169,200 +259,158 @@ curl -I http://127.0.0.1:3000
 
 ---
 
-## 三、域名与 SSL 配置
+## 四、数据迁移流程
 
-### 3.1 配置 Nginx 反向代理（需 root 权限）
+### 4.1 迁移场景
 
-```bash
-# 1. 切换到 root
-su - root
+从其他环境（如阿里云测试服务器）迁移业务数据到XDF生产环境。
 
-# 2. 安装 Nginx
-apt update && apt install nginx -y
+### 4.2 数据库迁移
 
-# 3. 创建配置文件（使用 echo 避免 heredoc 问题）
-echo 'server {
-    listen 80;
-    server_name ienglish.xdf.cn;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}' > /etc/nginx/sites-available/ienglish.xdf.cn
-
-# 4. 启用配置
-ln -s /etc/nginx/sites-available/ienglish.xdf.cn /etc/nginx/sites-enabled/
-
-# 5. 测试并重启
-nginx -t && systemctl reload nginx
-
-# 6. 验证 Nginx 状态
-systemctl status nginx
-```
-
-### 3.2 域名解析配置（✅ 已完成）
-
-#### 当前状态
-
-集团网络已完成配置：
-
-| 配置项 | 状态 | 说明 |
-|--------|------|------|
-| DNS 解析 | ✅ | 指向腾讯 EO 边缘节点 |
-| 腾讯 EO 防护 | ✅ | 提供 CDN 加速和 WAF 防护 |
-| 集团负载均衡 | ✅ | upstream 指向 172.20.234.44:80 |
+#### 步骤1：导出源数据
 
 ```bash
-# 检查域名解析（返回的是 EO 边缘节点 IP，这是正常的）
-nslookup ienglish.xdf.cn
+# 在源服务器（需要数据库访问权限）
+mysqldump -h源数据库地址 -u用户名 -p密码 \
+  bdcxcx vocabularies word_meanings word_audios word_images \
+  questions question_options > data.sql
 ```
 
-#### 验证服务是否正常
+#### 步骤2：DBA执行导入
+
+由于XDF环境数据库由专业DBA管理，提供SQL文件给DBA执行：
+
+```sql
+-- DBA在RDS上执行
+USE bdcxcx;
+
+-- 清空现有数据（可选）
+TRUNCATE TABLE word_masteries;
+TRUNCATE TABLE student_progress;
+-- ... 其他需要重置的表
+
+-- 导入新数据
+source /path/to/data.sql;
+```
+
+### 4.3 图片文件迁移
+
+**问题**: 服务器间无法直接scp/rsync传输
+
+**解决方案**: 通过GitHub仓库中转
 
 ```bash
-# 1. 服务器本地测试（确保 Nginx 和应用正常）
-curl -I http://127.0.0.1        # 通过 Nginx
-curl -I http://127.0.0.1:3000   # 直接访问应用
+# ───────────────────────────────────────────────────────────
+# 阶段1：源服务器推送到GitHub（本地操作，需翻墙）
+# ───────────────────────────────────────────────────────────
 
-# 2. 从外部访问测试
-curl -I https://ienglish.xdf.cn
+# 在源服务器（如 8.130.182.148）
+cd /root/word-app
 
-# 预期结果：返回 200 OK
+# 强制添加大文件到Git
+git add -f web-admin/public/images/
+
+# 提交（可能需要配置GitHub token）
+git config --global credential.helper store
+git config --global user.name "wangpeng1017"
+git config --global user.email "wangpeng1017@users.noreply.github.com"
+
+# 推送（使用Personal Access Token）
+# Token获取方式：GitHub Settings → Developer settings → Personal access tokens
+git remote set-url origin https://TOKEN@github.com/wangpeng1017/1word.git
+git push origin main
+
+
+# ───────────────────────────────────────────────────────────
+# 阶段2：XDF服务器拉取（通过堡垒机SSH）
+# ───────────────────────────────────────────────────────────
+
+# 在XDF服务器
+cd ~/apps/1word
+git pull origin main
+
+# 验证图片文件
+ls -la web-admin/public/images/words/
 ```
 
-#### 如果外部无法访问，排查顺序
 
-1. **检查 Nginx 监听 80 端口**: `netstat -tlnp | grep :80`
-2. **检查 PM2 应用运行**: `pm2 status`
-3. **检查 Nginx 配置**: `nginx -t`
-4. **联系集团网络确认负载均衡配置**
+### 4.4 Schema同步问题处理
 
-### 3.3 SSL 证书配置
+**问题**: Prisma期望camelCase字段（`createdAt`），但数据库是snake_case（`created_at`）
 
-#### 当前架构下的 SSL 说明
+**解决方案**：
 
-由于流量经过 **腾讯 EO → 集团负载均衡 → 服务器**，SSL 终止有以下可能：
-
-| SSL 终止位置 | 服务器需要配置 | 说明 |
-|--------------|----------------|------|
-| 腾讯 EO 层 | ❌ 不需要 | EO 提供 HTTPS，回源用 HTTP |
-| 集团负载均衡层 | ❌ 不需要 | 负载均衡配置证书，回源用 HTTP |
-| 服务器层 | ✅ 需要 | 全链路 HTTPS |
-
-**建议**: 先测试 `https://ienglish.xdf.cn` 是否可访问。如果可以，说明 SSL 在上游已终止，服务器无需配置证书。
-
+1. **检查Prisma Schema定义**：
 ```bash
-# 测试 HTTPS 访问
-curl -I https://ienglish.xdf.cn
+cd ~/apps/1word/web-admin
+grep -A 5 "createdAt\|updatedAt" prisma/schema.prisma
 ```
 
-#### 如果需要服务器配置 SSL（方式一：Let's Encrypt）
+2. **如果字段缺失，联系DBA执行**：
+```sql
+-- 添加缺失的时间戳字段（camelCase）
+ALTER TABLE word_meanings ADD COLUMN createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE word_meanings ADD COLUMN updatedAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
+ALTER TABLE word_audios ADD COLUMN createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE word_images ADD COLUMN createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE questions ADD COLUMN createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+```
 
+3. **重新生成Prisma Client**：
 ```bash
-# 1. 安装 certbot
-apt install certbot python3-certbot-nginx -y
-
-# 2. 自动申请并配置 SSL
-certbot --nginx -d ienglish.xdf.cn
-
-# 3. 设置自动续期
-systemctl enable certbot.timer
-systemctl start certbot.timer
-
-# 4. 验证
-curl -I https://ienglish.xdf.cn
+npx prisma generate
+npm run build
+pm2 restart word-app
 ```
 
-#### 方式二：使用公司统一证书
-
-如果公司有 `*.xdf.cn` 泛域名证书，联系 IT 获取证书文件后：
-
-```bash
-# 1. 创建证书目录
-mkdir -p /etc/nginx/ssl
-
-# 2. 上传证书文件
-# ienglish.xdf.cn.pem  ← 证书文件
-# ienglish.xdf.cn.key  ← 私钥文件
-
-# 3. 修改 Nginx 配置
-cat > /etc/nginx/sites-available/ienglish.xdf.cn << 'EOF'
-# HTTP -> HTTPS 重定向
-server {
-    listen 80;
-    server_name ienglish.xdf.cn;
-    return 301 https://$server_name$request_uri;
-}
-
-# HTTPS 主配置
-server {
-    listen 443 ssl http2;
-    server_name ienglish.xdf.cn;
-
-    ssl_certificate     /etc/nginx/ssl/ienglish.xdf.cn.pem;
-    ssl_certificate_key /etc/nginx/ssl/ienglish.xdf.cn.key;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_prefer_server_ciphers on;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-EOF
-
-# 4. 重新加载 Nginx
-nginx -t && systemctl reload nginx
-```
+**⚠️ 禁止**: 不要在生产环境运行 `npx prisma db pull`，这会覆盖schema中的关系定义。
 
 ---
 
-## 四、更新部署流程
+## 五、更新部署流程
 
-### 4.1 代码更新（普通用户）
+### 5.1 标准更新流程
 
 ```bash
-# 1. 进入项目目录
+# 1. 本地提交代码（需要翻墙）
+git add -A
+git commit -m "feat: xxx"
+git push origin main
+
+
+# 2. SSH到XDF服务器（通过堡垒机）
 cd ~/apps/1word/web-admin
 
-# 2. 拉取最新代码
+
+# 3. 拉取最新代码
 git pull origin main
 
-# 3. 安装新依赖（如有）
+
+# 4. 检查是否需要更新依赖
+git diff HEAD~1 package.json package-lock.json
+# 如果有变化，执行：
 npm install --legacy-peer-deps
 
-# 4. 同步数据库（如有 schema 变更）
-npx prisma generate
-npx prisma db push
 
-# 5. 重新构建
+# 5. 检查是否需要更新数据库
+git diff HEAD~1 prisma/schema.prisma
+# 如果有变化，联系DBA后执行：
+npx prisma generate
+
+
+# 6. 重新构建
 npm run build
 
-# 6. 重启应用
+
+# 7. 重启应用
 pm2 restart word-app
 
-# 7. 查看日志确认启动成功
+
+# 8. 验证
 pm2 logs word-app --lines 50
 ```
 
-### 4.2 一键更新脚本
+### 5.2 一键更新脚本
 
 创建更新脚本 `~/update-app.sh`：
 
@@ -378,12 +426,14 @@ cd "$APP_DIR"
 echo "[1/5] 拉取最新代码..."
 git pull origin main
 
-echo "[2/5] 安装依赖..."
-npm install --legacy-peer-deps
+echo "[2/5] 检查依赖变化..."
+if git diff HEAD~1 HEAD -- package.json | grep -q .; then
+    echo "检测到依赖变化，安装中..."
+    npm install --legacy-peer-deps
+fi
 
-echo "[3/5] 同步数据库..."
+echo "[3/5] 生成Prisma Client..."
 npx prisma generate
-npx prisma db push --accept-data-loss
 
 echo "[4/5] 构建应用..."
 npm run build
@@ -402,11 +452,81 @@ chmod +x ~/update-app.sh
 ~/update-app.sh
 ```
 
+### 5.3 回滚操作
+
+```bash
+# 查看最近提交
+git log --oneline -5
+
+# 回滚到指定版本
+git reset --hard <commit-hash>
+
+# 重新构建
+npm run build
+pm2 restart word-app
+```
+
 ---
 
-## 五、运维管理
+## 六、常见问题处理
 
-### 5.1 PM2 常用命令
+### 6.1 小程序图片无法显示
+
+**症状**: API正常，答题正常，但看不到词汇图片
+
+**原因**: Nginx只代理`/api/*`请求，静态文件路径`/images/*`无法访问
+
+**解决方案**: 已通过创建图片API接口解决
+
+```bash
+# 验证图片API是否正常
+curl -I https://ienglish.xdf.cn/api/images/words/wedding.webp
+
+# 预期返回: HTTP/1.1 200 OK
+```
+
+**技术实现**:
+- 新增 `/api/images/[...path]` 路由
+- API返回数据自动转换 `/images/` → `/api/images/`
+- 图片通过API接口返回，走已有的代理通道
+
+### 6.2 数据库字段不存在
+
+**症状**: 日志显示 `Column 'xxx.createdAt' does not exist`
+
+**解决方案**:
+
+1. 检查Prisma Schema期望的字段名
+2. 联系DBA执行ALTER TABLE添加字段
+3. 重新生成Prisma Client
+
+```bash
+# 步骤3：重新生成
+npx prisma generate
+npm run build
+pm2 restart word-app
+```
+
+### 6.3 Git推送失败
+
+**症状**: `git push` 提示认证失败
+
+**解决方案**: 使用Personal Access Token
+
+```bash
+# 1. 生成Token：GitHub Settings → Developer settings → Tokens
+# 2. 设置远程URL
+git remote set-url origin https://TOKEN@github.com/wangpeng1017/1word.git
+
+# 3. 推送
+git push origin main
+```
+
+---
+
+## 七、运维管理
+
+### 7.1 PM2 常用命令
 
 ```bash
 # 查看应用状态
@@ -434,7 +554,7 @@ pm2 show word-app
 pm2 monit
 ```
 
-### 5.2 Nginx 管理（需 root）
+### 7.2 Nginx 管理（需 root）
 
 ```bash
 # 查看 Nginx 状态
@@ -456,21 +576,7 @@ tail -f /var/log/nginx/access.log
 tail -f /var/log/nginx/error.log
 ```
 
-### 5.3 数据库管理
-
-```bash
-# 查看数据库连接
-cd ~/apps/1word/web-admin
-npx prisma studio  # 启动可视化管理界面（端口 5555）
-
-# 执行数据库迁移
-npx prisma migrate dev
-
-# 重置数据库（危险！）
-npx prisma migrate reset
-```
-
-### 5.4 日志位置
+### 7.3 日志位置
 
 | 日志类型 | 路径 |
 |----------|------|
@@ -481,9 +587,9 @@ npx prisma migrate reset
 
 ---
 
-## 六、故障排查
+## 八、故障排查
 
-### 6.1 应用无法启动
+### 8.1 应用无法启动
 
 **症状**: `pm2 status` 显示 `errored` 或 `stopped`
 
@@ -500,10 +606,7 @@ netstat -tlnp | grep 3000
 cd ~/apps/1word/web-admin
 cat .env
 
-# 4. 手动启动测试
-npm start
-
-# 5. 检查 Node.js 版本
+# 4. 检查Node.js版本
 node -v  # 应为 v18.x
 ```
 
@@ -513,9 +616,7 @@ node -v  # 应为 v18.x
 - 数据库连接失败
 - 构建文件缺失（需重新 `npm run build`）
 
----
-
-### 6.2 502 Bad Gateway
+### 8.2 502 Bad Gateway
 
 **症状**: 访问域名返回 502 错误
 
@@ -536,12 +637,10 @@ tail -50 /var/log/nginx/error.log
 ```
 
 **解决方案**:
-- 如果应用未运行: `pm2 restart word-app`
-- 如果 Nginx 配置错误: 修复后 `systemctl reload nginx`
+- 应用未运行: `pm2 restart word-app`
+- Nginx 配置错误: 修复后 `systemctl reload nginx`
 
----
-
-### 6.3 数据库连接失败
+### 8.3 数据库连接失败
 
 **症状**: 日志显示 `Can't reach database server` 或 `ECONNREFUSED`
 
@@ -553,187 +652,12 @@ cat ~/apps/1word/web-admin/.env | grep DATABASE_URL
 
 # 2. 测试数据库连接
 cd ~/apps/1word/web-admin
-npx prisma db pull  # 尝试拉取 schema
-
-# 3. 检查 RDS 白名单
-# 需要确认 RDS 白名单包含服务器 IP: 47.94.235.91
+npx prisma db pull
 ```
 
 **解决方案**:
-- 联系 DBA 将服务器 IP 加入 RDS 白名单
+- 联系 DBA 检查 RDS 白名单
 - 检查数据库账号密码是否正确
-
----
-
-### 6.4 域名无法访问
-
-**症状**: 浏览器无法打开 `http://ienglish.xdf.cn`
-
-**排查步骤**:
-
-```bash
-# 1. 检查域名解析
-nslookup ienglish.xdf.cn
-
-# 2. 检查 Nginx 是否监听 80 端口
-netstat -tlnp | grep :80
-
-# 3. 检查防火墙
-ufw status  # 如果启用，需开放 80/443 端口
-
-# 4. 本地测试
-curl -I http://127.0.0.1
-```
-
-**解决方案**:
-- 域名未解析: 联系 IT 配置 DNS
-- 防火墙阻止: `ufw allow 80/tcp && ufw allow 443/tcp`
-- Nginx 未启动: `systemctl start nginx`
-
----
-
-### 6.5 SSL 证书错误
-
-**症状**: HTTPS 访问提示证书无效
-
-**排查步骤**:
-
-```bash
-# 1. 检查证书有效期
-openssl x509 -in /etc/nginx/ssl/ienglish.xdf.cn.pem -noout -dates
-
-# 2. 检查证书域名
-openssl x509 -in /etc/nginx/ssl/ienglish.xdf.cn.pem -noout -subject
-
-# 3. 测试 SSL 配置
-nginx -t
-```
-
-**解决方案**:
-- 证书过期: 重新申请或续期
-- 域名不匹配: 使用正确的证书
-- Let's Encrypt 自动续期失败: `certbot renew --dry-run`
-
----
-
-## 七、性能优化建议
-
-### 7.1 Nginx 缓存配置
-
-```nginx
-# 在 /etc/nginx/sites-available/ienglish.xdf.cn 中添加
-
-# 静态资源缓存
-location /_next/static {
-    proxy_pass http://127.0.0.1:3000;
-    add_header Cache-Control "public, max-age=31536000, immutable";
-}
-
-location /public {
-    proxy_pass http://127.0.0.1:3000;
-    add_header Cache-Control "public, max-age=86400";
-}
-
-# Gzip 压缩
-gzip on;
-gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
-gzip_min_length 1000;
-```
-
-### 7.2 PM2 集群模式
-
-```bash
-# 停止当前应用
-pm2 delete word-app
-
-# 以集群模式启动（利用多核 CPU）
-pm2 start npm --name "word-app" -i max -- start
-
-# 保存配置
-pm2 save
-```
-
-### 7.3 数据库连接池优化
-
-在 `prisma/schema.prisma` 中：
-
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-
-  // 连接池配置
-  relationMode = "prisma"
-  pool_timeout = 20
-  connection_limit = 10
-}
-```
-
----
-
-## 八、安全加固建议
-
-### 8.1 修改 SSH 端口（可选）
-
-```bash
-# 编辑 SSH 配置
-sudo nano /etc/ssh/sshd_config
-
-# 修改端口（如改为 2222）
-Port 2222
-
-# 重启 SSH
-sudo systemctl restart sshd
-```
-
-### 8.2 配置防火墙
-
-```bash
-# 启用 UFW
-sudo ufw enable
-
-# 允许必要端口
-sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS
-
-# 查看状态
-sudo ufw status
-```
-
-### 8.3 定期备份
-
-创建备份脚本 `~/backup.sh`：
-
-```bash
-#!/bin/bash
-BACKUP_DIR="$HOME/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-
-mkdir -p "$BACKUP_DIR"
-
-# 备份代码
-tar -czf "$BACKUP_DIR/code_$DATE.tar.gz" ~/apps/1word
-
-# 备份数据库（导出 schema）
-cd ~/apps/1word/web-admin
-npx prisma db pull > "$BACKUP_DIR/schema_$DATE.prisma"
-
-# 删除 7 天前的备份
-find "$BACKUP_DIR" -name "*.tar.gz" -mtime +7 -delete
-
-echo "备份完成: $BACKUP_DIR"
-```
-
-设置定时任务：
-
-```bash
-# 编辑 crontab
-crontab -e
-
-# 添加每天凌晨 2 点备份
-0 2 * * * /home/dontovertime/backup.sh
-```
 
 ---
 
@@ -747,46 +671,44 @@ crontab -e
 // wechat-miniapp/config/env.js
 const ENV = 'xdf'  // 当前使用新东方环境
 
-xdf: {
-  apiUrl: 'https://ienglish.xdf.cn/api',
-  debug: false,
-  name: '新东方生产环境'
+config = {
+  xdf: {
+    apiUrl: 'https://ienglish.xdf.cn/api',
+    debug: false,
+    name: '新东方生产环境'
+  }
 }
 ```
 
-### 9.2 微信公众平台配置
+### 9.2 图片URL处理
 
-发布小程序前，需要在微信公众平台配置服务器域名：
+小程序会自动将API返回的图片路径转换为完整URL：
 
-1. 登录 [微信公众平台](https://mp.weixin.qq.com)
-2. 开发 → 开发管理 → 服务器域名
-3. 添加以下域名：
+```javascript
+// 小程序代码逻辑
+if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
+  const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
+  vocabulary.imageUrl = baseUrl + vocabulary.imageUrl
+}
+
+// 结果：
+// API返回: /api/images/words/wedding.webp
+// 转换后: https://ienglish.xdf.cn/api/images/words/wedding.webp
+```
+
+### 9.3 微信公众平台配置
 
 | 类型 | 域名 |
 |------|------|
 | request 合法域名 | https://ienglish.xdf.cn |
 
-### 9.3 小程序信息
+### 9.4 小程序信息
 
 | 项目 | 值 |
 |------|-----|
 | **AppID** | wx132f0943597b61b7 |
 | **项目名** | vocab-assistant |
 | **代码目录** | wechat-miniapp/ |
-
-### 9.4 开发调试
-
-```bash
-# 1. 用微信开发者工具打开 wechat-miniapp 目录
-# 2. 开发阶段勾选"不校验合法域名"
-# 3. 如需切换环境，修改 config/env.js 中的 ENV 变量
-```
-
-### 9.5 学生登录
-
-学生使用小程序登录需要：
-1. 在教师管理后台创建学生账号
-2. 学生使用学号 + 密码登录小程序
 
 ---
 
@@ -795,7 +717,7 @@ xdf: {
 | 角色 | 负责内容 | 联系方式 |
 |------|----------|----------|
 | 应用负责人 | 代码开发、应用部署 | 王鹏 |
-| IT 部门 | 域名解析、SSL 证书 | （待填写） |
+| IT 部门 | 域名解析、负载均衡 | （待填写） |
 | DBA | 数据库管理、白名单 | （待填写） |
 
 ---
@@ -818,7 +740,6 @@ xdf: {
 | 3000 | Next.js 应用 | 内网访问 |
 | 80 | Nginx HTTP | 公网访问 |
 | 443 | Nginx HTTPS | 公网访问 |
-| 5555 | Prisma Studio | 本地访问（按需启动） |
 
 ### 11.3 关键文件路径
 
@@ -826,12 +747,22 @@ xdf: {
 |------|------|
 | 应用代码 | ~/apps/1word/web-admin |
 | 环境变量 | ~/apps/1word/web-admin/.env |
+| 图片文件 | ~/apps/1word/web-admin/public/images/ |
 | Nginx 配置 | /etc/nginx/sites-available/ienglish.xdf.cn |
 | PM2 配置 | ~/.pm2/dump.pm2 |
 | Node.js 二进制 | ~/node-v18.20.4-linux-x64/bin |
 
+### 11.4 变更历史
+
+| 日期 | 版本 | 变更内容 |
+|------|------|----------|
+| 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 |
+| 2026-01-22 | v1.2 | 完善域名配置和SSL说明 |
+| 2026-01-20 | v1.1 | 添加首次部署流程 |
+| 2026-01-15 | v1.0 | 初始版本 |
+
 ---
 
-**文档版本**: v1.2
-**最后更新**: 2026-01-22
+**文档版本**: v1.3
+**最后更新**: 2026-01-30
 **维护者**: 王鹏
