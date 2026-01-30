@@ -1,3 +1,8 @@
+// @input: 依赖: Next.js请求对象、文件系统(fs)、路径模块
+// @output: 导出: GET处理器，返回静态图片文件(支持jpg/png/webp/gif/svg)
+// @pos: 核心: XDF反向代理环境下，通过API提供静态文件访问，解决Nginx只代理/api/*的问题
+// ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
