@@ -11,6 +11,22 @@ const MAX_NEW_WORDS_PER_DAY = 200
 // 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
 const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
 
+/**
+ * 转换图片URL为API路径
+ * 解决反向代理环境下静态文件无法访问的问题
+ * /images/xxx.webp -> /api/images/xxx.webp
+ */
+function transformImageUrl(imageUrl: string | null): string | null {
+  if (!imageUrl) return null
+  if (imageUrl.startsWith('/images/')) {
+    return '/api/images' + imageUrl.substring('/images'.length)
+  }
+  if (imageUrl.startsWith('/uploads/')) {
+    return '/api/images' + imageUrl.substring('/uploads'.length)
+  }
+  return imageUrl
+}
+
 // 映射任务数据为小程序格式
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
   return tasks.map((t: any) => {
@@ -60,7 +76,7 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
         audioUrl: defaultAudio,
         audioUs,
         audioUk,
-        imageUrl: v.word_images?.[0]?.imageUrl ?? null, // 单词实物图片
+        imageUrl: transformImageUrl(v.word_images?.[0]?.imageUrl ?? null), // 单词实物图片（转换为API路径）
         difficulty: v.difficulty,
         isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
         questions,
