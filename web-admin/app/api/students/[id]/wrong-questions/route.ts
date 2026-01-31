@@ -1,9 +1,15 @@
+/**
+ * @file wrong-questions route
+ * @desc 错题本 API - 查询最新答题状态仍为错误的单词
+ * @logic 对于每个(vocabularyId, questionId)组合，只取最新的一条答题记录
+ */
+
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 
-// 统一小程序字段映射（从 question_answers 表格式化）
+// 统一小程序字段映射
 function mapWrongQuestionsForMiniapp(rows: any[]) {
   return rows.map((qa: any) => {
     const v = qa.vocabularies || qa.vocabulary || {}
@@ -12,7 +18,6 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
       .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
       .map((o: any) => ({ id: o.id, content: o.content, isCorrect: o.isCorrect, order: o.order }))
 
-    // 获取第一个 meaning
     const firstMeaning = v.word_meanings?.[0]?.meaning || ''
 
     return {
@@ -20,9 +25,9 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
       studentId: qa.studentId,
       vocabularyId: qa.vocabularyId,
       questionId: qa.questionId,
-      wrongAnswer: qa.answer, // question_answers 中是 answer 字段
+      wrongAnswer: qa.answer,
       correctAnswer: q.correctAnswer,
-      wrongAt: qa.answeredAt, // 改用 answeredAt
+      wrongAt: qa.answeredAt,
       vocabulary: {
         id: v.id,
         word: v.word,
@@ -50,7 +55,7 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
 }
 
 // GET /api/students/[id]/wrong-questions - 获取学生错题本
-// 从 question_answers 表查询（返回所有答错的记录）
+// 逻辑：对于每个(单词,题目)组合，查询最新的答题记录，只返回最新记录为错误的
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -73,25 +78,48 @@ export async function GET(
     const questionType = searchParams.get('questionType')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // 构建查询条件（使用 question_answers 表，筛选 isCorrect = false）
-    const where: any = {
-      studentId,
-      isCorrect: false, // 只查询错误的答题记录
-    }
+    // 使用原生 SQL 查询：对于每个(vocabularyId, questionId)组合，获取最新答题记录
+    // 然后筛选出最新记录 isCorrect = false 的
+    let sql = `
+      SELECT latest_answers.*
+      FROM (
+        SELECT
+          qa.id,
+          qa.studentId,
+          qa.vocabularyId,
+          qa.questionId,
+          qa.answer,
+          qa.isCorrect,
+          qa.answeredAt,
+          ROW_NUMBER() OVER (
+            PARTITION BY qa.vocabularyId, qa.questionId
+            ORDER BY qa.answeredAt DESC
+          ) as rn
+        FROM question_answers qa
+        WHERE qa.studentId = ?
+          ${vocabularyId ? 'AND qa.vocabularyId = ?' : ''}
+      ) latest_answers
+      WHERE latest_answers.rn = 1
+        AND latest_answers.isCorrect = 0
+      ORDER BY latest_answers.answeredAt DESC
+      LIMIT ?
+    `
+
+    // 构建参数
+    const params: any[] = [studentId]
     if (vocabularyId) {
-      where.vocabularyId = vocabularyId
+      params.push(vocabularyId)
     }
+    params.push(limit)
 
-    // 如果指定了题型，需要在 questions 关联上过滤
-    if (questionType) {
-      where.questions = {
-        type: questionType,
-      }
-    }
+    // 执行查询
+    const rawWrongAnswers = await prisma.$queryRawUnsafe(sql, ...params)
 
-    // 查询错题（从 question_answers 表）
-    const wrongAnswersRaw = await prisma.question_answers.findMany({
-      where,
+    // 获取完整的词汇和题目信息
+    const wrongAnswersWithDetails = await prisma.question_answers.findMany({
+      where: {
+        id: { in: (rawWrongAnswers as any[]).map((r: any) => r.id) },
+      },
       include: {
         vocabularies: {
           include: {
@@ -108,12 +136,18 @@ export async function GET(
           },
         },
       },
-      orderBy: { answeredAt: 'desc' },
-      take: limit,
     })
 
+    // 如果指定了题型，在内存中过滤（Prisma 不支持在 findMany 中过滤关联）
+    let filtered = wrongAnswersWithDetails
+    if (questionType) {
+      filtered = wrongAnswersWithDetails.filter(
+        (qa: any) => qa.questions?.type === questionType
+      )
+    }
+
     // 统一结构
-    const shaped = mapWrongQuestionsForMiniapp(wrongAnswersRaw)
+    const shaped = mapWrongQuestionsForMiniapp(filtered)
 
     // 统计信息
     const stats = {
