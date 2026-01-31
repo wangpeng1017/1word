@@ -50,7 +50,7 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
 }
 
 // GET /api/students/[id]/wrong-questions - 获取学生错题本
-// 从 wrong_questions 表查询（只返回 ACTIVE 状态的错题）
+// 从 question_answers 表查询（返回所有答错的记录）
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -73,10 +73,10 @@ export async function GET(
     const questionType = searchParams.get('questionType')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // 构建查询条件（使用 wrong_questions 表，只查询 ACTIVE 状态）
+    // 构建查询条件（使用 question_answers 表，筛选 isCorrect = false）
     const where: any = {
       studentId,
-      status: 'ACTIVE', // 只查询活跃状态的错题
+      isCorrect: false, // 只查询错误的答题记录
     }
     if (vocabularyId) {
       where.vocabularyId = vocabularyId
@@ -89,8 +89,8 @@ export async function GET(
       }
     }
 
-    // 查询错题（从 wrong_questions 表）
-    const wrongQuestionsRaw = await prisma.wrong_questions.findMany({
+    // 查询错题（从 question_answers 表）
+    const wrongAnswersRaw = await prisma.question_answers.findMany({
       where,
       include: {
         vocabularies: {
@@ -108,54 +108,12 @@ export async function GET(
           },
         },
       },
-      orderBy: { wrongCount: 'desc' },
+      orderBy: { answeredAt: 'desc' },
       take: limit,
     })
 
-    // 统一结构映射
-    const shaped = wrongQuestionsRaw.map((wq: any) => {
-      const v = wq.vocabularies || {}
-      const q = wq.questions || {}
-      const options = (q.question_options || q.options || [])
-        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
-        .map((o: any) => ({ id: o.id, content: o.content, isCorrect: o.isCorrect, order: o.order }))
-
-      // 获取第一个 meaning
-      const firstMeaning = v.word_meanings?.[0]?.meaning || ''
-
-      return {
-        id: wq.id,
-        studentId: wq.studentId,
-        vocabularyId: wq.vocabularyId,
-        questionId: wq.questionId,
-        wrongAnswer: wq.wrongAnswer || '',
-        correctAnswer: wq.correctAnswer,
-        wrongAt: wq.wrongAt,
-        wrongCount: wq.wrongCount || 1,
-        vocabulary: {
-          id: v.id,
-          word: v.word,
-          primaryMeaning: firstMeaning,
-          secondaryMeaning: null,
-          audioUrl: v.audio_url,
-          difficulty: v.difficulty,
-          isHighFrequency: v.is_high_frequency,
-          meanings: v.word_meanings?.map((m: any) => ({
-            partOfSpeech: m.partOfSpeech,
-            meaning: m.meaning,
-          })) || [],
-        },
-        question: {
-          id: q.id,
-          type: q.type,
-          content: q.content,
-          sentence: q.sentence,
-          audioUrl: q.audioUrl,
-          correctAnswer: q.correctAnswer,
-          options,
-        },
-      }
-    })
+    // 统一结构
+    const shaped = mapWrongQuestionsForMiniapp(wrongAnswersRaw)
 
     // 统计信息
     const stats = {
