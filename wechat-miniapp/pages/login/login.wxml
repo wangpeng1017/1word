@@ -22,13 +22,20 @@
 
     <view class="form-item mt-3">
       <text class="form-label">密码</text>
-      <input
-        class="form-input"
-        placeholder="请输入密码"
-        password="{{true}}"
-        value="{{password}}"
-        bindinput="onPasswordInput"
-      />
+      <view class="password-input-wrapper">
+        <input
+          class="form-input password-input"
+          placeholder="请输入密码"
+          password="{{!showPassword}}"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+        />
+        <view class="password-toggle-icon" bindtap="togglePassword">
+          <view class="eye-icon {{showPassword ? 'eye-open' : 'eye-close'}}">
+            <view class="eye-ball"></view>
+          </view>
+        </view>
+      </view>
     </view>
 
     <button

@@ -67,6 +67,62 @@
   border-color: #FF7A7A;
 }
 
+/* 密码输入框容器 */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  flex: 1;
+  padding-right: 88rpx;
+}
+
+/* 密码显示/隐藏图标容器 */
+.password-toggle-icon {
+  position: absolute;
+  right: 24rpx;
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 眼睛图标 */
+.eye-icon {
+  position: relative;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 眼球 */
+.eye-ball {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s;
+}
+
+/* 隐藏状态 - 倾斜45度直线 */
+.eye-icon.eye-close .eye-ball {
+  width: 32rpx;
+  height: 3rpx;
+  border-radius: 2rpx;
+  background: #9CA3AF;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* 显示状态 - 圆点 */
+.eye-icon.eye-open .eye-ball {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #374151;
+}
+
 .login-footer {
   margin-top: 40rpx;
 }

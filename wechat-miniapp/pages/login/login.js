@@ -7,6 +7,7 @@ Page({
     phone: '',
     password: '',
     loading: false,
+    showPassword: false,  // 控制密码显示/隐藏
     // 客服二维码
     showQrcode: false,
     qrcodeUrl: '',
@@ -120,6 +121,13 @@ Page({
   onPasswordInput(e) {
     this.setData({
       password: e.detail.value
+    })
+  },
+
+  // 切换密码显示/隐藏
+  togglePassword() {
+    this.setData({
+      showPassword: !this.data.showPassword
     })
   },
 
