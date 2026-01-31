@@ -1,8 +1,8 @@
 # 新东方服务器部署方案（完整版）
 
 > **项目**: 英语词汇学习助手 (iEnglish)
-> **版本**: v1.3
-> **更新日期**: 2026-01-30
+> **版本**: v1.4
+> **更新日期**: 2026-01-31
 > **状态**: ✅ 生产运行中，图片API已部署
 
 ---
@@ -46,6 +46,8 @@
 
 ### 1.3 数据库配置
 
+#### 新东方生产数据库
+
 | 项目 | 值 |
 |------|-----|
 | **类型** | MySQL (阿里云 RDS) |
@@ -54,6 +56,18 @@
 | **数据库名** | bdcxcx |
 | **读写账号** | PRO_RDS_bdcxcx_RW / 4n8anApuMflp3cRr |
 | **只读账号** | PRO_RDS_bdcxcx_RO / f9l5LDWLcu9wkjU8 |
+
+#### 阿里云测试数据库
+
+| 项目 | 值 |
+|------|-----|
+| **类型** | MySQL (本地安装) |
+| **服务器** | 8.130.182.148:3306 |
+| **数据库名** | word_app_mysql |
+| **账号** | word_mysql / word_mysql_2024 |
+| **用途** | 测试验证、数据导出源 |
+
+> **重要**: 阿里云测试环境与新东方生产环境**网络不互通**，数据迁移必须通过 GitHub 中转。
 
 ### 1.4 域名配置
 
@@ -85,8 +99,9 @@ Next.js 应用 (3000端口)
 | 决策点 | 方案 | 原因 |
 |--------|------|------|
 | 静态文件访问 | 通过 `/api/images/*` 提供访问 | Nginx只代理`/api/*`，避免配置复杂化 |
-| 大文件传输 | 通过Git仓库中转 | 服务器间无法直接scp/rsync |
+| 数据迁移 | **通过 Git 仓库中转** | **阿里云↔新东方网络不互通，无法直接传输** |
 | 数据库同步 | DBA手动执行SQL | 无外部数据库访问权限 |
+| 测试环境数据库 | MySQL (非 PostgreSQL) | 与生产环境保持一致，减少迁移问题 |
 
 ---
 
@@ -293,48 +308,150 @@ TRUNCATE TABLE student_progress;
 source /path/to/data.sql;
 ```
 
-### 4.3 图片文件迁移
+### 4.3 重要：阿里云测试环境数据迁移必须通过 GitHub
 
-**问题**: 服务器间无法直接scp/rsync传输
+**原因**: 阿里云测试环境 (8.130.182.148) 与新东方生产环境之间网络**不互通**，无法直接通过 scp/rsync/mysqldump 传输数据。
 
-**解决方案**: 通过GitHub仓库中转
+**唯一可行方案**: 通过 GitHub 仓库中转数据文件。
+
+#### 数据迁移流程图
+
+```
+阿里云测试环境 (8.130.182.148)
+    ↓ git push (需翻墙)
+GitHub 仓库 (wangpeng1017/1word.git)
+    ↓ git pull (无需翻墙)
+新东方生产环境 (172.20.234.44)
+```
+
+#### 方式 1: 迁移 JSON 数据文件
 
 ```bash
-# ───────────────────────────────────────────────────────────
-# 阶段1：源服务器推送到GitHub（本地操作，需翻墙）
-# ───────────────────────────────────────────────────────────
+# ===========================
+# 步骤 1: 阿里云测试环境 - 导出并推送（本地执行，需翻墙）
+# ===========================
+ssh root@8.130.182.148
+cd /root/word-app/web-admin
 
-# 在源服务器（如 8.130.182.148）
+# 导出数据为 JSON（如已有导出脚本）
+npx ts-node scripts/export-vocabularies.ts > exports/vocabularies.json
+npx ts-node scripts/export-questions.ts > exports/questions.json
+npx ts-node scripts/export-badges.ts > exports/badges.json
+
+# 提交到 Git
 cd /root/word-app
-
-# 强制添加大文件到Git
-git add -f web-admin/public/images/
-
-# 提交（可能需要配置GitHub token）
-git config --global credential.helper store
-git config --global user.name "wangpeng1017"
-git config --global user.email "wangpeng1017@users.noreply.github.com"
-
-# 推送（使用Personal Access Token）
-# Token获取方式：GitHub Settings → Developer settings → Personal access tokens
-git remote set-url origin https://TOKEN@github.com/wangpeng1017/1word.git
+git add exports/
+git commit -m "feat: 导出测试数据用于生产迁移"
 git push origin main
 
+# ===========================
+# 步骤 2: 新东方生产环境 - 拉取并导入（通过堡垒机 SSH）
+# ===========================
+# 在新东方服务器
+cd ~/apps/1word
+git pull origin main
 
-# ───────────────────────────────────────────────────────────
-# 阶段2：XDF服务器拉取（通过堡垒机SSH）
-# ───────────────────────────────────────────────────────────
+# 检查文件是否同步
+ls -la web-admin/exports/
 
-# 在XDF服务器
+# 导入数据
+cd web-admin
+npx ts-node scripts/import-vocabularies.ts
+npx ts-node scripts/import-questions.ts
+npx ts-node scripts/import-badges.ts
+```
+
+#### 方式 2: 迁移 SQL 数据文件
+
+```bash
+# ===========================
+# 步骤 1: 阿里云测试环境 - 导出 SQL 并推送
+# ===========================
+ssh root@8.130.182.148
+
+# 导出 MySQL 数据
+mysqldump -uword_mysql -pword_mysql_2024 word_app_mysql \
+  --tables \
+  vocabularies word_meanings word_audios word_images \
+  questions question_options \
+  badges student_badges achievements student_achievements \
+  > /root/word-app/web-admin/exports/data-migration.sql
+
+# 提交到 Git
+cd /root/word-app
+git add web-admin/exports/data-migration.sql
+git commit -m "feat: 导出 SQL 迁移数据"
+git push origin main
+
+# ===========================
+# 步骤 2: 新东方生产环境 - 拉取并执行导入
+# ===========================
+# 在新东方服务器
+cd ~/apps/1word
+git pull origin main
+
+# 转换数据库名并执行（需要 DBA 配合）
+sed 's/word_app_mysql/bdcxcx/g' web-admin/exports/data-migration.sql > /tmp/xdf-import.sql
+
+# 将 SQL 文件交给 DBA 执行，或自行在有权限的数据库上执行
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com \
+  -u PRO_RDS_bdcxcx_RW -p4n8anApuMflp3cRr \
+  bdcxcx < /tmp/xdf-import.sql
+```
+
+#### 方式 3: 迁移图片文件
+
+```bash
+# ===========================
+# 步骤 1: 阿里云测试环境 - 推送图片
+# ===========================
+ssh root@8.130.182.148
+cd /root/word-app
+
+# 强制添加图片文件到 Git
+git add -f web-admin/public/images/
+git commit -m "feat: 添加图片文件"
+git push origin main
+
+# ===========================
+# 步骤 2: 新东方生产环境 - 拉取图片
+# ===========================
+# 在新东方服务器
 cd ~/apps/1word
 git pull origin main
 
 # 验证图片文件
-ls -la web-admin/public/images/words/
+ls -la web-admin/public/images/words/ | wc -l
 ```
 
+#### 阿里云测试环境数据库信息
 
-### 4.4 Schema同步问题处理
+| 项目 | 值 |
+|------|-----|
+| **服务器 IP** | 8.130.182.148 |
+| **数据库类型** | MySQL 8.0 |
+| **数据库名** | word_app_mysql |
+| **用户名** | word_mysql |
+| **密码** | word_mysql_2024 |
+| **端口** | 3306 |
+
+#### 数据量统计（截至 2026-01-31）
+
+| 表名 | 记录数 |
+|------|--------|
+| vocabularies | 1996 |
+| word_images | 1986 |
+| word_audios | 2109 |
+| questions | 5120 |
+| badges | 10 |
+
+### 4.4 图片文件迁移
+
+**问题**: 服务器间无法直接scp/rsync传输
+
+**解决方案**: 通过GitHub仓库中转（详见 4.3 节方式 3）
+
+### 4.5 Schema同步问题处理
 
 **问题**: Prisma期望camelCase字段（`createdAt`），但数据库是snake_case（`created_at`）
 
@@ -343,7 +460,7 @@ ls -la web-admin/public/images/words/
 1. **检查Prisma Schema定义**：
 ```bash
 cd ~/apps/1word/web-admin
-grep -A 5 "createdAt\|updatedAt" prisma/schema.prisma
+grep -A 5 "createdAt|updatedAt" prisma/schema.prisma
 ```
 
 2. **如果字段缺失，联系DBA执行**：
@@ -363,7 +480,7 @@ npm run build
 pm2 restart word-app
 ```
 
-**⚠️ 禁止**: 不要在生产环境运行 `npx prisma db pull`，这会覆盖schema中的关系定义。
+**禁止**: 不要在生产环境运行 `npx prisma db pull`，这会覆盖schema中的关系定义。
 
 ---
 
@@ -756,13 +873,13 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
-| 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 |
+| 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 | 新增本地开发工作流、数据迁移流程、图片API说明 |
 | 2026-01-22 | v1.2 | 完善域名配置和SSL说明 |
 | 2026-01-20 | v1.1 | 添加首次部署流程 |
 | 2026-01-15 | v1.0 | 初始版本 |
 
 ---
 
-**文档版本**: v1.3
-**最后更新**: 2026-01-30
+**文档版本**: v1.4
+**最后更新**: 2026-01-31
 **维护者**: 王鹏
