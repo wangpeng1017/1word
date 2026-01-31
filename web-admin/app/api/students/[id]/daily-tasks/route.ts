@@ -176,6 +176,7 @@ export async function GET(
             .map(dw => dw.vocabulary)
             .filter(v => v && !masteredVocabIds.has(v.id))
             .filter(v => v.questions && v.questions.length > 0)
+            .filter(v => v.word_audios && v.word_audios.length > 0)
             .slice(0, MAX_NEW_WORDS_PER_DAY)
         }
       }
@@ -193,6 +194,7 @@ export async function GET(
               .map(dw => dw.vocabulary)
               .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
               .filter(v => v.questions && v.questions.length > 0)
+              .filter(v => v.word_audios && v.word_audios.length > 0)
 
             dayReviewWords.forEach(v => {
               seenVocabIds.add(v.id)

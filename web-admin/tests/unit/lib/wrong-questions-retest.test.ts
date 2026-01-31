@@ -24,6 +24,10 @@ vi.mock('@/lib/prisma', () => ({
     achievements: {
       findMany: vi.fn(),
     },
+    study_records: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn((fn) => fn({
       wrong_questions: { findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
       questions: { findMany: vi.fn() },

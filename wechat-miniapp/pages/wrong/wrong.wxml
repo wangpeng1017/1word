@@ -12,10 +12,6 @@
       <text class="btn-icon">🔄</text>
       <text>全部重测</text>
     </button>
-    <button class="action-btn" bindtap="retestFiltered">
-      <text class="btn-icon">📝</text>
-      <text>筛选重测</text>
-    </button>
   </view>
 
   <!-- 加载中 -->

@@ -9,6 +9,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 
+const QUIZ_QUESTION_COUNT = 50 // 词汇测试题目数量
+
 // POST /api/vocabulary-quiz/start - 开始词汇量测试
 export async function POST(request: NextRequest) {
     try {
@@ -29,25 +31,71 @@ export async function POST(request: NextRequest) {
             return apiResponse.error('缺少studentId参数', 400)
         }
 
-        // 获取所有启用的题目
-        const allQuestions = await prisma.vocabulary_quiz_questions.findMany({
-            where: { isActive: true },
-            orderBy: { questionNo: 'asc' },
+        // 获取有音频的词汇题目（用于词汇测试）
+        const questionsWithAudio = await prisma.questions.findMany({
+            where: {
+                isActive: true,
+                vocabulary: {
+                    word_audios: {
+                        some: {} // 确保词汇有音频
+                    }
+                }
+            },
+            include: {
+                vocabulary: {
+                    select: {
+                        word: true,
+                        primaryMeaning: true,
+                        word_audios: {
+                            take: 1,
+                            where: {
+                                accent: 'US'
+                            }
+                        }
+                    }
+                },
+                question_options: {
+                    orderBy: { order: 'asc' }
+                }
+            },
+            take: QUIZ_QUESTION_COUNT * 3 // 多取一些用于随机筛选
         })
 
-        if (allQuestions.length === 0) {
+        if (questionsWithAudio.length === 0) {
             return apiResponse.error('暂无可用题目', 400)
         }
 
-        // 随机打乱顺序返回
-        const shuffledQuestions = allQuestions
+        // 随机选择指定数量的题目
+        const shuffled = questionsWithAudio
             .map(q => ({ ...q, sort: Math.random() }))
             .sort((a, b) => a.sort - b.sort)
-            .map(({ sort, ...q }) => q)
+            .slice(0, QUIZ_QUESTION_COUNT)
+
+        // 转换为前端需要的格式
+        const quizQuestions = shuffled.map((q, index) => {
+            // 生成选项 A, B, C, D, E
+            const options = q.question_options.map(opt => opt.content).slice(0, 4)
+            while (options.length < 4) options.push('')
+
+            // 找到正确答案的位置
+            const correctOption = q.question_options.find(o => o.isCorrect)
+            const correctIndex = correctOption ? q.question_options.indexOf(correctOption) : 0
+            const correctLetter = ['A', 'B', 'C', 'D'][correctIndex] || 'A'
+
+            return {
+                id: q.id,
+                questionNo: index + 1,
+                word: q.vocabulary.word,
+                meaning: q.vocabulary.primaryMeaning,
+                options,
+                correctOption: correctLetter,
+                type: q.type
+            }
+        })
 
         return apiResponse.success({
-            questions: shuffledQuestions,
-            totalQuestions: shuffledQuestions.length,
+            questions: quizQuestions,
+            totalQuestions: quizQuestions.length,
         })
     } catch (error: any) {
         console.error('开始测试失败:', error)

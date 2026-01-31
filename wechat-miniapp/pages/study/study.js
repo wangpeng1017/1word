@@ -161,6 +161,50 @@ Page({
     if (!question && vocabulary.questions.length > 0) question = vocabulary.questions[Math.floor(Math.random() * vocabulary.questions.length)]
     if (!question) { this.nextQuestion(); return }
     this.setData({ currentTask, currentQuestion: question, selectedAnswer: '', isAnswered: false, isCorrect: false, showResult: false, progress: Math.round(((currentIndex + 1) / tasks.length) * 100) })
+
+    // 预缓冲下一题音频
+    this.preloadNextAudio()
+  },
+
+  // 预缓冲下一题音频
+  preloadNextAudio() {
+    const { tasks, currentIndex } = this.data
+    const nextIndex = currentIndex + 1
+
+    if (nextIndex >= tasks.length) return
+
+    const nextTask = tasks[nextIndex]
+    const nextVocab = nextTask?.vocabulary
+
+    if (!nextVocab) return
+
+    // 获取下一题音频 URL（优先美式发音）
+    const audios = nextVocab.word_audios || nextVocab.audios || []
+    const audioUs = audios.find((a) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
+    const audioUk = audios.find((a) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
+    const nextAudioUrl = audioUs ?? audioUk ?? nextVocab.audioUrl ?? nextVocab.audio_url ?? null
+
+    if (!nextAudioUrl) return
+
+    // 创建或复用预加载音频上下文
+    if (!this.data.preloadAudioContext) {
+      this.data.preloadAudioContext = wx.createInnerAudioContext()
+    }
+
+    const preloadCtx = this.data.preloadAudioContext
+
+    // 设置音频源但不播放（微信会自动缓冲）
+    if (preloadCtx.src !== nextAudioUrl) {
+      preloadCtx.src = nextAudioUrl
+      preloadCtx.volume = 0 // 静音预加载
+    }
+
+    // 监听缓冲事件，缓冲完成可停止
+    preloadCtx.offCanplay() // 移除旧监听器
+    preloadCtx.onCanplay(() => {
+      // 下一题音频已缓冲就绪
+      console.log('[预加载] 下一题音频已就绪:', nextVocab.word)
+    })
   },
 
   selectAnswer(e) {
@@ -304,8 +348,17 @@ Page({
     if (this.data.isSubmitting) return
     // 标记为已完成，防止 onUnload 时 syncBeforeLeave 再次保存进度
     this.setData({ isSubmitting: true, currentIndex: this.data.totalCount })
-    const { answers, correctCount, wrongCount, sessionId, lastSyncedIndex } = this.data
+    const { answers, correctCount, wrongCount, sessionId, lastSyncedIndex, isRetestMode } = this.data
     if (answers.length === 0) { wx.navigateBack(); return }
+
+    // 重测模式：直接跳转结果页，不记录学习历史
+    if (isRetestMode) {
+      playSound(SoundType.COMPLETE)
+      clearStudyProgress()
+      wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length + '&mode=retest' })
+      return
+    }
+
     try {
       wx.showLoading({ title: '提交中...' })
       const studentId = app.globalData.userInfo?.studentId
@@ -318,7 +371,7 @@ Page({
       const newAnswers = answers.slice(lastSyncedIndex + 1)
       if (newAnswers.length > 0 && sessionId) await syncProgress(newAnswers)
       if (sessionId) await completeSession()
-      else await post('/study-records', { studentId, answers, isRetestMode: this.data.isRetestMode })
+      else await post('/study-records', { studentId, answers })
       playSound(SoundType.COMPLETE)  // 完成学习音效
       clearStudyProgress(); wx.hideLoading()
       wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length })
