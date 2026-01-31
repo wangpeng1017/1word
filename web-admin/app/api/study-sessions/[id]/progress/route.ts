@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           questionId: answer.questionId,
           answer: answer.answer,
           isCorrect: answer.isCorrect,
-          timeSpent: answer.timeSpent || null,
+          timeSpent: answer.timeSpent ?? 0, // 默认值 0，避免 null 约束错误
           answeredAt: now,
         },
       }),
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       questionId: a.questionId,
       answer: a.answer,
       isCorrect: a.isCorrect,
-      timeSpent: a.timeSpent || null,
+      timeSpent: a.timeSpent ?? 0, // 默认值 0，避免 null 约束错误
       answeredAt: now,
     }))
 
