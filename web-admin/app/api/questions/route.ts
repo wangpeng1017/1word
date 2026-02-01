@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
       where.vocabularies = {
         word: {
           contains: word,
-          mode: 'insensitive', // 不区分大小写
         },
       }
     }
