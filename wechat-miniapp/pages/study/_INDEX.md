@@ -30,7 +30,7 @@ study.js (答题循环)
 错题本 (错题重测)
     ↓
 study.js?mode=retest (加载错题列表)
-    ├── 答对 → 从错题本移除
+    ├── 答对 → 提交答题记录到 question_answers 表（自动从错题列表消失）
     └── 全部完成 → result.js (结果页)
 ```
 

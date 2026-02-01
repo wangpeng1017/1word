@@ -1,5 +1,11 @@
 'use client'
 
+// vocabulary-packs/[id]/page.tsx
+// @input: 词汇包ID、所有词汇列表(vocabularies API)、每日词汇配置
+// @output: 更新词汇包每天的单词配置
+// @pos: 管理后台-词汇包每日单词配置页面，支持Transfer穿梭框和批量粘贴添加
+// ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
+
 import { useState, useEffect } from 'react'
 import { Card, Button, Tag, message, Spin, Row, Col, Statistic, Modal, Table, Transfer, Input, Divider } from 'antd'
 import { ArrowLeftOutlined, SearchOutlined, PlusCircleOutlined, ClearOutlined } from '@ant-design/icons'
