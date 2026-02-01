@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       where.type = type
     }
 
-    // 支持通过单词搜索
+    // 支持通过单词搜索（MySQL 默认不区分大小写）
     if (word) {
       where.vocabularies = {
         word: {
