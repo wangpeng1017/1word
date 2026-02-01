@@ -1,8 +1,8 @@
 # 新东方服务器部署方案（完整版）
 
 > **项目**: 英语词汇学习助手 (iEnglish)
-> **版本**: v1.4
-> **更新日期**: 2026-01-31
+> **版本**: v1.5
+> **更新日期**: 2026-02-01
 > **状态**: ✅ 生产运行中，图片API已部署
 
 ---
@@ -782,27 +782,57 @@ npx prisma db pull
 
 ### 9.1 小程序环境配置
 
-小程序代码位于 `wechat-miniapp/` 目录，API 地址通过 `config/env.js` 配置：
+小程序代码位于 `wechat-miniapp/` 目录，API 地址通过 `project.config.json` 配置：
 
+```json
+{
+  "appid": "wx9e311c91d453f624",
+  "projectname": "vocab-assistant"
+}
+```
+
+### 9.2 生产环境配置要点
+
+| 项目 | 配置值 | 说明 |
+|------|--------|------|
+| **AppID** | wx9e311c91d453f624 | 新东方生产环境小程序AppID |
+| **API地址** | https://ienglish.xdf.cn/api | 生产环境API |
+| **调试模式** | false | 生产环境关闭调试 |
+
+### 9.3 切换生产环境步骤
+
+如需将小程序切换到生产环境：
+
+1. **修改 project.config.json**
+```bash
+cd wechat-miniapp
+# 编辑 project.config.json，确认 appid 为 wx9e311c91d453f624
+```
+
+2. **修改 API 环境配置**
 ```javascript
-// wechat-miniapp/config/env.js
-const ENV = 'xdf'  // 当前使用新东方环境
+// config/env.js 或 utils/config.js
+const ENV = 'production'  // 或 'xdf'
 
 config = {
   xdf: {
     apiUrl: 'https://ienglish.xdf.cn/api',
-    debug: false,
-    name: '新东方生产环境'
+    debug: false
   }
 }
 ```
 
-### 9.2 图片URL处理
+3. **微信开发者工具重新编译**
+   - 关闭当前项目
+   - 重新打开项目
+   - 点击"编译"按钮
+
+### 9.4 图片URL处理
 
 小程序会自动将API返回的图片路径转换为完整URL：
 
 ```javascript
-// 小程序代码逻辑
+// 小程序代码逻辑（pages/study/study.js）
 if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
   const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
   vocabulary.imageUrl = baseUrl + vocabulary.imageUrl
@@ -813,19 +843,24 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 // 转换后: https://ienglish.xdf.cn/api/images/words/wedding.webp
 ```
 
-### 9.3 微信公众平台配置
+### 9.5 微信公众平台配置
 
-| 类型 | 域名 |
-|------|------|
-| request 合法域名 | https://ienglish.xdf.cn |
+| 类型 | 域名 | 状态 |
+|------|------|------|
+| request 合法域名 | https://ienglish.xdf.cn | ✅ 已配置 |
+| uploadFile 合法域名 | https://ienglish.xdf.cn | ✅ 已配置 |
+| downloadFile 合法域名 | https://ienglish.xdf.cn | ✅ 已配置 |
 
-### 9.4 小程序信息
+### 9.6 小程序信息
 
 | 项目 | 值 |
 |------|-----|
-| **AppID** | wx132f0943597b61b7 |
+| **生产环境 AppID** | wx9e311c91d453f624 |
+| **测试环境 AppID** | wx132f0943597b61b7 |
 | **项目名** | vocab-assistant |
 | **代码目录** | wechat-miniapp/ |
+
+> **注意**: 生产环境与测试环境使用不同的 AppID，确保在发布前使用正确的 AppID。
 
 ---
 
@@ -863,6 +898,7 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 | 文件 | 路径 |
 |------|------|
 | 应用代码 | ~/apps/1word/web-admin |
+| 小程序代码 | ~/apps/1word/wechat-miniapp |
 | 环境变量 | ~/apps/1word/web-admin/.env |
 | 图片文件 | ~/apps/1word/web-admin/public/images/ |
 | Nginx 配置 | /etc/nginx/sites-available/ienglish.xdf.cn |
@@ -873,13 +909,14 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
-| 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 | 新增本地开发工作流、数据迁移流程、图片API说明 |
+| 2026-02-01 | v1.5 | 更新生产环境小程序AppID为 wx9e311c91d453f624 |
+| 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 |
 | 2026-01-22 | v1.2 | 完善域名配置和SSL说明 |
 | 2026-01-20 | v1.1 | 添加首次部署流程 |
 | 2026-01-15 | v1.0 | 初始版本 |
 
 ---
 
-**文档版本**: v1.4
-**最后更新**: 2026-01-31
+**文档版本**: v1.5
+**最后更新**: 2026-02-01
 **维护者**: 王鹏
