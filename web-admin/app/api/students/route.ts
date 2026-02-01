@@ -7,7 +7,7 @@
  * ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
  */
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, prismaRead } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader, hashPassword } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { StudentCreateInput } from '@/types'
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [students, total] = await Promise.all([
-      prisma.students.findMany({
+      prismaRead.students.findMany({
         where,
         skip,
         take: limit,
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { created_at: 'desc' },
       }),
-      prisma.students.count({ where }),
+      prismaRead.students.count({ where }),
     ])
 
     // 转换数据格式

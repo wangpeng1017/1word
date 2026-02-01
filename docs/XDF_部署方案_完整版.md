@@ -880,12 +880,72 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 
 | 变量名 | 说明 | 必填 | 示例 |
 |--------|------|------|------|
-| DATABASE_URL | MySQL 连接字符串 | 是 | mysql://user:pass@host:3306/db |
+| DATABASE_URL | MySQL 主库连接（读写） | 是 | mysql://user:pass@host:3306/db |
+| DATABASE_URL_REPLICA | MySQL 从库连接（只读） | 否 | mysql://user:pass@replica:3306/db |
 | JWT_SECRET | JWT 签名密钥 | 是 | 随机字符串（建议 32 位以上） |
 | NEXT_PUBLIC_API_URL | API 地址（前端使用） | 是 | https://ienglish.xdf.cn |
 | NODE_ENV | 环境标识 | 是 | production |
 
-### 11.2 端口使用
+### 11.2 读写分离配置
+
+#### 架构说明
+
+```
+                    ┌─────────────────┐
+                    │   应用服务器     │
+                    │  (Next.js)      │
+                    └────────┬────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+    ┌─────────────────┐          ┌─────────────────┐
+    │   主库 (RW)      │  ──────▶ │   从库 (RO)      │
+    │ rm-2zel9bu...   │  自动复制 │ rr-2zenk118...  │
+    └─────────────────┘          └─────────────────┘
+    写操作: INSERT/UPDATE/DELETE   读操作: SELECT
+```
+
+#### 环境变量配置
+
+```bash
+# 主库（读写）
+DATABASE_URL="mysql://PRO_RDS_bdcxcx_RW:4n8anApuMflp3cRr@rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com:3306/bdcxcx"
+
+# 从库（只读）- 配置后自动启用读写分离
+DATABASE_URL_REPLICA="mysql://PRO_RDS_bdcxcx_RO:f9l5LDWLcu9wkjU8@rr-2zenk118a3dkqgu1f.mysql.rds.aliyuncs.com:3306/bdcxcx"
+```
+
+#### 代码使用方式
+
+```typescript
+// 写操作 - 使用主库
+import { prisma } from '@/lib/prisma'
+await prisma.students.create({ data: {...} })
+await prisma.study_records.update({ where: {...}, data: {...} })
+
+// 读操作 - 使用从库（减轻主库压力）
+import { prismaRead } from '@/lib/prisma'
+const students = await prismaRead.students.findMany()
+const stats = await prismaRead.study_records.count()
+```
+
+#### 适合使用从库的场景
+
+| 场景 | 说明 |
+|------|------|
+| 统计查询 | 学习数据统计、排行榜 |
+| 列表查询 | 学生列表、词汇列表 |
+| 报表导出 | 数据导出、报表生成 |
+| 搜索功能 | 词汇搜索、学生搜索 |
+
+#### 注意事项
+
+1. **主从延迟**: 从库数据可能有 1-3 秒延迟，刚写入的数据立即查询应使用主库
+2. **事务操作**: 事务必须使用主库 `prisma`，不能使用 `prismaRead`
+3. **回退机制**: 如果未配置 `DATABASE_URL_REPLICA`，`prismaRead` 自动回退到主库
+
+### 11.3 端口使用
 
 | 端口 | 用途 | 访问方式 |
 |------|------|----------|
@@ -893,7 +953,7 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 | 80 | Nginx HTTP | 公网访问 |
 | 443 | Nginx HTTPS | 公网访问 |
 
-### 11.3 关键文件路径
+### 11.4 关键文件路径
 
 | 文件 | 路径 |
 |------|------|
@@ -905,10 +965,11 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 | PM2 配置 | ~/.pm2/dump.pm2 |
 | Node.js 二进制 | ~/node-v18.20.4-linux-x64/bin |
 
-### 11.4 变更历史
+### 11.5 变更历史
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
+| 2026-02-01 | v1.6 | 新增读写分离配置，支持主从数据库 |
 | 2026-02-01 | v1.5 | 更新生产环境小程序AppID为 wx9e311c91d453f624 |
 | 2026-01-30 | v1.3 | 新增本地开发工作流、数据迁移流程、图片API说明 |
 | 2026-01-22 | v1.2 | 完善域名配置和SSL说明 |
@@ -917,6 +978,6 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 
 ---
 
-**文档版本**: v1.5
+**文档版本**: v1.6
 **最后更新**: 2026-02-01
 **维护者**: 王鹏

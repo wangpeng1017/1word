@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prismaRead } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 import { cacheGet, cacheSet, getLeaderboard, isRedisAvailable } from '@/lib/redis'
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
       if (redisData.length > 0) {
         const studentIds = redisData.map(r => r.studentId)
-        const students = await prisma.students.findMany({
+        const students = await prismaRead.students.findMany({
           where: { id: { in: studentIds } },
           select: {
             id: true,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       default: orderByField = 'totalPoints'
     }
 
-    const leaderboard = await prisma.student_points.findMany({
+    const leaderboard = await prismaRead.student_points.findMany({
       where,
       orderBy: { [orderByField]: 'desc' },
       take: limit,

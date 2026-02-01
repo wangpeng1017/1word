@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prismaRead } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayDate } from '@/lib/ebbinghaus'
@@ -35,15 +35,15 @@ export async function GET(request: NextRequest) {
     const studentFilter = classId ? { class_id: classId } : {}
 
     // 1. 学生总数统计
-    const totalStudents = await prisma.students.count({
+    const totalStudents = await prismaRead.students.count({
       where: studentFilter,
     })
 
     // 2. 词汇总数
-    const totalVocabularies = await prisma.vocabularies.count()
+    const totalVocabularies = await prismaRead.vocabularies.count()
 
     // 3. 学习记录统计
-    const studyRecords = await prisma.study_records.findMany({
+    const studyRecords = await prismaRead.study_records.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(today)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const activeStudentIds = await prisma.study_records.findMany({
+    const activeStudentIds = await prismaRead.study_records.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     })
 
     // 4.1 今日完成学习的学生数（今天有 isCompleted=true 学习记录的独立学生数）
-    const todayCompletedStudents = await prisma.study_records.findMany({
+    const todayCompletedStudents = await prismaRead.study_records.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
         taskDate: {
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     })
 
     // 5. 掌握度统计 - 改用人次统计（更准确）
-    const wordMasteries = await prisma.word_masteries.findMany({
+    const wordMasteries = await prismaRead.word_masteries.findMany({
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
       },
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     const fourteenDaysAgo = new Date(today)
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
-    const dailyStats = await prisma.study_records.groupBy({
+    const dailyStats = await prismaRead.study_records.groupBy({
       by: ['taskDate'],
       where: {
         students: Object.keys(studentFilter).length ? { ...studentFilter } : undefined,
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // 7. 错题统计
-    const wrongQuestions = await prisma.wrong_questions.findMany({
+    const wrongQuestions = await prismaRead.wrong_questions.findMany({
       where: {
         students: studentFilter,
         wrongAt: {

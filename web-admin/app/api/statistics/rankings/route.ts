@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prismaRead } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { getTodayDate } from '@/lib/ebbinghaus'
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const studentFilter = classId ? { class_id: classId } : {}
 
     // 获取所有学生基本信息
-    const students = await prisma.students.findMany({
+    const students = await prismaRead.students.findMany({
       where: studentFilter,
       include: {
         user: {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         // 掌握词汇数量排行
         const masteryStats = await Promise.all(
           students.map(async (student) => {
-            const wordMasteries = await prisma.word_masteries.findMany({
+            const wordMasteries = await prismaRead.word_masteries.findMany({
               where: { studentId: student.id },
             })
 
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
         const accuracyStats = await Promise.all(
           students.map(async (student) => {
-            const studyRecords = await prisma.study_records.findMany({
+            const studyRecords = await prismaRead.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         const progressStats = await Promise.all(
           students.map(async (student) => {
             // 最近7天
-            const recentRecords = await prisma.study_records.findMany({
+            const recentRecords = await prismaRead.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
             })
 
             // 之前7天
-            const previousRecords = await prisma.study_records.findMany({
+            const previousRecords = await prismaRead.study_records.findMany({
               where: {
                 studentId: student.id,
                 taskDate: {
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
             let checkDate = new Date(today)
 
             while (consecutiveDays < 365) {
-              const record = await prisma.study_records.findFirst({
+              const record = await prismaRead.study_records.findFirst({
                 where: {
                   studentId: student.id,
                   taskDate: checkDate,
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
             }
 
             // 总学习天数
-            const totalDays = await prisma.study_records.count({
+            const totalDays = await prismaRead.study_records.count({
               where: {
                 studentId: student.id,
                 isCompleted: true,
@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
         // 学习时长排行
         const studyTimeStats = await Promise.all(
           students.map(async (student) => {
-            const studyRecords = await prisma.study_records.findMany({
+            const studyRecords = await prismaRead.study_records.findMany({
               where: {
                 studentId: student.id,
               },
