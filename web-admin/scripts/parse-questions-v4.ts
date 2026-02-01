@@ -244,7 +244,7 @@ async function parseAllDocuments(): Promise<ParsedWordQuestions[]> {
     console.log('  解析练习题文档 (v4 - 三格式支持)')
     console.log('=========================================\n')
 
-    const docsDir = path.join(process.cwd(), '..', '练习_extracted', '练习')
+    const docsDir = 'E:\\trae\\1word\\练习'
     const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.docx')).sort((a, b) => {
         const numA = parseInt(a.match(/\d+/)?.[0] || '0')
         const numB = parseInt(b.match(/\d+/)?.[0] || '0')

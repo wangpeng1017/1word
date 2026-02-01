@@ -56,11 +56,13 @@ function QuestionsContent() {
   const [manualFilters, setManualFilters] = useState<{
     vocabularyId?: string
     type?: string
+    word?: string
   }>({})
 
   // 实际使用的 vocabularyId：URL 参数优先，否则用用户手动选择
   const activeVocabularyId = urlVocabularyId || manualFilters.vocabularyId
   const activeType = manualFilters.type
+  const activeWord = manualFilters.word
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -86,7 +88,7 @@ function QuestionsContent() {
   // 加载题目列表 - 依赖分页和筛选条件
   useEffect(() => {
     fetchQuestions()
-  }, [pagination.current, pagination.pageSize, activeVocabularyId, activeType])
+  }, [pagination.current, pagination.pageSize, activeVocabularyId, activeType, activeWord])
 
   const fetchVocabularies = async () => {
     try {
@@ -119,6 +121,9 @@ function QuestionsContent() {
       }
       if (activeType) {
         params.append('type', activeType)
+      }
+      if (activeWord) {
+        params.append('word', activeWord)
       }
 
       const response = await fetch(
@@ -448,6 +453,22 @@ function QuestionsContent() {
         {/* 筛选区域 */}
         <Space size="middle" style={{ marginBottom: 16 }}>
           <span>筛选：</span>
+          <Input.Search
+            style={{ width: 200 }}
+            placeholder="搜索单词（如：abandon）"
+            allowClear
+            value={activeWord}
+            onSearch={(value) => {
+              setManualFilters({ ...manualFilters, word: value || undefined })
+              setPagination({ ...pagination, current: 1 })
+            }}
+            onChange={(e) => {
+              if (!e.target.value) {
+                setManualFilters({ ...manualFilters, word: undefined })
+                setPagination({ ...pagination, current: 1 })
+              }
+            }}
+          />
           <Select
             style={{ width: 200 }}
             placeholder="选择词汇"
@@ -490,7 +511,7 @@ function QuestionsContent() {
               setPagination({ ...pagination, current: 1 })
             }}
           />
-          {(activeVocabularyId || activeType) && (
+          {(activeVocabularyId || activeType || activeWord) && (
             <Button
               onClick={() => {
                 setManualFilters({})

@@ -16,19 +16,30 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const vocabularyId = searchParams.get('vocabularyId')
     const type = searchParams.get('type')
+    const word = searchParams.get('word')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
     const skip = (page - 1) * limit
 
     const where: any = {}
-    
+
     if (vocabularyId) {
       where.vocabularyId = vocabularyId
     }
-    
+
     if (type) {
       where.type = type
+    }
+
+    // 支持通过单词搜索
+    if (word) {
+      where.vocabularies = {
+        word: {
+          contains: word,
+          mode: 'insensitive', // 不区分大小写
+        },
+      }
     }
 
     // 性能优化: 使用 select 替代 include 减少数据传输
