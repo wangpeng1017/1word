@@ -8,7 +8,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { prisma, prismaRead } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 import { VocabularyCreateInput } from '@/types'
@@ -97,21 +97,21 @@ export async function GET(request: NextRequest) {
       const otherWhere = { ...where, NOT: { word: { startsWith: 'r' } } }
 
       const [rVocabs, rCount] = await Promise.all([
-        prismaRead.vocabularies.findMany({
+        prisma.vocabularies.findMany({
           where: rWhere,
           orderBy: { word: 'asc' },
           include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
         }),
-        prismaRead.vocabularies.count({ where: rWhere }),
+        prisma.vocabularies.count({ where: rWhere }),
       ])
 
       const [otherVocabs, otherCount] = await Promise.all([
-        prismaRead.vocabularies.findMany({
+        prisma.vocabularies.findMany({
           where: otherWhere,
           orderBy: orderByClause,
           include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
         }),
-        prismaRead.vocabularies.count({ where: otherWhere }),
+        prisma.vocabularies.count({ where: otherWhere }),
       ])
 
       // 合并并分页
@@ -119,16 +119,16 @@ export async function GET(request: NextRequest) {
       vocabularies = allVocabs.slice(skip, skip + limit)
       total = rCount + otherCount
     } else {
-      // 正常查询（使用从库）
+      // 正常查询
       const [vocabs, count] = await Promise.all([
-        prismaRead.vocabularies.findMany({
+        prisma.vocabularies.findMany({
           where,
           skip,
           take: limit,
           orderBy: orderByClause,
           include: Object.keys(includeOptions).length > 0 ? includeOptions : undefined,
         }),
-        prismaRead.vocabularies.count({ where }),
+        prisma.vocabularies.count({ where }),
       ])
       vocabularies = vocabs
       total = count

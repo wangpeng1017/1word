@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { prismaRead } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response'
 
@@ -30,7 +30,7 @@ export async function GET(
         const { startDate, endDate } = getDateRange(period, customStart, customEnd)
 
         // 1. 获取学生信息
-        const student = await prismaRead.students.findUnique({
+        const student = await prisma.students.findUnique({
             where: { id: studentId },
             include: {
                 user: { select: { name: true } },
@@ -42,7 +42,7 @@ export async function GET(
         }
 
         // 2. 获取学习记录统计
-        const studyRecords = await prismaRead.study_records.findMany({
+        const studyRecords = await prisma.study_records.findMany({
             where: {
                 studentId,
                 taskDate: {
@@ -61,7 +61,7 @@ export async function GET(
         const accuracy = totalQuestions > 0 ? Number(((correctCount / totalQuestions) * 100).toFixed(1)) : 0
 
         // 3. 获取错题词性分布
-        const wrongQuestions = await prismaRead.wrong_questions.findMany({
+        const wrongQuestions = await prisma.wrong_questions.findMany({
             where: {
                 studentId,
                 wrongAt: {
