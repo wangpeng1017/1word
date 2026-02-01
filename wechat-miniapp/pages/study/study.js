@@ -20,8 +20,6 @@ Page({
     showExpGain: false, expGainValue: 0, isOffline: false, isSubmitting: false,
     sessionId: null, lastSyncedIndex: -1,
     isRetestMode: false, // 错题重测模式
-    retestQuestionIds: [], // 重测的题目ID列表
-    wrongQuestionMap: {}, // questionId -> wrongQuestionId 映射
   },
 
   async onLoad(options) {
@@ -239,10 +237,9 @@ Page({
     this.setData({ isAnswered: true, isCorrect, showResult: true, answers, correctCount, wrongCount, consecutiveCorrect: newCC, showExpGain: isCorrect, expGainValue: expGain })
     this.saveProgress()
 
-    // 如果是重测模式且答对了,删除错题记录
-    if (this.data.isRetestMode && isCorrect) {
-      this.removeWrongQuestion(currentQuestion.id)
-    }
+    // 注意：错题重测模式下，答对的题目会在完成时提交答题记录到服务器
+    // 服务器会在 question_answers 表中插入 isCorrect=true 的新记录
+    // 错题列表查询使用 ROW_NUMBER 取最新记录，所以答对的题目会自动从错题列表消失
 
     if (isMilestone) setTimeout(() => this.showMilestonePopup(newCC), 300)
     if (isCorrect) { setTimeout(() => this.setData({ showExpGain: false }), 1000); setTimeout(() => this.nextQuestion(), isMilestone ? 2500 : 1500) }
@@ -351,11 +348,23 @@ Page({
     const { answers, correctCount, wrongCount, sessionId, lastSyncedIndex, isRetestMode } = this.data
     if (answers.length === 0) { wx.navigateBack(); return }
 
-    // 重测模式：直接跳转结果页，不记录学习历史
+    // 重测模式：提交答题记录到 question_answers 表
     if (isRetestMode) {
-      playSound(SoundType.COMPLETE)
-      clearStudyProgress()
-      wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length + '&mode=retest' })
+      try {
+        wx.showLoading({ title: '提交中...' })
+        const studentId = app.globalData.userInfo?.studentId
+        // 提交答题记录，让答对的题目从错题列表中消失
+        await post('/study-records', { studentId, answers, isRetestMode: true })
+        playSound(SoundType.COMPLETE)
+        clearStudyProgress()
+        wx.hideLoading()
+        wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length + '&mode=retest' })
+      } catch (e) {
+        wx.hideLoading()
+        console.error('提交重测结果失败:', e)
+        // 即使提交失败也跳转结果页
+        wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length + '&mode=retest&offline=true' })
+      }
       return
     }
 
@@ -451,12 +460,6 @@ Page({
         return
       }
 
-      // 构建 wrongQuestionMap (questionId -> wrongQuestionId)
-      const wrongQuestionMap = {}
-      wrongQuestions.forEach(wq => {
-        wrongQuestionMap[wq.questionId] = wq.id
-      })
-
       // 转换为 tasks 格式（将 question 放入 vocabulary.questions 数组以兼容 loadCurrentQuestion）
       const tasks = wrongQuestions.map(wq => ({
         id: wq.id,
@@ -472,7 +475,6 @@ Page({
         tasks,
         totalCount: tasks.length,
         isLoading: false,
-        wrongQuestionMap
       })
 
       wx.hideLoading()
@@ -486,28 +488,6 @@ Page({
         showCancel: false,
         success: () => wx.navigateBack()
       })
-    }
-  },
-
-  // 删除错题记录
-  async removeWrongQuestion(questionId) {
-    try {
-      const { wrongQuestionMap } = this.data
-      const wrongQuestionId = wrongQuestionMap[questionId]
-
-      if (!wrongQuestionId) {
-        console.warn('未找到错题记录ID:', questionId)
-        return
-      }
-
-      // 调用删除API
-      const { del } = require('../../utils/request')
-      await del(`/wrong-questions/${wrongQuestionId}`)
-
-      console.log('错题已删除:', wrongQuestionId)
-    } catch (error) {
-      console.error('删除错题失败:', error)
-      // 不阻塞流程,继续答题
     }
   },
 })
