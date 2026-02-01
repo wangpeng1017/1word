@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, Button, Tag, message, Spin, Row, Col, Statistic, Modal, Table, Transfer, Input } from 'antd'
-import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons'
+import { Card, Button, Tag, message, Spin, Row, Col, Statistic, Modal, Table, Transfer, Input, Divider } from 'antd'
+import { ArrowLeftOutlined, SearchOutlined, PlusCircleOutlined, ClearOutlined } from '@ant-design/icons'
 import { useRouter, useParams } from 'next/navigation'
 import type { ColumnsType } from 'antd/es/table'
 import type { TransferProps } from 'antd'
+
+const { TextArea } = Input
 
 interface Vocabulary {
   id: string
@@ -58,6 +60,10 @@ export default function VocabularyPackDetailPage() {
   const [loadingVocabs, setLoadingVocabs] = useState(false)
   const [leftSearch, setLeftSearch] = useState('')
   const [rightSearch, setRightSearch] = useState('')
+
+  // 批量输入相关状态
+  const [batchInput, setBatchInput] = useState('')
+  const [batchResult, setBatchResult] = useState<{ found: number; added: number; skipped: number; notFound: string[] } | null>(null)
 
   useEffect(() => {
     fetchPack()
@@ -144,6 +150,8 @@ export default function VocabularyPackDetailPage() {
     setTargetKeys(selectedIds)
     setLeftSearch('')
     setRightSearch('')
+    setBatchInput('')
+    setBatchResult(null)
     setModalVisible(true)
 
     // 加载所有词汇
@@ -180,6 +188,69 @@ export default function VocabularyPackDetailPage() {
   // Transfer 变化处理
   const handleTransferChange: TransferProps['onChange'] = (newTargetKeys) => {
     setTargetKeys(newTargetKeys as string[])
+  }
+
+  // 批量添加处理
+  const handleBatchAdd = () => {
+    if (!batchInput.trim()) {
+      message.warning('请输入单词列表')
+      return
+    }
+
+    // 解析输入：支持逗号、换行、分号、空格分隔
+    const inputWords = batchInput
+      .split(/[,\n;，；\s]+/)
+      .map(w => w.trim().toLowerCase())
+      .filter(w => w.length > 0 && /^[a-z][a-z-']*$/.test(w))
+
+    if (inputWords.length === 0) {
+      message.warning('未识别到有效单词')
+      return
+    }
+
+    // 获取已使用的词汇ID
+    const usedVocabIds = getUsedVocabIds()
+    const currentlySelected = new Set(targetKeys)
+
+    // 匹配词汇库中的单词
+    const matched = new Map<string, TransferItem>()
+    const notFound: string[] = []
+
+    for (const word of inputWords) {
+      const vocab = allVocabularies.find(v => v.word.toLowerCase() === word)
+      if (vocab) {
+        if (!usedVocabIds.has(vocab.key) && !currentlySelected.has(vocab.key)) {
+          matched.set(vocab.key, vocab)
+        }
+      } else {
+        notFound.push(word)
+      }
+    }
+
+    // 更新已选列表
+    const newTargetKeys = [...targetKeys]
+    matched.forEach((_, key) => {
+      if (!newTargetKeys.includes(key)) {
+        newTargetKeys.push(key)
+      }
+    })
+    setTargetKeys(newTargetKeys)
+
+    // 显示结果
+    setBatchResult({
+      found: inputWords.length,
+      added: matched.size,
+      skipped: usedVocabIds.size + (inputWords.length - matched.size - notFound.length),
+      notFound: notFound.slice(0, 10) // 只显示前10个未找到的
+    })
+
+    // 清空输入框
+    setBatchInput('')
+  }
+
+  // 清空批量结果
+  const clearBatchResult = () => {
+    setBatchResult(null)
   }
 
   // 过滤已被其他天使用的词汇
@@ -254,9 +325,9 @@ export default function VocabularyPackDetailPage() {
         onOk={handleSaveDay}
         onCancel={() => setModalVisible(false)}
         confirmLoading={saving}
-        width={900}
+        width={950}
         okText="保存"
-        styles={{ body: { padding: '24px 0' } }}
+        styles={{ body: { padding: '20px 24px' } }}
       >
         {loadingVocabs ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
@@ -264,31 +335,73 @@ export default function VocabularyPackDetailPage() {
             <p style={{ marginTop: 16, color: '#666' }}>正在加载词汇列表...</p>
           </div>
         ) : (
-          <Transfer
-            dataSource={availableVocabularies}
-            titles={[`可选词汇 (${availableVocabularies.length - targetKeys.length})`, `已选词汇 (${targetKeys.length})`]}
-            targetKeys={targetKeys}
-            onChange={handleTransferChange}
-            render={renderItem}
-            showSearch
-            filterOption={filterOption}
-            listStyle={{
-              width: 380,
-              height: 450,
-            }}
-            locale={{
-              itemUnit: '词',
-              itemsUnit: '词',
-              searchPlaceholder: '搜索单词或释义...',
-              notFoundContent: '无匹配词汇',
-            }}
-            oneWay={false}
-            showSelectAll={true}
-          />
+          <>
+            {/* 批量添加区域 */}
+            <div style={{ marginBottom: 20, padding: 16, background: '#fafafa', borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                <PlusCircleOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                批量添加单词
+              </div>
+              <TextArea
+                placeholder="粘贴单词列表，支持以下格式：&#10;• 逗号分隔: abandon, ability, abnormal&#10;• 换行分隔: 每行一个单词&#10;• 混合分隔: 逗号、空格、换行均可"
+                value={batchInput}
+                onChange={(e) => setBatchInput(e.target.value)}
+                rows={3}
+                style={{ marginBottom: 12 }}
+              />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Button type="primary" onClick={handleBatchAdd} icon={<PlusCircleOutlined />}>
+                  添加到已选
+                </Button>
+                <Button onClick={() => setBatchInput('')} icon={<ClearOutlined />}>
+                  清空输入
+                </Button>
+                {batchResult && (
+                  <span style={{ marginLeft: 12, fontSize: 12, color: '#666' }}>
+                    共找到 {batchResult.found} 个，成功添加 {batchResult.added} 个
+                    {batchResult.skipped > 0 && `，跳过 ${batchResult.skipped} 个`}
+                    {batchResult.notFound.length > 0 && `，${batchResult.notFound.length} 个未匹配`}
+                  </span>
+                )}
+              </div>
+              {batchResult && batchResult.notFound.length > 0 && (
+                <div style={{ marginTop: 8, padding: 8, background: '#fff2e8', borderRadius: 4, fontSize: 12 }}>
+                  <span style={{ color: '#ff4d4f' }}>未找到的单词: </span>
+                  <span style={{ color: '#666' }}>{batchResult.notFound.join(', ')}</span>
+                  {batchResult.notFound.length >= 10 && <span style={{ color: '#999' }}> ...</span>}
+                </div>
+              )}
+            </div>
+
+            <Divider style={{ margin: '16px 0' }} />
+
+            {/* Transfer 穿梭框 */}
+            <Transfer
+              dataSource={availableVocabularies}
+              titles={[`可选词汇 (${availableVocabularies.length - targetKeys.length})`, `已选词汇 (${targetKeys.length})`]}
+              targetKeys={targetKeys}
+              onChange={handleTransferChange}
+              render={renderItem}
+              showSearch
+              filterOption={filterOption}
+              listStyle={{
+                width: 380,
+                height: 400,
+              }}
+              locale={{
+                itemUnit: '词',
+                itemsUnit: '词',
+                searchPlaceholder: '搜索单词或释义...',
+                notFoundContent: '无匹配词汇',
+              }}
+              oneWay={false}
+              showSelectAll={true}
+            />
+            <div style={{ marginTop: 12, color: '#999', fontSize: 12 }}>
+              提示：点击词汇选中后，使用中间的箭头按钮移动；或双击词汇直接移动；也可使用上方批量添加功能
+            </div>
+          </>
         )}
-        <div style={{ marginTop: 16, color: '#666', fontSize: 12 }}>
-          提示：点击词汇选中后，使用中间的箭头按钮移动；或双击词汇直接移动
-        </div>
       </Modal>
     </div>
   )
