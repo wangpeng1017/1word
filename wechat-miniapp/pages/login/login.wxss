@@ -123,6 +123,28 @@
   background: #374151;
 }
 
+/* 协议勾选框样式 */
+.agreement-check {
+  padding: 20rpx 0;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: flex-start;
+}
+
+.agreement-text {
+  font-size: 26rpx;
+  color: #6B7280;
+  line-height: 40rpx;
+  margin-left: 12rpx;
+}
+
+.agreement-link {
+  color: #FF7A7A;
+  text-decoration: underline;
+}
+
 .login-footer {
   margin-top: 40rpx;
 }

@@ -15,7 +15,9 @@
     "pages/leaderboard/leaderboard",
     "pages/points-history/points-history",
     "pages/change-password/change-password",
-    "pages/login/login"
+    "pages/login/login",
+    "pages/privacy/privacy",
+    "pages/agreement/agreement"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -53,6 +55,13 @@
   "permission": {
     "scope.userLocation": {
       "desc": "你的位置信息将用于小程序位置接口的效果展示"
+    }
+  },
+  "privacy": {
+    "prompt": "感谢您使用智能词汇复习！我们非常重视您的隐私保护和个人信息保护。请您仔细阅读并同意《隐私政策》和《用户服务协议》后再使用我们的服务。",
+    "privacyAgreementPrestorage": {
+      "title": "隐私政策概要",
+      "content": "1. 收集信息：手机号、学习记录、设备信息\n2. 使用目的：提供学习服务、生成报告、改进产品\n3. 存储安全：加密存储、访问控制\n4. 您的权利：访问、更正、删除个人信息\n详细内容请查看《隐私政策》全文"
     }
   },
   "sitemapLocation": "sitemap.json",

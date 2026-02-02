@@ -8,6 +8,7 @@ Page({
     password: '',
     loading: false,
     showPassword: false,  // 控制密码显示/隐藏
+    agreedToTerms: false, // 是否同意协议
     // 客服二维码
     showQrcode: false,
     qrcodeUrl: '',
@@ -131,8 +132,38 @@ Page({
     })
   },
 
+  // 协议勾选变化
+  onAgreementChange(e) {
+    this.setData({
+      agreedToTerms: e.detail.value.length > 0
+    })
+  },
+
+  // 跳转到隐私政策
+  goToPrivacy() {
+    wx.navigateTo({
+      url: '/pages/privacy/privacy'
+    })
+  },
+
+  // 跳转到用户服务协议
+  goToAgreement() {
+    wx.navigateTo({
+      url: '/pages/agreement/agreement'
+    })
+  },
+
   async handleLogin() {
-    const { phone, password } = this.data
+    const { phone, password, agreedToTerms } = this.data
+
+    // 检查是否同意协议
+    if (!agreedToTerms) {
+      wx.showToast({
+        title: '请先阅读并同意协议',
+        icon: 'none',
+      })
+      return
+    }
 
     if (!phone) {
       wx.showToast({

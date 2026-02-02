@@ -38,10 +38,26 @@
       </view>
     </view>
 
+    <!-- 协议勾选 -->
+    <view class="agreement-check mt-3">
+      <checkbox-group bindchange="onAgreementChange">
+        <label class="agreement-label">
+          <checkbox value="agree" checked="{{agreedToTerms}}" color="#FF7A7A" />
+          <text class="agreement-text">
+            我已阅读并同意
+            <text class="agreement-link" bindtap="goToPrivacy">《隐私政策》</text>
+            和
+            <text class="agreement-link" bindtap="goToAgreement">《用户服务协议》</text>
+          </text>
+        </label>
+      </checkbox-group>
+    </view>
+
     <button
       class="btn-primary mt-4"
       bindtap="handleLogin"
       loading="{{loading}}"
+      disabled="{{!agreedToTerms}}"
     >
       登录
     </button>
