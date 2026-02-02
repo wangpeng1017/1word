@@ -125,24 +125,33 @@
 
 /* 协议勾选框样式 */
 .agreement-check {
+  display: flex;
+  align-items: flex-start;
   padding: 20rpx 0;
 }
 
 .agreement-label {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 12rpx;
 }
 
 .agreement-text {
+  flex: 1;
   font-size: 26rpx;
   color: #6B7280;
   line-height: 40rpx;
-  margin-left: 12rpx;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.agreement-text text {
+  display: inline;
 }
 
 .agreement-link {
   color: #FF7A7A;
-  text-decoration: underline;
 }
 
 .login-footer {

@@ -43,14 +43,14 @@
       <checkbox-group bindchange="onAgreementChange">
         <label class="agreement-label">
           <checkbox value="agree" checked="{{agreedToTerms}}" color="#FF7A7A" />
-          <text class="agreement-text">
-            我已阅读并同意
-            <text class="agreement-link" bindtap="goToPrivacy">《隐私政策》</text>
-            和
-            <text class="agreement-link" bindtap="goToAgreement">《用户服务协议》</text>
-          </text>
         </label>
       </checkbox-group>
+      <view class="agreement-text">
+        <text>我已阅读并同意</text>
+        <text class="agreement-link" bindtap="goToPrivacy">《隐私政策》</text>
+        <text>和</text>
+        <text class="agreement-link" bindtap="goToAgreement">《用户服务协议》</text>
+      </view>
     </view>
 
     <button
