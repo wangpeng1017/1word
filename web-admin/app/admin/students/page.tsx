@@ -166,9 +166,9 @@ export default function StudentsPage() {
         : '/api/students'
       const method = editingRecord ? 'PUT' : 'POST'
 
-      // 如果是新增，添加默认密码
+      // 如果是新增，使用手机号作为初始密码
       if (!editingRecord) {
-        values.password = values.password || '123456'
+        values.password = values.phone || '123456'
       }
 
       const response = await fetch(url, {
@@ -369,11 +369,6 @@ export default function StudentsPage() {
               ))}
             </Select>
           </Form.Item>
-          {!editingRecord && (
-            <Form.Item label="密码" name="password" initialValue="123456">
-              <Input.Password placeholder="默认: 123456" />
-            </Form.Item>
-          )}
         </Form>
       </Modal>
       <Modal
