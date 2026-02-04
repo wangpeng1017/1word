@@ -188,6 +188,31 @@ Page({
     if (!question && currentTask.targetQuestionType) question = vocabulary.questions.find(q => q.type === currentTask.targetQuestionType)
     if (!question && vocabulary.questions.length > 0) question = vocabulary.questions[Math.floor(Math.random() * vocabulary.questions.length)]
     if (!question) { this.nextQuestion(); return }
+
+    // 前端打乱选项顺序
+    if (question.options && question.options.length > 0) {
+      // 1. 深度复制选项数组，避免污染源数据
+      const shuffledOptions = JSON.parse(JSON.stringify(question.options))
+
+      // 2. Fisher-Yates 洗牌算法
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+      }
+
+      // 3. 找到正确答案在乱序该数组中的新位置
+      // 后端返回的 options 中通常包含 isCorrect=true 标记
+      const correctIndex = shuffledOptions.findIndex(o => o.isCorrect)
+      if (correctIndex !== -1) {
+        // 更新正确答案标识为新的位置 (A/B/C/D)
+        const labels = ['A', 'B', 'C', 'D']
+        question.correctAnswer = labels[correctIndex]
+      }
+
+      // 4. 更新题目选项
+      question.options = shuffledOptions
+    }
+
     this.setData({ currentTask, currentQuestion: question, selectedAnswer: '', isAnswered: false, isCorrect: false, showResult: false, progress: Math.round(((currentIndex + 1) / tasks.length) * 100) })
 
     // 预缓冲下一题音频
@@ -260,6 +285,7 @@ Page({
     if (isCorrect) {
       if (newCC === 10) playSound(SoundType.STREAK_10)      // 连对10题
       else if (newCC === 5) playSound(SoundType.STREAK_5)   // 连对5题
+      else if (newCC === 3) playSound(SoundType.STREAK_3)   // 连对3题
       else playSound(SoundType.CORRECT)                     // 普通答对
     } else {
       playSound(SoundType.WRONG)                            // 答错

@@ -8,6 +8,7 @@
 const SoundType = {
     CORRECT: 'correct',      // 答对
     WRONG: 'wrong',          // 答错
+    STREAK_3: 'streak_3',    // 连对3题
     STREAK_5: 'streak_5',    // 连对5题
     STREAK_10: 'streak_10',  // 连对10题
     COMPLETE: 'complete'     // 完成学习
@@ -16,16 +17,14 @@ const SoundType = {
 // 免费在线音效 URL（来源：公共域/CC0 音效）
 // 您可以替换为自己上传到阿里云 OSS 的音效 URL
 const SOUND_URLS = {
-    // 答对音效 - 清脆叮声
-    correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
-    // 答错音效 - 低沉错误声
-    wrong: 'https://assets.mixkit.co/active_storage/sfx/2001/2001-preview.mp3',
-    // 连对5题 - 成就解锁
-    streak_5: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
-    // 连对10题 - 升级音效
-    streak_10: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
-    // 完成学习 - 胜利音效
-    complete: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'
+    // 来源：本地服务器 (web-admin/public/uploads/sounds)
+    // 注意：实际使用时会拼接 app.globalData.apiUrl
+    correct: '/uploads/sounds/correct.mp3',
+    wrong: '/uploads/sounds/wrong.mp3',
+    streak_3: '/uploads/sounds/streak_3.mp3',
+    streak_5: '/uploads/sounds/streak_5.mp3',
+    streak_10: '/uploads/sounds/streak_10.mp3',
+    complete: '/uploads/sounds/complete.mp3'
 }
 
 // 音效上下文缓存
@@ -47,10 +46,18 @@ function playSound(type) {
             return
         }
 
+        // 处理相对路径
+        let finalUrl = soundUrl
+        if (soundUrl.startsWith('/')) {
+            const app = getApp()
+            const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
+            finalUrl = baseUrl + soundUrl
+        }
+
         // 创建或复用 AudioContext
         if (!audioContexts[type]) {
             audioContexts[type] = wx.createInnerAudioContext()
-            audioContexts[type].src = soundUrl
+            audioContexts[type].src = finalUrl
             audioContexts[type].volume = 0.7  // 设置音量
             // 错误处理
             audioContexts[type].onError((err) => {
