@@ -35,7 +35,8 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
     const audios = v.word_audios || v.audios || []
     const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
     const audioUk = audios.find((a: any) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
-    const defaultAudio = audioUs ?? audioUk ?? v.audioUrl ?? v.audio_url ?? null
+    // Fix: Use || instead of ?? to handle empty strings and ensure fallback works
+    const defaultAudio = audioUs || audioUk || v.audioUrl || v.audio_url || null
 
     const meanings = (v.word_meanings || []).map((m: any) => ({
       id: m.id,
