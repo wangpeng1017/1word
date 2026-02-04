@@ -297,7 +297,13 @@ export default function VocabulariesPage() {
         setModalVisible(false)
         loadData()
       } else {
-        message.error(result.error || '操作失败')
+        // 增强错误显示
+        const errorMsg = result.error || '操作失败'
+        if (errorMsg.includes('单词已存在')) {
+          form.setFields([{ name: 'word', errors: [errorMsg] }])
+        } else {
+          message.error(errorMsg)
+        }
       }
     } catch (error) {
       console.error('提交失败:', error)

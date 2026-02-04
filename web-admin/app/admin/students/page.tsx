@@ -186,7 +186,15 @@ export default function StudentsPage() {
         setEditingRecord(null)
         loadData(pagination.current, pagination.pageSize)
       } else {
-        message.error(result.error || '操作失败')
+        // 增强错误提示：将后端错误映射到表单字段
+        const errorMsg = result.error || '操作失败'
+        if (errorMsg.includes('学号')) {
+          form.setFields([{ name: 'studentNo', errors: [errorMsg] }])
+        } else if (errorMsg.includes('手机') || errorMsg.includes('邮箱')) {
+          form.setFields([{ name: 'phone', errors: [errorMsg] }])
+        } else {
+          message.error(errorMsg)
+        }
       }
     } catch (error) {
       console.error('提交失败:', error)
