@@ -39,7 +39,7 @@ Page({
     } else if (options.resume === 'true') {
       this.resumeProgress()
     } else {
-      this.loadTasks()
+      this.loadTasks(options.mode || 'all')
     }
   },
 
@@ -87,8 +87,9 @@ Page({
     this.setData({ timer })
   },
 
-  async loadTasks() {
+  async loadTasks(mode = 'all') {
     try {
+      this.setData({ isLoading: true, mode }) // Save mode
       wx.showLoading({ title: '加载中...' })
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) throw new Error('未找到学生ID')
@@ -111,7 +112,27 @@ Page({
         if (cachedTasks?.length > 0) { tasks = cachedTasks; this.setData({ isOffline: true }); wx.showToast({ title: '离线模式', icon: 'none' }) }
         else throw e
       }
-      if (!tasks?.length) { wx.hideLoading(); wx.showModal({ title: '提示', content: '暂无学习任务', showCancel: false, success: () => wx.navigateBack() }); return }
+
+      // Filter tasks based on mode
+      if (mode === 'new') {
+        tasks = tasks.filter(t => t.isNew)
+        wx.setNavigationBarTitle({ title: '今日新词' })
+      } else if (mode === 'review') {
+        tasks = tasks.filter(t => !t.isNew)
+        wx.setNavigationBarTitle({ title: '今日复习' })
+      }
+
+      if (!tasks?.length) {
+        wx.hideLoading();
+        wx.showModal({
+          title: '提示',
+          content: mode === 'new' ? '今日新词已学完' : (mode === 'review' ? '今日复习已完成' : '暂无学习任务'),
+          showCancel: false,
+          success: () => wx.navigateBack()
+        });
+        return
+      }
+
       const validTasks = tasks.filter(t => t.vocabulary?.questions?.length > 0)
       if (validTasks.length === 0) { wx.hideLoading(); wx.showModal({ title: '提示', content: '所有任务都没有可用题目', showCancel: false, success: () => wx.navigateBack() }); return }
       let sessionId = null, lastSyncedIndex = -1, resumedIndex = 0, resumedCorrect = 0, resumedWrong = 0
