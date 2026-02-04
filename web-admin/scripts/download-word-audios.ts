@@ -41,45 +41,31 @@ function generateId(prefix: string): string {
 }
 
 /**
- * 从Free Dictionary API获取音频URL
+ * 获取音频URL（支持多源回退）
  */
-async function fetchAudioFromFreeDictAPI(word: string): Promise<AudioInfo> {
+async function fetchAudioWithFallback(word: string): Promise<AudioInfo> {
     const result: AudioInfo = { word }
 
+    // 1. 尝试 Free Dictionary API (质量最好)
     try {
-        const response = await axios.get(`${CONFIG.FREE_DICT_API}/${word}`, {
-            timeout: CONFIG.REQUEST_TIMEOUT,
-        })
-
-        if (response.data && response.data.length > 0) {
-            const entry = response.data[0]
-
-            if (entry.phonetics && entry.phonetics.length > 0) {
-                // 查找美式和英式发音
-                for (const phonetic of entry.phonetics) {
-                    if (phonetic.audio) {
-                        const audioUrl = phonetic.audio
-
-                        // 判断是美式还是英式
-                        if (audioUrl.includes('-us.mp3') || audioUrl.includes('/us/')) {
-                            result.usAudioUrl = audioUrl
-                        } else if (audioUrl.includes('-uk.mp3') || audioUrl.includes('/uk/')) {
-                            result.ukAudioUrl = audioUrl
-                        } else if (!result.usAudioUrl) {
-                            // 如果无法判断，默认作为美式发音
-                            result.usAudioUrl = audioUrl
-                        }
-                    }
-                }
+        const response = await axios.get(`${CONFIG.FREE_DICT_API}/${word}`, { timeout: 5000 })
+        if (response.data?.[0]?.phonetics) {
+            for (const p of response.data[0].phonetics) {
+                if (!p.audio) continue
+                if (p.audio.includes('-us.mp3') || p.audio.includes('/us/')) result.usAudioUrl = p.audio
+                else if (p.audio.includes('-uk.mp3') || p.audio.includes('/uk/')) result.ukAudioUrl = p.audio
+                else if (!result.usAudioUrl) result.usAudioUrl = p.audio
             }
         }
-    } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-            console.log(`  ⚠ 单词 "${word}" 在API中未找到`)
-        } else {
-            console.error(`  ✗ 获取 "${word}" 音频URL失败:`, error instanceof Error ? error.message : error)
-        }
-    }
+    } catch (e) { /* ignore */ }
+
+    // 2. 尝试 有道词典 (发音纯正，适合单词)
+    // type=0: 美音, type=1: 英音
+    if (!result.usAudioUrl) result.usAudioUrl = `http://dict.youdao.com/dictvoice?type=0&audio=${word}`
+    if (!result.ukAudioUrl) result.ukAudioUrl = `http://dict.youdao.com/dictvoice?type=1&audio=${word}`
+
+    // 3. 尝试 Google TTS (备用)
+    if (!result.usAudioUrl) result.usAudioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${word}&tl=en`
 
     return result
 }
@@ -141,8 +127,8 @@ async function processWord(
     console.log(`\n处理单词: ${word}`)
     console.log(`  需要: ${needUS ? '美式' : ''}${needUS && needUK ? ' + ' : ''}${needUK ? '英式' : ''}`)
 
-    // 从API获取音频URL
-    const audioInfo = await fetchAudioFromFreeDictAPI(word)
+    // 从API获取音频URL (包含回退策略)
+    const audioInfo = await fetchAudioWithFallback(word)
 
     let usSuccess = false
     let ukSuccess = false
