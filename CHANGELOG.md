@@ -3,8 +3,13 @@
 ## [Unreleased]
 
 ### Added
+- **Mini-App**: **4-Tab Architecture** - Split "Today's Review" into "Today's Learn" (New Words) and "Review" (Timeline).
+- **Mini-App**: **Make-up Learning** - Users can click on "Missed" days in timeline to learn *only* the new words from that day.
+- **Mini-App**: **UX Enhancements** - Implemented option shuffling to prevent position memorization. Added "Streak-3" sound effect.
 - **Mini-App**: Added 3D-style emoji icons (⭐️, 📖, 🔒) to Home Page timeline nodes.
-- **Mini-App**: Added haptic feedback to audio playback button in "Listen and Choose" mode.
+- **Mini-App**: Added haptic feedback to audio playback button.
+- **Web-Admin**: **Local Audio Hosting** - Downloaded all sound effects to local server to avoid network issues with external URLs.
+- **Web-Admin**: **API Update** - `daily-tasks` now supports `day` parameter for make-up learning and auto-filters review words in this mode.
 
 ### Changed
 - **Mini-App**: Reduced delay after correct answer in "Listen and Choose" mode (1.5s -> 0.8s) for faster pacing.
