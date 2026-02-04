@@ -168,7 +168,14 @@ Page({
         }
       }
       console.log('[DEBUG] 最终 sessionId:', sessionId, 'lastSyncedIndex:', lastSyncedIndex, 'resumedIndex:', resumedIndex)
-      this.setData({ tasks: validTasks, totalCount: validTasks.length, isLoading: false, sessionId, lastSyncedIndex, currentIndex: resumedIndex, correctCount: resumedCorrect, wrongCount: resumedWrong })
+
+      // 性能优化：将完整任务存入实例变量，data中只存当前需要的子集
+      this.allTasks = validTasks
+      // 初始加载数量：如果是恢复进度，至少加载到当前进度+20题；否则加载前20题
+      const initialLoadCount = resumedIndex + 20
+      const visibleTasks = validTasks.slice(0, initialLoadCount)
+
+      this.setData({ tasks: visibleTasks, totalCount: validTasks.length, isLoading: false, sessionId, lastSyncedIndex, currentIndex: resumedIndex, correctCount: resumedCorrect, wrongCount: resumedWrong })
       wx.hideLoading()
       this.loadCurrentQuestion()
     } catch (e) { wx.hideLoading(); wx.showModal({ title: '加载失败', content: e.message || '请检查网络', showCancel: false, success: () => wx.navigateBack() }) }
@@ -322,6 +329,21 @@ Page({
       }
     }
 
+    // 性能优化：动态加载更多题目
+    // 当剩余题目不足5题，且还有更多题目未加载时，追加加载20题
+    if (this.allTasks && nextIndex + 5 >= this.data.tasks.length && this.data.tasks.length < this.totalCount) {
+      const currentLength = this.data.tasks.length
+      const moreTasks = this.allTasks.slice(currentLength, currentLength + 20)
+      if (moreTasks.length > 0) {
+        // 使用 concat 追加数据，避免重置整个数组
+        // 注意：微信小程序 setData 对长数组追加可能有性能瓶颈，但在 2000 条规模下通常优于一次性传输
+        // 更优做法是 key-path更新 'tasks[index]': item，但这里用 concat 简单且足够
+        this.setData({
+          tasks: this.data.tasks.concat(moreTasks)
+        })
+      }
+    }
+
     // 原有逻辑
     nextIndex >= totalCount ? this.finishStudy() : (this.setData({ currentIndex: nextIndex, startTime: Date.now() }), this.loadCurrentQuestion())
   },
@@ -469,11 +491,20 @@ Page({
       const answeredVocabIds = new Set(progress.answers.map(a => a.vocabularyId))
       const remainingTasks = validLocalTasks.filter(t => !answeredVocabIds.has(t.vocabularyId))
       if (remainingTasks.length === 0) {
+        // 即使已完成，也需要初始化 allTasks 以防逻辑依赖
+        this.allTasks = validLocalTasks
         this.setData({ tasks: validLocalTasks, answers: progress.answers, correctCount: progress.correctCount, wrongCount: progress.wrongCount, totalCount: validLocalTasks.length, currentIndex: validLocalTasks.length, isLoading: false, sessionId: progress.sessionId || null, lastSyncedIndex: progress.lastSyncedIndex ?? -1 })
         this.finishStudy(); return
       }
       const elapsedSeconds = progress.elapsedSeconds || 0
-      this.setData({ tasks: validLocalTasks, currentIndex: validLocalTasks.length - remainingTasks.length, answers: progress.answers, correctCount: progress.correctCount, wrongCount: progress.wrongCount, totalCount: validLocalTasks.length, sessionStartTime: Date.now() - (elapsedSeconds * 1000), isLoading: false, sessionId: progress.sessionId || null, lastSyncedIndex: progress.lastSyncedIndex ?? -1 })
+
+      // 性能优化：初始化 allTasks 并切片
+      this.allTasks = validLocalTasks
+      const resumedIndex = validLocalTasks.length - remainingTasks.length
+      const initialLoadCount = resumedIndex + 20
+      const visibleTasks = validLocalTasks.slice(0, initialLoadCount)
+
+      this.setData({ tasks: visibleTasks, currentIndex: resumedIndex, answers: progress.answers, correctCount: progress.correctCount, wrongCount: progress.wrongCount, totalCount: validLocalTasks.length, sessionStartTime: Date.now() - (elapsedSeconds * 1000), isLoading: false, sessionId: progress.sessionId || null, lastSyncedIndex: progress.lastSyncedIndex ?? -1 })
       if (progress.sessionId) setCurrentSessionId(progress.sessionId)
       wx.showToast({ title: '已恢复进度 ' + progress.answers.length + '/' + validLocalTasks.length, icon: 'none', duration: 1500 })
       this.loadCurrentQuestion()

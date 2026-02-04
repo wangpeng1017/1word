@@ -6,7 +6,7 @@ import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type
 import { getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
 
 // 每日新学单词上限
-const MAX_NEW_WORDS_PER_DAY = 200
+const MAX_NEW_WORDS_PER_DAY = 2000
 
 // 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
 const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
