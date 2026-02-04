@@ -72,13 +72,29 @@ export async function POST(request: NextRequest) {
  // 加密密码
  const hashedPassword = await hashPassword(password)
 
- // 处理空值：空字符串转为null，避免唯一约束冲突
- const emailValue = email || null
- const phoneValue = phone || null
+ // 处理空值：生产数据库不允许null，生成唯一占位符
+ const userId = nanoid()
+ let emailValue: string
+ let phoneValue: string | null = null
+
+ if (email && email.trim()) {
+ emailValue = email.trim()
+ } else if (phone) {
+ // 用手机号生成唯一email
+ emailValue = `${phone}@placeholder.local`
+ } else {
+ // 生成唯一占位符
+ emailValue = `user_${userId}@placeholder.local`
+ }
+
+ if (phone && phone.trim()) {
+ phoneValue = phone.trim()
+ }
 
  // 创建用户
  const user = await prisma.user.create({
  data: {
+ id: userId,
  email: emailValue,
  phone: phoneValue,
  password: hashedPassword,

@@ -187,8 +187,17 @@ export async function POST(request: NextRequest) {
     const studentId = nanoid()
     const now = new Date()
 
-    // 处理 email：空字符串转为 null，避免唯一约束冲突
-    const emailValue = email || null
+    // 处理 email：生产数据库不允许null，用手机号或生成唯一占位符
+    let emailValue: string
+    if (email && email.trim()) {
+      emailValue = email.trim()
+    } else if (phone) {
+      // 用手机号作为唯一标识
+      emailValue = `${phone}@placeholder.local`
+    } else {
+      // 生成唯一占位符
+      emailValue = `stu_${userId}@placeholder.local`
+    }
 
     const user = await prisma.user.create({
       data: {
