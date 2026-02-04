@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/today-learn/today-learn",
     "pages/index/index",
     "pages/study/study",
     "pages/study/result",
@@ -33,10 +34,16 @@
     "borderStyle": "black",
     "list": [
       {
-        "pagePath": "pages/index/index",
-        "text": "今日复习",
+        "pagePath": "pages/today-learn/today-learn",
+        "text": "今日学习",
         "iconPath": "images/study.png",
         "selectedIconPath": "images/study-active.png"
+      },
+      {
+        "pagePath": "pages/index/index",
+        "text": "今日复习",
+        "iconPath": "images/review.png",
+        "selectedIconPath": "images/review-active.png"
       },
       {
         "pagePath": "pages/wrong/wrong",

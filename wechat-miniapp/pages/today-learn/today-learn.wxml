@@ -1,0 +1,35 @@
+<!--pages/today-learn/today-learn.wxml-->
+<view class="page">
+  <!-- 欢迎区域 -->
+  <view class="welcome-section">
+    <view class="welcome-title">今日新词</view>
+    <view class="welcome-subtitle">每天进步一点点</view>
+  </view>
+
+  <!-- 任务卡片 -->
+  <view class="task-card-container">
+    <view class="task-card">
+      <view class="card-icon">📚</view>
+      
+      <view class="card-content" wx:if="{{state === 'loading'}}">
+        <view class="loading-spinner"></view>
+        <view class="status-text">加载任务中...</view>
+      </view>
+
+      <view class="card-content" wx:elif="{{newWordsCount > 0}}">
+        <view class="count-number">{{newWordsCount}}</view>
+        <view class="count-label">个新单词待学习</view>
+        <view class="time-estimate">预计耗时 {{timeEstimate}} 分钟</view>
+        
+        <button class="start-btn" bindtap="startLearning">开始学习</button>
+      </view>
+
+      <view class="card-content" wx:else>
+        <view class="done-icon">🎉</view>
+        <view class="status-title">今日新词已完成！</view>
+        <view class="status-desc">去"今日复习"巩固一下吧</view>
+        <button class="review-btn" bindtap="goToReview">查看复习任务</button>
+      </view>
+    </view>
+  </view>
+</view>
