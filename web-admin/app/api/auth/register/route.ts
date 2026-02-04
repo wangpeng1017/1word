@@ -72,11 +72,15 @@ export async function POST(request: NextRequest) {
  // 加密密码
  const hashedPassword = await hashPassword(password)
 
+ // 处理空值：空字符串转为null，避免唯一约束冲突
+ const emailValue = email || null
+ const phoneValue = phone || null
+
  // 创建用户
  const user = await prisma.user.create({
  data: {
- email,
- phone,
+ email: emailValue,
+ phone: phoneValue,
  password: hashedPassword,
  name,
  role,
