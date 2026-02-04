@@ -127,60 +127,65 @@ async function processWord(
     console.log(`\n处理单词: ${word}`)
     console.log(`  需要: ${needUS ? '美式' : ''}${needUS && needUK ? ' + ' : ''}${needUK ? '英式' : ''}`)
 
-    // 从API获取音频URL (包含回退策略)
-    const audioInfo = await fetchAudioWithFallback(word)
+    const usFilename = `${word}-us.mp3`
+    const usFilepath = path.join(CONFIG.AUDIO_DIR, usFilename)
+    const usAudioUrl = `/uploads/word-audios/${usFilename}`
+
+    const ukFilename = `${word}-uk.mp3`
+    const ukFilepath = path.join(CONFIG.AUDIO_DIR, ukFilename)
+    const ukAudioUrl = `/uploads/word-audios/${ukFilename}`
+
+    // 1. 先检查本地是否存在
+    const usExists = needUS ? await fs.pathExists(usFilepath) : false
+    const ukExists = needUK ? await fs.pathExists(ukFilepath) : false
+
+    let audioInfo: AudioInfo | null = null
+    let apiCalled = false
+
+    // 2. 如果缺少任何一个需要的音频，才请求 API
+    if ((needUS && !usExists) || (needUK && !ukExists)) {
+        console.log(`  🔍 本地缺失，请求 API 获取链接...`)
+        audioInfo = await fetchAudioWithFallback(word)
+        apiCalled = true
+    }
 
     let usSuccess = false
     let ukSuccess = false
 
     // 下载美式发音
-    if (needUS && audioInfo.usAudioUrl) {
-        const filename = `${word}-us.mp3`
-        const filepath = path.join(CONFIG.AUDIO_DIR, filename)
-        const audioUrl = `/uploads/word-audios/${filename}`
-
-        let downloadSuccess = false
-        if (await fs.pathExists(filepath)) {
-            console.log(`  ✓ 本地文件已存在 (跳过下载)`)
-            downloadSuccess = true
-        } else {
-            console.log(`  ⬇ 下载美式发音...`)
-            downloadSuccess = await downloadAudio(audioInfo.usAudioUrl, filepath)
-        }
-
-        if (downloadSuccess) {
-            await saveAudioToDatabase(vocabularyId, audioUrl, 'US')
-            // console.log(`  ✓ 美式发音记录已更新`) // 减少日志
-            stats.usDownloaded++
+    if (needUS) {
+        if (usExists) {
+            console.log(`  ✓ 美式: 本地已有 (跳过下载)`)
+            await saveAudioToDatabase(vocabularyId, usAudioUrl, 'US')
             usSuccess = true
+        } else if (audioInfo && audioInfo.usAudioUrl) {
+            console.log(`  ⬇ 美式: 下载中...`)
+            if (await downloadAudio(audioInfo.usAudioUrl, usFilepath)) {
+                await saveAudioToDatabase(vocabularyId, usAudioUrl, 'US')
+                stats.usDownloaded++
+                usSuccess = true
+            }
+        } else {
+            console.log(`  ⚠ 美式: 未找到资源`)
         }
-    } else if (needUS) {
-        console.log(`  ⚠ 未找到美式发音URL`)
     }
 
     // 下载英式发音
-    if (needUK && audioInfo.ukAudioUrl) {
-        const filename = `${word}-uk.mp3`
-        const filepath = path.join(CONFIG.AUDIO_DIR, filename)
-        const audioUrl = `/uploads/word-audios/${filename}`
-
-        let downloadSuccess = false
-        if (await fs.pathExists(filepath)) {
-            console.log(`  ✓ 本地文件已存在 (跳过下载)`)
-            downloadSuccess = true
-        } else {
-            console.log(`  ⬇ 下载英式发音...`)
-            downloadSuccess = await downloadAudio(audioInfo.ukAudioUrl, filepath)
-        }
-
-        if (downloadSuccess) {
-            await saveAudioToDatabase(vocabularyId, audioUrl, 'UK')
-            // console.log(`  ✓ 英式发音记录已更新`)
-            stats.ukDownloaded++
+    if (needUK) {
+        if (ukExists) {
+            console.log(`  ✓ 英式: 本地已有 (跳过下载)`)
+            await saveAudioToDatabase(vocabularyId, ukAudioUrl, 'UK')
             ukSuccess = true
+        } else if (audioInfo && audioInfo.ukAudioUrl) {
+            console.log(`  ⬇ 英式: 下载中...`)
+            if (await downloadAudio(audioInfo.ukAudioUrl, ukFilepath)) {
+                await saveAudioToDatabase(vocabularyId, ukAudioUrl, 'UK')
+                stats.ukDownloaded++
+                ukSuccess = true
+            }
+        } else {
+            console.log(`  ⚠ 英式: 未找到资源`)
         }
-    } else if (needUK) {
-        console.log(`  ⚠ 未找到英式发音URL`)
     }
 
     // 更新统计
@@ -190,8 +195,10 @@ async function processWord(
         stats.failed++
     }
 
-    // 请求间隔
-    await new Promise(resolve => setTimeout(resolve, CONFIG.REQUEST_DELAY))
+    // 只有在请求了 API 时才延迟，避免本地检查也被拖慢
+    if (apiCalled) {
+        await new Promise(resolve => setTimeout(resolve, CONFIG.REQUEST_DELAY))
+    }
 }
 
 /**
