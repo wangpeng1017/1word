@@ -225,152 +225,151 @@ async function downloadWordAudios() {
         }> = []
 
         for (const vocab of vocabularies) {
-            const hasUS = vocab.word_audios.some(a => a.accent === 'US')
-            const hasUK = vocab.word_audios.some(a => a.accent === 'UK')
+            // 检查数据库记录
+            const usAudio = vocab.word_audios.find(a => a.accent === 'US')
+            const ukAudio = vocab.word_audios.find(a => a.accent === 'UK')
 
-            if (!hasUS || !hasUK) {
+            // 检查本地文件是否存在
+            let needUS = true
+            let needUK = true
+
+            if (usAudio && usAudio.audioUrl) {
+                // 如果是本地路径，检查文件是否存在
+                if (usAudio.audioUrl.startsWith('/uploads/')) {
+                    const localPath = path.join(process.cwd(), 'public', usAudio.audioUrl.replace(/^\//, ''))
+                    if (await fs.pathExists(localPath)) {
+                        needUS = false
+                    }
+                } else if (usAudio.audioUrl.startsWith('http')) {
+                    // 如果是远程URL，我们需要下载到本地（因为用户要求所有单词都要有本地音频）
+                    needUS = true
+                }
+            }
+
+            if (ukAudio && ukAudio.audioUrl) {
+                if (ukAudio.audioUrl.startsWith('/uploads/')) {
+                    const localPath = path.join(process.cwd(), 'public', ukAudio.audioUrl.replace(/^\//, ''))
+                    if (await fs.pathExists(localPath)) {
+                        needUK = false
+                    }
+                } else if (ukAudio.audioUrl.startsWith('http')) {
+                    needUK = true
+                }
+            }
+
+            if (needUS || needUK) {
                 wordsToProcess.push({
                     word: vocab.word,
                     vocabularyId: vocab.id,
-                    needUS: !hasUS,
-                    needUK: !hasUK,
+                    needUS,
+                    needUK,
                 })
             }
         }
 
-        console.log(`✓ 找到 ${wordsToProcess.length} 个需要处理的词汇\n`)
+        console.log(`✓ 找到 ${wordsToProcess.length} 个需要处理的词汇 (包括本地文件缺失或为远程链接的情况)\n`)
 
         if (wordsToProcess.length === 0) {
-            console.log('所有词汇都已有完整音频！')
+            console.log('所有词汇都已有完整本地音频！')
         }
 
-        // 特別检查 Upheaval
-        const upheaval = vocabularies.find(v => v.word.toLowerCase() === 'upheaval')
-        if (upheaval) {
-            console.log('\n[Check] Found "upheaval" in database.')
-            const hasAudio = upheaval.word_audios.length > 0
-            console.log(`[Check] "upheaval" audio count: ${upheaval.word_audios.length}`)
-            if (true) {
-                console.log('[Check] Ensuring "upheaval" audio exists locally...')
-                // Force add to processing if not already there
-                if (!wordsToProcess.find(w => w.word === 'upheaval')) {
-                    wordsToProcess.push({
-                        word: upheaval.word,
-                        vocabularyId: upheaval.id,
-                        needUS: true,
-                        needUK: true
-                    })
+        // 统计信息
+        const stats: DownloadStats = {
+            total: wordsToProcess.length,
+            success: 0,
+            failed: 0,
+            skipped: 0,
+            usDownloaded: 0,
+            ukDownloaded: 0,
+        }
+
+        // 并发控制
+        // Fix: Use simple inline concurrency limiter to avoid ESM/CommonJS issues with p-limit
+        const createLimit = (concurrency: number) => {
+            let active = 0;
+            const queue: any[] = [];
+
+            const next = () => {
+                active--;
+                if (queue.length > 0) {
+                    const [fn, resolve, reject] = queue.shift();
+                    active++;
+                    fn().then(resolve).catch(reject).finally(next);
                 }
             }
-            wordsToProcess.push({
-                word: upheaval.word,
-                vocabularyId: upheaval.id,
-                needUS: true,
-                needUK: true
-            })
-        }
-    }
-        } else {
-    console.log('\n[Check] "upheaval" NOT found in database.')
-}
 
-// 统计信息
-const stats: DownloadStats = {
-    total: wordsToProcess.length,
-    success: 0,
-    failed: 0,
-    skipped: 0,
-    usDownloaded: 0,
-    ukDownloaded: 0,
-}
+            return (fn: () => Promise<any>) => {
+                return new Promise((resolve, reject) => {
+                    const run = () => {
+                        active++;
+                        fn().then(resolve).catch(reject).finally(next);
+                    };
 
-// 并发控制
-// Fix: Use simple inline concurrency limiter to avoid ESM/CommonJS issues with p-limit
-const createLimit = (concurrency: number) => {
-    let active = 0;
-    const queue: any[] = [];
-
-    const next = () => {
-        active--;
-        if (queue.length > 0) {
-            const [fn, resolve, reject] = queue.shift();
-            active++;
-            fn().then(resolve).catch(reject).finally(next);
-        }
-    }
-
-    return (fn: () => Promise<any>) => {
-        return new Promise((resolve, reject) => {
-            const run = () => {
-                active++;
-                fn().then(resolve).catch(reject).finally(next);
+                    if (active < concurrency) {
+                        run();
+                    } else {
+                        queue.push([fn, resolve, reject]);
+                    }
+                });
             };
+        };
 
-            if (active < concurrency) {
-                run();
-            } else {
-                queue.push([fn, resolve, reject]);
-            }
-        });
-    };
-};
+        const limit = createLimit(CONFIG.CONCURRENT_DOWNLOADS)
 
-const limit = createLimit(CONFIG.CONCURRENT_DOWNLOADS)
+        console.log('开始下载音频...\n')
+        console.log('=========================================')
 
-console.log('开始下载音频...\n')
-console.log('=========================================')
-
-// 批量处理
-const tasks = wordsToProcess.map((item, index) =>
-    limit(async () => {
-        console.log(`\n[${index + 1}/${wordsToProcess.length}]`)
-        await processWord(
-            item.word,
-            item.vocabularyId,
-            item.needUS,
-            item.needUK,
-            stats
+        // 批量处理
+        const tasks = wordsToProcess.map((item, index) =>
+            limit(async () => {
+                console.log(`\n[${index + 1}/${wordsToProcess.length}]`)
+                await processWord(
+                    item.word,
+                    item.vocabularyId,
+                    item.needUS,
+                    item.needUK,
+                    stats
+                )
+            })
         )
-    })
-)
 
-await Promise.all(tasks)
+        await Promise.all(tasks)
 
-// 输出最终统计
-console.log('\n=========================================')
-console.log('✓ 下载完成!')
-console.log('=========================================')
-console.log(`总计处理: ${stats.total}`)
-console.log(`成功: ${stats.success}`)
-console.log(`失败: ${stats.failed}`)
-console.log(`跳过: ${stats.skipped}`)
-console.log(`美式发音下载: ${stats.usDownloaded}`)
-console.log(`英式发音下载: ${stats.ukDownloaded}`)
-console.log(`总音频文件: ${stats.usDownloaded + stats.ukDownloaded}`)
-console.log('=========================================\n')
+        // 输出最终统计
+        console.log('\n=========================================')
+        console.log('✓ 下载完成!')
+        console.log('=========================================')
+        console.log(`总计处理: ${stats.total}`)
+        console.log(`成功: ${stats.success}`)
+        console.log(`失败: ${stats.failed}`)
+        console.log(`跳过: ${stats.skipped}`)
+        console.log(`美式发音下载: ${stats.usDownloaded}`)
+        console.log(`英式发音下载: ${stats.ukDownloaded}`)
+        console.log(`总音频文件: ${stats.usDownloaded + stats.ukDownloaded}`)
+        console.log('=========================================\n')
 
-// 保存失败列表
-if (stats.failed > 0) {
-    const failedWords = wordsToProcess
-        .filter((_, index) => index < stats.failed)
-        .map(w => w.word)
+        // 保存失败列表
+        if (stats.failed > 0) {
+            const failedWords = wordsToProcess
+                .filter((_, index) => index < stats.failed)
+                .map(w => w.word)
 
-    const failedFile = path.join(process.cwd(), '..', 'failed-audio-downloads.json')
-    await fs.writeJSON(failedFile, {
-        generatedAt: new Date().toISOString(),
-        count: stats.failed,
-        words: failedWords,
-    }, { spaces: 2 })
+            const failedFile = path.join(process.cwd(), '..', 'failed-audio-downloads.json')
+            await fs.writeJSON(failedFile, {
+                generatedAt: new Date().toISOString(),
+                count: stats.failed,
+                words: failedWords,
+            }, { spaces: 2 })
 
-    console.log(`⚠ 失败单词列表已保存到: ${failedFile}\n`)
-}
+            console.log(`⚠ 失败单词列表已保存到: ${failedFile}\n`)
+        }
 
     } catch (error) {
-    console.error('\n✗ 执行失败:', error)
-    process.exit(1)
-} finally {
-    await prisma.$disconnect()
-}
+        console.error('\n✗ 执行失败:', error)
+        process.exit(1)
+    } finally {
+        await prisma.$disconnect()
+    }
 }
 
 if (require.main === module) {
