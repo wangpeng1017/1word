@@ -344,13 +344,24 @@ Page({
     } else if (day.status === 'completed') {
       wx.showModal({
         title: 'Day ' + day.day + ' 已完成',
-        content: '学习单词: ' + day.wordsCount + '个\n用时: ' + this.formatTime(day.totalTime),
+        content: '复习单词: ' + day.wordsCount + '个\n用时: ' + this.formatTime(day.totalTime),
         showCancel: false
       })
     } else if (day.status === 'missed') {
-      wx.showToast({
-        title: '该日学习已错过',
-        icon: 'none'
+      // 允许补打卡
+      wx.showModal({
+        title: '补学 Day ' + day.day,
+        content: '确定要补学这天错过的单词吗？\n(仅学习当日新词)',
+        confirmText: '开始补学',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转学习页，指定 mode=new 和 day 参数
+            wx.navigateTo({
+              url: `/pages/study/study?mode=new&day=${day.day}`
+            })
+          }
+        }
       })
     } else if (day.status === 'locked') {
       wx.showToast({

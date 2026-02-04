@@ -143,6 +143,11 @@ export async function GET(
     let dayNumber = 0
     let totalDays = 0
 
+    // 获取查询参数中的 day (用于补打卡)
+    const { searchParams } = new URL(request.url)
+    const forcedDayStr = searchParams.get('day')
+    const forcedDay = forcedDayStr ? parseInt(forcedDayStr) : null
+
     if (planClass?.vocabulary_packs) {
       const pack = planClass.vocabulary_packs
       totalDays = pack.totalDays
@@ -150,8 +155,12 @@ export async function GET(
       // 计算今天是学习的第几天（使用北京时间）
       const startDateBeijing = toBeijingDate(planClass.start_date)
       const diffTime = today.getTime() - startDateBeijing.getTime()
-      dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-      console.log('[daily-tasks] dayNumber:', dayNumber, 'totalDays:', totalDays)
+      let currentDayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+      // 如果指定了 day 参数（补打卡），则使用指定的 day，否则使用今天
+      dayNumber = forcedDay || currentDayNumber
+
+      console.log('[daily-tasks] dayNumber:', dayNumber, 'forcedDay:', forcedDay, 'totalDays:', totalDays)
 
       // 获取当天的新学单词
       if (dayNumber >= 1 && dayNumber <= totalDays) {
@@ -167,24 +176,27 @@ export async function GET(
       }
 
       // 获取需要复习的单词（基于记忆曲线，从过去天数的词汇包中获取）
-      const newWordIds = new Set(newWords.map(v => v.id))
-      const seenVocabIds = new Set<string>()
+      // 注意：如果是补打卡模式 (forcedDay)，则不需要加载复习词，只学新词
+      if (!forcedDay) {
+        const newWordIds = new Set(newWords.map(v => v.id))
+        const seenVocabIds = new Set<string>()
 
-      for (const interval of REVIEW_INTERVALS) {
-        const targetDay = dayNumber - interval
-        if (targetDay >= 1 && targetDay <= totalDays) {
-          const packDay = pack.pack_days.find(d => d.dayNumber === targetDay)
-          if (packDay) {
-            const dayReviewWords = packDay.day_words
-              .map(dw => dw.vocabulary)
-              .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
-              .filter(v => v.questions && v.questions.length > 0)
-              .filter(v => v.word_audios && v.word_audios.length > 0)
+        for (const interval of REVIEW_INTERVALS) {
+          const targetDay = dayNumber - interval
+          if (targetDay >= 1 && targetDay <= totalDays) {
+            const packDay = pack.pack_days.find(d => d.dayNumber === targetDay)
+            if (packDay) {
+              const dayReviewWords = packDay.day_words
+                .map(dw => dw.vocabulary)
+                .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
+                .filter(v => v.questions && v.questions.length > 0)
+                .filter(v => v.word_audios && v.word_audios.length > 0)
 
-            dayReviewWords.forEach(v => {
-              seenVocabIds.add(v.id)
-              reviewWords.push({ vocabulary: v })
-            })
+              dayReviewWords.forEach(v => {
+                seenVocabIds.add(v.id)
+                reviewWords.push({ vocabulary: v })
+              })
+            }
           }
         }
       }

@@ -39,7 +39,7 @@ Page({
     } else if (options.resume === 'true') {
       this.resumeProgress()
     } else {
-      this.loadTasks(options.mode || 'all')
+      this.loadTasks(options.mode || 'all', options.day || null)
     }
   },
 
@@ -87,7 +87,7 @@ Page({
     this.setData({ timer })
   },
 
-  async loadTasks(mode = 'all') {
+  async loadTasks(mode = 'all', day = null) {
     try {
       this.setData({ isLoading: true, mode }) // Save mode
       wx.showLoading({ title: '加载中...' })
@@ -96,19 +96,28 @@ Page({
       const cachedTasks = getTodayWords()
       let tasks = []
       try {
-        let response = await get('/students/' + studentId + '/daily-tasks')
+        let url = '/students/' + studentId + '/daily-tasks'
+        if (day) url += '?day=' + day
+
+        let response = await get(url)
         if (Array.isArray(response)) tasks = response
         else if (response?.tasks) tasks = response.tasks
         else if (response?.data?.tasks) tasks = response.data.tasks
-        if (tasks.length === 0) {
+
+        // 只有正常的每日任务才走离线缓存逻辑，补打卡任务不缓存
+        if (tasks.length === 0 && !day) {
           response = await post('/students/' + studentId + '/daily-tasks')
           if (Array.isArray(response)) tasks = response
           else if (response?.tasks) tasks = response.tasks
           else if (response?.data?.tasks) tasks = response.data.tasks
         }
-        if (tasks.length > 0) saveTodayWords(tasks)
+
+        if (tasks.length > 0 && !day) saveTodayWords(tasks)
         this.setData({ isOffline: false })
       } catch (e) {
+        // 补打卡模式不支持离线
+        if (day) throw e
+
         if (cachedTasks?.length > 0) { tasks = cachedTasks; this.setData({ isOffline: true }); wx.showToast({ title: '离线模式', icon: 'none' }) }
         else throw e
       }
