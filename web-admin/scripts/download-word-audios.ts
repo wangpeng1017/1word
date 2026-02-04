@@ -15,10 +15,10 @@ const prisma = new PrismaClient()
 const CONFIG = {
     FREE_DICT_API: 'https://api.dictionaryapi.dev/api/v2/entries/en',
     REQUEST_TIMEOUT: 10000,
-    MAX_RETRIES: 3,
-    CONCURRENT_DOWNLOADS: 5,
+    MAX_RETRIES: 5,
+    CONCURRENT_DOWNLOADS: 1,
     AUDIO_DIR: path.join(process.cwd(), 'public', 'uploads', 'word-audios'),
-    REQUEST_DELAY: 100, // 请求间隔，避免API限流
+    REQUEST_DELAY: 1500, // 增加间隔，避免API限流 (429错误)
 }
 
 interface AudioInfo {
