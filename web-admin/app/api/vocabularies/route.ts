@@ -40,7 +40,16 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (search) {
+    // 批量精确查找模式
+    const wordsParam = searchParams.get('words')
+    if (wordsParam) {
+      const words = wordsParam.split(',').map(w => w.trim().toLowerCase()).filter(Boolean)
+      if (words.length > 0) {
+        where.word = { in: words }
+        // 如果是批量查找，通常不需要分页限制，或者限制稍微大一点
+        // 这里我们暂时不强制分页，或者沿用 limit
+      }
+    } else if (search) {
       where.OR = [
         { word: { contains: search } },  // MySQL utf8mb4_unicode_ci 默认大小写不敏感
         // 搜索 word_meanings 表中的释义
