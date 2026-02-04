@@ -187,11 +187,14 @@ export async function POST(request: NextRequest) {
     const studentId = nanoid()
     const now = new Date()
 
+    // 处理 email：空字符串转为 null，避免唯一约束冲突
+    const emailValue = email || null
+
     const user = await prisma.user.create({
       data: {
         id: userId,
         name,
-        email,
+        email: emailValue,
         phone,
         password: hashedPassword,
         role: 'STUDENT',
