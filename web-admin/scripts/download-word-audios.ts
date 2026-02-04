@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client'
 import axios from 'axios'
 import * as fs from 'fs-extra'
 import * as path from 'path'
-import pLimit from 'p-limit'
+
 
 const prisma = new PrismaClient()
 
@@ -17,7 +17,7 @@ const CONFIG = {
     REQUEST_TIMEOUT: 10000,
     MAX_RETRIES: 3,
     CONCURRENT_DOWNLOADS: 5,
-    AUDIO_DIR: path.join(process.cwd(), '..', 'public', 'uploads', 'word-audios'),
+    AUDIO_DIR: path.join(process.cwd(), 'public', 'uploads', 'word-audios'),
     REQUEST_DELAY: 100, // 请求间隔，避免API限流
 }
 
@@ -242,7 +242,28 @@ async function downloadWordAudios() {
 
         if (wordsToProcess.length === 0) {
             console.log('所有词汇都已有完整音频！')
-            return
+        }
+
+        // 特別检查 Upheaval
+        const upheaval = vocabularies.find(v => v.word.toLowerCase() === 'upheaval')
+        if (upheaval) {
+            console.log('\n[Check] Found "upheaval" in database.')
+            const hasAudio = upheaval.word_audios.length > 0
+            console.log(`[Check] "upheaval" audio count: ${upheaval.word_audios.length}`)
+            if (!hasAudio) {
+                console.log('[Check] "upheaval" missing audio, will attempt download.')
+                // Force add to processing if not already there
+                if (!wordsToProcess.find(w => w.word === 'upheaval')) {
+                    wordsToProcess.push({
+                        word: upheaval.word,
+                        vocabularyId: upheaval.id,
+                        needUS: true,
+                        needUK: true
+                    })
+                }
+            }
+        } else {
+            console.log('\n[Check] "upheaval" NOT found in database.')
         }
 
         // 统计信息
@@ -256,6 +277,8 @@ async function downloadWordAudios() {
         }
 
         // 并发控制
+        // Fix: Use dynamic import for ESM module p-limit in CommonJS environment
+        const { default: pLimit } = await import('p-limit')
         const limit = pLimit(CONFIG.CONCURRENT_DOWNLOADS)
 
         console.log('开始下载音频...\n')

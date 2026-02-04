@@ -45,10 +45,10 @@
           <!-- 圆形节点 -->
           <view class="node-circle {{item.status}}">
             <view class="node-inner">
-              <text class="node-icon" wx:if="{{item.status === 'completed'}}">✓</text>
-              <text class="node-icon" wx:elif="{{item.status === 'current'}}">▶</text>
-              <text class="node-icon" wx:elif="{{item.status === 'missed'}}">!</text>
-              <text class="node-icon" wx:else>🔒</text>
+              <text class="node-icon-3d" wx:if="{{item.status === 'completed'}}">⭐️</text>
+              <text class="node-icon-3d" wx:elif="{{item.status === 'current'}}">📖</text>
+              <text class="node-icon-3d" wx:elif="{{item.status === 'missed'}}">❗️</text>
+              <text class="node-icon-3d" wx:else>🔒</text>
             </view>
             <!-- 进度环 -->
             <view class="progress-ring" wx:if="{{item.status === 'current'}}"></view>

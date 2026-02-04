@@ -216,6 +216,12 @@
   color: #AFAFAF;
 }
 
+.node-icon-3d {
+  font-size: 56rpx;
+  transform: translateY(-2rpx);
+  text-shadow: 0 4rpx 4rpx rgba(0,0,0,0.2);
+}
+
 /* 已完成状态 */
 .node-circle.completed {
   background: #58CC02;

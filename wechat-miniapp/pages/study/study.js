@@ -242,7 +242,7 @@ Page({
     // 错题列表查询使用 ROW_NUMBER 取最新记录，所以答对的题目会自动从错题列表消失
 
     if (isMilestone) setTimeout(() => this.showMilestonePopup(newCC), 300)
-    if (isCorrect) { setTimeout(() => this.setData({ showExpGain: false }), 1000); setTimeout(() => this.nextQuestion(), isMilestone ? 2500 : 1500) }
+    if (isCorrect) { setTimeout(() => this.setData({ showExpGain: false }), 1000); setTimeout(() => this.nextQuestion(), isMilestone ? 1500 : 800) }
   },
 
   playFeedback(c) { },
@@ -429,6 +429,7 @@ Page({
   playAudio() {
     const { currentTask } = this.data
     if (!currentTask?.vocabulary) return
+    wx.vibrateShort({ type: 'light' }) // 增加触感反馈
     if (currentTask.vocabulary.audioUrl) {
       if (!this.data.audioContext) this.data.audioContext = wx.createInnerAudioContext()
       this.data.audioContext.src = currentTask.vocabulary.audioUrl
