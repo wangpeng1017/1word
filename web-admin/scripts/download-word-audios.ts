@@ -277,9 +277,37 @@ async function downloadWordAudios() {
         }
 
         // 并发控制
-        // Fix: Use dynamic import for ESM module p-limit in CommonJS environment
-        const { default: pLimit } = await import('p-limit')
-        const limit = pLimit(CONFIG.CONCURRENT_DOWNLOADS)
+        // Fix: Use simple inline concurrency limiter to avoid ESM/CommonJS issues with p-limit
+        const createLimit = (concurrency: number) => {
+            let active = 0;
+            const queue: any[] = [];
+
+            const next = () => {
+                active--;
+                if (queue.length > 0) {
+                    const [fn, resolve, reject] = queue.shift();
+                    active++;
+                    fn().then(resolve).catch(reject).finally(next);
+                }
+            }
+
+            return (fn: () => Promise<any>) => {
+                return new Promise((resolve, reject) => {
+                    const run = () => {
+                        active++;
+                        fn().then(resolve).catch(reject).finally(next);
+                    };
+
+                    if (active < concurrency) {
+                        run();
+                    } else {
+                        queue.push([fn, resolve, reject]);
+                    }
+                });
+            };
+        };
+
+        const limit = createLimit(CONFIG.CONCURRENT_DOWNLOADS)
 
         console.log('开始下载音频...\n')
         console.log('=========================================')
