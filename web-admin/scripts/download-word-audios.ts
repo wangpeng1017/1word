@@ -139,10 +139,18 @@ async function processWord(
         const filepath = path.join(CONFIG.AUDIO_DIR, filename)
         const audioUrl = `/uploads/word-audios/${filename}`
 
-        console.log(`  ⬇ 下载美式发音...`)
-        if (await downloadAudio(audioInfo.usAudioUrl, filepath)) {
+        let downloadSuccess = false
+        if (await fs.pathExists(filepath)) {
+            console.log(`  ✓ 本地文件已存在 (跳过下载)`)
+            downloadSuccess = true
+        } else {
+            console.log(`  ⬇ 下载美式发音...`)
+            downloadSuccess = await downloadAudio(audioInfo.usAudioUrl, filepath)
+        }
+
+        if (downloadSuccess) {
             await saveAudioToDatabase(vocabularyId, audioUrl, 'US')
-            console.log(`  ✓ 美式发音已保存`)
+            // console.log(`  ✓ 美式发音记录已更新`) // 减少日志
             stats.usDownloaded++
             usSuccess = true
         }
@@ -156,10 +164,18 @@ async function processWord(
         const filepath = path.join(CONFIG.AUDIO_DIR, filename)
         const audioUrl = `/uploads/word-audios/${filename}`
 
-        console.log(`  ⬇ 下载英式发音...`)
-        if (await downloadAudio(audioInfo.ukAudioUrl, filepath)) {
+        let downloadSuccess = false
+        if (await fs.pathExists(filepath)) {
+            console.log(`  ✓ 本地文件已存在 (跳过下载)`)
+            downloadSuccess = true
+        } else {
+            console.log(`  ⬇ 下载英式发音...`)
+            downloadSuccess = await downloadAudio(audioInfo.ukAudioUrl, filepath)
+        }
+
+        if (downloadSuccess) {
             await saveAudioToDatabase(vocabularyId, audioUrl, 'UK')
-            console.log(`  ✓ 英式发音已保存`)
+            // console.log(`  ✓ 英式发音记录已更新`)
             stats.ukDownloaded++
             ukSuccess = true
         }
