@@ -10,6 +10,8 @@
 - **Mini-App**: Added haptic feedback to audio playback button.
 - **Web-Admin**: **Local Audio Hosting** - Downloaded all sound effects to local server to avoid network issues with external URLs.
 - **Web-Admin**: **API Update** - `daily-tasks` now supports `day` parameter for make-up learning and auto-filters review words in this mode.
+- **Web-Admin**: **Student Management** - Enforced phone number requirement in "Add Student" form to match backend validation.
+- **Web-Admin**: **Class Management** - Added uniqueness check for class names to prevent duplicates.
 
 ### Changed
 - **Mini-App**: Reduced delay after correct answer in "Listen and Choose" mode (1.5s -> 0.8s) for faster pacing.

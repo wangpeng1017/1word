@@ -362,13 +362,14 @@ export default function StudentsPage() {
             label="电话号码"
             name="phone"
             rules={[
+              { required: true, message: '请输入手机号码' },
               {
                 pattern: /^1\d{10}$/,
                 message: '请输入11位手机号码'
               }
             ]}
           >
-            <Input placeholder="11位手机号码" maxLength={11} />
+            <Input placeholder="11位手机号码（必填，用于登录）" maxLength={11} />
           </Form.Item>
           <Form.Item label="班级" name="classId">
             <Select placeholder="选择班级" allowClear>

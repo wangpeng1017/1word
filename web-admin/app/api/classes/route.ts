@@ -14,141 +14,153 @@ import { nanoid } from 'nanoid'
 
 // 数据转换函数：将数据库字段转换为前端期望的格式
 function formatClassData(classData: any) {
- return {
- ...classData,
- isActive: classData.is_active,
- teacherId: classData.teacher_id,
- createdAt: classData.created_at,
- updatedAt: classData.updated_at,
- teacher: classData.teachers ? {
- ...classData.teachers,
- userId: classData.teachers.user_id,
- createdAt: classData.teachers.created_at,
- updatedAt: classData.teachers.updated_at,
- } : undefined,
- }
+    return {
+        ...classData,
+        isActive: classData.is_active,
+        teacherId: classData.teacher_id,
+        createdAt: classData.created_at,
+        updatedAt: classData.updated_at,
+        teacher: classData.teachers ? {
+            ...classData.teachers,
+            userId: classData.teachers.user_id,
+            createdAt: classData.teachers.created_at,
+            updatedAt: classData.teachers.updated_at,
+        } : undefined,
+    }
 }
 
 // 获取班级列表
 export async function GET(request: NextRequest) {
- try {
- const authHeader = request.headers.get('authorization')
- const token = getTokenFromHeader(authHeader || '')
+    try {
+        const authHeader = request.headers.get('authorization')
+        const token = getTokenFromHeader(authHeader || '')
 
- const payload = verifyToken(token || '')
- if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
- return unauthorizedResponse('只有教师或管理员可以查看班级')
- }
+        const payload = verifyToken(token || '')
+        if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+            return unauthorizedResponse('只有教师或管理员可以查看班级')
+        }
 
- const classes = await prisma.classes.findMany({
- where: { is_active: true },
- include: {
- teachers: {
- include: {
- user: {
- select: {
- name: true,
- },
- },
- },
- },
- _count: {
- select: { students: true },
- },
- },
- orderBy: { created_at: 'desc' },
- })
+        const classes = await prisma.classes.findMany({
+            where: { is_active: true },
+            include: {
+                teachers: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+                _count: {
+                    select: { students: true },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        })
 
- // 转换数据格式
- const formattedClasses = classes.map(formatClassData)
+        // 转换数据格式
+        const formattedClasses = classes.map(formatClassData)
 
- return successResponse(formattedClasses)
- } catch (error) {
- console.error('获取班级列表错误:', error)
- return errorResponse('获取班级列表失败', 500)
- }
+        return successResponse(formattedClasses)
+    } catch (error) {
+        console.error('获取班级列表错误:', error)
+        return errorResponse('获取班级列表失败', 500)
+    }
 }
 
 // 创建班级
 export async function POST(request: NextRequest) {
- try {
- const authHeader = request.headers.get('authorization')
- const token = getTokenFromHeader(authHeader || '')
+    try {
+        const authHeader = request.headers.get('authorization')
+        const token = getTokenFromHeader(authHeader || '')
 
- const payload = verifyToken(token || '')
- if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
- return unauthorizedResponse('只有教师或管理员可以创建班级')
- }
+        const payload = verifyToken(token || '')
+        if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
+            return unauthorizedResponse('只有教师或管理员可以创建班级')
+        }
 
- const body = await request.json()
- const { name, teacherId } = body
+        const body = await request.json()
+        const { name, teacherId } = body
 
- if (!name) {
- return errorResponse('班级名称不能为空')
- }
+        if (!name) {
+            return errorResponse('班级名称不能为空')
+        }
 
- let finalTeacherId = teacherId
+        // 检查班级名称是否已存在
+        const existingClass = await prisma.classes.findFirst({
+            where: {
+                name,
+                is_active: true // 只检查活跃的班级
+            }
+        })
 
- // 如果是教师角色，使用自己的教师ID
- if (payload.role === 'TEACHER') {
- const user = await prisma.user.findUnique({
- where: { id: payload.userId },
- include: { teachers: true },
- })
+        if (existingClass) {
+            return errorResponse('班级名称已存在', 400)
+        }
 
- if (!user?.teachers) {
- return errorResponse('教师信息不存在', 404)
- }
- finalTeacherId = user.teachers.id
- }
+        let finalTeacherId = teacherId
 
- // 管理员具备所有身份，如果没有教师身份则自动创建
- if (payload.role === 'ADMIN' && !finalTeacherId) {
- const user = await prisma.user.findUnique({
- where: { id: payload.userId },
- include: { teachers: true },
- })
- if (user?.teachers) {
- finalTeacherId = user.teachers.id
- } else if (user) {
- // 自动为管理员创建教师身份
- const newTeacher = await prisma.teachers.create({
- data: {
- id: nanoid(),
- user_id: user.id,
- school: '管理员',
- subject: '英语',
- updated_at: new Date(),
- }
- })
- finalTeacherId = newTeacher.id
- }
- }
+        // 如果是教师角色，使用自己的教师ID
+        if (payload.role === 'TEACHER') {
+            const user = await prisma.user.findUnique({
+                where: { id: payload.userId },
+                include: { teachers: true },
+            })
 
- // 使用 Prisma 创建班级
- const newClass = await prisma.classes.create({
- data: {
- id: nanoid(),
- name,
- teacher_id: finalTeacherId,
- updated_at: new Date(),
- },
- include: {
- teachers: {
- include: {
- user: {
- select: {
- name: true,
- },
- },
- },
- },
- },
- })
+            if (!user?.teachers) {
+                return errorResponse('教师信息不存在', 404)
+            }
+            finalTeacherId = user.teachers.id
+        }
 
- return successResponse(formatClassData(newClass), '班级创建成功')
- } catch (error) {
- console.error('创建班级错误:', error)
- return errorResponse('创建班级失败', 500)
- }
+        // 管理员具备所有身份，如果没有教师身份则自动创建
+        if (payload.role === 'ADMIN' && !finalTeacherId) {
+            const user = await prisma.user.findUnique({
+                where: { id: payload.userId },
+                include: { teachers: true },
+            })
+            if (user?.teachers) {
+                finalTeacherId = user.teachers.id
+            } else if (user) {
+                // 自动为管理员创建教师身份
+                const newTeacher = await prisma.teachers.create({
+                    data: {
+                        id: nanoid(),
+                        user_id: user.id,
+                        school: '管理员',
+                        subject: '英语',
+                        updated_at: new Date(),
+                    }
+                })
+                finalTeacherId = newTeacher.id
+            }
+        }
+
+        // 使用 Prisma 创建班级
+        const newClass = await prisma.classes.create({
+            data: {
+                id: nanoid(),
+                name,
+                teacher_id: finalTeacherId,
+                updated_at: new Date(),
+            },
+            include: {
+                teachers: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        return successResponse(formatClassData(newClass), '班级创建成功')
+    } catch (error) {
+        console.error('创建班级错误:', error)
+        return errorResponse('创建班级失败', 500)
+    }
 }
