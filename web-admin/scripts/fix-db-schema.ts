@@ -11,7 +11,8 @@ async function main() {
         console.log('1.Executing: ALTER TABLE students MODIFY wechat_id VARCHAR(191) NULL DEFAULT NULL;')
 
         // Using $executeRawUnsafe for DDL
-        await prisma.$executeRawUnsafe`ALTER TABLE students MODIFY wechat_id VARCHAR(191) NULL DEFAULT NULL;`
+        // Correctly passing a string, NOT a template literal
+        await prisma.$executeRawUnsafe('ALTER TABLE students MODIFY wechat_id VARCHAR(191) NULL DEFAULT NULL;')
 
         console.log('✅ Schema updated successfully!')
 
