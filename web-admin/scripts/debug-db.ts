@@ -9,8 +9,8 @@ async function main() {
     try {
         // 1. Check Table Structure (using raw SQL because Prisma doesn't expose schema info easily)
         console.log('1. Table Structure for `students`:')
-        const columns = await prisma.$queryRaw`DESCRIBE students`
-        const wechatCol = columns.find(c => c.Field === 'wechat_id')
+        const columns: any[] = await prisma.$queryRaw`DESCRIBE students`
+        const wechatCol = columns.find((c: any) => c.Field === 'wechat_id')
         console.log('wechat_id column definition:')
         console.log(wechatCol || 'Column not found!')
 
