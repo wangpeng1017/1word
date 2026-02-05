@@ -89,9 +89,6 @@ export async function POST(request: NextRequest) {
 
         if (phone && phone.trim()) {
             phoneValue = phone.trim()
-        } else {
-            // 生产环境 phone 可能为 NOT NULL，如果没有提供，生成唯一占位符
-            phoneValue = `register_no_phone_${userId}`
         }
 
         // 创建用户
