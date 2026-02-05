@@ -73,11 +73,11 @@ export async function POST(request: NextRequest) {
 
         for (const studentData of students) {
             try {
-                const { name, studentNo, className } = studentData
+                const { name, studentNo, className, phone } = studentData
 
-                if (!name || !studentNo) {
+                if (!name || !studentNo || !phone) {
                     results.failed++
-                    results.errors.push(`学号 ${studentNo || '未知'}: 姓名或学号为空`)
+                    results.errors.push(`学号 ${studentNo || '未知'}: 姓名、学号或手机号为空`)
                     continue
                 }
 
@@ -145,8 +145,7 @@ export async function POST(request: NextRequest) {
                 const now = new Date()
 
                 // 生产环境必需字段处理
-                // Phone: 用于登录，且唯一。导入如果没有，生成唯一占位符
-                const phone = `import_${studentId}`
+                // Phone: 用于登录，且唯一。需从导入数据获取
                 // WeChat ID: 唯一且非空。生成唯一占位符
                 const wechatId = `temp_import_${studentId}`
                 // Email: 生成唯一占位符
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
                         id: nanoid(),
                         name,
                         password: hashedPassword,
-                        phone: phone, // 必填且唯一
+                        phone: phone, // 必填且唯一 (来自导入数据)
                         email: email, // 必填且唯一
                         role: 'STUDENT',
                         updated_at: now,

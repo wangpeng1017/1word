@@ -105,6 +105,7 @@ export interface StudentImportRow {
   name: string
   studentNo: string
   className?: string
+  phone: string // 必填，用于登录
 }
 
 // 学习记录相关类型
