@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以查看学生列表')
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {}
-    
+
     if (classId) {
       where.class_id = classId
     }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以创建学生')
@@ -213,6 +213,9 @@ export async function POST(request: NextRequest) {
             id: studentId,
             student_no: studentNo,
             class_id: classId,
+            // 修复: 生产数据库 wechat_id 为 NOT NULL 且唯一，但在 Prisma 中可选
+            // 为了避免唯一性冲突，生成一个唯一的临时占位符
+            wechat_id: `temp_${studentId}`,
             updated_at: now,
           },
         },
