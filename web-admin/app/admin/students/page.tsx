@@ -204,28 +204,61 @@ export default function StudentsPage() {
   const handleImport = async (file: File) => {
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      // 1. 读取并解析 Excel 文件
+      const arrayBuffer = await file.arrayBuffer()
+      const wb = XLSX.read(arrayBuffer)
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const jsonData = XLSX.utils.sheet_to_json(ws)
+
+      if (jsonData.length === 0) {
+        message.warning('Excel 文件为空')
+        setUploading(false)
+        return false
+      }
+
+      // 2. 映射数据列
+      const students = jsonData.map((row: any) => ({
+        name: row['姓名'],
+        studentNo: row['学号'] ? String(row['学号']) : undefined,
+        phone: row['手机号'] ? String(row['手机号']) : undefined,
+        className: row['班级名称'],
+      })).filter(s => s.name && s.studentNo && s.phone) // 简单过滤无效行
+
+      if (students.length === 0) {
+        message.error('未找到有效数据，请检查 Excel 列名是否正确（姓名、学号、手机号）')
+        setUploading(false)
+        return false
+      }
+
+      // 3. 发送 JSON 数据
       const token = localStorage.getItem('token')
       const response = await fetch('/api/students/import', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ students }),
       })
+
       const result = await response.json()
       if (result.success) {
-        message.success(`成功导入${result.data?.count || 0}个学生`)
+        message.success(`成功导入 ${result.data?.success || 0} 个学生`)
+        if (result.data?.failed > 0) {
+          message.warning(`有 ${result.data?.failed} 条数据导入失败，请查看返回详情`)
+        }
         setImportModalVisible(false)
         loadData(pagination.current, pagination.pageSize)
       } else {
         message.error(result.error || '导入失败')
       }
     } catch (error) {
-      message.error('导入失败')
+      console.error('导入出错:', error)
+      message.error('导入处理失败，请检查文件格式')
     } finally {
       setUploading(false)
     }
-    return false
+    return false // 阻止 Upload 组件默认上传行为
   }
 
   const downloadTemplate = () => {
