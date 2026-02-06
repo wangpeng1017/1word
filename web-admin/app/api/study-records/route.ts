@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
           accuracy,
           totalTime,
           startedAt: new Date(now.getTime() - totalTime * 1000),
-          completedAt: now,
+          completedAt: new Date(now.getTime()),
           isCompleted: true,
           isRetestMode: isRetestMode || false, // 保存错题重测标志
           updatedAt: now,
