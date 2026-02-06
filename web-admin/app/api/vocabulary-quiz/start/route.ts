@@ -74,6 +74,11 @@ export async function POST(request: NextRequest) {
                 questionText: q.questionText || '',
                 questionType: q.questionType,
                 options: [q.optionA, q.optionB, q.optionC, q.optionD],
+                optionA: q.optionA,
+                optionB: q.optionB,
+                optionC: q.optionC,
+                optionD: q.optionD,
+                optionE: q.optionE,
                 correctOption: q.correctOption,
                 difficulty: q.difficulty
             }
