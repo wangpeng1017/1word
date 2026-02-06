@@ -712,6 +712,28 @@ tail -f /var/log/nginx/error.log
 | Nginx 访问日志 | /var/log/nginx/access.log |
 | Nginx 错误日志 | /var/log/nginx/error.log |
 
+### 7.4 数据维护与备份操作
+
+#### 手动备份表数据（mysqldump）
+
+当数据库账号没有 `CREATE TABLE` 权限无法直接复制表时，使用此方法备份数据到文件：
+
+```bash
+# 1. 登录到服务器（bash环境）
+# 2. 执行导出命令（将 table_name 替换为实际表名）
+mysqldump -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RW -p4n8anApuMflp3cRr bdcxcx table_name > table_name_backup.sql
+
+# 示例：备份 word_audios 表
+mysqldump -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RW -p4n8anApuMflp3cRr bdcxcx word_audios > word_audios_backup.sql
+```
+
+#### 数据恢复
+
+```bash
+# 将备份文件导入回数据库
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RW -p4n8anApuMflp3cRr bdcxcx < table_name_backup.sql
+```
+
 ---
 
 ## 八、故障排查
