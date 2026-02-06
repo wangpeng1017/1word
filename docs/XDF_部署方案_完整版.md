@@ -1,8 +1,8 @@
 # 新东方服务器部署方案（完整版）
 
 > **项目**: 英语词汇学习助手 (iEnglish)
-> **版本**: v1.7
-> **更新日期**: 2026-02-01
+> **版本**: v1.0
+> **更新日期**: 2026-02-06
 > **状态**: ✅ 生产运行中，图片API已部署
 
 ---
@@ -98,6 +98,10 @@ Next.js 应用 (3000端口)
 
 | 决策点 | 方案 | 原因 |
 |--------|------|------|
+| **容器化** | ❌ 不使用 Docker | 生产环境直接使用 PM2 管理 Node.js 进程 |
+| **数据库** | 阿里云 RDS MySQL | 集团统一数据库服务，高可用、自动备份 |
+| **进程管理** | PM2 | 自动重启、日志管理、零停机部署 |
+| **反向代理** | Nginx | 集团统一负载均衡 + 本地 Nginx 转发 |
 | 静态文件访问 | 通过 `/api/images/*` 提供访问 | Nginx只代理`/api/*`，避免配置复杂化 |
 | 数据迁移 | **通过 Git 仓库中转** | **阿里云↔新东方网络不互通，无法直接传输** |
 | 数据库同步 | DBA手动执行SQL | 无外部数据库访问权限 |
@@ -905,10 +909,50 @@ if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
 | PM2 配置 | ~/.pm2/dump.pm2 |
 | Node.js 二进制 | ~/node-v18.20.4-linux-x64/bin |
 
-### 11.4 变更历史
+### 11.4 数据库诊断命令
+
+由于生产环境使用阿里云 RDS，无法通过 Docker 访问，需使用以下命令连接数据库：
+
+> **重要**: 使用**主库地址**进行查询，从库可能存在数据同步延迟。
+
+#### 查询数据库表结构
+```bash
+# 使用只读账号查看表结构（连接主库）
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RO -pf9l5LDWLcu9wkjU8 bdcxcx -e "SHOW TABLES;"
+```
+
+#### 查询特定表
+```bash
+# 示例：查询词汇量测试表
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RO -pf9l5LDWLcu9wkjU8 bdcxcx -e "SHOW TABLES LIKE 'vocabulary_quiz%';"
+```
+
+#### 执行复杂查询
+```bash
+# 示例：查询学生学习记录
+# 第一步：查找学生ID
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RO -pf9l5LDWLcu9wkjU8 bdcxcx -e "SELECT id FROM students WHERE student_no = '10002';"
+
+# 第二步：用实际的 studentId 替换下面的 'STUDENT_ID_HERE'
+mysql -h rm-2zel9bu41o5s0v0j8.mysql.rds.aliyuncs.com -u PRO_RDS_bdcxcx_RO -pf9l5LDWLcu9wkjU8 bdcxcx -e "
+SELECT id, taskDate, totalWords, correctCount, wrongCount, accuracy 
+FROM study_records 
+WHERE studentId = 'STUDENT_ID_HERE' 
+ORDER BY createdAt DESC 
+LIMIT 10;
+"
+```
+
+> **注意**: 
+> - 只读账号 (`PRO_RDS_bdcxcx_RO`) 仅用于查询，不能修改数据
+> - 数据修改需使用读写账号 (`PRO_RDS_bdcxcx_RW`) 或联系 DBA
+> - **必须使用主库地址** (`rm-2zel9bu41o5s0v0j8`)，从库可能有数据延迟
+
+### 11.5 变更历史
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
+| 2026-02-06 | v1.0 | 明确生产环境架构：不使用 Docker，使用 PM2 + 阿里云 RDS |
 | 2026-02-01 | v1.7 | 回滚读写分离配置（从库连接不可用） |
 | 2026-02-01 | v1.6 | 新增读写分离配置，支持主从数据库 |
 | 2026-02-01 | v1.5 | 更新生产环境小程序AppID为 wx9e311c91d453f624 |

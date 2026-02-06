@@ -246,18 +246,19 @@ Page({
 
     if (!nextAudioUrl) return
 
-    // 创建或复用预加载音频上下文
-    if (!this.data.preloadAudioContext) {
-      this.data.preloadAudioContext = wx.createInnerAudioContext()
+    // 修复：停止并销毁旧的预加载上下文，避免音频混乱
+    if (this.data.preloadAudioContext) {
+      this.data.preloadAudioContext.stop()
+      this.data.preloadAudioContext.destroy()
     }
 
+    // 创建新的预加载音频上下文
+    this.data.preloadAudioContext = wx.createInnerAudioContext()
     const preloadCtx = this.data.preloadAudioContext
 
     // 设置音频源但不播放（微信会自动缓冲）
-    if (preloadCtx.src !== nextAudioUrl) {
-      preloadCtx.src = nextAudioUrl
-      preloadCtx.volume = 0 // 静音预加载
-    }
+    preloadCtx.src = nextAudioUrl
+    preloadCtx.volume = 0 // 静音预加载
 
     // 监听缓冲事件，缓冲完成可停止
     preloadCtx.offCanplay() // 移除旧监听器
@@ -518,7 +519,13 @@ Page({
     if (!currentTask?.vocabulary) return
     wx.vibrateShort({ type: 'light' }) // 增加触感反馈
     if (currentTask.vocabulary.audioUrl) {
-      if (!this.data.audioContext) this.data.audioContext = wx.createInnerAudioContext()
+      // 修复：先停止并销毁旧的音频上下文，避免音频混乱
+      if (this.data.audioContext) {
+        this.data.audioContext.stop()
+        this.data.audioContext.destroy()
+      }
+      // 创建新的音频上下文
+      this.data.audioContext = wx.createInnerAudioContext()
       this.data.audioContext.src = currentTask.vocabulary.audioUrl
       this.data.audioContext.play()
     } else wx.showToast({ title: '正在加载音频...', icon: 'loading', duration: 1000 })

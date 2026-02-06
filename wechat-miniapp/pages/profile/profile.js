@@ -104,8 +104,12 @@ Page({
       const totalSessions = records.length
       const totalWords = records.reduce((sum, r) => sum + (r.totalWords || 0), 0)
       const totalCorrect = records.reduce((sum, r) => sum + (r.correctCount || 0), 0)
+      const totalWrong = records.reduce((sum, r) => sum + (r.wrongCount || 0), 0)
       const totalTime = records.reduce((sum, r) => sum + (r.totalTime || 0), 0)
-      const avgAccuracy = totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0
+
+      // 修复：使用实际答题总数（正确+错误）计算正确率，避免 correctCount > totalWords 导致的异常
+      const totalAnswered = totalCorrect + totalWrong
+      const avgAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0
 
       // 格式化总用时为 mm:ss 格式
       const totalMinutes = Math.floor(totalTime / 60)

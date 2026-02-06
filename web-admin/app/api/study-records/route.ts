@@ -292,6 +292,15 @@ export async function POST(request: NextRequest) {
     const totalTime = validatedAnswers.reduce((sum, a) => sum + (a.timeSpent || 0), 0)
     const vocabularyIds = [...new Set(validatedAnswers.map(a => a.vocabularyId))] as string[]
 
+    // 数据完整性验证：防止 correctCount 超过 totalWords（理论上不应该发生，但添加保护）
+    if (correctCount > totalWords) {
+      console.error(`[数据异常] correctCount (${correctCount}) > totalWords (${totalWords})`, {
+        studentId,
+        answersCount: validatedAnswers.length,
+        correctAnswers: validatedAnswers.filter(a => a.isCorrect).length
+      })
+    }
+
     const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 
     const coreResult = await prisma.$transaction(async (tx) => {
