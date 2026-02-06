@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: {
         status: 'COMPLETED',
         isCompleted: true,
-        completedWords: session.totalWords,
+        // completedWords: session.totalWords, // 不要覆盖！依赖 progress 增量更新
         completedAt: now,
         updatedAt: now,
       },
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         const lastReviewDate = existingPlan.lastReviewAt ? new Date(existingPlan.lastReviewAt).toDateString() : null
         const todayStr = now.toDateString()
         const alreadyReviewedToday = lastReviewDate === todayStr
-        const newReviewCount = alreadyReviewedToday 
-          ? existingPlan.reviewCount 
+        const newReviewCount = alreadyReviewedToday
+          ? existingPlan.reviewCount
           : getNextReviewCount(existingPlan.reviewCount, isCorrect)
 
         planUpdates.push(

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const payload = verifyToken(token)
     if (!payload) return apiResponse.unauthorized('Token无效')
 
-    const { studentId, totalWords, vocabularyIds } = await request.json()
+    const { studentId, totalWords, vocabularyIds, mode, day } = await request.json()
     if (!studentId || !totalWords) {
       return apiResponse.error('参数错误：需要 studentId 和 totalWords', 400)
     }
@@ -39,51 +39,105 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingSession) {
-      if (existingSession.status === 'COMPLETED') {
-        // 今天已完成学习，返回已完成状态（不是错误）
-        return apiResponse.success({
-          sessionId: existingSession.id,
-          isCompleted: true,
-          completedWords: existingSession.completedWords,
-          correctCount: existingSession.correctCount,
-          wrongCount: existingSession.wrongCount,
-          totalTime: existingSession.totalTime,
-          message: '今天的学习任务已完成，明天再来吧！',
-        })
+      // 检查会话上下文是否匹配（通过解析 ID）
+      // ID格式：sr_{timestamp}_{random}_m{mode}_d{day}
+      const parts = existingSession.id.split('_')
+      let sessionMode = 'unknown'
+      let sessionDay = 'unknown'
+
+      // 尝试解析 ID 中的 tag
+      for (const part of parts) {
+        if (part.startsWith('m')) sessionMode = part.substring(1)
+        if (part.startsWith('d')) sessionDay = part.substring(1)
       }
 
-      // 如果是中断状态，恢复为进行中
-      if (existingSession.status === 'INTERRUPTED') {
-        await prisma.study_records.update({
-          where: { id: existingSession.id },
-          data: { status: 'IN_PROGRESS', lastActiveAt: now, updatedAt: now },
-        })
+      // 当前请求的 tag
+      const reqMode = mode || 'unknown'
+      const reqDay = day ? String(day) : 'unknown'
+
+      // 判断是否匹配
+      // 策略：信任前端传入的参数。
+      // 1. 如果ID中有 tag，必须与请求参数完全匹配。
+      // 2. 如果ID中没有 tag（旧数据），回退到 totalWords 判断。
+
+      let isContextMatch = true
+      const hasTags = sessionMode !== 'unknown' || (sessionDay !== 'unknown' && sessionDay !== 'null')
+
+      if (hasTags) {
+        // ID 中有 tag，必须完全匹配
+        const sessionDayStr = sessionDay === 'null' ? 'unknown' : sessionDay
+        const reqDayStr = (reqDay === 'null' || !reqDay) ? 'unknown' : reqDay
+
+        // 关键修复：对于“今日新学”，请求可能是 mode=new, day=undefined。
+        // 而 ID 可能只包含 mnew，没有 dTag。
+        // 或者生成的 ID 是 mnew_dnull。
+        // 我们需要统一标准。
+
+        isContextMatch = (sessionMode === reqMode && sessionDayStr === reqDayStr)
+      } else {
+        // 旧会话没有 tag，回退到 totalWords 判断
+        isContextMatch = (existingSession.totalWords === totalWords)
       }
 
-      // 如果请求的总单词数大于当前会话的总单词数，更新总数（防止 240/10 这种情况）
-      if (totalWords > existingSession.totalWords) {
-        console.log(`[Session Update] Updating totalWords from ${existingSession.totalWords} to ${totalWords}`)
-        await prisma.study_records.update({
-          where: { id: existingSession.id },
-          data: { totalWords },
-        })
-        existingSession.totalWords = totalWords // 更新本地变量以便返回正确值
+      console.log(`[Session Check] ID=${existingSession.id} Mode=${sessionMode} Day=${sessionDay} | Req: Mode=${reqMode} Day=${reqDay} | Match=${isContextMatch}`)
+
+      if (isContextMatch) {
+        // 上下文匹配，检查状态
+
+        // 1. 如果是进行中，恢复会话（断点续传）
+        if (existingSession.status === 'IN_PROGRESS') {
+          // 如果请求的总单词数大于当前会话的总单词数，更新总数（扩容）
+          if (totalWords > existingSession.totalWords) {
+            console.log(`[Session Update] Updating totalWords from ${existingSession.totalWords} to ${totalWords}`)
+            await prisma.study_records.update({
+              where: { id: existingSession.id },
+              data: { totalWords },
+            })
+            existingSession.totalWords = totalWords
+          }
+
+          return apiResponse.success({
+            sessionId: existingSession.id,
+            isResumed: true,
+            completedWords: existingSession.completedWords,
+            correctCount: existingSession.correctCount,
+            wrongCount: existingSession.wrongCount,
+            totalTime: existingSession.totalTime,
+            message: '恢复已有学习会话',
+          })
+        }
+
+        // 2. 如果是 INTERRUPTED，恢复为进行中
+        if (existingSession.status === 'INTERRUPTED') {
+          await prisma.study_records.update({
+            where: { id: existingSession.id },
+            data: { status: 'IN_PROGRESS', lastActiveAt: now, updatedAt: now },
+          })
+          return apiResponse.success({
+            sessionId: existingSession.id,
+            isResumed: true,
+            completedWords: existingSession.completedWords,
+            correctCount: existingSession.correctCount,
+            wrongCount: existingSession.wrongCount,
+            totalTime: existingSession.totalTime,
+            message: '恢复中断的学习会话',
+          })
+        }
       }
 
-      // 返回已有会话，让客户端恢复（进度累加）
-      return apiResponse.success({
-        sessionId: existingSession.id,
-        isResumed: true,
-        completedWords: existingSession.completedWords,
-        correctCount: existingSession.correctCount,
-        wrongCount: existingSession.wrongCount,
-        totalTime: existingSession.totalTime,
-        message: existingSession.status === 'INTERRUPTED' ? '恢复中断的学习会话' : '恢复已有学习会话',
-      })
+      // 3. 其他情况（已完成、或上下文不匹配），直接创建新会话
     }
 
-    // 创建新会话
-    const sessionId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    // 创建新会话 - 加上 Context Tag
+    // 格式：sr_{timestamp}_m{mode}_d{day}_{random}
+    // 确保 tag 清晰：
+    // mode=new, day=1 -> mnew_d1
+    // mode=new, day=null -> mnew_dnull
+    const tagMode = mode || 'unknown'
+    const tagDay = day ? String(day) : 'null'
+    const tag = `m${tagMode}_d${tagDay}`
+
+    const sessionId = `sr_${Date.now()}_${tag}_${Math.random().toString(36).slice(2, 6)}`
 
     const session = await prisma.study_records.create({
       data: {
