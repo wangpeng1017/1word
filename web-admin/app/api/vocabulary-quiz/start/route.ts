@@ -52,6 +52,21 @@ export async function POST(request: NextRequest) {
 
         // 转换为前端需要的格式
         const formattedQuestions = shuffled.map((q, index) => {
+            // 调试：打印第一题的原始数据
+            if (index === 0) {
+                console.log('[词汇量测试] 第一题原始数据:', JSON.stringify({
+                    id: q.id,
+                    questionNo: q.questionNo,
+                    word: q.word,
+                    questionText: q.questionText,
+                    optionA: q.optionA,
+                    optionB: q.optionB,
+                    optionC: q.optionC,
+                    optionD: q.optionD,
+                    correctOption: q.correctOption
+                }, null, 2))
+            }
+
             return {
                 id: q.id,
                 questionNo: index + 1,
