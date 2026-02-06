@@ -490,6 +490,10 @@ pm2 restart word-app
 
 ## 五、更新部署流程
 
+> **⚠️ 重要**: XDF 服务器使用 PM2 运行 `npm start`（生产模式），**必须先执行 `npm run build` 构建**，否则应用会使用旧代码！
+> 
+> 验证方式：`pm2 info word-app` 查看 `script args` 为 `start`
+
 ### 5.1 标准更新流程
 
 ```bash
@@ -519,8 +523,10 @@ git diff HEAD~1 prisma/schema.prisma
 npx prisma generate
 
 
-# 6. 重新构建
+# 6. 重新构建（⚠️ 必须执行！）
 npm run build
+# 说明：PM2 运行 npm start（生产模式），需要 .next 构建产物
+# 如果不构建，应用会继续使用旧代码
 
 
 # 7. 重启应用
