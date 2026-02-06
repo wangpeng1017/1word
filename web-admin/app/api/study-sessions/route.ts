@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           message: '今天的学习任务已完成，明天再来吧！',
         })
       }
-      
+
       // 如果是中断状态，恢复为进行中
       if (existingSession.status === 'INTERRUPTED') {
         await prisma.study_records.update({
@@ -59,7 +59,17 @@ export async function POST(request: NextRequest) {
           data: { status: 'IN_PROGRESS', lastActiveAt: now, updatedAt: now },
         })
       }
-      
+
+      // 如果请求的总单词数大于当前会话的总单词数，更新总数（防止 240/10 这种情况）
+      if (totalWords > existingSession.totalWords) {
+        console.log(`[Session Update] Updating totalWords from ${existingSession.totalWords} to ${totalWords}`)
+        await prisma.study_records.update({
+          where: { id: existingSession.id },
+          data: { totalWords },
+        })
+        existingSession.totalWords = totalWords // 更新本地变量以便返回正确值
+      }
+
       // 返回已有会话，让客户端恢复（进度累加）
       return apiResponse.success({
         sessionId: existingSession.id,
