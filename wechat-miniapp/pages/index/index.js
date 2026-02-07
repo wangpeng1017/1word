@@ -411,6 +411,15 @@ Page({
   handleDayClick(e) {
     const day = e.currentTarget.dataset.day
 
+    // 如果该天没有复习任务（例如Day 1或休息日），提示用户
+    if (day.wordsCount === 0) {
+      wx.showToast({
+        title: '今日无复习任务',
+        icon: 'none'
+      })
+      return
+    }
+
     if (day.status === 'current') {
       this.startReview()
     } else if (day.status === 'completed') {

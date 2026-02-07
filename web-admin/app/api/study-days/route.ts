@@ -95,11 +95,13 @@ export async function GET(request: NextRequest) {
         })
 
         // 6. 生成 DAY 列表（复习计划模式）
+        // 修正：复习计划需要延伸到学习结束后的15天（艾宾浩斯最后一个周期）
+        const reviewDuration = totalDays + 15
         const days = []
         let streak = 0
         let lastCompletedDate: string | null = null
 
-        for (let i = 0; i < totalDays; i++) {
+        for (let i = 0; i < reviewDuration; i++) {
             const dayNumber = i + 1
             const targetDate = new Date(startDate)
             targetDate.setDate(targetDate.getDate() + i)
@@ -123,14 +125,7 @@ export async function GET(request: NextRequest) {
             if (dayNumber < currentDayNumber) {
                 status = 'completed' // 已过去的天数
             } else if (dayNumber === currentDayNumber) {
-                // 特殊逻辑：如果是Day 1（今天），虽然是当前天，但复习量为0，且Day 1不应该出现在复习列表中被点击
-                // 所以 Day 1 在复习列表里应该是 locked 或 completed 状态，或者不可点击
-                // 这里设置为 locked 并附带 wordsCount=0，前端会显示锁住
-                if (dayNumber === 1) {
-                    status = 'locked'
-                } else {
-                    status = 'current' // 当前天
-                }
+                status = 'current' // 当前天
             }
 
             // 计算连续天数（基于是否完成学习记录）
