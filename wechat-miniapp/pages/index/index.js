@@ -198,11 +198,17 @@ Page({
   },
 
   startReview() {
-    // 检查是否有未完成的进度 (任意模式，只要不是补卡)
+    // 1. 检查今日复习是否已完成
+    if (this.data.reviewCount === 0) {
+      wx.showToast({ title: '今日复习已完成', icon: 'success' })
+      return
+    }
+
+    // 2. 检查是否有未完成的进度 (任意模式，只要不是补卡)
     const saved = getStudyProgress()
     if (this.checkAndResume(saved, 'all')) return
 
-    // 无进度，开始新学习 (默认为 all)
+    // 3. 无进度，开始新学习 (默认为 all)
     wx.navigateTo({ url: '/pages/study/study' })
   },
 

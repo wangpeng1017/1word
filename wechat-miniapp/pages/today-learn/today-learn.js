@@ -77,6 +77,12 @@ Page({
     },
 
     startLearning() {
+        // 0. 检查今日任务是否已完成
+        if (this.data.newWordsCount === 0 && this.data.state === 'ready') {
+            wx.showToast({ title: '今日学习已完成', icon: 'success' })
+            return
+        }
+
         // 检查是否有未完成的进度 (新词模式)
         const saved = getStudyProgress()
         if (saved) {
