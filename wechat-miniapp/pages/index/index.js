@@ -40,20 +40,11 @@ Page({
     }
 
     this.setData({ userInfo: userInfo || {} })
-
-    const lastWelcome = wx.getStorageSync('lastWelcomeDate')
-    const today = new Date().toDateString()
-
-    if (lastWelcome !== today) {
-      this.setData({ showWelcome: true })
-      wx.setStorageSync('lastWelcomeDate', today)
-    } else {
-      this.init()
-    }
+    this.init()
   },
 
   onShow() {
-    if (app.globalData.token && !this.data.showWelcome) {
+    if (app.globalData.token) {
       this.init()
       this.syncOfflineData()
     }
@@ -61,12 +52,6 @@ Page({
 
   onPullDownRefresh() {
     this.init().finally(() => wx.stopPullDownRefresh())
-  },
-
-  // 隐藏欢迎动画
-  hideWelcome() {
-    this.setData({ showWelcome: false })
-    this.init()
   },
 
   async init() {

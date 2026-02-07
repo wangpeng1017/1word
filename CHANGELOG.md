@@ -11,6 +11,8 @@
 - **Study Progress**: Fixed issue where progress was lost/reset by saving full task list and trusting local storage.
 - **Make-up Logic**: Make-up tasks now auto-resume silently if progress exists.
 - **Vocabulary Test**: Added sound effects for correct/wrong answers, streaks, and completion.
+- **Home Page**: Fixed white screen on startup by ensuring `today-learn` page configuration exists.
+- **UX**: Moved welcome animation to the first tab ("Today's Learn") for correct startup experience.
 
 ## [1.0.0] - 2026-02-06
 

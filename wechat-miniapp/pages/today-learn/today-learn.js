@@ -7,13 +7,36 @@ Page({
     data: {
         state: 'loading',
         newWordsCount: 0,
-        timeEstimate: 0
+        timeEstimate: 0,
+        userInfo: {},
+        showWelcome: false
+    },
+
+    async onLoad() {
+        // 检查是否需要显示欢迎动画
+        const lastWelcome = wx.getStorageSync('lastWelcomeDate')
+        const today = new Date().toDateString()
+
+        if (lastWelcome !== today) {
+            this.setData({ showWelcome: true })
+            wx.setStorageSync('lastWelcomeDate', today)
+        }
     },
 
     onShow() {
         if (typeof this.getTabBar === 'function' && this.getTabBar()) {
             this.getTabBar().setData({ selected: 0 })
         }
+
+        // 如果正在显示欢迎动画，暂停数据加载
+        if (!this.data.showWelcome) {
+            this.checkTodayTasks()
+        }
+    },
+
+    // 隐藏欢迎动画
+    hideWelcome() {
+        this.setData({ showWelcome: false })
         this.checkTodayTasks()
     },
 

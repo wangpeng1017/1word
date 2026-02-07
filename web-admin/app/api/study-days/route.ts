@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getTodayBeijing, toBeijingDate, formatDateBeijing } from '@/lib/date-utils'
 
-// GET /api/study-days?studentId=xxx - 获取学生学习天数数据
+// GET /api/study-days?studentId=xxx - 获取学生学习天数数据（复习计划模式）
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
@@ -40,59 +40,61 @@ export async function GET(request: NextRequest) {
                 status: 'ACTIVE'
             },
             include: {
-                vocabulary_packs: true
+                vocabulary_packs: {
+                    include: {
+                        pack_days: {
+                            include: {
+                                day_words: {
+                                    select: {
+                                        vocabularyId: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         })
 
-        if (!planClass) {
+        if (!planClass || !planClass.vocabulary_packs) {
             return NextResponse.json({
                 success: true,
                 data: { currentDay: 0, streak: 0, totalDays: 0, days: [] }
             })
         }
 
-        const totalDays = planClass.vocabulary_packs?.totalDays || 10
+        const totalDays = planClass.vocabulary_packs.totalDays || 10
         const startDate = new Date(planClass.start_date)
-
-        // 3. 获取学生在计划期间的学习记录（排除错题重测记录）
-        const endDate = new Date(startDate)
-        endDate.setDate(endDate.getDate() + totalDays)
-
-        const studyRecords = await prisma.study_records.findMany({
-            where: {
-                studentId,
-                taskDate: { gte: startDate, lte: endDate },
-                isCompleted: true,
-                isRetestMode: false, // 排除错题重测记录
-            },
-            select: {
-                taskDate: true,
-                completedWords: true,
-                accuracy: true,
-                totalTime: true,
-            },
-        })
-
-        // 按日期分组
-        const recordMap = new Map<string, any>()
-        studyRecords.forEach((record) => {
-            const dateStr = formatDateBeijing(new Date(record.taskDate))
-            if (!recordMap.has(dateStr)) {
-                recordMap.set(dateStr, {
-                    wordsCount: record.completedWords || 0,
-                    accuracy: record.accuracy || 0,
-                    totalTime: record.totalTime || 0,
-                })
-            } else {
-                const existing = recordMap.get(dateStr)
-                existing.wordsCount += record.completedWords || 0
-                existing.totalTime += record.totalTime || 0
-                existing.accuracy = (existing.accuracy + (record.accuracy || 0)) / 2
-            }
-        })
-
-        // 4. 生成 DAY 列表
         const today = formatDateBeijing(new Date())
+
+        // 计算当前是计划的第几天
+        const startDateBeijing = toBeijingDate(planClass.start_date)
+        const todayBeijing = getTodayBeijing()
+        const diffTime = todayBeijing.getTime() - startDateBeijing.getTime()
+        const currentDayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+        // 3. 获取已掌握的词汇ID（全局过滤）
+        const masteredWords = await prisma.word_masteries.findMany({
+            where: { studentId, isMastered: true },
+            select: { vocabularyId: true }
+        })
+        const masteredVocabIds = new Set(masteredWords.map(w => w.vocabularyId))
+
+        // 4. 艾宾浩斯记忆曲线间隔
+        const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
+
+        // 5. 构建每一天的词汇包数据
+        const packDays = planClass.vocabulary_packs.pack_days || []
+        const dayVocabMap = new Map<number, string[]>()
+
+        packDays.forEach(packDay => {
+            const vocabIds = packDay.day_words
+                .map(dw => dw.vocabularyId)
+                .filter(id => !masteredVocabIds.has(id)) // 过滤已掌握
+            dayVocabMap.set(packDay.dayNumber, vocabIds)
+        })
+
+        // 6. 生成 DAY 列表（复习计划模式）
         const days = []
         let streak = 0
         let lastCompletedDate: string | null = null
@@ -103,38 +105,63 @@ export async function GET(request: NextRequest) {
             targetDate.setDate(targetDate.getDate() + i)
             const dateStr = formatDateBeijing(targetDate)
 
-            const dayData = recordMap.get(dateStr)
-            let status = 'locked'
+            // 该天的新词数量（学习计划）
+            const newWordsCount = dayVocabMap.get(dayNumber)?.length || 0
 
-            if (dayData) {
-                status = 'completed'
-                // 计算连续天数
-                if (!lastCompletedDate) {
-                    streak = 1
-                } else {
-                    const lastDate = new Date(lastCompletedDate)
-                    const currentDate = new Date(dateStr)
-                    const diff = (currentDate.getTime() - lastDate.getTime()) / 86400000
-                    if (diff === 1) {
-                        streak++
-                    } else {
-                        streak = 1
-                    }
+            // 该天需要复习的词汇数量（基于艾宾浩斯曲线）
+            let reviewWordsCount = 0
+            for (const interval of REVIEW_INTERVALS) {
+                const reviewTargetDay = dayNumber - interval
+                if (reviewTargetDay >= 1 && reviewTargetDay <= totalDays) {
+                    const reviewVocabIds = dayVocabMap.get(reviewTargetDay) || []
+                    reviewWordsCount += reviewVocabIds.length
                 }
-                lastCompletedDate = dateStr
-            } else if (dateStr === today) {
-                status = 'current'
-            } else if (dateStr < today) {
-                status = 'missed'
+            }
+
+            // 状态判定
+            let status = 'locked'
+            if (dayNumber < currentDayNumber) {
+                status = 'completed' // 已过去的天数
+            } else if (dayNumber === currentDayNumber) {
+                status = 'current' // 当前天
+            }
+
+            // 计算连续天数（基于是否完成学习记录）
+            if (status === 'completed') {
+                // 查询该天是否有完成的学习记录
+                const hasRecord = await prisma.study_records.findFirst({
+                    where: {
+                        studentId,
+                        taskDate: targetDate,
+                        isCompleted: true,
+                        isRetestMode: false
+                    }
+                })
+
+                if (hasRecord) {
+                    if (!lastCompletedDate) {
+                        streak = 1
+                    } else {
+                        const lastDate = new Date(lastCompletedDate)
+                        const currentDate = new Date(dateStr)
+                        const diff = (currentDate.getTime() - lastDate.getTime()) / 86400000
+                        if (diff === 1) {
+                            streak++
+                        } else {
+                            streak = 1
+                        }
+                    }
+                    lastCompletedDate = dateStr
+                }
             }
 
             days.push({
                 day: dayNumber,
                 date: dateStr,
                 status,
-                wordsCount: dayData?.wordsCount || 0,
-                accuracy: Math.round((dayData?.accuracy || 0) * 100),
-                totalTime: dayData?.totalTime || 0,
+                wordsCount: reviewWordsCount, // 复习词数（非新词数）
+                accuracy: 0, // 复习模式下暂不显示准确率
+                totalTime: 0,
             })
         }
 
@@ -160,3 +187,4 @@ export async function GET(request: NextRequest) {
         )
     }
 }
+
