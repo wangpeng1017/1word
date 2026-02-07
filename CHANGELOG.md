@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] - 2026-02-07
+
+### Added
+- **Testing**: Added reproduction scripts `reproduce-session-bug.ts` and `reproduce-time.ts`.
+- **Scripts**: Added data restoration and integrity check scripts (`restore-data.sql`, `check-abandon-question.js`, `check-basin-question.js`).
+- **Assets**: Added review icons to Mini-App (`review.png`, `review-active.png`).
+
 ## [1.0.0] - 2026-02-06
 
 ### Added
