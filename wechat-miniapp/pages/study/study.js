@@ -194,9 +194,25 @@ Page({
     if (currentIndex >= tasks.length) { this.finishStudy(); return }
     const currentTask = tasks[currentIndex], vocabulary = currentTask.vocabulary
     // 处理图片URL：相对路径转完整URL
+    const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
     if (vocabulary.imageUrl && vocabulary.imageUrl.startsWith('/')) {
-      const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
       vocabulary.imageUrl = baseUrl + vocabulary.imageUrl
+    }
+
+    // 修复：如果没有 audioUrl，尝试从 word_audios 中获取 (优先美音)
+    if (!vocabulary.audioUrl && vocabulary.word_audios && vocabulary.word_audios.length > 0) {
+      const audios = vocabulary.word_audios
+      const audioUs = audios.find(a => (a.accent || '').toUpperCase() === 'US')?.audioUrl
+      const audioUk = audios.find(a => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
+      let bestAudio = audioUs || audioUk || audios[0].audioUrl
+
+      if (bestAudio) {
+        // 同样处理相对路径
+        if (bestAudio.startsWith('/')) {
+          bestAudio = baseUrl + bestAudio
+        }
+        vocabulary.audioUrl = bestAudio
+      }
     }
     let question = null
     if (currentTask.selectedQuestionId) question = vocabulary.questions.find(q => q.id === currentTask.selectedQuestionId)

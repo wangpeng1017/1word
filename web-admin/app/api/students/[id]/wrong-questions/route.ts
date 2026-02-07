@@ -36,6 +36,7 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
         audioUrl: v.audio_url,
         difficulty: v.difficulty,
         isHighFrequency: v.is_high_frequency,
+        word_audios: v.word_audios || [], // 新增：传递音频列表
         meanings: v.word_meanings?.map((m: any) => ({
           partOfSpeech: m.partOfSpeech,
           meaning: m.meaning,
@@ -126,6 +127,7 @@ export async function GET(
             word_meanings: {
               orderBy: { orderIndex: 'asc' },
             },
+            word_audios: true, // 新增：包含音频信息
           },
         },
         questions: {
