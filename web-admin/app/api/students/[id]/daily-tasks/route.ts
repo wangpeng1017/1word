@@ -11,6 +11,15 @@ const MAX_NEW_WORDS_PER_DAY = 2000
 // 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
 const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
 
+// 将相对路径转换为完整URL
+function toAbsoluteUrl(path: string | null | undefined): string | null {
+  if (!path) return null
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  // 使用阿里云域名
+  const baseUrl = process.env.NEXT_PUBLIC_STATIC_URL || 'https://ienglish.xdf.cn'
+  return `${baseUrl}${path}`
+}
+
 // 映射任务数据为小程序格式
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
   return tasks.map((t: any) => {
@@ -38,6 +47,11 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
     // Fix: Use || instead of ?? to handle empty strings and ensure fallback works
     const defaultAudio = audioUs || audioUk || v.audioUrl || v.audio_url || null
 
+    // 转换为完整URL
+    const audioUsAbsolute = toAbsoluteUrl(audioUs)
+    const audioUkAbsolute = toAbsoluteUrl(audioUk)
+    const defaultAudioAbsolute = toAbsoluteUrl(defaultAudio)
+
     const meanings = (v.word_meanings || []).map((m: any) => ({
       id: m.id,
       partOfSpeech: m.partOfSpeech ?? m.part_of_speech,
@@ -58,9 +72,9 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
         primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
         secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
         meanings,
-        audioUrl: defaultAudio,
-        audioUs,
-        audioUk,
+        audioUrl: defaultAudioAbsolute,
+        audioUs: audioUsAbsolute,
+        audioUk: audioUkAbsolute,
         imageUrl: v.word_images?.[0]?.imageUrl ?? null, // 单词实物图片（保持原始路径）
         difficulty: v.difficulty,
         isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
