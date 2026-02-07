@@ -25,8 +25,8 @@ Page({
         const studentId = userInfo?.studentId
 
         if (!studentId) {
-            // 未登录，跳转到登录页
-            wx.redirectTo({ url: '/pages/login/login' })
+            // 未登录，跳转到登录页（使用 reLaunch 避免与 tabBar 冲突）
+            wx.reLaunch({ url: '/pages/login/login' })
             return
         }
 

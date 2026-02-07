@@ -38,6 +38,7 @@ Page({
     // 等待 userInfo 加载完成（解决真机异步时序问题）
     const userInfo = await waitForUserInfo()
     if (!userInfo) {
+      // 未登录，跳转到登录页（使用 reLaunch 避免与 tabBar 冲突）
       wx.reLaunch({ url: '/pages/login/login' })
       return
     }
