@@ -5,6 +5,7 @@
 // ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
 
 const { get, post } = require('../../utils/request')
+const { SoundType, playSound, preloadSounds } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -29,10 +30,12 @@ Page({
         estimatedVocab: 0,
         accuracy: 0,
         totalTime: 0,
+        consecutiveCorrect: 0, // 连对计数
     },
 
     onLoad() {
         // 默认显示介绍页
+        preloadSounds() // 预加载音效
     },
 
     onUnload() {
@@ -129,6 +132,19 @@ Page({
         const wrongCount = newAnswers.filter(a => !a.isCorrect && a.userAnswer !== 'E').length
         const unknownCount = newAnswers.filter(a => a.userAnswer === 'E').length
 
+        // 音效逻辑
+        let newCC = this.data.consecutiveCorrect
+        if (isCorrect) {
+            newCC++
+            if (newCC === 10) playSound(SoundType.STREAK_10)
+            else if (newCC === 5) playSound(SoundType.STREAK_5)
+            else if (newCC === 3) playSound(SoundType.STREAK_3)
+            else playSound(SoundType.CORRECT)
+        } else {
+            newCC = 0
+            if (!isUnknown) playSound(SoundType.WRONG)
+        }
+
         this.setData({
             isAnswered: true,
             isCorrect,
@@ -137,6 +153,7 @@ Page({
             correctCount,
             wrongCount,
             unknownCount,
+            consecutiveCorrect: newCC,
         })
 
         // 自动进入下一题或结束
@@ -191,6 +208,8 @@ Page({
                 accuracy: accuracy.toFixed(1),
                 totalTime,
             })
+
+            playSound(SoundType.COMPLETE) // 完成音效
         } catch (error) {
             wx.hideLoading()
             console.error('提交失败:', error)
@@ -248,6 +267,7 @@ Page({
             correctCount: 0,
             wrongCount: 0,
             unknownCount: 0,
+            consecutiveCorrect: 0,
         })
     },
 

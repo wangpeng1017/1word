@@ -149,6 +149,7 @@ Page({
       return
     }
 
+    // 检查日期，只提示当天的未完成进度
     const savedDate = saved.timestamp ? new Date(saved.timestamp).toDateString() : null
     const today = new Date().toDateString()
 
@@ -158,19 +159,25 @@ Page({
       return
     }
 
+    // 检查是否已完成
     const totalTasks = saved.tasks?.length || 0
     const answeredCount = saved.answers?.length || 0
-    const remainingCount = totalTasks - answeredCount
 
-    if (remainingCount > 0 && answeredCount > 0) {
-      this.setData({ hasUnfinishedProgress: true, unfinishedCount: remainingCount })
+    // 如果未完成且有答题记录
+    if (totalTasks > answeredCount && answeredCount > 0) {
+      this.setData({ hasUnfinishedProgress: true, unfinishedCount: totalTasks - answeredCount })
+
+      // 自动弹出因为无法判断用户意图（可能想开始新任务），所以保留弹窗但简化文案
+      // 用户反馈：保留弹窗，但不提示具体数量
       wx.showModal({
-        title: '发现未完成的复习',
-        content: '您有 ' + remainingCount + ' 个单词未完成复习',
+        title: '发现未完成的学习',
+        content: '是否继续上次的学习进度？',
         confirmText: '继续学习',
         cancelText: '稍后再说',
         success: (res) => {
-          if (res.confirm) wx.navigateTo({ url: '/pages/study/study?resume=true' })
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/study/study?resume=true' })
+          }
         }
       })
     } else {
@@ -197,7 +204,78 @@ Page({
   },
 
   startReview() {
-    wx.navigateTo({ url: '/pages/study/study?resume=true' })
+    // 检查是否有未完成的进度 (任意模式，只要不是补卡)
+    const saved = getStudyProgress()
+    if (this.checkAndResume(saved, 'all')) return
+
+    // 无进度，开始新学习 (默认为 all)
+    wx.navigateTo({ url: '/pages/study/study' })
+  },
+
+  // 辅助方法：检查并恢复进度
+  // silent: 是否静默恢复（不弹窗确认）
+  checkAndResume(saved, targetMode, targetDay = null, silent = false) {
+    if (!saved) return false
+
+    const savedDate = saved.timestamp ? new Date(saved.timestamp).toDateString() : null
+    const today = new Date().toDateString()
+
+    // 过期进度无效
+    if (savedDate !== today) return false
+
+    // 检查是否已完成
+    const total = saved.tasks?.length || 0
+    const answered = saved.answers?.length || 0
+    if (answered >= total) return false
+
+    // 检查模式匹配
+    const savedMode = saved.mode || 'all'
+    const savedDay = saved.day || null
+
+    // 匹配逻辑：
+    // 1. 如果指定了 targetDay (补卡)，必须匹配 day
+    // 2. 如果 targetMode 是 'review' 或 'new'，savedMode 必须匹配，或者 savedMode 是 'all' (兼容)
+
+    let isMatch = false
+    if (targetDay) {
+      isMatch = (savedDay == targetDay) // 比较 day
+    } else {
+      // 今日任务 (targetDay 为 null)
+      // 如果本地存的是补卡任务 (savedDay不为空)，则不匹配
+      if (savedDay) return false
+
+      // 模式匹配
+      if (targetMode === 'all') isMatch = true
+      else isMatch = (savedMode === targetMode || savedMode === 'all')
+    }
+
+    if (isMatch) {
+      if (silent) {
+        wx.navigateTo({ url: '/pages/study/study?resume=true' })
+        return true
+      }
+
+      wx.showModal({
+        title: '发现未完成的学习',
+        content: '是否继续上次的学习进度？',
+        confirmText: '继续学习',
+        cancelText: '重新开始',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/study/study?resume=true' })
+          } else {
+            // 用户选择重新开始，清除旧进度并跳转新任务
+            clearStudyProgress()
+            let url = '/pages/study/study?mode=' + targetMode
+            if (targetDay) url += '&day=' + targetDay
+            wx.navigateTo({ url })
+          }
+        }
+      })
+      return true
+    }
+
+    return false
   },
 
   reload() { this.init() },
@@ -348,7 +426,16 @@ Page({
         showCancel: false
       })
     } else if (day.status === 'missed') {
-      // 允许补打卡
+      // 补打卡逻辑优化
+
+      // 补打卡逻辑优化
+
+      // 先检查是否有该天未完成的补卡进度
+      const saved = getStudyProgress()
+      // 用户要求补卡无需弹窗，直接静默恢复 （silent=true）
+      if (this.checkAndResume(saved, 'new', day.day, true)) return
+
+      // 无进度，询问是否开始
       wx.showModal({
         title: '补学 Day ' + day.day,
         content: '确定要补学这天错过的单词吗？\n(仅学习当日新词)',

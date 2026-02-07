@@ -7,6 +7,11 @@
 - **Scripts**: Added data restoration and integrity check scripts (`restore-data.sql`, `check-abandon-question.js`, `check-basin-question.js`).
 - **Assets**: Added review icons to Mini-App (`review.png`, `review-active.png`).
 
+### Fixed
+- **Study Progress**: Fixed issue where progress was lost/reset by saving full task list and trusting local storage.
+- **Make-up Logic**: Make-up tasks now auto-resume silently if progress exists.
+- **Vocabulary Test**: Added sound effects for correct/wrong answers, streaks, and completion.
+
 ## [1.0.0] - 2026-02-06
 
 ### Added

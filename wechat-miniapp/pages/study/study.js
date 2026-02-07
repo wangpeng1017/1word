@@ -89,7 +89,17 @@ Page({
 
   async loadTasks(mode = 'all', day = null) {
     try {
-      this.setData({ isLoading: true, mode }) // Save mode
+      this.setData({ isLoading: true })
+      // 保存当前模式和天数到实例变量，用于保存进度
+      this.currentMode = mode
+      this.currentDay = day
+
+      if (mode === 'new') {
+        wx.setNavigationBarTitle({ title: '今日新词' })
+      } else if (mode === 'review') {
+        wx.setNavigationBarTitle({ title: '今日复习' })
+      }
+
       wx.showLoading({ title: '加载中...' })
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) throw new Error('未找到学生ID')
@@ -122,15 +132,6 @@ Page({
         else throw e
       }
 
-      // Filter tasks based on mode
-      if (mode === 'new') {
-        tasks = tasks.filter(t => t.isNew)
-        wx.setNavigationBarTitle({ title: '今日新词' })
-      } else if (mode === 'review') {
-        tasks = tasks.filter(t => !t.isNew)
-        wx.setNavigationBarTitle({ title: '今日复习' })
-      }
-
       if (!tasks?.length) {
         wx.hideLoading();
         wx.showModal({
@@ -142,11 +143,22 @@ Page({
         return
       }
 
+      // 根据模式过滤任务
+      if (mode === 'new') {
+        tasks = tasks.filter(t => t.isNew)
+      } else if (mode === 'review') {
+        tasks = tasks.filter(t => !t.isNew)
+      }
+
       const validTasks = tasks.filter(t => t.vocabulary?.questions?.length > 0)
       if (validTasks.length === 0) { wx.hideLoading(); wx.showModal({ title: '提示', content: '所有任务都没有可用题目', showCancel: false, success: () => wx.navigateBack() }); return }
+
       let sessionId = null, lastSyncedIndex = -1, resumedIndex = 0, resumedCorrect = 0, resumedWrong = 0
       console.log('[DEBUG] loadTasks - isOffline:', this.data.isOffline, 'validTasks.length:', validTasks.length)
-      if (!this.data.isOffline) {
+
+      // 创建新会话（仅在线且非补卡模式）
+      // 注意：这里不再处理 resume 逻辑，resume 由 resumeProgress 专门处理
+      if (!this.data.isOffline && !day) {
         console.log('[DEBUG] 准备创建会话 - validTasks.length:', validTasks.length)
         const sr = await createSession(validTasks.length)
         console.log('[DEBUG] createSession 返回结果:', sr)
@@ -157,17 +169,13 @@ Page({
             wx.showModal({ title: '提示', content: sr.message || '今天的学习任务已完成', showCancel: false, success: () => wx.navigateBack() })
             return
           }
-          sessionId = sr.sessionId; setCurrentSessionId(sessionId)
-          if (sr.isResumed && sr.completedWords > 0) {
-            lastSyncedIndex = sr.completedWords - 1
-            resumedIndex = sr.completedWords
-            resumedCorrect = sr.correctCount || 0
-            resumedWrong = sr.wrongCount || 0
-            wx.showToast({ title: '已恢复进度 ' + sr.completedWords + '/' + validTasks.length, icon: 'none', duration: 1500 })
-          }
+          sessionId = sr.sessionId;
+          setCurrentSessionId(sessionId)
+          // 注意：后端可能返回 resumed 信息，但我们主要依赖前端 resumeProgress 恢复
+          // 如果后端返回了进度，也可以作为参考（但前端进度通常更准确）
         }
       }
-      console.log('[DEBUG] 最终 sessionId:', sessionId, 'lastSyncedIndex:', lastSyncedIndex, 'resumedIndex:', resumedIndex)
+      console.log('[DEBUG] 最终 sessionId:', sessionId)
 
       // 性能优化：将完整任务存入实例变量，data中只存当前需要的子集
       this.allTasks = validTasks
@@ -471,45 +479,97 @@ Page({
   },
 
   saveProgress() {
-    const { tasks, currentIndex, answers, correctCount, wrongCount, sessionStartTime, sessionId, lastSyncedIndex } = this.data
-    saveStudyProgress({ tasks, currentIndex, answers, correctCount, wrongCount, timestamp: Date.now(), startTime: sessionStartTime, elapsedSeconds: Math.floor((Date.now() - sessionStartTime) / 1000), sessionId, lastSyncedIndex })
+    // 关键修正：保存 this.allTasks (完整列表) 而非 data.tasks (切片)
+    const { currentIndex, answers, correctCount, wrongCount, sessionStartTime, sessionId, lastSyncedIndex } = this.data
+    // 如果没有 allTasks，说明可能还没加载完，尝试用 tasks
+    const tasksToSave = this.allTasks || this.data.tasks
+
+    saveStudyProgress({
+      tasks: tasksToSave,
+      currentIndex,
+      answers,
+      correctCount,
+      wrongCount,
+      timestamp: Date.now(),
+      startTime: sessionStartTime,
+      elapsedSeconds: Math.floor((Date.now() - sessionStartTime) / 1000),
+      sessionId,
+      lastSyncedIndex,
+      // 关键修正：保存 currentMode 和 currentDay，以便正确恢复上下文
+      mode: this.currentMode || 'all',
+      day: this.currentDay || null,
+      isRetestMode: this.data.isRetestMode // 保存重测模式标志
+    })
   },
 
   async resumeProgress() {
     const progress = getStudyProgress()
     if (!progress) { this.loadTasks(); return }
-    if (progress.timestamp && new Date(progress.timestamp).toDateString() !== new Date().toDateString()) { clearStudyProgress(); this.loadTasks(); return }
+
+    // 检查进度日期，如果是今天的才恢复（或者 progress 中没有 timestamp）
+    if (progress.timestamp && new Date(progress.timestamp).toDateString() !== new Date().toDateString()) {
+      clearStudyProgress(); this.loadTasks(); return
+    }
+
+    // 关键修正：直接信任本地缓存，不再请求后端校验，防止后端数据更新导致进度失效
     try {
-      wx.showLoading({ title: '校验进度中...' })
-      const studentId = app.globalData.userInfo?.studentId
-      const response = await get('/students/' + studentId + '/daily-tasks')
-      const serverTasks = Array.isArray(response) ? response : (response?.tasks || [])
-      wx.hideLoading()
-      if (!serverTasks?.length) { clearStudyProgress(); wx.showModal({ title: '提示', content: '任务已更新', showCancel: false, success: () => wx.navigateBack() }); return }
-      const serverTaskIds = new Set(serverTasks.map(t => t.id)), serverVocabIds = new Set(serverTasks.map(t => t.vocabularyId))
-      const validLocalTasks = progress.tasks.filter(t => serverTaskIds.has(t.id) || serverVocabIds.has(t.vocabularyId))
+      wx.showLoading({ title: '恢复进度中...' })
+      const validLocalTasks = progress.tasks || []
       if (validLocalTasks.length === 0) { clearStudyProgress(); this.loadTasks(); return }
-      const answeredVocabIds = new Set(progress.answers.map(a => a.vocabularyId))
-      const remainingTasks = validLocalTasks.filter(t => !answeredVocabIds.has(t.vocabularyId))
-      if (remainingTasks.length === 0) {
-        // 即使已完成，也需要初始化 allTasks 以防逻辑依赖
-        this.allTasks = validLocalTasks
-        this.setData({ tasks: validLocalTasks, answers: progress.answers, correctCount: progress.correctCount, wrongCount: progress.wrongCount, totalCount: validLocalTasks.length, currentIndex: validLocalTasks.length, isLoading: false, sessionId: progress.sessionId || null, lastSyncedIndex: progress.lastSyncedIndex ?? -1 })
-        this.finishStudy(); return
+
+      // 恢复上下文
+      this.currentMode = progress.mode || 'all'
+      this.currentDay = progress.day || null
+
+      // 恢复重测模式标志
+      const isRetestMode = progress.isRetestMode || false
+
+      // 设置标题
+      if (isRetestMode) {
+        wx.setNavigationBarTitle({ title: '错题重测' })
+      } else if (this.currentMode === 'new') {
+        wx.setNavigationBarTitle({ title: '今日新词' })
+      } else if (this.currentMode === 'review') {
+        wx.setNavigationBarTitle({ title: '今日复习' })
       }
+
       const elapsedSeconds = progress.elapsedSeconds || 0
 
       // 性能优化：初始化 allTasks 并切片
       this.allTasks = validLocalTasks
-      const resumedIndex = validLocalTasks.length - remainingTasks.length
+      const resumedIndex = progress.currentIndex || (progress.answers && progress.answers.length) || 0
+
+      // 确保 resumedIndex 不越界
+      if (resumedIndex >= validLocalTasks.length) {
+        this.finishStudy(); return
+      }
+
       const initialLoadCount = resumedIndex + 20
       const visibleTasks = validLocalTasks.slice(0, initialLoadCount)
 
-      this.setData({ tasks: visibleTasks, currentIndex: resumedIndex, answers: progress.answers, correctCount: progress.correctCount, wrongCount: progress.wrongCount, totalCount: validLocalTasks.length, sessionStartTime: Date.now() - (elapsedSeconds * 1000), isLoading: false, sessionId: progress.sessionId || null, lastSyncedIndex: progress.lastSyncedIndex ?? -1 })
+      this.setData({
+        tasks: visibleTasks,
+        currentIndex: resumedIndex,
+        answers: progress.answers || [],
+        correctCount: progress.correctCount || 0,
+        wrongCount: progress.wrongCount || 0,
+        totalCount: validLocalTasks.length,
+        sessionStartTime: Date.now() - (elapsedSeconds * 1000),
+        isLoading: false,
+        sessionId: progress.sessionId || null,
+        lastSyncedIndex: progress.lastSyncedIndex ?? -1,
+        isRetestMode: isRetestMode
+      })
+
       if (progress.sessionId) setCurrentSessionId(progress.sessionId)
-      wx.showToast({ title: '已恢复进度 ' + progress.answers.length + '/' + validLocalTasks.length, icon: 'none', duration: 1500 })
+
+      wx.hideLoading()
+      wx.showToast({ title: '已恢复进度', icon: 'none', duration: 1500 })
       this.loadCurrentQuestion()
-    } catch (e) { wx.hideLoading(); clearStudyProgress(); this.loadTasks() }
+    } catch (e) {
+      console.error('恢复进度失败:', e)
+      wx.hideLoading(); clearStudyProgress(); this.loadTasks()
+    }
   },
 
   exitStudy() { wx.showModal({ title: '确认退出', content: '当前进度会被保存', confirmText: '确定退出', success: (r) => { if (r.confirm) { this.syncBeforeLeave(); wx.navigateBack() } } }) },
@@ -537,6 +597,7 @@ Page({
   async loadRetestQuestions() {
     try {
       wx.showLoading({ title: '加载错题中...' })
+      this.currentMode = 'retest' // 标记当前模式
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) throw new Error('未找到学生ID')
 
