@@ -40,7 +40,7 @@
         <view class="card-content" wx:elif="{{newWordsCount > 0}}">
           <view class="count-number">{{newWordsCount}}</view>
           <view class="count-label">个新单词待学习</view>
-          <view class="time-estimate">预计耗时 {{timeEstimate}} 分钟</view>
+
           
           <button class="start-btn" bindtap="startLearning">开始学习</button>
         </view>
