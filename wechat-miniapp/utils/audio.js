@@ -4,6 +4,40 @@
  * @see PRD: docs/待开发功能清单.md
  */
 
+// 等待 userInfo 加载完成（解决真机异步时序问题）
+// 用于页面 onLoad/onShow 时等待 app.globalData.userInfo 加载完成
+function waitForUserInfo(maxWaitMs = 3000) {
+    return new Promise((resolve) => {
+        const app = getApp()  // 在函数内部获取 app 实例
+        if (!app) {
+            resolve(null)
+            return
+        }
+
+        // 如果已有 userInfo，直接返回
+        if (app.globalData.userInfo?.studentId) {
+            resolve(app.globalData.userInfo)
+            return
+        }
+
+        // 等待 userInfo 加载（最多等待 maxWaitMs 毫秒）
+        const interval = 100
+        const maxAttempts = maxWaitMs / interval
+        let attempts = 0
+
+        const checkInterval = setInterval(() => {
+            attempts++
+            if (app.globalData.userInfo?.studentId) {
+                clearInterval(checkInterval)
+                resolve(app.globalData.userInfo)
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkInterval)
+                resolve(null)  // 超时返回 null
+            }
+        }, interval)
+    })
+}
+
 // 音效类型枚举
 const SoundType = {
     CORRECT: 'correct',      // 答对
@@ -86,16 +120,27 @@ function playSound(type) {
  */
 function preloadSounds() {
     try {
+        const app = getApp()
+        const baseUrl = (app.globalData.apiUrl || '').replace(/\/api$/, '')
+
         Object.keys(SOUND_URLS).forEach(type => {
             if (!audioContexts[type]) {
+                const soundUrl = SOUND_URLS[type]
+                // 拼接完整 URL
+                const finalUrl = soundUrl.startsWith('/') ? baseUrl + soundUrl : soundUrl
+
                 audioContexts[type] = wx.createInnerAudioContext()
-                audioContexts[type].src = SOUND_URLS[type]
+                audioContexts[type].src = finalUrl
                 audioContexts[type].volume = 0.7
+                // 错误处理，避免预加载失败影响使用
+                audioContexts[type].onError((err) => {
+                    console.warn('[Audio] 音效预加载失败:', type, err)
+                })
             }
         })
         console.log('[Audio] 音效预加载完成')
     } catch (e) {
-        console.warn('[Audio] 音效预加载失败:', e)
+        console.warn('[Audio] 音效预加载异常:', e)
     }
 }
 
@@ -151,5 +196,6 @@ module.exports = {
     destroySounds,
     setSoundEnabled,
     isSoundEnabled,
+    waitForUserInfo,  // 导出等待 userInfo 的公共函数
     updateSoundUrl
 }

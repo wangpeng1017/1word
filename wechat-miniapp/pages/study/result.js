@@ -165,10 +165,10 @@ Page({
     })
   },
 
-  // 返回首页
+  // 返回首页（今日学习）
   backToHome() {
     wx.switchTab({
-      url: '/pages/index/index',
+      url: '/pages/today-learn/today-learn',
     })
   },
 

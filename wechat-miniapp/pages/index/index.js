@@ -1,6 +1,7 @@
 // pages/index/index.js
 const { get, post } = require('../../utils/request')
 const { getStudyProgress, clearStudyProgress, getSyncQueue, clearSyncQueue } = require('../../utils/storage')
+const { waitForUserInfo } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -24,13 +25,20 @@ Page({
     scrollTarget: '',
   },
 
-  onLoad() {
+  async onLoad() {
     if (!app.globalData.token) {
       wx.reLaunch({ url: '/pages/login/login' })
       return
     }
 
-    this.setData({ userInfo: app.globalData.userInfo || {} })
+    // 等待 userInfo 加载完成（解决真机异步时序问题）
+    const userInfo = await waitForUserInfo()
+    if (!userInfo) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
+
+    this.setData({ userInfo: userInfo || {} })
 
     const lastWelcome = wx.getStorageSync('lastWelcomeDate')
     const today = new Date().toDateString()

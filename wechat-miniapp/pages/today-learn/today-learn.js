@@ -1,5 +1,6 @@
 // pages/today-learn/today-learn.js
 const { get, post } = require('../../utils/request')
+const { waitForUserInfo } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -18,8 +19,16 @@ Page({
 
     async checkTodayTasks() {
         this.setData({ state: 'loading' })
-        const studentId = app.globalData.userInfo?.studentId
-        if (!studentId) return
+
+        // 等待 userInfo 加载完成（解决真机异步时序问题）
+        const userInfo = await waitForUserInfo()
+        const studentId = userInfo?.studentId
+
+        if (!studentId) {
+            // 未登录，跳转到登录页
+            wx.redirectTo({ url: '/pages/login/login' })
+            return
+        }
 
         try {
             // 获取每日任务

@@ -1,5 +1,6 @@
 // pages/wrong/wrong.js
 const { get } = require('../../utils/request')
+const { waitForUserInfo } = require('../../utils/audio')
 const app = getApp()
 
 Page({
@@ -12,12 +13,19 @@ Page({
     isEmpty: false,
   },
 
-  onLoad() {
+  async onLoad() {
     // 检查登录状态
     if (!app.globalData.token) {
       wx.reLaunch({
         url: '/pages/login/login',
       })
+      return
+    }
+
+    // 等待 userInfo 加载完成（解决真机异步时序问题）
+    const userInfo = await waitForUserInfo()
+    if (!userInfo) {
+      wx.reLaunch({ url: '/pages/login/login' })
       return
     }
 

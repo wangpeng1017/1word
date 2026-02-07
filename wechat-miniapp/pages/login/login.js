@@ -206,10 +206,10 @@ Page({
         icon: 'success',
       })
 
-      // 跳转到首页（tab）
+      // 跳转到今日学习（第一个tab）
       setTimeout(() => {
         wx.switchTab({
-          url: '/pages/index/index',
+          url: '/pages/today-learn/today-learn',
         })
       }, 1500)
     } catch (error) {
