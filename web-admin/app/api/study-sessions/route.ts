@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
         status: 'IN_PROGRESS',
         lastActiveAt: now,
         updatedAt: now,
+        completedAt: null, // 显式设置为 null，防止数据库默认值(CURRENT_TIMESTAMP)导致的时区问题
       },
     })
 

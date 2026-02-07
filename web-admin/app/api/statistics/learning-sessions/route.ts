@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
                 ? ((record.correctCount / totalAnswered) * 100).toFixed(1)
                 : '0.0'
 
-            return {
+            const session: any = {
                 id: record.id,
                 studentId: record.studentId,
                 studentName: record.students.user.name,
@@ -159,6 +159,14 @@ export async function GET(request: NextRequest) {
                 isCompleted: record.isCompleted,
                 status: (record as any).status || (record.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'),
             }
+
+            // 修复：对于非完成状态的记录，completedAt 应该为空
+            // 防止数据库默认值导致的时区偏差（表现为结束时间是未来时间）
+            if (session.status !== 'COMPLETED') {
+                session.completedAt = null
+            }
+
+            return session
         })
 
         return successResponse({
