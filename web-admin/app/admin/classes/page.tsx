@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Table, Button, Space, message, Card, Modal, Form, Input, Popconfirm } from 'antd'
-import { PlusOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons'
 
 export default function ClassesPage() {
   const [data, setData] = useState([])
@@ -11,6 +11,7 @@ export default function ClassesPage() {
   const [editingRecord, setEditingRecord] = useState<any>(null)
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     loadData()
@@ -55,7 +56,7 @@ export default function ClassesPage() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
-      
+
       // 确保能解析 JSON，不管状态码是什么
       let result
       try {
@@ -69,7 +70,7 @@ export default function ClassesPage() {
         })
         return
       }
-      
+
       if (result.success) {
         message.success('删除成功')
         loadData()
@@ -95,8 +96,8 @@ export default function ClassesPage() {
     try {
       const values = await form.validateFields()
       const token = localStorage.getItem('token')
-      
-      const url = editingRecord 
+
+      const url = editingRecord
         ? `/api/classes/${editingRecord.id}`
         : '/api/classes'
       const method = editingRecord ? 'PUT' : 'POST'
@@ -143,9 +144,9 @@ export default function ClassesPage() {
       key: 'action',
       render: (_: any, record: any) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EditOutlined />} 
+          <Button
+            type="link"
+            icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
             编辑
@@ -157,8 +158,15 @@ export default function ClassesPage() {
 
   return (
     <Card>
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ReloadOutlined />} onClick={loadData}>刷新</Button>
+      <Space style={{ marginBottom: 16 }} wrap>
+        <Input.Search
+          style={{ width: 200 }}
+          placeholder="搜索班级名称"
+          allowClear
+          enterButton={<SearchOutlined />}
+          onSearch={(value) => setSearchText(value)}
+        />
+        <Button icon={<ReloadOutlined />} onClick={() => { setSearchText(''); loadData() }}>重置</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           创建班级
         </Button>
@@ -213,7 +221,7 @@ export default function ClassesPage() {
           </Popconfirm>
         )}
       </Space>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }} />
+      <Table columns={columns} dataSource={searchText ? data.filter((item: any) => item.name?.toLowerCase().includes(searchText.toLowerCase())) : data} rowKey="id" loading={loading} rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }} />
       <Modal
         title={editingRecord ? '编辑班级' : '创建班级'}
         open={modalVisible}

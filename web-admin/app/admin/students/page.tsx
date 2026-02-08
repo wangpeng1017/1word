@@ -19,17 +19,24 @@ export default function StudentsPage() {
   const [form] = Form.useForm()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
+  const [searchText, setSearchText] = useState('')
+  const [filterClassId, setFilterClassId] = useState<string | undefined>()
 
   useEffect(() => {
     loadData(1, 20)
     loadClasses()
   }, [])
 
-  const loadData = async (page = pagination.current, pageSize = pagination.pageSize) => {
+  const loadData = async (page = pagination.current, pageSize = pagination.pageSize, search?: string, classId?: string) => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/students?page=${page}&limit=${pageSize}`, {
+      const s = search !== undefined ? search : searchText
+      const c = classId !== undefined ? classId : filterClassId
+      let url = `/api/students?page=${page}&limit=${pageSize}`
+      if (s) url += `&search=${encodeURIComponent(s)}`
+      if (c) url += `&classId=${encodeURIComponent(c)}`
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
@@ -337,8 +344,36 @@ export default function StudentsPage() {
 
   return (
     <Card>
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
+      <Space style={{ marginBottom: 16 }} wrap>
+        <Input.Search
+          style={{ width: 200 }}
+          placeholder="搜索姓名或学号"
+          allowClear
+          enterButton={<SearchOutlined />}
+          onSearch={(value) => {
+            setSearchText(value)
+            loadData(1, pagination.pageSize, value, filterClassId)
+          }}
+        />
+        <Select
+          style={{ width: 160 }}
+          placeholder="筛选班级"
+          allowClear
+          value={filterClassId}
+          onChange={(value) => {
+            setFilterClassId(value)
+            loadData(1, pagination.pageSize, searchText, value)
+          }}
+          options={classes.map((cls: any) => ({
+            label: cls.name,
+            value: cls.id,
+          }))}
+        />
+        <Button icon={<ReloadOutlined />} onClick={() => {
+          setSearchText('')
+          setFilterClassId(undefined)
+          loadData(1, pagination.pageSize, '', undefined)
+        }}>重置</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           添加学生
         </Button>

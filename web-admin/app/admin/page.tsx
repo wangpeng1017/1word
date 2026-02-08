@@ -61,10 +61,10 @@ export default function AdminDashboard() {
         : 0
 
       setStats({
-        vocabularies: vocabData.data?.pagination?.total || 0,  // 使用 pagination.total
-        students: studentsData.data?.students?.length || 0,
-        classes: classesData.data?.length || 0,
-        todayStudy: todayStudyCount,  // 今日完成学习的学生人数
+        vocabularies: vocabData.data?.pagination?.total || 0,
+        students: studentsData.data?.pagination?.total || 0,  // 使用 pagination.total 获取真实总数
+        classes: Array.isArray(classesData.data) ? classesData.data.length : 0,
+        todayStudy: todayStudyCount,
       })
     } catch (error) {
       console.error('加载统计数据失败:', error)
