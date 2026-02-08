@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
         questionId: a.questionId,
         answer: a.answer,
         isCorrect: a.isCorrect, // 服务端验证后的结果
-        timeSpent: a.timeSpent || null,
+        timeSpent: a.timeSpent ?? 0, // DB字段NOT NULL，默认0
         answeredAt: now,
       }))
 
