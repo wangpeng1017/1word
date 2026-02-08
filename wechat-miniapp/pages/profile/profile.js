@@ -29,6 +29,13 @@ Page({
 
   async onLoad() {
     if (!app.globalData.token) {
+      if (app.globalData.isGuest) {
+        this.setData({
+          userInfo: { name: '游客', studentNo: 'Guest' },
+          isGuest: true
+        })
+        return
+      }
       wx.reLaunch({
         url: '/pages/login/login',
       })
@@ -175,6 +182,7 @@ Page({
 
   // 跳转到学习历史页面
   goToStudyHistory() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/study-history/study-history'
     })
@@ -182,6 +190,7 @@ Page({
 
   // 跳转到词汇量测试页面
   goToVocabularyTest() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/vocabulary-test/vocabulary-test'
     })
@@ -189,6 +198,7 @@ Page({
 
   // 跳转到水平测验页面
   goToTest() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/test/test'
     })
@@ -196,6 +206,7 @@ Page({
 
   // 跳转到成就页面
   goToAchievements() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/achievements/achievements'
     })
@@ -203,6 +214,7 @@ Page({
 
   // 跳转到修改密码页面
   goToChangePassword() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/change-password/change-password'
     })
@@ -210,6 +222,10 @@ Page({
 
   // 退出登录
   logout() {
+    if (this.data.isGuest) {
+      this.goToLogin()
+      return
+    }
     wx.showModal({
       title: '确认退出',
       content: '确定要退出登录吗？',
@@ -257,6 +273,7 @@ Page({
 
   // 跳转到勋章墙
   goToBadges() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/badges/badges'
     })
@@ -264,8 +281,14 @@ Page({
 
   // 跳转到积分商城
   goToRedeem() {
+    if (this.data.isGuest) return this.goToLogin()
     wx.navigateTo({
       url: '/pages/redeem/redeem'
     })
+  },
+
+  goToLogin() {
+    app.globalData.isGuest = false
+    wx.reLaunch({ url: '/pages/login/login' })
   },
 })

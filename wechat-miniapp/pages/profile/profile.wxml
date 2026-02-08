@@ -7,15 +7,25 @@
       <view class="user-info">
         <view class="user-name-row">
           <text class="user-name">{{userInfo.name || '同学'}}</text>
-          <!-- 勋章显示(最多3个) -->
-          <view class="user-badges" wx:if="{{displayedBadges.length > 0}}">
+          <!-- 勋章显示(最多3个) - 游客不显示 -->
+          <view class="user-badges" wx:if="{{!isGuest && displayedBadges.length > 0}}">
             <text wx:for="{{displayedBadges}}" wx:key="id" class="badge-icon">{{item.icon}}</text>
           </view>
         </view>
-        <text class="user-id">手机：{{userInfo.phone || '--'}}</text>
+        <text class="user-id" wx:if="{{!isGuest}}">手机：{{userInfo.phone || '--'}}</text>
+        <text class="user-id" wx:else>点击下方登录同步数据</text>
       </view>
     </view>
-    <view class="user-level">
+    
+    <!-- 游客模式显示登录按钮 -->
+    <view class="user-level" wx:if="{{isGuest}}">
+      <view class="level-badge" bindtap="goToLogin" style="background: rgba(255,255,255,0.9);">
+        <text class="level-text" style="color: #FF7A7A;">立即登录</text>
+      </view>
+    </view>
+
+    <!-- 正常模式显示等级 -->
+    <view class="user-level" wx:else>
       <view class="level-badge">
         <text class="level-icon">⭐</text>
         <text class="level-text">Lv.{{pointsInfo.level || 1}}</text>
@@ -69,7 +79,7 @@
       <text class="link-arrow">›</text>
     </view>
     <view class="quick-link-item" bindtap="goToRedeem">
-      <view class="link-icon">🛒</view>
+      <view class="link-icon" style="{{isGuest ? 'background: #ccc;' : ''}}">🛒</view>
       <text class="link-title">积分商城</text>
       <text class="link-arrow">›</text>
     </view>

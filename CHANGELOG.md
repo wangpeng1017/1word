@@ -1,6 +1,14 @@
 # Changelog
 
-## [1.0.1] - 2026-02-07
+## [1.0.2] - 2026-02-08
+
+### Fixed
+- **Timeline状态Bug**: 修复"今日复习"页面中过去的Day全部显示为"已完成"的问题。利用现有`study_records.status`字段区分学习模式(`COMPLETED_NEW`/`COMPLETED_REVIEW`)，timeline仅按复习完成记录判断Day状态。无需数据库Schema改动。
+
+### Changed
+- **学习记录模式标记**: `study.js`提交答题记录时传递`mode`参数，`study-records`和`study-sessions/complete`根据mode写入不同status值，实现今日学习和今日复习的完成状态独立判断。
+
+
 
 ### Added
 - **Testing**: Added reproduction scripts `reproduce-session-bug.ts` and `reproduce-time.ts`.

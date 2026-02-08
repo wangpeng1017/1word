@@ -10,6 +10,7 @@ App({
     apiUrl: envConfig.apiUrl,
     debug: envConfig.debug,
     envName: envConfig.name,
+    isGuest: false, // 是否为游客模式
   },
 
   onLaunch() {
@@ -26,6 +27,11 @@ App({
 
   // 检查登录状态
   checkLoginStatus() {
+    // 如果是游客模式，跳过检查
+    if (this.globalData.isGuest) {
+      return
+    }
+
     wx.request({
       url: `${this.globalData.apiUrl}/auth/me`,
       header: {
@@ -53,6 +59,7 @@ App({
 
     this.globalData.token = null
     this.globalData.userInfo = null
+    this.globalData.isGuest = false
     wx.removeStorageSync('token')
     wx.removeStorageSync('userInfo')
     wx.reLaunch({

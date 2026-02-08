@@ -276,3 +276,14 @@
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: #fff;
 }
+
+.btn-text {
+  background: transparent;
+  color: #6B7280;
+  font-size: 28rpx;
+  border: none;
+}
+
+.btn-text::after {
+  border: none;
+}

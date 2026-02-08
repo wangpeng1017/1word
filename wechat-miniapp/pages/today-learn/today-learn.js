@@ -52,6 +52,12 @@ Page({
         const studentId = userInfo?.studentId
 
         if (!studentId) {
+            // 如果是游客模式，显示游客状态
+            if (app.globalData.isGuest) {
+                this.setData({ state: 'guest' })
+                return
+            }
+
             // 未登录，跳转到登录页（使用 reLaunch 避免与 tabBar 冲突）
             wx.reLaunch({ url: '/pages/login/login' })
             return
@@ -126,5 +132,10 @@ Page({
     checkUnfinishedProgress() {
         // 只做简单的状态标记，不弹窗（点击开始学习时再检查/弹窗）
         // 这里可以用来显示一个小红点或者提示文案（如果需要）
+    },
+
+    goToLogin() {
+        app.globalData.isGuest = false
+        wx.reLaunch({ url: '/pages/login/login' })
     }
 })

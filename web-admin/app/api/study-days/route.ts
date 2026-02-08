@@ -120,27 +120,33 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // 状态判定
+            // 状态判定（基于复习完成情况）
             let status = 'locked'
             if (dayNumber < currentDayNumber) {
-                status = 'completed' // 已过去的天数
-            } else if (dayNumber === currentDayNumber) {
-                status = 'current' // 当前天
-            }
+                if (reviewWordsCount === 0) {
+                    // 该天无需复习（Day 1或纯学习天），直接标记completed
+                    status = 'completed'
+                } else {
+                    // 查询该天是否有完成的复习记录（仅匹配 COMPLETED_REVIEW）
+                    const hasReviewRecord = await prisma.study_records.findFirst({
+                        where: {
+                            studentId,
+                            taskDate: targetDate,
+                            isCompleted: true,
+                            isRetestMode: false,
+                            status: 'COMPLETED_REVIEW'
+                        }
+                    })
 
-            // 计算连续天数（基于是否完成学习记录）
-            if (status === 'completed') {
-                // 查询该天是否有完成的学习记录
-                const hasRecord = await prisma.study_records.findFirst({
-                    where: {
-                        studentId,
-                        taskDate: targetDate,
-                        isCompleted: true,
-                        isRetestMode: false
+                    if (hasReviewRecord) {
+                        status = 'completed'
+                    } else {
+                        status = 'missed' // 未完成复习，可补卡
                     }
-                })
+                }
 
-                if (hasRecord) {
+                // 计算连续天数
+                if (status === 'completed') {
                     if (!lastCompletedDate) {
                         streak = 1
                     } else {
@@ -155,6 +161,8 @@ export async function GET(request: NextRequest) {
                     }
                     lastCompletedDate = dateStr
                 }
+            } else if (dayNumber === currentDayNumber) {
+                status = 'current' // 当前天
             }
 
             days.push({

@@ -61,6 +61,13 @@
     >
       登录
     </button>
+
+    <button
+      class="btn-text mt-3"
+      bindtap="handleGuestLogin"
+    >
+      暂不登录，先看看
+    </button>
   </view>
 
   <view class="login-footer mt-4 text-center">

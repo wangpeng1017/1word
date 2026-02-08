@@ -76,6 +76,13 @@
     </view>
   </view>
 
+  <!-- 游客模式 -->
+  <view class="empty-state" wx:if="{{state === 'guest'}}" style="margin-top: 100rpx;">
+    <image class="empty-img" src="/images/empty-review.png" mode="aspectFit"></image>
+    <view class="empty-text">登录后查看您的复习计划</view>
+    <button class="empty-btn" bindtap="goToLogin" style="margin-top: 30rpx; background: #FF7A7A; color: white;">立即登录</button>
+  </view>
+
   <!-- 加载状态 -->
   <view class="loading-state" wx:if="{{state === 'loading' && !showWelcome}}">
     <view class="loading-spinner"></view>

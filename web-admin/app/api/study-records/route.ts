@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
     const payload = verifyToken(token)
     if (!payload) return apiResponse.unauthorized('Token无效')
 
-    const { studentId, answers: clientAnswers, isRetestMode } = await request.json()
+    const { studentId, answers: clientAnswers, isRetestMode, mode } = await request.json()
     if (!studentId || !clientAnswers?.length) {
       return apiResponse.error('参数错误', 400)
     }
@@ -333,6 +333,7 @@ export async function POST(request: NextRequest) {
           completedAt: new Date(now.getTime()),
           isCompleted: true,
           isRetestMode: isRetestMode || false, // 保存错题重测标志
+          status: mode === 'new' ? 'COMPLETED_NEW' : (mode === 'review' ? 'COMPLETED_REVIEW' : 'COMPLETED'), // 区分学习模式
           updatedAt: now,
         },
       })

@@ -37,6 +37,13 @@
           <view class="status-text">加载任务中...</view>
         </view>
 
+        <!-- 游客模式 -->
+        <view class="card-content" wx:elif="{{state === 'guest'}}">
+          <view class="status-title">欢迎新同学！</view>
+          <view class="status-desc" style="margin-top: 10rpx; margin-bottom: 30rpx;">登录后开始您的专属学习计划</view>
+          <button class="start-btn" bindtap="goToLogin">立即登录</button>
+        </view>
+
         <view class="card-content" wx:elif="{{newWordsCount > 0}}">
           <view class="count-number">{{newWordsCount}}</view>
           <view class="count-label">个新单词待学习</view>

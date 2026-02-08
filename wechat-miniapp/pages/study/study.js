@@ -444,7 +444,7 @@ Page({
         wx.showLoading({ title: '提交中...' })
         const studentId = app.globalData.userInfo?.studentId
         // 提交答题记录，让答对的题目从错题列表中消失
-        await post('/study-records', { studentId, answers, isRetestMode: true })
+        await post('/study-records', { studentId, answers, isRetestMode: true, mode: 'retest' })
         playSound(SoundType.COMPLETE)
         clearStudyProgress()
         wx.hideLoading()
@@ -470,7 +470,7 @@ Page({
       const newAnswers = answers.slice(lastSyncedIndex + 1)
       if (newAnswers.length > 0 && sessionId) await syncProgress(newAnswers)
       if (sessionId) await completeSession()
-      else await post('/study-records', { studentId, answers })
+      else await post('/study-records', { studentId, answers, mode: this.currentMode || 'all' })
       playSound(SoundType.COMPLETE)  // 完成学习音效
       clearStudyProgress(); wx.hideLoading()
       wx.redirectTo({ url: '/pages/study/result?correct=' + correctCount + '&wrong=' + wrongCount + '&total=' + answers.length })

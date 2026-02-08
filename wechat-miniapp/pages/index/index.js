@@ -27,6 +27,10 @@ Page({
 
   async onLoad() {
     if (!app.globalData.token) {
+      if (app.globalData.isGuest) {
+        this.setData({ state: 'guest' })
+        return
+      }
       wx.reLaunch({ url: '/pages/login/login' })
       return
     }
@@ -199,17 +203,16 @@ Page({
 
   startReview() {
     // 1. 检查今日复习是否已完成
-    if (this.data.reviewCount === 0) {
-      wx.showToast({ title: '今日复习已完成', icon: 'success' })
-      return
-    }
+    // 注意：这里原本的 check 可能有误(reviewCount未定义)，但交给 study.js 处理空任务更稳妥
+    // study.js 会在 mode=review 且无旧词时提示"今日复习已完成"
 
-    // 2. 检查是否有未完成的进度 (任意模式，只要不是补卡)
+    // 2. 检查是否有未完成的进度 (强制匹配 review 模式)
     const saved = getStudyProgress()
-    if (this.checkAndResume(saved, 'all')) return
+    // 改为 'review' 模式，只恢复复习类的进度（或兼容all）
+    if (this.checkAndResume(saved, 'review')) return
 
-    // 3. 无进度，开始新学习 (默认为 all)
-    wx.navigateTo({ url: '/pages/study/study' })
+    // 3. 无进度，开始纯复习模式
+    wx.navigateTo({ url: '/pages/study/study?mode=review' })
   },
 
   // 辅助方法：检查并恢复进度
@@ -476,5 +479,10 @@ Page({
     if (currentDay) {
       this.setData({ scrollTarget: 'day-' + currentDay.day })
     }
+  },
+
+  goToLogin() {
+    app.globalData.isGuest = false
+    wx.reLaunch({ url: '/pages/login/login' })
   },
 })

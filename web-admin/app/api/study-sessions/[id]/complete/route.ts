@@ -41,12 +41,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return apiResponse.error('学习会话不存在', 404)
     }
 
-    if (session.status === 'COMPLETED') {
+    if (session.status === 'COMPLETED' || session.status === 'COMPLETED_NEW' || session.status === 'COMPLETED_REVIEW') {
       return apiResponse.success({
         message: '学习会话已完成（重复请求已忽略）',
         duplicate: true,
       })
     }
+
+    // 从 sessionId 中解析学习模式（格式：sr_{ts}_m{mode}_d{day}_{random}）
+    let sessionMode = 'unknown'
+    const idParts = sessionId.split('_')
+    for (const part of idParts) {
+      if (part.startsWith('m')) sessionMode = part.substring(1)
+    }
+    const completedStatus = sessionMode === 'new' ? 'COMPLETED_NEW'
+      : sessionMode === 'review' ? 'COMPLETED_REVIEW'
+        : 'COMPLETED'
 
     // 获取本次学习的所有答题记录
     const answers = await prisma.question_answers.findMany({
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await prisma.study_records.update({
       where: { id: sessionId },
       data: {
-        status: 'COMPLETED',
+        status: completedStatus, // 根据mode区分完成状态
         isCompleted: true,
         // completedWords: session.totalWords, // 不要覆盖！依赖 progress 增量更新
         completedAt: now,

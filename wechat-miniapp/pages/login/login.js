@@ -218,4 +218,12 @@ Page({
       this.setData({ loading: false })
     }
   },
+
+  // 游客试用
+  handleGuestLogin() {
+    app.globalData.isGuest = true
+    wx.switchTab({
+      url: '/pages/today-learn/today-learn'
+    })
+  },
 })
