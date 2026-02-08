@@ -108,25 +108,39 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 从 question_answers 表实时计算每个单词的最近3次正确率
+        // 从 question_answers 表批量查询最近答题记录（一次查询替代 N 次）
         const vocabIds = Array.from(aggregatedData.keys())
+        const allStudentIds = [...new Set(
+            Array.from(aggregatedData.values()).flatMap(item => item.studentIds)
+        )]
+
+        // 一次性查出所有相关的最近答题记录
+        const allRecentAnswers = await prisma.question_answers.findMany({
+            where: {
+                vocabularyId: { in: vocabIds },
+                studentId: { in: allStudentIds },
+            },
+            orderBy: { answeredAt: 'desc' },
+            select: { vocabularyId: true, isCorrect: true }
+        })
+
+        // 按 vocabularyId 分组，取每组前 3 条
+        const answersByVocab = new Map<string, boolean[]>()
+        for (const answer of allRecentAnswers) {
+            const list = answersByVocab.get(answer.vocabularyId) || []
+            if (list.length < 3) {
+                list.push(answer.isCorrect)
+                answersByVocab.set(answer.vocabularyId, list)
+            }
+        }
+
+        // 计算每个词汇的最近正确率
         for (const vocabId of vocabIds) {
             const item = aggregatedData.get(vocabId)!
-
-            // 查询该单词的最近3次答题记录（跨所有相关学生）
-            const recentAnswers = await prisma.question_answers.findMany({
-                where: {
-                    vocabularyId: vocabId,
-                    studentId: { in: item.studentIds },
-                },
-                orderBy: { answeredAt: 'desc' },
-                take: 3,
-                select: { isCorrect: true }
-            })
-
-            if (recentAnswers.length > 0) {
-                const correctCount = recentAnswers.filter(a => a.isCorrect).length
-                item.recentAccuracy = Math.round((correctCount / recentAnswers.length) * 100)
+            const recent = answersByVocab.get(vocabId) || []
+            if (recent.length > 0) {
+                const correctCount = recent.filter(r => r).length
+                item.recentAccuracy = Math.round((correctCount / recent.length) * 100)
             }
         }
 

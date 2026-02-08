@@ -94,7 +94,33 @@ export async function GET(request: NextRequest) {
             dayVocabMap.set(packDay.dayNumber, vocabIds)
         })
 
-        // 6. 生成 DAY 列表（复习计划模式）
+        // 6. 一次性批量查询所有复习完成记录（避免 N+1 查询）
+        // 原来在循环内每天查一次DB，200学生×25天=5000次查询
+        // 改为只查1次，在内存中匹配
+        const allReviewRecords = await prisma.study_records.findMany({
+            where: {
+                studentId,
+                isCompleted: true,
+                isRetestMode: false,
+                status: 'COMPLETED_REVIEW',
+                taskDate: {
+                    gte: startDate,
+                },
+            },
+            select: {
+                taskDate: true,
+                totalTime: true,
+            },
+        })
+
+        // 按日期建立索引（用日期字符串作为 key）
+        const reviewRecordMap = new Map<string, { totalTime: number }>()
+        for (const record of allReviewRecords) {
+            const dateKey = formatDateBeijing(record.taskDate)
+            reviewRecordMap.set(dateKey, { totalTime: record.totalTime || 0 })
+        }
+
+        // 7. 生成 DAY 列表（复习计划模式）
         // 修正：复习计划需要延伸到学习结束后的15天（艾宾浩斯最后一个周期）
         const reviewDuration = totalDays + 15
         const days = []
@@ -128,20 +154,12 @@ export async function GET(request: NextRequest) {
                     // 该天无需复习（Day 1或纯学习天），直接标记completed
                     status = 'completed'
                 } else {
-                    // 查询该天是否有完成的复习记录（仅匹配 COMPLETED_REVIEW）
-                    const hasReviewRecord = await prisma.study_records.findFirst({
-                        where: {
-                            studentId,
-                            taskDate: targetDate,
-                            isCompleted: true,
-                            isRetestMode: false,
-                            status: 'COMPLETED_REVIEW'
-                        }
-                    })
+                    // 从批量查询结果中查找（内存操作，无 DB 查询）
+                    const reviewRecord = reviewRecordMap.get(dateStr)
 
-                    if (hasReviewRecord) {
+                    if (reviewRecord) {
                         status = 'completed'
-                        dayTotalTime = hasReviewRecord.totalTime || 0
+                        dayTotalTime = reviewRecord.totalTime
                     } else {
                         status = 'missed' // 未完成复习，可补卡
                     }

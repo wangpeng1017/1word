@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
+import { generateId } from '@/lib/id'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -68,12 +69,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
     }
 
-    // 创建答题记录并更新会话进度
-    const [newAnswer, updatedSession] = await prisma.$transaction([
+    // 创建答题记录并更新会话进度（accuracy 也在事务内更新，避免并发覆盖）
+    const updatedSession = await prisma.$transaction(async (tx) => {
       // 创建答题记录
-      prisma.question_answers.create({
+      await tx.question_answers.create({
         data: {
-          id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          id: generateId('qa'),
           studentId: session.studentId,
           vocabularyId: answer.vocabularyId,
           questionId: answer.questionId,
@@ -82,9 +83,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           timeSpent: answer.timeSpent ?? 0, // 默认值 0，避免 null 约束错误
           answeredAt: now,
         },
-      }),
+      })
       // 更新会话进度
-      prisma.study_records.update({
+      const updated = await tx.study_records.update({
         where: { id: sessionId },
         data: {
           completedWords: { increment: 1 },
@@ -94,17 +95,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           lastActiveAt: now,
           updatedAt: now,
         },
-      }),
-    ])
-
-    // 更新正确率
-    const newAccuracy = updatedSession.completedWords > 0
-      ? updatedSession.correctCount / updatedSession.completedWords
-      : 0
-
-    await prisma.study_records.update({
-      where: { id: sessionId },
-      data: { accuracy: newAccuracy },
+      })
+      // 更新正确率（在事务内，避免并发覆盖）
+      const newAccuracy = updated.completedWords > 0
+        ? updated.correctCount / updated.completedWords
+        : 0
+      await tx.study_records.update({
+        where: { id: sessionId },
+        data: { accuracy: newAccuracy },
+      })
+      return updated
     })
 
     return apiResponse.success({
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // 批量创建答题记录
     const qaData = newAnswers.map((a: any, i: number) => ({
-      id: `qa_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+      id: generateId('qa'),
       studentId: session.studentId,
       vocabularyId: a.vocabularyId,
       questionId: a.questionId,

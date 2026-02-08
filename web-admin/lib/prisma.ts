@@ -4,6 +4,16 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
+// 确保连接池大小足够（默认只有 5，200 学生并发时不够用）
+function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL || ''
+  if (url && !url.includes('connection_limit')) {
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}connection_limit=20`
+  }
+  return url
+}
+
 const prismaClientSingleton = () => {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development'
@@ -11,7 +21,7 @@ const prismaClientSingleton = () => {
       : ['error'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: getDatabaseUrl(),
       },
     },
     transactionOptions: {
@@ -24,3 +34,4 @@ const prismaClientSingleton = () => {
 export const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+

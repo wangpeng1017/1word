@@ -6,6 +6,7 @@ import { apiResponse } from '@/lib/response'
 import { checkAndUnlockAchievements } from '@/lib/achievement-checker'
 import { getTodayUTC } from '@/lib/date-utils'
 import { validateAnswers, isDuplicatePointsAward, calculatePoints } from '@/lib/points-validator'
+import { generateId } from '@/lib/id'
 
 // 同步更新掌握度
 async function updateMasteries(
@@ -40,7 +41,7 @@ async function updateMasteries(
       if (!existing) {
         return prisma.word_masteries.create({
           data: {
-            id: `wm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            id: generateId('wm'),
             studentId,
             vocabularyId: a.vocabularyId,
             totalWrongCount: a.isCorrect ? 0 : 1,
@@ -143,7 +144,7 @@ async function createWrongQuestions(
       } else {
         // 创建新的错题记录
         toCreate.push({
-          id: `wq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          id: generateId('wq'),
           studentId,
           vocabularyId: answer.vocabularyId || '',
           questionId: answer.questionId,
@@ -202,7 +203,7 @@ async function updatePointsAsync(
     const points = await prisma.student_points.upsert({
       where: { studentId },
       create: {
-        id: `sp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        id: generateId('sp'),
         studentId,
         totalPoints,
         dailyPoints: totalPoints,
@@ -228,7 +229,7 @@ async function updatePointsAsync(
 
     await prisma.point_history.create({
       data: {
-        id: `ph_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        id: generateId('ph'),
         studentId,
         points: totalPoints,
         reason: `学习${totalWords}题(对${correctCount}个+${basePoints}分, 完成+${completionBonus}分${perfectBonus > 0 ? ', 全对+' + perfectBonus + '分' : ''})`,
@@ -301,7 +302,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const srId = `sr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    const srId = generateId('sr')
 
     const coreResult = await prisma.$transaction(async (tx) => {
       const [existingPlans, existingMasteries] = await Promise.all([
@@ -340,7 +341,7 @@ export async function POST(request: NextRequest) {
 
       // 使用服务端验证后的 isCorrect
       const qaData = validatedAnswers.map((a, i) => ({
-        id: `qa_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+        id: generateId('qa'),
         studentId,
         vocabularyId: a.vocabularyId || '',
         questionId: a.questionId,
@@ -393,7 +394,7 @@ export async function POST(request: NextRequest) {
         )
       } else {
         plansToCreate.push({
-          id: `sp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${vocabId.slice(-4)}`,
+          id: generateId('sp'),
           studentId,
           vocabularyId: vocabId,
           status: 'LEARNING',
@@ -465,7 +466,7 @@ export async function POST(request: NextRequest) {
       } else {
         await prisma.study_streaks.create({
           data: {
-            id: `ss_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            id: generateId('ss'),
             studentId,
             currentStreak: 1,
             longestStreak: 1,
