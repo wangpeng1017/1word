@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             questionId: a.questionId,
             userAnswer: a.userAnswer,
             isCorrect: a.isCorrect,
-            timeSpent: a.timeSpent || null,
+            timeSpent: a.timeSpent ?? 0,
         }))
 
         await prisma.vocabulary_quiz_answers.createMany({
