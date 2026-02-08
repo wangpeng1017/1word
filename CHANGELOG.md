@@ -4,6 +4,9 @@
 
 ### Fixed
 - **Timeline状态Bug**: 修复"今日复习"页面中过去的Day全部显示为"已完成"的问题。利用现有`study_records.status`字段区分学习模式(`COMPLETED_NEW`/`COMPLETED_REVIEW`)，timeline仅按复习完成记录判断Day状态。无需数据库Schema改动。
+- **复习结果弹窗数据错误**: 修复完成学习后弹窗显示旧session数据的问题。`result.js`不再用服务器汇总数据覆盖当次学习的URL参数；`review-plan`API改为`findMany`汇总全天所有记录。
+- **学习历史正确率偏低**: 正确率分母从`totalWords`改为`correctCount+wrongCount`(实际答题数)。涉及`study-history.js`和`study-history.wxml`。
+- **Day弹窗用时始终00:00**: `study-days`API返回的`totalTime`从硬编码0改为从`study_records`获取实际用时。
 
 ### Changed
 - **学习记录模式标记**: `study.js`提交答题记录时传递`mode`参数，`study-records`和`study-sessions/complete`根据mode写入不同status值，实现今日学习和今日复习的完成状态独立判断。

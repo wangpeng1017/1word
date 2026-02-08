@@ -148,7 +148,7 @@ Page({
     const totalCorrect = records.reduce((sum, r) => sum + (r.correctCount || 0), 0)
     const totalWrong = records.reduce((sum, r) => sum + (r.wrongCount || 0), 0)
     const totalTime = records.reduce((sum, r) => sum + (r.totalTime || 0), 0)
-    const avgAccuracy = totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0
+    const avgAccuracy = (totalCorrect + totalWrong) > 0 ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0
 
     return {
       totalSessions,
@@ -171,8 +171,7 @@ Page({
     })
 
     const accuracies = recentRecords.map(r => {
-      const total = r.totalWords
-      return total > 0 ? Math.round((r.totalCorrect / total) * 100) : 0
+      return (r.totalCorrect + r.totalWrong) > 0 ? Math.round((r.totalCorrect / (r.totalCorrect + r.totalWrong)) * 100) : 0
     })
 
     const wordCounts = recentRecords.map(r => r.totalWords)
@@ -240,8 +239,9 @@ Page({
     const { dateIndex, recordIndex } = e.currentTarget.dataset
     const record = this.data.filteredRecords[dateIndex].records[recordIndex]
 
-    const accuracy = record.totalWords > 0
-      ? Math.round((record.correctCount / record.totalWords) * 100)
+    const totalAnswered = (record.correctCount || 0) + (record.wrongCount || 0)
+    const accuracy = totalAnswered > 0
+      ? Math.round((record.correctCount / totalAnswered) * 100)
       : 0
 
     const timeStr = this.formatTime(record.totalTime || 0)
@@ -282,8 +282,8 @@ Page({
   // 判断是否同一天
   isSameDay(date1, date2) {
     return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate()
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
   },
 
   // 判断是否本周
@@ -301,7 +301,7 @@ Page({
   // 判断是否本月
   isThisMonth(date, now) {
     return date.getFullYear() === now.getFullYear() &&
-           date.getMonth() === now.getMonth()
+      date.getMonth() === now.getMonth()
   },
 
   // 下拉刷新

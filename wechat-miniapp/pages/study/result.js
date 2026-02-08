@@ -53,20 +53,13 @@ Page({
         const streakDays = reviewData?.miniapp?.progress?.consecutiveDays || 0
         const masteredWords = reviewData?.progress?.masteredWords || 0
 
-        // 使用服务器汇总数据覆盖
-        const serverTotal = today.completedCount || this.data.total
-        const serverCorrect = today.correctCount || this.data.correct
-        const serverWrong = today.wrongCount || this.data.wrong
-        const serverAccuracy = serverTotal > 0 ? Math.round((serverCorrect / serverTotal) * 100) : 0
+        // 服务器数据仅用于附加信息（streak/mastered/time），不覆盖当次学习的核心数据
         const ts = today.timeSpentSeconds || 0
 
         const motivation = this.getMotivationContent(streakDays)
 
         this.setData({
-          total: serverTotal,
-          correct: serverCorrect,
-          wrong: serverWrong,
-          accuracy: serverAccuracy,
+          // 不覆盖 total/correct/wrong/accuracy — URL参数才是当次学习的正确数据
           timeSeconds: ts,
           timeString: this.formatTime(ts),
           streakDays,

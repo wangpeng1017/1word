@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
 
             // 状态判定（基于复习完成情况）
             let status = 'locked'
+            let dayTotalTime = 0
             if (dayNumber < currentDayNumber) {
                 if (reviewWordsCount === 0) {
                     // 该天无需复习（Day 1或纯学习天），直接标记completed
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest) {
 
                     if (hasReviewRecord) {
                         status = 'completed'
+                        dayTotalTime = hasReviewRecord.totalTime || 0
                     } else {
                         status = 'missed' // 未完成复习，可补卡
                     }
@@ -171,7 +173,7 @@ export async function GET(request: NextRequest) {
                 status,
                 wordsCount: reviewWordsCount, // 复习词数（非新词数）
                 accuracy: 0, // 复习模式下暂不显示准确率
-                totalTime: 0,
+                totalTime: dayTotalTime, // 从study_records获取实际用时
             })
         }
 

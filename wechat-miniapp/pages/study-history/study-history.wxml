@@ -67,7 +67,7 @@
               </view>
               <view class="record-stat">
                 <text class="stat-label">正确率</text>
-                <text class="stat-value accent">{{record.totalWords > 0 ? fmt.round((record.correctCount / record.totalWords) * 100) : 0}}%</text>
+                <text class="stat-value accent">{{(record.correctCount + record.wrongCount) > 0 ? fmt.round((record.correctCount / (record.correctCount + record.wrongCount)) * 100) : 0}}%</text>
               </view>
             </view>
 

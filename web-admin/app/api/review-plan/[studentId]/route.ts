@@ -182,20 +182,25 @@ export async function GET(
       }
     }
 
-    // 7. 获取今日已完成数量
-    const todayRecord = await prisma.study_records.findFirst({
+    // 7. 获取今日所有学习记录并汇总
+    const todayRecords = await prisma.study_records.findMany({
       where: {
         studentId,
-        taskDate: { gte: startOfToday, lte: endOfToday }
-      }
+        taskDate: { gte: startOfToday, lte: endOfToday },
+        isRetestMode: false, // 排除错题重测
+      },
     })
 
-    // dueCount: 如果今天有学习记录，使用记录中的totalWords（避免复习后掌握单词导致数量变化）
-    const todayDueCount = todayRecord?.totalWords || (todayNewCount + todayReviewCount)
-    const todayCompletedCount = todayRecord?.completedWords || 0
-    const todayTimeSpent = todayRecord?.totalTime || 0
-    const todayCorrectCount = todayRecord?.correctCount || 0
-    const todayWrongCount = todayRecord?.wrongCount || 0
+    // 汇总所有今日记录
+    const todayCompletedCount = todayRecords.reduce((sum, r) => sum + (r.completedWords || 0), 0)
+    const todayCorrectCount = todayRecords.reduce((sum, r) => sum + (r.correctCount || 0), 0)
+    const todayWrongCount = todayRecords.reduce((sum, r) => sum + (r.wrongCount || 0), 0)
+    const todayTimeSpent = todayRecords.reduce((sum, r) => sum + (r.totalTime || 0), 0)
+
+    // dueCount: 如果今天有学习记录，汇总totalWords；否则用计算值
+    const todayDueCount = todayRecords.length > 0
+      ? todayRecords.reduce((sum, r) => sum + (r.totalWords || 0), 0)
+      : (todayNewCount + todayReviewCount)
 
     // 需要复习的词汇数量（用于后台显示）
     const needReview = todayReviewCount
