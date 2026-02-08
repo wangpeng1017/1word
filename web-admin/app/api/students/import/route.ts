@@ -62,14 +62,14 @@ export async function POST(request: NextRequest) {
             return errorResponse('学生数据不能为空')
         }
 
-        const password = defaultPassword || '123456'
-        const hashedPassword = await hashPassword(password)
-
         const results = {
             success: 0,
             failed: 0,
             errors: [] as string[],
         }
+
+        // 缓存已计算的密码哈希（相同密码只算一次）
+        const passwordHashCache = new Map<string, string>()
 
         for (const studentData of students) {
             try {
@@ -79,6 +79,14 @@ export async function POST(request: NextRequest) {
                     results.failed++
                     results.errors.push(`学号 ${studentNo || '未知'}: 姓名、学号或手机号为空`)
                     continue
+                }
+
+                // 默认密码：优先用手机号，其次用统一密码，最后用123456
+                const actualPassword = phone || defaultPassword || '123456'
+                let hashedPassword = passwordHashCache.get(actualPassword)
+                if (!hashedPassword) {
+                    hashedPassword = await hashPassword(actualPassword)
+                    passwordHashCache.set(actualPassword, hashedPassword)
                 }
 
                 // 检查学号是否已存在
