@@ -151,6 +151,13 @@ export async function GET(
     })
     const masteredVocabIds = new Set(masteredWords.map(w => w.vocabularyId))
 
+    // 3.1 获取已经在学习中的词汇ID (避免新词重复出现)
+    const startedWords = await prisma.study_plans.findMany({
+      where: { studentId },
+      select: { vocabularyId: true }
+    })
+    const startedVocabIds = new Set(startedWords.map(w => w.vocabularyId))
+
     // 4. 计算今日新学单词和复习单词
     let newWords: any[] = []
     let reviewWords: { vocabulary: any }[] = []
@@ -182,7 +189,7 @@ export async function GET(
         if (packDay) {
           newWords = packDay.day_words
             .map(dw => dw.vocabulary)
-            .filter(v => v && !masteredVocabIds.has(v.id))
+            .filter(v => v && !masteredVocabIds.has(v.id) && !startedVocabIds.has(v.id)) // 过滤掉已掌握 和 已在学习计划中 的词
             .filter(v => v.questions && v.questions.length > 0)
             .filter(v => v.word_audios && v.word_audios.length > 0)
             .slice(0, MAX_NEW_WORDS_PER_DAY)
