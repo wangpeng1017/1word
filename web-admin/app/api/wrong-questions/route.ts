@@ -105,33 +105,19 @@ export async function GET(request: NextRequest) {
             prisma.question_answers.count({ where }),
         ])
 
-        // 选项字母映射函数：A=0, B=1, C=2, D=3
-        const letterToIndex = (letter: string): number => {
-            const upperLetter = letter?.toUpperCase()
-            if (upperLetter === 'A') return 0
-            if (upperLetter === 'B') return 1
-            if (upperLetter === 'C') return 2
-            if (upperLetter === 'D') return 3
-            return -1
-        }
-
         // 格式化数据
         const formattedRecords = records.map((record: any) => {
             const options = record.questions?.question_options || []
-            const wrongAnswerLetter = record.answer // 用户选择的选项字母
-            const correctAnswerLetter = record.questions?.correctAnswer || ''
+            const wrongAnswerLetter = record.answer // 用户选择的选项字母（洗牌后的位置）
 
-            // 获取错误答案的具体内容
-            const wrongIndex = letterToIndex(wrongAnswerLetter)
-            const wrongAnswerContent = wrongIndex >= 0 && wrongIndex < options.length
-                ? options[wrongIndex]?.content
-                : wrongAnswerLetter
+            // ⚠️ 重要：用户的 answer 是前端洗牌后的位置标签（A/B/C/D），
+            // 无法用原始选项顺序映射回实际内容。
+            // 正确答案通过 isCorrect 标记精确查找。
+            const correctOption = options.find((o: any) => o.isCorrect)
+            const correctAnswerContent = correctOption?.content || record.questions?.correctAnswer || '-'
 
-            // 获取正确答案的具体内容
-            const correctIndex = letterToIndex(correctAnswerLetter)
-            const correctAnswerContent = correctIndex >= 0 && correctIndex < options.length
-                ? options[correctIndex]?.content
-                : correctAnswerLetter
+            // 用户选择的答案无法精确还原（洗牌信息未保存），显示为字母
+            const wrongAnswerContent = `选项${wrongAnswerLetter || '?'}（已打乱顺序）`
 
             return {
                 id: record.id,
@@ -142,8 +128,8 @@ export async function GET(request: NextRequest) {
                 meaning: record.vocabularies?.word_meanings?.[0]?.meaning || '',
                 questionType: record.questions?.type || '',
                 questionContent: record.questions?.content || '',
-                wrongAnswer: wrongAnswerContent || wrongAnswerLetter || '-',
-                correctAnswer: correctAnswerContent || correctAnswerLetter || '-',
+                wrongAnswer: wrongAnswerContent,
+                correctAnswer: correctAnswerContent,
                 wrongAt: record.answeredAt,
             }
         })
