@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3] - 2026-02-11
+
+### Fixed
+- **LISTENING题泄漏**: 彻底修复听音频选词题仍出现在今日学习、复习和错题本中的问题。
+  - `selectQuestionByType` fallback 选题排除 LISTENING 类型
+  - `mapTasksForMiniapp` 过滤 questions 数组中的 LISTENING 题
+  - 错题本 API 排除 LISTENING 类型的错题
+
 ## [1.0.2] - 2026-02-08
 
 ### Fixed

@@ -148,7 +148,12 @@ export function selectQuestionByType(
     return matchedQuestion.id
   }
 
-  // 如果没有目标题型，随机返回一个
-  const randomIndex = Math.floor(Math.random() * questions.length)
-  return questions[randomIndex].id
+  // 如果没有目标题型，随机返回一个（排除 LISTENING 类型）
+  const nonListening = questions.filter(q => q.type !== 'LISTENING')
+  if (nonListening.length > 0) {
+    const randomIndex = Math.floor(Math.random() * nonListening.length)
+    return nonListening[randomIndex].id
+  }
+  // 极端情况：全部都是 LISTENING 题，返回第一个
+  return questions[0].id
 }

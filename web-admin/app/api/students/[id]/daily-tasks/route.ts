@@ -24,7 +24,7 @@ function toAbsoluteUrl(path: string | null | undefined): string | null {
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
   return tasks.map((t: any) => {
     const v = t.vocabulary || t.vocabularies || {}
-    const questions = (v.questions || []).map((q: any) => ({
+    const questions = (v.questions || []).filter((q: any) => q.type !== 'LISTENING').map((q: any) => ({
       id: q.id,
       type: q.type,
       content: q.content,

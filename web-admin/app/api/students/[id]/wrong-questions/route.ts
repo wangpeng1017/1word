@@ -154,6 +154,10 @@ export async function GET(
         (qa: any) => qa.questions?.type === questionType
       )
     }
+    // 始终排除 LISTENING 类型（听音选词暂时禁用）
+    filtered = filtered.filter(
+      (qa: any) => qa.questions?.type !== 'LISTENING'
+    )
 
     // 统一结构
     const shaped = mapWrongQuestionsForMiniapp(filtered)
