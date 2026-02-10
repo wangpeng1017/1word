@@ -102,13 +102,25 @@ async function createWrongQuestions(
   if (wrongAnswers.length === 0) return
 
   try {
-    // 获取题目的正确答案
+    // 获取题目的正确答案（通过 question_options 的 isCorrect 标记，避免洗牌参考系问题）
     const questionIds = wrongAnswers.map(a => a.questionId)
     const questions = await prisma.questions.findMany({
       where: { id: { in: questionIds } },
-      select: { id: true, correctAnswer: true },
+      select: {
+        id: true,
+        correctAnswer: true,
+        question_options: {
+          where: { isCorrect: true },
+          select: { content: true },
+          take: 1,
+        },
+      },
     })
-    const questionMap = new Map(questions.map(q => [q.id, q.correctAnswer]))
+    // 优先使用正确选项的内容，回退到 correctAnswer 位置标签
+    const questionMap = new Map(questions.map(q => [
+      q.id,
+      q.question_options?.[0]?.content || q.correctAnswer
+    ]))
 
     // 检查已存在的错题记录
     const existingWrongs = await prisma.wrong_questions.findMany({

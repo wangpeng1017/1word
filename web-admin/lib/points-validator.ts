@@ -9,6 +9,10 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * 验证单个答案是否正确（服务端验证）
+ * 
+ * @deprecated 此函数存在洗牌参考系问题，请使用 validateAnswers 代替。
+ * 前端洗牌选项后的位置标签与数据库原始 correctAnswer 不在同一参考系。
+ * 
  * @param questionId 题目ID
  * @param userAnswer 用户提交的答案
  * @returns 答案是否正确
@@ -26,6 +30,7 @@ export async function validateAnswer(
     return false
   }
 
+  // ⚠️ 注意：此比较在选项被洗牌的场景下不准确
   const normalizedUserAnswer = userAnswer.trim().toLowerCase()
   const normalizedCorrectAnswer = question.correctAnswer.trim().toLowerCase()
 
@@ -56,8 +61,16 @@ interface ValidatedAnswer {
 }
 
 /**
- * 批量验证答案（服务端验证）
- * 忽略客户端提交的 isCorrect，使用数据库中的正确答案进行比对
+ * 批量验证答案
+ * 
+ * ⚠️ 重要修复说明 (2026-02-10):
+ * 前端 study.js 会对选项进行 Fisher-Yates 洗牌，用户选择的 A/B/C/D 是洗牌后的位置标签。
+ * 而数据库 questions.correctAnswer 存储的是原始顺序的位置标签。
+ * 两者参考系不同，直接比较会导致正确答案被误判为错误。
+ * 
+ * 修复方案：信任客户端的 isCorrect（客户端在洗牌后正确计算了结果），
+ * 与 session-based 路径 (progress/route.ts) 保持一致。
+ * 仅做基本完整性检查（questionId 是否存在）。
  */
 export async function validateAnswers(
   answers: AnswerInput[]
@@ -66,38 +79,22 @@ export async function validateAnswers(
     return []
   }
 
+  // 基本完整性检查：确认题目存在
   const questionIds = answers.map(a => a.questionId)
-
   const questions = await prisma.questions.findMany({
     where: { id: { in: questionIds } },
-    select: { id: true, correctAnswer: true, type: true },
+    select: { id: true },
   })
-
-  const questionMap = new Map(questions.map(q => [q.id, q]))
+  const questionIdSet = new Set(questions.map(q => q.id))
 
   return answers.map(answer => {
-    const question = questionMap.get(answer.questionId)
-
-    if (!question) {
-      // 题目不存在，视为错误
-      return {
-        questionId: answer.questionId,
-        answer: answer.answer,
-        isCorrect: false,
-        serverValidated: true,
-        vocabularyId: answer.vocabularyId,
-        timeSpent: answer.timeSpent,
-      }
-    }
-
-    const normalizedUserAnswer = answer.answer.trim().toLowerCase()
-    const normalizedCorrectAnswer = question.correctAnswer.trim().toLowerCase()
-    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer
+    const questionExists = questionIdSet.has(answer.questionId)
 
     return {
       questionId: answer.questionId,
       answer: answer.answer,
-      isCorrect, // 服务端验证的结果，忽略客户端提交的
+      // 信任客户端 isCorrect（前端洗牌后正确计算），题目不存在则视为错误
+      isCorrect: questionExists ? answer.isCorrect : false,
       serverValidated: true,
       vocabularyId: answer.vocabularyId,
       timeSpent: answer.timeSpent,

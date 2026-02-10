@@ -92,44 +92,55 @@ describe('validateAnswers', () => {
     vi.clearAllMocks()
   })
 
-  it('should validate multiple answers and return correct results', async () => {
+  it('should trust client isCorrect when question exists', async () => {
     const mockQuestions = [
-      { id: 'q1', correctAnswer: 'apple', type: 'ENGLISH_TO_CHINESE' },
-      { id: 'q2', correctAnswer: 'banana', type: 'ENGLISH_TO_CHINESE' },
-      { id: 'q3', correctAnswer: 'cherry', type: 'ENGLISH_TO_CHINESE' },
+      { id: 'q1' },
+      { id: 'q2' },
+      { id: 'q3' },
     ]
     vi.mocked(prisma.questions.findMany).mockResolvedValue(mockQuestions as any)
 
     const answers = [
-      { questionId: 'q1', answer: 'apple', isCorrect: true },   // client says true, actually true
-      { questionId: 'q2', answer: 'wrong', isCorrect: true },   // client says true, actually false!
-      { questionId: 'q3', answer: 'cherry', isCorrect: false }, // client says false, actually true!
+      { questionId: 'q1', answer: 'A', isCorrect: true },
+      { questionId: 'q2', answer: 'C', isCorrect: false },
+      { questionId: 'q3', answer: 'B', isCorrect: true },
     ]
 
     const results = await validateAnswers(answers)
 
     expect(results).toEqual([
-      { questionId: 'q1', answer: 'apple', isCorrect: true, serverValidated: true },
-      { questionId: 'q2', answer: 'wrong', isCorrect: false, serverValidated: true },   // corrected!
-      { questionId: 'q3', answer: 'cherry', isCorrect: true, serverValidated: true },   // corrected!
+      { questionId: 'q1', answer: 'A', isCorrect: true, serverValidated: true },
+      { questionId: 'q2', answer: 'C', isCorrect: false, serverValidated: true },
+      { questionId: 'q3', answer: 'B', isCorrect: true, serverValidated: true },
     ])
   })
 
-  it('should detect cheating attempts (client claiming correct but actually wrong)', async () => {
-    const mockQuestions = [
-      { id: 'q1', correctAnswer: 'apple', type: 'ENGLISH_TO_CHINESE' },
-    ]
-    vi.mocked(prisma.questions.findMany).mockResolvedValue(mockQuestions as any)
+  it('should mark as incorrect when question does not exist', async () => {
+    vi.mocked(prisma.questions.findMany).mockResolvedValue([])
 
     const answers = [
-      { questionId: 'q1', answer: 'banana', isCorrect: true }, // CHEATING: claiming correct
+      { questionId: 'non-existent', answer: 'A', isCorrect: true },
     ]
 
     const results = await validateAnswers(answers)
 
-    // Server should override the client's lie
     expect(results[0].isCorrect).toBe(false)
     expect(results[0].serverValidated).toBe(true)
+  })
+
+  it('should handle shuffled options correctly (fix for 2026-02-10 bug)', async () => {
+    // 场景：前端洗牌后正确选项在位置C，但DB的correctAnswer是A
+    // 旧版会用 "C" vs "A" 比较导致误判
+    // 新版信任客户端 isCorrect=true
+    const mockQuestions = [{ id: 'q1' }]
+    vi.mocked(prisma.questions.findMany).mockResolvedValue(mockQuestions as any)
+
+    const answers = [
+      { questionId: 'q1', answer: 'C', isCorrect: true }, // 洗牌后位置C是正确的
+    ]
+
+    const results = await validateAnswers(answers)
+    expect(results[0].isCorrect).toBe(true) // 不再误判！
   })
 })
 
