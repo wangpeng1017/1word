@@ -20,6 +20,7 @@ export default function StudentsPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
   const [searchText, setSearchText] = useState('')
+  const [phoneSearch, setPhoneSearch] = useState('')
   const [filterClassId, setFilterClassId] = useState<string | undefined>()
 
   useEffect(() => {
@@ -27,15 +28,17 @@ export default function StudentsPage() {
     loadClasses()
   }, [])
 
-  const loadData = async (page = pagination.current, pageSize = pagination.pageSize, search?: string, classId?: string) => {
+  const loadData = async (page = pagination.current, pageSize = pagination.pageSize, search?: string, classId?: string, phone?: string) => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
       const s = search !== undefined ? search : searchText
       const c = classId !== undefined ? classId : filterClassId
+      const p = phone !== undefined ? phone : phoneSearch
       let url = `/api/students?page=${page}&limit=${pageSize}`
       if (s) url += `&search=${encodeURIComponent(s)}`
       if (c) url += `&classId=${encodeURIComponent(c)}`
+      if (p) url += `&phone=${encodeURIComponent(p)}`
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -352,7 +355,17 @@ export default function StudentsPage() {
           enterButton={<SearchOutlined />}
           onSearch={(value) => {
             setSearchText(value)
-            loadData(1, pagination.pageSize, value, filterClassId)
+            loadData(1, pagination.pageSize, value, filterClassId, phoneSearch)
+          }}
+        />
+        <Input.Search
+          style={{ width: 200 }}
+          placeholder="搜索手机号"
+          allowClear
+          enterButton={<SearchOutlined />}
+          onSearch={(value) => {
+            setPhoneSearch(value)
+            loadData(1, pagination.pageSize, searchText, filterClassId, value)
           }}
         />
         <Select
@@ -362,7 +375,7 @@ export default function StudentsPage() {
           value={filterClassId}
           onChange={(value) => {
             setFilterClassId(value)
-            loadData(1, pagination.pageSize, searchText, value)
+            loadData(1, pagination.pageSize, searchText, value, phoneSearch)
           }}
           options={classes.map((cls: any) => ({
             label: cls.name,
@@ -371,8 +384,9 @@ export default function StudentsPage() {
         />
         <Button icon={<ReloadOutlined />} onClick={() => {
           setSearchText('')
+          setPhoneSearch('')
           setFilterClassId(undefined)
-          loadData(1, pagination.pageSize, '', undefined)
+          loadData(1, pagination.pageSize, '', undefined, '')
         }}>重置</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           添加学生

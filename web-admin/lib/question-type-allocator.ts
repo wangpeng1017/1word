@@ -1,12 +1,13 @@
 /**
  * 题型分配工具
- * 比例：选词填空 20%、听音选词 10%、汉选英 ~23%、英选汉 ~47%
+ * 比例：选词填空 25%、汉选英 28%、英选汉 ~47%
+ * ⚠️ 听音选词暂时禁用（音频播放问题未解决）- 2026-02-11
  */
 
 export enum QuestionTypeEnum {
   ENGLISH_TO_CHINESE = 'ENGLISH_TO_CHINESE',  // 英选汉
   CHINESE_TO_ENGLISH = 'CHINESE_TO_ENGLISH',  // 汉选英
-  LISTENING = 'LISTENING',                     // 听音选词
+  LISTENING = 'LISTENING',                     // 听音选词（暂时禁用）
   FILL_IN_BLANK = 'FILL_IN_BLANK',            // 选词填空
 }
 
@@ -25,11 +26,11 @@ export function allocateQuestionTypes(
     return allocation
   }
 
-  // 计算各题型数量
+  // 计算各题型数量（听音选词暂时禁用）
   const total = vocabularyIds.length
-  const fillInBlankCount = Math.floor(total * 0.2)   // 20% 选词填空
-  const listeningCount = Math.floor(total * 0.1)     // 10% 听音选词
-  const chineseToEnglishCount = Math.floor(total * 0.23) // ~23% 汉选英
+  const fillInBlankCount = Math.floor(total * 0.25)   // 25% 选词填空（原20%+5%）
+  const listeningCount = 0                             // 0% 听音选词（暂时禁用）
+  const chineseToEnglishCount = Math.floor(total * 0.28) // 28% 汉选英（原23%+5%）
   // 剩余全部给英选汉 (~47%)
 
   // 洗牌算法（Fisher-Yates）- 随机打乱词汇顺序

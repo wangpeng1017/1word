@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const classId = searchParams.get('classId')
     const search = searchParams.get('search')
+    const phone = searchParams.get('phone')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
@@ -71,35 +72,67 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [students, total] = await Promise.all([
-      prisma.students.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              is_active: true,
-            },
-          },
-          classes: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-        orderBy: { created_at: 'desc' },
-      }),
-      prisma.students.count({ where }),
-    ])
+    if (phone) {
+      where.user = { ...where.user, phone: { contains: phone } }
+    }
 
-    // 转换数据格式
-    const formattedStudents = students.map(formatStudentData)
+    let students: any[] = []
+    let total = 0
+
+    try {
+      const [rawStudents, rawTotal] = await Promise.all([
+        prisma.students.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                is_active: true,
+              },
+            },
+            classes: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.students.count({ where }),
+      ])
+      students = rawStudents
+      total = rawTotal
+    } catch (queryError: any) {
+      console.error('学生列表查询失败(关联数据可能缺失):', queryError?.message)
+      // 降级查询：不 include 关联表，避免外键缺失导致崩溃
+      const [rawStudents, rawTotal] = await Promise.all([
+        prisma.students.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.students.count({ where }),
+      ])
+      students = rawStudents
+      total = rawTotal
+    }
+
+    // 转换数据格式（跳过格式化异常的记录）
+    const formattedStudents = students.map(s => {
+      try {
+        return formatStudentData(s)
+      } catch (e) {
+        console.error(`格式化学生数据失败: ${s.id}`, e)
+        return { ...s, user: null, class: null }
+      }
+    })
 
     return successResponse({
       students: formattedStudents,

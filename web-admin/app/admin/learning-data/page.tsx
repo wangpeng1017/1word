@@ -26,6 +26,7 @@ interface LearningSession {
     startedAt: string
     completedAt: string | null
     isCompleted: boolean
+    status: string
 }
 
 interface ClassInfo {
@@ -90,7 +91,9 @@ export default function LearningDataPage() {
             })
             const result = await res.json()
             if (result.success) {
-                setStudents(result.data || [])
+                // API 返回 { data: { students: [...], pagination } }，需要取 students 数组
+                const list = result.data?.students || result.data || []
+                setStudents(Array.isArray(list) ? list : [])
             }
         } catch (error) {
             console.error('加载学生失败:', error)
@@ -307,7 +310,7 @@ export default function LearningDataPage() {
                     >
                         {students.map((s) => (
                             <Select.Option key={s.id} value={s.id}>
-                                {s.user.name}
+                                {s.user?.name || '未命名'}
                             </Select.Option>
                         ))}
                     </Select>

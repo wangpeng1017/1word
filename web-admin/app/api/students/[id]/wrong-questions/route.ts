@@ -20,13 +20,20 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
 
     const firstMeaning = v.word_meanings?.[0]?.meaning || ''
 
+    // 正确答案：使用 question_options 中 isCorrect=true 的选项内容（而非位置标签）
+    const correctOption = options.find((o: any) => o.isCorrect)
+    const correctAnswerContent = correctOption?.content || q.correctAnswer
+
+    // 用户答案：洗牌后位置标签无法可靠映射回原始选项，直接标记为"答错了"
+    const wrongAnswerContent = '答错了'
+
     return {
       id: qa.id,
       studentId: qa.studentId,
       vocabularyId: qa.vocabularyId,
       questionId: qa.questionId,
-      wrongAnswer: qa.answer,
-      correctAnswer: q.correctAnswer,
+      wrongAnswer: wrongAnswerContent,
+      correctAnswer: correctAnswerContent,
       wrongAt: qa.answeredAt,
       vocabulary: {
         id: v.id,
@@ -48,7 +55,7 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
         content: q.content,
         sentence: q.sentence,
         audioUrl: q.audioUrl,
-        correctAnswer: q.correctAnswer,
+        correctAnswer: correctAnswerContent,
         options,
       },
     }
