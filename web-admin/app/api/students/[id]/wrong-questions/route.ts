@@ -24,8 +24,10 @@ function mapWrongQuestionsForMiniapp(rows: any[]) {
     const correctOption = options.find((o: any) => o.isCorrect)
     const correctAnswerContent = correctOption?.content || q.correctAnswer
 
-    // 用户答案：洗牌后位置标签无法可靠映射回原始选项，直接标记为"答错了"
-    const wrongAnswerContent = '答错了'
+    // 用户答案：优先使用存储的实际选项内容，老数据（仅位置标签 A/B/C/D）回退为"答错了"
+    const rawAnswer = qa.answer || ''
+    const isOnlyLabel = /^[A-Da-d]$/.test(rawAnswer.trim())
+    const wrongAnswerContent = (rawAnswer && !isOnlyLabel) ? rawAnswer : '答错了'
 
     return {
       id: qa.id,

@@ -7,6 +7,9 @@
   - `selectQuestionByType` fallback 选题排除 LISTENING 类型
   - `mapTasksForMiniapp` 过滤 questions 数组中的 LISTENING 题
   - 错题本 API 排除 LISTENING 类型的错题
+- **错题本答案显示**: 修复错题本中"你的答案"始终显示"答错了"的问题。
+  - `study.js` 提交答题时保存选项实际文字内容（而非洗牌后位置标签 A/B/C/D）
+  - 错题本 API 优先显示实际选项内容，老数据（仅位置标签）回退为"答错了"
 
 ## [1.0.2] - 2026-02-08
 

@@ -304,7 +304,13 @@ Page({
     if (!selectedAnswer) { wx.showToast({ title: '请选择答案', icon: 'none' }); return }
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer
     const timeSpent = Math.floor((Date.now() - this.data.startTime) / 1000)
-    const answerRecord = { vocabularyId: currentTask.vocabularyId, questionId: currentQuestion.id, answer: selectedAnswer, isCorrect, timeSpent, taskId: currentTask.id, timestamp: Date.now() }
+    // 获取用户选择选项的实际文字内容（而非洗牌后的位置标签 A/B/C/D）
+    const labels = ['A', 'B', 'C', 'D']
+    const selectedIndex = labels.indexOf(selectedAnswer)
+    const answerContent = (selectedIndex >= 0 && currentQuestion.options?.[selectedIndex]?.content)
+      ? currentQuestion.options[selectedIndex].content
+      : selectedAnswer
+    const answerRecord = { vocabularyId: currentTask.vocabularyId, questionId: currentQuestion.id, answer: answerContent, isCorrect, timeSpent, taskId: currentTask.id, timestamp: Date.now() }
     const answers = [...this.data.answers, answerRecord]
     const correctCount = answers.filter(a => a.isCorrect).length, wrongCount = answers.length - correctCount
     const newCC = isCorrect ? consecutiveCorrect + 1 : 0

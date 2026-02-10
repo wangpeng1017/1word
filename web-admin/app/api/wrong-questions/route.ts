@@ -116,8 +116,10 @@ export async function GET(request: NextRequest) {
             const correctOption = options.find((o: any) => o.isCorrect)
             const correctAnswerContent = correctOption?.content || record.questions?.correctAnswer || '-'
 
-            // 用户选择的答案无法精确还原（洗牌信息未保存），显示为字母
-            const wrongAnswerContent = `选项${wrongAnswerLetter || '?'}（已打乱顺序）`
+            // 用户答案：优先使用存储的实际选项内容，老数据（仅位置标签）回退为提示文字
+            const rawAnswer = record.answer || ''
+            const isOnlyLabel = /^[A-Da-d]$/.test(rawAnswer.trim())
+            const wrongAnswerContent = (rawAnswer && !isOnlyLabel) ? rawAnswer : `选项${rawAnswer || '?'}（已打乱顺序）`
 
             return {
                 id: record.id,
