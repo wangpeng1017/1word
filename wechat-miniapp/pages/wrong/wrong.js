@@ -50,7 +50,7 @@ Page({
         throw new Error('未找到学生ID')
       }
 
-      const response = await get(`/students/${studentId}/wrong-questions?limit=100`)
+      const response = await get(`/students/${studentId}/wrong-questions?limit=300`)
       const { wrongQuestions, stats } = response
 
       this.setData({

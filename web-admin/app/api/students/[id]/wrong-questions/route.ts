@@ -90,6 +90,7 @@ export async function GET(
 
     // 使用原生 SQL 查询：对于每个(vocabularyId, questionId)组合，获取最新答题记录
     // 然后筛选出最新记录 isCorrect = false 的
+    // 注意：LISTENING 过滤必须在 LIMIT 之前执行，否则会导致返回数量不稳定
     let sql = `
       SELECT latest_answers.*
       FROM (
@@ -106,7 +107,9 @@ export async function GET(
             ORDER BY qa.answeredAt DESC
           ) as rn
         FROM question_answers qa
+        JOIN questions q ON qa.questionId = q.id
         WHERE qa.studentId = ?
+          AND q.type != 'LISTENING'
           ${vocabularyId ? 'AND qa.vocabularyId = ?' : ''}
       ) latest_answers
       WHERE latest_answers.rn = 1
@@ -159,16 +162,13 @@ export async function GET(
     )
 
     // 如果指定了题型，在内存中过滤（Prisma 不支持在 findMany 中过滤关联）
+    // 注意：LISTENING 已在 SQL 中排除，无需在此重复过滤
     let filtered = wrongAnswersWithDetails
     if (questionType) {
       filtered = wrongAnswersWithDetails.filter(
         (qa: any) => qa.questions?.type === questionType
       )
     }
-    // 始终排除 LISTENING 类型（听音选词暂时禁用）
-    filtered = filtered.filter(
-      (qa: any) => qa.questions?.type !== 'LISTENING'
-    )
 
     // 统一结构
     const shaped = mapWrongQuestionsForMiniapp(filtered)
