@@ -667,6 +667,45 @@ pm2 logs word-app --lines 20
 curl -s https://ienglish.xdf.cn/api/health | head -1
 ```
 
+### 5.5 🔴 生产环境代码变更验证清单（强制！）
+
+> **教训来源**：2026-02-11 部署后，`study-days` API 将今日新学完成的 `COMPLETED` 状态误匹配为复习完成，导致大面积学生 Day2 复习被错误标记为已完成。同时 `findFirst` 无排序随机命中未来计划，返回 0 个词。
+
+#### 每次发版前，必须完成以下检查：
+
+```
+□ 1. 状态覆盖检查
+  - 列出所有涉及的表和字段的可能状态值
+  - 逐一确认代码对每种状态的处理是否正确
+  - 特别检查 study_records.status 的 5 种值：
+    COMPLETED / COMPLETED_NEW / COMPLETED_REVIEW / IN_PROGRESS / INTERRUPTED
+
+□ 2. 查询安全检查
+  - findFirst 是否有 orderBy？多条匹配时返回哪一条？
+  - 生产中是否存在一对多数据异常？（如同一班级多个 ACTIVE 计划）
+  - 日期/时区计算是否正确？
+
+□ 3. 生产数据验证 SQL
+  - 提供可在生产 MySQL 执行的验证 SQL
+  - 用真实学生 ID（如 SH0721975154）验证
+  - 部署前在生产库跑 SQL 确认数据状态
+
+□ 4. 部署后验证
+  - 用真实学生刷新小程序，确认功能正常
+  - 检查 PM2 日志无报错：pm2 logs word-app --lines 50
+  - 记录部署版本号到版本部署记录表
+```
+
+#### 关键数据状态枚举速查：
+
+| 表 | 字段 | 可能值 | 说明 |
+|---|------|--------|------|
+| `study_records` | `status` | `IN_PROGRESS` / `INTERRUPTED` / `COMPLETED` / `COMPLETED_NEW` / `COMPLETED_REVIEW` | `COMPLETED` = mode=unknown 的旧会话 |
+| `plan_classes` | `status` | `ACTIVE` / `COMPLETED` | 同一班级可能有多个 ACTIVE |
+| `study_plans` | `status` | `LEARNING` / `MASTERED` | — |
+| `word_masteries` | `isMastered` | `true` / `false` | — |
+| `wrong_questions` | `status` | `ACTIVE` / `CONFIRMED` / `MASTERED` | — |
+
 ---
 
 ## 六、常见问题处理

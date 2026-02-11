@@ -173,6 +173,50 @@ npm run perf:test-all         # 运行性能测试
 | ✅ **只能修改代码逻辑** | 在现有表结构基础上开发 | 保证生产稳定性 |
 | ✅ **只能使用 `prisma generate`** | 仅生成客户端代码，不改数据库 | 安全操作 |
 
+### 🔴 生产环境代码变更验证规则（强制执行！）
+
+> **教训来源**：2026-02-11 部署后，`study-days` API 将今日新学完成的 `COMPLETED` 状态误匹配为复习完成，导致大面积学生 Day2 复习被错误标记为已完成。同时 `findFirst` 无排序导致随机命中未来计划，返回 0 个词。
+>
+> **根本问题**：只在逻辑层面分析代码，没有用真实生产数据验证。
+
+#### 每次涉及生产环境的代码修改，AI 必须执行以下 3 步验证：
+
+**第 1 步：列出所有受影响的数据状态组合**
+
+修改涉及 `study_records`、`plan_classes` 等表时，必须列出所有可能的状态值及其含义：
+```
+study_records.status: COMPLETED | COMPLETED_NEW | COMPLETED_REVIEW | IN_PROGRESS | INTERRUPTED
+plan_classes.status: ACTIVE | COMPLETED
+word_masteries.isMastered: true | false
+```
+然后逐一确认代码对每种状态的处理是否正确。
+
+**第 2 步：输出生产验证 SQL**
+
+提供可在生产数据库执行的 SQL 查询，用于验证修改前后的数据状态：
+```sql
+-- 示例：检查某学生的所有记录状态分布
+SELECT status, COUNT(*) FROM study_records
+WHERE studentId = 'xxx' GROUP BY status;
+```
+**部署前必须让用户先在生产库跑验证 SQL，确认数据状态符合预期。**
+
+**第 3 步：用真实学生 ID 模拟 API 调用**
+
+修改 API 逻辑后，必须给出完整的验证步骤：
+1. 指定一个真实学生 ID（如 `SH0721975154`）
+2. 列出受影响的 API 端点和预期返回值
+3. 部署后让用户用 curl 或小程序实际验证
+
+#### 特别注意事项：
+
+| 场景 | 必查项 |
+|------|--------|
+| 修改 `findFirst` / `findMany` 查询 | 是否有 `orderBy`？多条匹配时返回哪一条？ |
+| 修改 `status` 相关逻辑 | 是否覆盖了所有枚举值？旧数据的状态值是否兼容？ |
+| 修改日期/时间计算 | 时区是否正确？`getTodayBeijing()` 边界是否测试？ |
+| 涉及多表关联的查询 | 生产中是否存在一对多等数据异常？（如同一班级多个 ACTIVE 计划） |
+
 **部署流程**:
 ```
 1. 本地开发 → git push origin main
