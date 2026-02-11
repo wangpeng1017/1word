@@ -43,10 +43,10 @@ function initNetworkListener() {
 /**
  * 创建/恢复学习会话
  */
-async function createSession(totalWords) {
+async function createSession(totalWords, mode) {
   const app = getApp() // 在函数内部获取 app
   const studentId = app?.globalData?.userInfo?.studentId
-  console.log('[DEBUG] createSession 调用 - studentId:', studentId, 'isOnline:', isOnline, 'totalWords:', totalWords)
+  console.log('[DEBUG] createSession 调用 - studentId:', studentId, 'isOnline:', isOnline, 'totalWords:', totalWords, 'mode:', mode)
   console.log('[DEBUG] app.globalData.userInfo:', app?.globalData?.userInfo)
 
   if (!studentId || !isOnline) {
@@ -56,7 +56,7 @@ async function createSession(totalWords) {
 
   try {
     console.log('[DEBUG] 开始请求 /study-sessions')
-    const response = await post('/study-sessions', { studentId, totalWords })
+    const response = await post('/study-sessions', { studentId, totalWords, mode: mode || 'unknown' })
     console.log('[DEBUG] createSession 响应:', response)
 
     if (response?.sessionId) {

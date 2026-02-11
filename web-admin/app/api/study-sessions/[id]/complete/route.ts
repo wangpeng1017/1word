@@ -68,13 +68,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const vocabularyIds = [...new Set(answers.map(a => a.vocabularyId))]
 
-    // 更新会话状态为已完成，确保 completedWords = totalWords
+    // 用实际答题数校正 completedWords（增量计数器可能因中断/去重不准确）
+    // 注意：answers 可能包含其他会话的记录，用 Math.min 限制上界
+    const actualCompletedWords = Math.min(answers.length, session.totalWords)
+
+    // 更新会话状态为已完成
     await prisma.study_records.update({
       where: { id: sessionId },
       data: {
         status: completedStatus, // 根据mode区分完成状态
         isCompleted: true,
-        // completedWords: session.totalWords, // 不要覆盖！依赖 progress 增量更新
+        completedWords: actualCompletedWords, // 校正增量计数器偏差
         completedAt: now,
         updatedAt: now,
       },

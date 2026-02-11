@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
                 studentId,
                 isCompleted: true,
                 isRetestMode: false,
-                status: 'COMPLETED_REVIEW',
+                status: { in: ['COMPLETED_REVIEW', 'COMPLETED'] }, // 不含 COMPLETED_NEW，避免"今日学习"完成误标"复习"已完成
                 taskDate: {
                     gte: startDate,
                 },
@@ -182,7 +182,18 @@ export async function GET(request: NextRequest) {
                     lastCompletedDate = dateStr
                 }
             } else if (dayNumber === currentDayNumber) {
-                status = 'current' // 当前天
+                // 当前天也检查是否已完成复习
+                if (reviewWordsCount > 0) {
+                    const reviewRecord = reviewRecordMap.get(dateStr)
+                    if (reviewRecord) {
+                        status = 'completed'
+                        dayTotalTime = reviewRecord.totalTime
+                    } else {
+                        status = 'current'
+                    }
+                } else {
+                    status = 'current'
+                }
             }
 
             days.push({
