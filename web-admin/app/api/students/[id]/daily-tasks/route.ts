@@ -106,12 +106,15 @@ export async function GET(
     console.log('[daily-tasks] 学生信息:', student)
     if (!student) return apiResponse.error('学生不存在')
 
-    // 2. 获取班级的活跃词汇库计划
+    // 2. 获取班级的活跃词汇库计划（取已开始的最新计划，避免命中未来计划）
+    const today = getTodayBeijing()
     const planClass = await prisma.plan_classes.findFirst({
       where: {
         class_id: student.class_id,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        start_date: { lte: today },
       },
+      orderBy: { start_date: 'desc' },
       include: {
         vocabulary_packs: {
           include: {
@@ -142,7 +145,6 @@ export async function GET(
     })
     console.log('[daily-tasks] planClass found:', !!planClass, 'pack:', planClass?.vocabulary_packs?.name)
 
-    const today = getTodayBeijing()
 
     // 3. 获取已掌握的词汇ID
     const masteredWords = await prisma.word_masteries.findMany({

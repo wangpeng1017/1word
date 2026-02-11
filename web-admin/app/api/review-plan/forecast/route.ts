@@ -59,12 +59,15 @@ export async function GET(request: NextRequest) {
       where: { studentId },
     })
 
-    // 获取班级的活跃词汇库计划
+    // 获取班级的活跃词汇库计划（取已开始的最新计划，避免命中未来计划）
+    const todayForPlan = getTodayBeijing()
     const planClass = await prisma.plan_classes.findFirst({
       where: {
         class_id: student.class_id,
         status: 'ACTIVE',
+        start_date: { lte: todayForPlan },
       },
+      orderBy: { start_date: 'desc' },
       include: {
         vocabulary_packs: {
           include: {

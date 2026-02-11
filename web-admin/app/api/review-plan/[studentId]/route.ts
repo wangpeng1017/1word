@@ -103,11 +103,14 @@ export async function GET(
     let todayReviewCount = 0
 
     if (student.classes?.id) {
+      const todayForPlan = getTodayBeijing()
       const planClass = await prisma.plan_classes.findFirst({
         where: {
           class_id: student.classes.id,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          start_date: { lte: todayForPlan },
         },
+        orderBy: { start_date: 'desc' },
         include: {
           vocabulary_packs: {
             include: {
