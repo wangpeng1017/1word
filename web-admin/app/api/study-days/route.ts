@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
                 studentId,
                 isCompleted: true,
                 isRetestMode: false,
-                status: { in: ['COMPLETED_REVIEW', 'COMPLETED'] }, // 不含 COMPLETED_NEW，避免"今日学习"完成误标"复习"已完成
+                status: 'COMPLETED_REVIEW', // 只匹配复习完成状态，排除 COMPLETED/COMPLETED_NEW（今日学习/mode=unknown）
                 taskDate: {
                     gte: startDate,
                 },
