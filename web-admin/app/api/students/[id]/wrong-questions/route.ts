@@ -125,10 +125,13 @@ export async function GET(
     // 执行查询
     const rawWrongAnswers = await prisma.$queryRawUnsafe(sql, ...params)
 
+    // 保留原始 SQL 的排序顺序（answeredAt DESC）
+    const orderedIds = (rawWrongAnswers as any[]).map((r: any) => r.id)
+
     // 获取完整的词汇和题目信息
-    const wrongAnswersWithDetails = await prisma.question_answers.findMany({
+    const wrongAnswersUnordered = await prisma.question_answers.findMany({
       where: {
-        id: { in: (rawWrongAnswers as any[]).map((r: any) => r.id) },
+        id: { in: orderedIds },
       },
       include: {
         vocabularies: {
@@ -148,6 +151,12 @@ export async function GET(
         },
       },
     })
+
+    // 按原始 SQL 排序恢复顺序（findMany 不保证返回顺序）
+    const idIndexMap = new Map(orderedIds.map((id: string, i: number) => [id, i]))
+    const wrongAnswersWithDetails = wrongAnswersUnordered.sort(
+      (a: any, b: any) => (idIndexMap.get(a.id) ?? 0) - (idIndexMap.get(b.id) ?? 0)
+    )
 
     // 如果指定了题型，在内存中过滤（Prisma 不支持在 findMany 中过滤关联）
     let filtered = wrongAnswersWithDetails
