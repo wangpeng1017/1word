@@ -1049,10 +1049,31 @@ LIMIT 10;
 > - 数据修改需使用读写账号 (`PRO_RDS_bdcxcx_RW`) 或联系 DBA
 > - **必须使用主库地址** (`rm-2zel9bu41o5s0v0j8`)，从库可能有数据延迟
 
-### 11.5 变更历史
+### 11.5 部署记录
+
+| 日期 | Commit | 变更内容 | 影响范围 | 回滚 Commit |
+|------|--------|----------|---------|-------------|
+| 2026-02-11 | `b51ae4e` | 修复复习完成状态检测：completedWords校正、study-days查询放宽、当前天完成检查、前端传mode参数 | study-days API、completeSession API、小程序sync.js/study.js | `690005d` |
+| 2026-02-10 | `690005d` | LISTENING过滤移入SQL + 错题limit改为300 | daily-tasks API、wrong-questions API | `603dd2c` |
+| 2026-02-10 | `603dd2c` | 修复错题本排序bug | wrong-questions API | - |
+
+#### 快速回滚指令
+
+```bash
+# 在新东方服务器上执行（回滚到上一个稳定版本 690005d）
+cd /home/dontovertime/apps/1word/web-admin
+git checkout 690005d -- app/api/study-days/route.ts app/api/study-sessions/[id]/complete/route.ts
+npm run build
+pm2 restart word-app
+```
+
+> **注意**: 小程序的 `sync.js` 和 `study.js` 改动未发版，回滚后端即可恢复。小程序侧 mode 参数为 undefined 时后端兜底为 `unknown`，不影响功能。
+
+### 11.6 变更历史
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
+| 2026-02-11 | v1.3 | 新增 11.5 部署记录表（含 v1.2 修复复习完成状态检测） |
 | 2026-02-11 | v1.2 | 新增 5.4 版本部署记录表，含 commit hash 和快速回滚指令 |
 | 2026-02-07 | v1.1 | 新增 1.6 节「迭代开发关键约束」，明确 AI 禁止修改表结构和直连生产 |
 | 2026-02-06 | v1.0 | 明确生产环境架构：不使用 Docker，使用 PM2 + 阿里云 RDS |
