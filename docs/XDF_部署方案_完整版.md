@@ -43,6 +43,7 @@
 | **应用端口** | 3000 |
 | **进程管理** | PM2 (进程名: word-app) |
 | **代码仓库** | https://github.com/wangpeng1017/1word.git |
+| **备用仓库(Gitee)** | https://gitee.com/WANGPENG13/1word.git（GitHub 不可达时使用） |
 
 ### 1.3 数据库配置
 
