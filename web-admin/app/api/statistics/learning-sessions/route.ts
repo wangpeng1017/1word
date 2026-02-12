@@ -99,11 +99,29 @@ export async function GET(request: NextRequest) {
             dateFilter.lte = end
         }
 
+        // 构建学习类型筛选条件
+        const studyType = searchParams.get('studyType')
+        const typeFilter: any = {}
+        if (studyType === '新学') {
+            typeFilter.OR = [
+                { status: 'COMPLETED_NEW' },
+                { id: { contains: '_mnew_' } },
+            ]
+        } else if (studyType === '复习') {
+            typeFilter.OR = [
+                { status: 'COMPLETED_REVIEW' },
+                { id: { contains: '_mreview_' } },
+            ]
+        } else if (studyType === '错题') {
+            typeFilter.isRetestMode = true
+        }
+
         // 查询总数
         const total = await prisma.study_records.count({
             where: {
                 students: Object.keys(studentFilter).length > 0 ? studentFilter : undefined,
                 taskDate: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
+                ...typeFilter,
             },
         })
 
@@ -112,6 +130,7 @@ export async function GET(request: NextRequest) {
             where: {
                 students: Object.keys(studentFilter).length > 0 ? studentFilter : undefined,
                 taskDate: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
+                ...typeFilter,
             },
             include: {
                 students: {
@@ -140,6 +159,32 @@ export async function GET(request: NextRequest) {
                 ? ((record.correctCount / totalAnswered) * 100).toFixed(1)
                 : '0.0'
 
+            // 推断学习类型
+            const recordStatus = (record as any).status || ''
+            let studyType = '未知'
+            if (record.isRetestMode) {
+                studyType = '错题'
+            } else if (recordStatus === 'COMPLETED_NEW') {
+                studyType = '新学'
+            } else if (recordStatus === 'COMPLETED_REVIEW') {
+                // 尝试从 sessionId 中提取 day 编号
+                const dayMatch = record.id.match(/_d(\d+)/)
+                studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
+            } else {
+                // 从 sessionId 解析 mode/day 兜底
+                const modeMatch = record.id.match(/_m(\w+)/)
+                const dayMatch = record.id.match(/_d(\d+)/)
+                const idMode = modeMatch ? modeMatch[1] : ''
+                if (idMode === 'new') {
+                    studyType = '新学'
+                } else if (idMode === 'review') {
+                    studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
+                } else if (idMode === 'retest') {
+                    studyType = '错题'
+                }
+                // 其他情况保持"未知"
+            }
+
             const session: any = {
                 id: record.id,
                 studentId: record.studentId,
@@ -158,11 +203,12 @@ export async function GET(request: NextRequest) {
                 completedAt: record.completedAt?.toISOString() || null,
                 isCompleted: record.isCompleted,
                 status: (record as any).status || (record.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'),
+                studyType,
             }
 
             // 修复：对于非完成状态的记录，completedAt 应该为空
             // 防止数据库默认值导致的时区偏差（表现为结束时间是未来时间）
-            if (session.status !== 'COMPLETED') {
+            if (session.status !== 'COMPLETED' && session.status !== 'COMPLETED_NEW' && session.status !== 'COMPLETED_REVIEW') {
                 session.completedAt = null
             }
 

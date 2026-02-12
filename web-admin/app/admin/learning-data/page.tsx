@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Select, DatePicker, Space, Button, Tag, message } from 'antd'
-import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, ClockCircleOutlined, PauseCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, ClockCircleOutlined, PauseCircleOutlined, CloseCircleOutlined, BookOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
 import * as XLSX from 'xlsx'
@@ -27,6 +27,7 @@ interface LearningSession {
     completedAt: string | null
     isCompleted: boolean
     status: string
+    studyType: string
 }
 
 interface ClassInfo {
@@ -64,6 +65,7 @@ export default function LearningDataPage() {
     const [students, setStudents] = useState<Student[]>([])
     const [selectedClass, setSelectedClass] = useState<string | undefined>()
     const [selectedStudent, setSelectedStudent] = useState<string | undefined>()
+    const [selectedType, setSelectedType] = useState<string | undefined>()
     const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null)
 
     // 加载班级列表
@@ -112,6 +114,7 @@ export default function LearningDataPage() {
 
             if (selectedClass) params.append('classId', selectedClass)
             if (selectedStudent) params.append('studentId', selectedStudent)
+            if (selectedType) params.append('studyType', selectedType)
             if (dateRange) {
                 params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
                 params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
@@ -133,7 +136,7 @@ export default function LearningDataPage() {
         } finally {
             setLoading(false)
         }
-    }, [page, pageSize, selectedClass, selectedStudent, dateRange])
+    }, [page, pageSize, selectedClass, selectedStudent, selectedType, dateRange])
 
     useEffect(() => {
         loadClasses()
@@ -164,6 +167,7 @@ export default function LearningDataPage() {
             '学生姓名': item.studentName,
             '手机号': item.phone,
             '学习日期': item.taskDate,
+            '学习类型': item.studyType || '未知',
             '总词数': item.totalWords,
             '已完成': item.completedWords,
             '完成率': `${item.completionRate}%`,
@@ -173,7 +177,7 @@ export default function LearningDataPage() {
             '答题时长': formatDuration(item.totalTimeSeconds),
             '开始时间': dayjs(item.startedAt).format('YYYY-MM-DD HH:mm:ss'),
             '结束时间': item.completedAt ? dayjs(item.completedAt).format('YYYY-MM-DD HH:mm:ss') : '-',
-            '完成状态': item.status === 'COMPLETED' ? '已完成' : item.status === 'IN_PROGRESS' ? '进行中' : '已中断',
+            '完成状态': item.status === 'COMPLETED' || item.status === 'COMPLETED_NEW' || item.status === 'COMPLETED_REVIEW' ? '已完成' : item.status === 'IN_PROGRESS' ? '进行中' : '已中断',
         }))
 
         const ws = XLSX.utils.json_to_sheet(exportData)
@@ -207,6 +211,18 @@ export default function LearningDataPage() {
             dataIndex: 'taskDate',
             key: 'taskDate',
             width: 110,
+        },
+        {
+            title: '类型',
+            dataIndex: 'studyType',
+            key: 'studyType',
+            width: 110,
+            render: (type: string) => {
+                if (type === '新学') return <Tag color="blue">新学</Tag>
+                if (type === '错题') return <Tag color="red">错题</Tag>
+                if (type?.startsWith('复习')) return <Tag color="green">{type}</Tag>
+                return <Tag>{type || '未知'}</Tag>
+            },
         },
         {
             title: '完成率',
@@ -313,6 +329,20 @@ export default function LearningDataPage() {
                                 {s.user?.name || '未命名'}
                             </Select.Option>
                         ))}
+                    </Select>
+                    <Select
+                        placeholder="学习类型"
+                        allowClear
+                        style={{ width: 120 }}
+                        value={selectedType}
+                        onChange={(val) => {
+                            setSelectedType(val)
+                            setPage(1)
+                        }}
+                    >
+                        <Select.Option value="新学">新学</Select.Option>
+                        <Select.Option value="复习">复习</Select.Option>
+                        <Select.Option value="错题">错题</Select.Option>
                     </Select>
                     <RangePicker
                         value={dateRange}

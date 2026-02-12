@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.4] - 2026-02-12
+
+### Added
+- **管理后台-学习类型列**: 学习数据页新增"类型"列，显示新学/复习(DayX)/错题/未知。支持按类型筛选和Excel导出。
+- **小程序-day参数**: `createSession`新增`day`参数传递，session ID中记录复习Day编号，解决复习完成后⭐星星不显示的问题。
+
+### Fixed
+- **completedAt显示**: 修复`COMPLETED_NEW`/`COMPLETED_REVIEW`状态记录结束时间被错误置空的问题。
+- **错题本limit**: 错题本和错题重测查询limit从100扩展到300（小程序待发版）。
+
+### Changed
+- **Storage优化**: 后端`mapTasksForMiniapp`只返回1个question（已部署），大幅减少小程序存储占用。
+
 ## [1.0.3] - 2026-02-11
 
 ### Fixed
