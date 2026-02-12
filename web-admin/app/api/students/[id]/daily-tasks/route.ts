@@ -24,7 +24,10 @@ function toAbsoluteUrl(path: string | null | undefined): string | null {
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
   return tasks.map((t: any) => {
     const v = t.vocabulary || t.vocabularies || {}
-    const questions = (v.questions || []).filter((q: any) => q.type !== 'LISTENING').map((q: any) => ({
+    // 性能优化：只返回被选中的 1 个 question（而非全部），大幅减少数据量
+    // 解决微信小程序 setStorageSync 超过 1MB 单条限制的问题
+    const allQuestions = (v.questions || []).filter((q: any) => q.type !== 'LISTENING')
+    const mapQuestion = (q: any) => ({
       id: q.id,
       type: q.type,
       content: q.content,
@@ -39,7 +42,18 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
           isCorrect: o.isCorrect,
           order: o.order,
         })),
-    }))
+    })
+    // 优先返回 selectedQuestionId 对应的题目，其次按 targetQuestionType，兜底取第一个
+    let selectedQ = t.selectedQuestionId
+      ? allQuestions.find((q: any) => q.id === t.selectedQuestionId)
+      : null
+    if (!selectedQ && t.targetQuestionType) {
+      selectedQ = allQuestions.find((q: any) => q.type === t.targetQuestionType)
+    }
+    if (!selectedQ && allQuestions.length > 0) {
+      selectedQ = allQuestions[0]
+    }
+    const questions = selectedQ ? [mapQuestion(selectedQ)] : []
 
     const audios = v.word_audios || v.audios || []
     const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
