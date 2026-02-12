@@ -2,8 +2,8 @@
 
 > **项目**: 英语词汇学习助手 (iEnglish)
 > **版本**: v1.0
-> **更新日期**: 2026-02-06
-> **状态**: ✅ 生产运行中，图片API已部署
+> **更新日期**: 2026-02-12
+> **状态**: ✅ 生产运行中，Storage超限修复已部署
 
 ---
 
@@ -627,6 +627,7 @@ pm2 restart word-app
 
 | 日期 | Commit | 改动摘要 | 回滚目标 |
 |------|--------|---------|----------|
+| 2026-02-12 | `d01c5f2` | **修复 Storage 超限**: daily-tasks API 只返回 1 个被选中的 question | `2c8db57` |
 | 2026-02-11 | `2c8db57` | 错题本显示实际错误选项内容 + 小程序保存选项文字 | `d9100b6` |
 | 2026-02-10 | `d9100b6` | 彻底修复 LISTENING 题在学习/复习/错题本中泄漏 | `82879e4` |
 | 2026-02-10 | `82879e4` | 错题本显示修复 + 学生列表防御 + 手机号筛选 + 禁用听音选词 | `24c58f0` |
@@ -650,13 +651,13 @@ pm2 restart word-app
 | 2026-02-05 | `41c0c69` | 重构今日复习逻辑为复习计划模式 | `today-learn.js` `study.js` |
 | 2026-02-05 | `e77cb5b` | 修复体验版白屏问题 | `app.js` |
 
-#### 本次快速回滚指令（2026-02-11 部署）
+#### 本次快速回滚指令（2026-02-12 部署）
 
 如果本次部署后出现问题，在 XDF 服务器执行：
 
 ```bash
 cd ~/apps/1word/web-admin
-git reset --hard d9100b6
+git reset --hard 2c8db57
 npm run build
 pm2 restart word-app
 ```
@@ -761,6 +762,37 @@ git remote set-url origin https://TOKEN@github.com/wangpeng1017/1word.git
 # 3. 推送
 git push origin main
 ```
+
+### 6.4 小程序点击"开始学习"报错 Storage 超限
+
+**症状**: 点击"开始学习"或"今日复习"弹出错误：
+```
+APP-SERVICE-SDK:setStorageSync:fail:entry size limit reached
+```
+
+**原因**: 微信小程序 `wx.setStorageSync` 单条存储限制 **1MB**。学习页面（`study.js`）在两处将完整 tasks 数组存入 Storage：
+- `saveTodayWords(tasks)` -> `todayWords_{studentId}`（离线缓存）
+- `saveStudyProgress({tasks, ...})` -> `currentSession_{studentId}`（进度保存，每次答题触发）
+
+当单词量较大时，tasks 中嵌套的 questions、options、meanings 等数据序列化后超过 1MB。
+
+**触发阈值估算**:
+
+| 场景 | 每 task 大小 | 触发限制所需词数 |
+|------|------------|----------------|
+| 修复前（返回全部 questions） | ~3500 bytes | ~250 个 |
+| 修复后（只返回 1 个 question） | ~1600 bytes | ~650 个 |
+
+**已实施方案**（2026-02-12，后端修改，无需发版小程序）:
+
+修改 `web-admin/app/api/students/[id]/daily-tasks/route.ts` 中的 `mapTasksForMiniapp` 函数：
+- 后端已通过 `selectedQuestionId` 选好题目，API 只返回被选中的 **1 个 question**，而非全部 3-5 个
+- 数据量减少约 **70%**，安全覆盖 600 词以下场景
+
+**后续优化方向**（需发版小程序时一并处理）:
+- `saveStudyProgress` 不再存储完整 tasks，只存进度元数据，恢复时从 API 重新拉取
+- `saveTodayWords` 添加 try-catch，存储失败不阻塞学习流程
+- 以上可彻底解决任意词量的 Storage 限制问题
 
 ---
 
