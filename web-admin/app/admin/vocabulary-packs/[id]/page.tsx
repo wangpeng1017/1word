@@ -7,8 +7,8 @@
 // ⚠️ 更新我时，请同步更新本注释及所属文件夹的 _INDEX.md
 
 import { useState, useEffect } from 'react'
-import { Card, Button, Tag, message, Spin, Row, Col, Statistic, Modal, Table, Input, Divider } from 'antd'
-import { ArrowLeftOutlined, PlusCircleOutlined, ClearOutlined } from '@ant-design/icons'
+import { Card, Button, Tag, message, Spin, Row, Col, Statistic, Modal, Table, Input, InputNumber, Divider } from 'antd'
+import { ArrowLeftOutlined, PlusCircleOutlined, ClearOutlined, PlusOutlined } from '@ant-design/icons'
 import { useRouter, useParams } from 'next/navigation'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -54,6 +54,10 @@ export default function VocabularyPackDetailPage() {
   // Store full objects for display, extract IDs for save
   const [selectedVocabs, setSelectedVocabs] = useState<any[]>([])
 
+  // Expand Days
+  const [expandModalVisible, setExpandModalVisible] = useState(false)
+  const [expandDays, setExpandDays] = useState<number | null>(null)
+
   // Batch Add
   const [batchInput, setBatchInput] = useState('')
   const [batchResult, setBatchResult] = useState<{ found: number; added: number; skipped: number; notFound: string[] } | null>(null)
@@ -80,6 +84,33 @@ export default function VocabularyPackDetailPage() {
       message.error('加载失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 扩展天数
+  const handleExpandDays = async () => {
+    if (!expandDays || !pack || expandDays <= pack.totalDays) {
+      message.warning(`请输入大于 ${pack?.totalDays} 的天数`)
+      return
+    }
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/vocabulary-packs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: packId, totalDays: expandDays })
+      })
+      const result = await res.json()
+      if (result.success) {
+        message.success(`已扩展到 ${expandDays} 天`)
+        setExpandModalVisible(false)
+        setExpandDays(null)
+        fetchPack()
+      } else {
+        message.error(result.error)
+      }
+    } catch {
+      message.error('扩展失败')
     }
   }
 
@@ -250,9 +281,14 @@ export default function VocabularyPackDetailPage() {
 
   return (
     <div>
-      <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/admin/vocabulary-packs')} style={{ marginBottom: 16 }}>
-        返回列表
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/admin/vocabulary-packs')}>
+          返回列表
+        </Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setExpandDays(pack.totalDays + 1); setExpandModalVisible(true) }}>
+          扩展天数
+        </Button>
+      </div>
 
       <Card title={pack.name} extra={<Tag color={pack.isActive ? 'green' : 'default'}>{pack.isActive ? '启用' : '禁用'}</Tag>}>
         <p style={{ color: '#666', marginBottom: 16 }}>{pack.description || '暂无描述'}</p>
@@ -344,6 +380,27 @@ export default function VocabularyPackDetailPage() {
             />
           </Col>
         </Row>
+      </Modal>
+
+      {/* 扩展天数弹窗 */}
+      <Modal
+        title="扩展天数"
+        open={expandModalVisible}
+        onOk={handleExpandDays}
+        onCancel={() => { setExpandModalVisible(false); setExpandDays(null) }}
+        okText="确认扩展"
+      >
+        <p style={{ marginBottom: 16, color: '#666' }}>
+          当前 <strong>{pack.totalDays}</strong> 天，扩展后会自动创建空Day（无新词），可在配置中添加单词。
+        </p>
+        <InputNumber
+          min={pack.totalDays + 1}
+          max={200}
+          value={expandDays}
+          onChange={(v) => setExpandDays(v)}
+          addonAfter="天"
+          style={{ width: '100%' }}
+        />
       </Modal>
     </div>
   )

@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT /api/vocabulary-packs - 更新词汇库基本信息
+// PUT /api/vocabulary-packs - 更新词汇库基本信息（支持扩展天数）
 export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -123,19 +123,57 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, name, description, isActive } = body
+    const { id, name, description, isActive, totalDays } = body
 
     if (!id) return errorResponse('缺少词汇库ID')
 
-    const updateData: any = {}
-    if (name !== undefined) updateData.name = name
-    if (description !== undefined) updateData.description = description
-    if (isActive !== undefined) updateData.isActive = isActive
+    // 如果要修改天数，先检查合法性
+    if (totalDays !== undefined) {
+      const existing = await prisma.vocabulary_packs.findUnique({
+        where: { id },
+        select: { totalDays: true }
+      })
+      if (!existing) return errorResponse('词汇库不存在', 404)
+      if (totalDays < existing.totalDays) {
+        return errorResponse(`天数只能增加，不能从 ${existing.totalDays} 缩小到 ${totalDays}`)
+      }
+    }
 
-    const pack = await prisma.vocabulary_packs.update({
-      where: { id },
-      data: updateData,
-      include: { pack_days: { orderBy: { dayNumber: 'asc' } } }
+    const pack = await prisma.$transaction(async (tx) => {
+      const updateData: any = {}
+      if (name !== undefined) updateData.name = name
+      if (description !== undefined) updateData.description = description
+      if (isActive !== undefined) updateData.isActive = isActive
+
+      // 扩展天数：更新 totalDays 并创建新的空 Day 记录
+      if (totalDays !== undefined) {
+        const current = await tx.vocabulary_packs.findUnique({
+          where: { id },
+          select: { totalDays: true }
+        })
+        const oldDays = current!.totalDays
+        updateData.totalDays = totalDays
+
+        if (totalDays > oldDays) {
+          const newDays = Array.from({ length: totalDays - oldDays }, (_, i) => ({
+            id: `vpd_${Date.now()}_${oldDays + i}_${Math.random().toString(36).substr(2, 9)}`,
+            packId: id,
+            dayNumber: oldDays + i + 1,
+            title: `Day ${oldDays + i + 1}`,
+          }))
+          await tx.vocabulary_pack_days.createMany({ data: newDays })
+        }
+      }
+
+      await tx.vocabulary_packs.update({
+        where: { id },
+        data: updateData,
+      })
+
+      return tx.vocabulary_packs.findUnique({
+        where: { id },
+        include: { pack_days: { orderBy: { dayNumber: 'asc' } } }
+      })
     })
 
     return successResponse(pack, '更新成功')

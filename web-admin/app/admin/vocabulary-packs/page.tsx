@@ -204,6 +204,11 @@ export default function VocabularyPacksPage() {
               <InputNumber min={1} max={100} placeholder="如：10" style={{ width: '100%' }} />
             </Form.Item>
           )}
+          {editingRecord && (
+            <Form.Item label="天数" name="totalDays" extra={`当前 ${editingRecord.totalDays} 天，只能增加不能减少`}>
+              <InputNumber min={editingRecord.totalDays} max={200} style={{ width: '100%' }} />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>
