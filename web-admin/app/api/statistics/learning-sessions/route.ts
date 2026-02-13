@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
                 studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
             } else {
                 // 从 sessionId 解析 mode/day 兜底
-                const modeMatch = record.id.match(/_m(\w+)/)
+                const modeMatch = record.id.match(/_m([^_]+)/)
                 const dayMatch = record.id.match(/_d(\d+)/)
                 const idMode = modeMatch ? modeMatch[1] : ''
                 if (idMode === 'new' || idMode === 'unknown' || idMode === 'all') {
