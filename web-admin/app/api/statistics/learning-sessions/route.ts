@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
         const endDate = searchParams.get('endDate')
         const page = parseInt(searchParams.get('page') || '1', 10)
         const pageSize = parseInt(searchParams.get('pageSize') || '20', 10)
+        const studentName = searchParams.get('studentName')
 
         // 构建学生筛选条件
         const studentFilter: any = {}
@@ -86,6 +87,9 @@ export async function GET(request: NextRequest) {
         }
         if (studentId) {
             studentFilter.id = studentId
+        }
+        if (studentName) {
+            studentFilter.user = { name: { contains: studentName } }
         }
 
         // 构建日期筛选条件
@@ -165,7 +169,8 @@ export async function GET(request: NextRequest) {
             if (record.isRetestMode) {
                 studyType = '错题'
             } else if (recordStatus === 'COMPLETED_NEW') {
-                studyType = '新学'
+                const dayMatch = record.id.match(/_d(\d+)/)
+                studyType = (dayMatch && dayMatch[1] !== 'null') ? `补卡(Day${dayMatch[1]})` : '新学'
             } else if (recordStatus === 'COMPLETED_REVIEW') {
                 // 尝试从 sessionId 中提取 day 编号
                 const dayMatch = record.id.match(/_d(\d+)/)
@@ -176,7 +181,7 @@ export async function GET(request: NextRequest) {
                 const dayMatch = record.id.match(/_d(\d+)/)
                 const idMode = modeMatch ? modeMatch[1] : ''
                 if (idMode === 'new') {
-                    studyType = '新学'
+                    studyType = (dayMatch && dayMatch[1] !== 'null') ? `补卡(Day${dayMatch[1]})` : '新学'
                 } else if (idMode === 'review') {
                     studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
                 } else if (idMode === 'retest') {

@@ -266,13 +266,16 @@ export async function GET(
     })
 
     const shaped = mapTasksForMiniapp(tasksWithSelection, isNewMap)
-    console.log('[daily-tasks] 返回任务数:', shaped.length, 'newCount:', newWords.length, 'reviewCount:', reviewWords.length)
+      .filter(t => t.vocabulary.questions.length > 0) // 过滤掉只有听力题（被屏蔽后无可用题目）的单词
+    const actualNewCount = shaped.filter(t => t.isNew).length
+    const actualReviewCount = shaped.filter(t => !t.isNew).length
+    console.log('[daily-tasks] 返回任务数:', shaped.length, 'newCount:', actualNewCount, 'reviewCount:', actualReviewCount)
 
     return apiResponse.success({
       tasks: shaped,
       summary: {
-        newCount: newWords.length,
-        reviewCount: reviewWords.length,
+        newCount: actualNewCount,
+        reviewCount: actualReviewCount,
         dayNumber,
         totalDays
       }

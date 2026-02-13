@@ -123,9 +123,18 @@ export async function POST(request: NextRequest) {
             message: '恢复中断的学习会话',
           })
         }
+
+        // 3. 如果已完成，返回已完成标记（防止重复学习）
+        if (existingSession.status === 'COMPLETED' || existingSession.status === 'COMPLETED_NEW' || existingSession.status === 'COMPLETED_REVIEW') {
+          return apiResponse.success({
+            sessionId: existingSession.id,
+            isCompleted: true,
+            message: '该学习任务已完成',
+          })
+        }
       }
 
-      // 3. 其他情况（已完成、或上下文不匹配），直接创建新会话
+      // 4. 其他情况（上下文不匹配），直接创建新会话
     }
 
     // 创建新会话 - 加上 Context Tag

@@ -123,7 +123,28 @@ export async function GET(request: NextRequest) {
             reviewRecordMap.set(dateKey, { totalTime: record.totalTime || 0 })
         }
 
-        // 7. 生成 DAY 列表（复习计划模式）
+        // 7. 查询补卡完成记录（通过 sessionId 中的 day 标签匹配）
+        // 补卡的 taskDate 是补卡当天（不是目标 Day 的日期），所以无法用日期匹配
+        // 只能通过 sessionId 中的 _d{dayNumber}_ 标签来识别
+        const makeupRecords = await prisma.study_records.findMany({
+            where: {
+                studentId,
+                isCompleted: true,
+                isRetestMode: false,
+                status: { in: ['COMPLETED_NEW', 'COMPLETED'] },
+                id: { contains: '_d' }, // sessionId 含 day 标签
+                NOT: { id: { contains: '_dnull' } }, // 排除正常今日新学（day=null）
+            },
+            select: { id: true },
+        })
+        // 从 sessionId 中提取 day 编号，建立补卡完成 Set
+        const makeupCompletedDays = new Set<number>()
+        for (const r of makeupRecords) {
+            const match = r.id.match(/_d(\d+)/)
+            if (match) makeupCompletedDays.add(parseInt(match[1]))
+        }
+
+        // 8. 生成 DAY 列表（复习计划模式）
         // 修正：复习计划需要延伸到学习结束后的15天（艾宾浩斯最后一个周期）
         const reviewDuration = totalDays + 15
         const days = []
@@ -149,7 +170,7 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // 状态判定（基于复习完成情况）
+            // 状态判定（基于复习完成情况 + 补卡完成情况）
             let status = 'locked'
             let dayTotalTime = 0
             if (dayNumber < currentDayNumber) {
@@ -160,9 +181,10 @@ export async function GET(request: NextRequest) {
                     // 从批量查询结果中查找（内存操作，无 DB 查询）
                     const reviewRecord = reviewRecordMap.get(dateStr)
 
-                    if (reviewRecord) {
+                    if (reviewRecord || makeupCompletedDays.has(dayNumber)) {
+                        // 正常复习完成 或 补卡完成 → 星星
                         status = 'completed'
-                        dayTotalTime = reviewRecord.totalTime
+                        dayTotalTime = reviewRecord?.totalTime || 0
                     } else {
                         status = 'missed' // 未完成复习，可补卡
                     }

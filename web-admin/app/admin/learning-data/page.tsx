@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Card, Select, DatePicker, Space, Button, Tag, message } from 'antd'
+import { Table, Card, Select, DatePicker, Space, Button, Tag, message, Input } from 'antd'
 import { ReloadOutlined, DownloadOutlined, CheckCircleOutlined, ClockCircleOutlined, PauseCircleOutlined, CloseCircleOutlined, BookOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
@@ -67,6 +67,7 @@ export default function LearningDataPage() {
     const [selectedStudent, setSelectedStudent] = useState<string | undefined>()
     const [selectedType, setSelectedType] = useState<string | undefined>()
     const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null)
+    const [searchName, setSearchName] = useState('')
 
     // 加载班级列表
     const loadClasses = useCallback(async () => {
@@ -119,6 +120,7 @@ export default function LearningDataPage() {
                 params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
                 params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
             }
+            if (searchName.trim()) params.append('studentName', searchName.trim())
 
             const res = await fetch(`/api/statistics/learning-sessions?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -136,7 +138,7 @@ export default function LearningDataPage() {
         } finally {
             setLoading(false)
         }
-    }, [page, pageSize, selectedClass, selectedStudent, selectedType, dateRange])
+    }, [page, pageSize, selectedClass, selectedStudent, selectedType, dateRange, searchName])
 
     useEffect(() => {
         loadClasses()
@@ -279,7 +281,7 @@ export default function LearningDataPage() {
             key: 'status',
             width: 90,
             render: (status: string) => {
-                if (status === 'COMPLETED') {
+                if (status === 'COMPLETED' || status === 'COMPLETED_NEW' || status === 'COMPLETED_REVIEW') {
                     return <Tag icon={<CheckCircleOutlined />} color="success">已完成</Tag>
                 } else if (status === 'IN_PROGRESS') {
                     return <Tag icon={<ClockCircleOutlined />} color="processing">进行中</Tag>
@@ -296,6 +298,16 @@ export default function LearningDataPage() {
             <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 24 }}>学习数据</h1>
             <Card>
                 <Space style={{ marginBottom: 16 }} wrap>
+                    <Input.Search
+                        placeholder="搜索学生姓名"
+                        allowClear
+                        style={{ width: 160 }}
+                        onSearch={(val) => {
+                            setSearchName(val)
+                            setPage(1)
+                        }}
+                        enterButton
+                    />
                     <Select
                         placeholder="选择班级"
                         allowClear
