@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
                 const modeMatch = record.id.match(/_m(\w+)/)
                 const dayMatch = record.id.match(/_d(\d+)/)
                 const idMode = modeMatch ? modeMatch[1] : ''
-                if (idMode === 'new') {
+                if (idMode === 'new' || idMode === 'unknown' || idMode === 'all') {
                     studyType = (dayMatch && dayMatch[1] !== 'null') ? `补卡(Day${dayMatch[1]})` : '新学'
                 } else if (idMode === 'review') {
                     studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
