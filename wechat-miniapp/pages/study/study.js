@@ -156,9 +156,9 @@ Page({
       let sessionId = null, lastSyncedIndex = -1, resumedIndex = 0, resumedCorrect = 0, resumedWrong = 0
       console.log('[DEBUG] loadTasks - isOffline:', this.data.isOffline, 'validTasks.length:', validTasks.length)
 
-      // 创建新会话（仅在线且非补卡模式）
+      // 创建新会话（在线时调用，包括补卡）
       // 注意：这里不再处理 resume 逻辑，resume 由 resumeProgress 专门处理
-      if (!this.data.isOffline && !day) {
+      if (!this.data.isOffline) {
         console.log('[DEBUG] 准备创建会话 - validTasks.length:', validTasks.length)
         const sr = await createSession(validTasks.length, this.currentMode, this.currentDay)
         console.log('[DEBUG] createSession 返回结果:', sr)
