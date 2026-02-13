@@ -227,13 +227,6 @@ export default function LearningDataPage() {
             },
         },
         {
-            title: '任务日期',
-            dataIndex: 'taskDate',
-            key: 'taskDate',
-            width: 110,
-            sorter: (a: any, b: any) => a.taskDate?.localeCompare(b.taskDate),
-        },
-        {
             title: '完成率',
             key: 'completionRate',
             width: 100,
