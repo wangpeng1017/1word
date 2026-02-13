@@ -107,9 +107,16 @@ export async function GET(request: NextRequest) {
         const studyType = searchParams.get('studyType')
         const typeFilter: any = {}
         if (studyType === '新学') {
-            typeFilter.OR = [
-                { status: 'COMPLETED_NEW' },
-                { id: { contains: '_mnew_' } },
+            typeFilter.AND = [
+                { isRetestMode: false },
+                {
+                    OR: [
+                        { status: 'COMPLETED_NEW', id: { contains: '_dnull' } },
+                        { id: { contains: '_mnew_' } },
+                        { id: { contains: '_munknown_dnull' } },
+                        { id: { contains: '_mall_dnull' } },
+                    ]
+                },
             ]
         } else if (studyType === '复习') {
             typeFilter.OR = [
