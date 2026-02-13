@@ -432,9 +432,10 @@ Page({
     if (day.status === 'current') {
       this.startReview()
     } else if (day.status === 'completed') {
+      const timeStr = day.totalTime > 0 ? '\n用时: ' + this.formatTime(day.totalTime) : ''
       wx.showModal({
         title: 'Day ' + day.day + ' 已完成',
-        content: '复习单词: ' + day.wordsCount + '个\n用时: ' + this.formatTime(day.totalTime),
+        content: '复习单词: ' + day.wordsCount + '个' + timeStr,
         showCancel: false
       })
     } else if (day.status === 'missed') {
