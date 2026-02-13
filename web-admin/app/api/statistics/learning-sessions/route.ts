@@ -176,16 +176,16 @@ export async function GET(request: NextRequest) {
             if (record.isRetestMode) {
                 studyType = '错题'
             } else if (recordStatus === 'COMPLETED_NEW') {
-                const dayMatch = record.id.match(/_d(\d+)/)
+                const dayMatch = record.id.match(/_d(\d+)_/)
                 studyType = (dayMatch && dayMatch[1] !== 'null') ? `补卡(Day${dayMatch[1]})` : '新学'
             } else if (recordStatus === 'COMPLETED_REVIEW') {
                 // 尝试从 sessionId 中提取 day 编号
-                const dayMatch = record.id.match(/_d(\d+)/)
+                const dayMatch = record.id.match(/_d(\d+)_/)
                 studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
             } else {
                 // 从 sessionId 解析 mode/day 兜底
                 const modeMatch = record.id.match(/_m([^_]+)/)
-                const dayMatch = record.id.match(/_d(\d+)/)
+                const dayMatch = record.id.match(/_d(\d+)_/)
                 const idMode = modeMatch ? modeMatch[1] : ''
                 if (idMode === 'new' || idMode === 'unknown' || idMode === 'all') {
                     studyType = (dayMatch && dayMatch[1] !== 'null') ? `补卡(Day${dayMatch[1]})` : '新学'
