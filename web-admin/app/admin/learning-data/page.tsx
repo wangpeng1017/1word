@@ -209,7 +209,7 @@ export default function LearningDataPage() {
             width: 120,
         },
         {
-            title: '日期',
+            title: '任务日期',
             dataIndex: 'taskDate',
             key: 'taskDate',
             width: 110,

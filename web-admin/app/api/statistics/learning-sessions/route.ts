@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
                 students: {
                     include: {
                         user: { select: { name: true, phone: true } },
-                        classes: { select: { name: true } },
+                        classes: { select: { name: true, plan_classes: { where: { status: 'ACTIVE' }, select: { start_date: true }, take: 1 } } },
                     },
                 },
             },
@@ -209,6 +209,17 @@ export async function GET(request: NextRequest) {
                 isCompleted: record.isCompleted,
                 status: (record as any).status || (record.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'),
                 studyType,
+            }
+
+            // 补卡记录：用计划开始日期+dayNumber计算原始任务日期
+            if (studyType.startsWith('补卡(Day')) {
+                const dayMatch = studyType.match(/Day(\d+)/)
+                const planClass = (record.students.classes as any).plan_classes?.[0]
+                if (dayMatch && planClass?.start_date) {
+                    const scheduledDate = new Date(planClass.start_date)
+                    scheduledDate.setDate(scheduledDate.getDate() + parseInt(dayMatch[1]) - 1)
+                    session.taskDate = scheduledDate.toISOString().split('T')[0]
+                }
             }
 
             // 修复：对于非完成状态的记录，completedAt 应该为空
