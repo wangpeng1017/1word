@@ -113,14 +113,15 @@ export async function GET(request: NextRequest) {
             select: {
                 taskDate: true,
                 totalTime: true,
+                totalWords: true,
             },
         })
 
         // 按日期建立索引（用日期字符串作为 key）
-        const reviewRecordMap = new Map<string, { totalTime: number }>()
+        const reviewRecordMap = new Map<string, { totalTime: number; totalWords: number }>()
         for (const record of allReviewRecords) {
             const dateKey = formatDateBeijing(record.taskDate)
-            reviewRecordMap.set(dateKey, { totalTime: record.totalTime || 0 })
+            reviewRecordMap.set(dateKey, { totalTime: record.totalTime || 0, totalWords: record.totalWords || 0 })
         }
 
         // 7. 查询补卡完成记录（通过 sessionId 中的 day 标签匹配）
@@ -135,13 +136,13 @@ export async function GET(request: NextRequest) {
                 id: { contains: '_d' }, // sessionId 含 day 标签
                 NOT: { id: { contains: '_dnull' } }, // 排除正常今日新学（day=null）
             },
-            select: { id: true },
+            select: { id: true, totalWords: true },
         })
-        // 从 sessionId 中提取 day 编号，建立补卡完成 Set
-        const makeupCompletedDays = new Set<number>()
+        // 从 sessionId 中提取 day 编号，建立补卡完成 Map（存储实际词数）
+        const makeupCompletedDays = new Map<number, number>()
         for (const r of makeupRecords) {
             const match = r.id.match(/_d(\d+)/)
-            if (match) makeupCompletedDays.add(parseInt(match[1]))
+            if (match) makeupCompletedDays.set(parseInt(match[1]), r.totalWords || 0)
         }
 
         // 8. 生成 DAY 列表（复习计划模式）
@@ -185,6 +186,12 @@ export async function GET(request: NextRequest) {
                         // 正常复习完成 或 补卡完成 → 星星
                         status = 'completed'
                         dayTotalTime = reviewRecord?.totalTime || 0
+                        // 使用实际完成词数覆盖理论值
+                        if (reviewRecord) {
+                            reviewWordsCount = reviewRecord.totalWords
+                        } else if (makeupCompletedDays.has(dayNumber)) {
+                            reviewWordsCount = makeupCompletedDays.get(dayNumber)!
+                        }
                     } else {
                         status = 'missed' // 未完成复习，可补卡
                     }
@@ -213,6 +220,7 @@ export async function GET(request: NextRequest) {
                     if (reviewRecord) {
                         status = 'completed'
                         dayTotalTime = reviewRecord.totalTime
+                        reviewWordsCount = reviewRecord.totalWords // 使用实际完成词数
                     } else {
                         status = 'current'
                     }
