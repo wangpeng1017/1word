@@ -225,6 +225,7 @@ export default function LearningDataPage() {
                 if (type?.startsWith('复习')) return <Tag color="green">{type}</Tag>
                 return <Tag>{type || '未知'}</Tag>
             },
+        },
         {
             title: '任务日期',
             dataIndex: 'taskDate',
