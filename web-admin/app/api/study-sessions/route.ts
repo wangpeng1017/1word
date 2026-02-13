@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
       let sessionMode = 'unknown'
       let sessionDay = 'unknown'
 
-      // 尝试解析 ID 中的 tag
+      // 尝试解析 ID 中的 tag（只取第一个匹配，防止随机后缀覆盖）
       for (const part of parts) {
-        if (part.startsWith('m')) sessionMode = part.substring(1)
-        if (part.startsWith('d')) sessionDay = part.substring(1)
+        if (sessionMode === 'unknown' && part.startsWith('m') && part.length > 1) sessionMode = part.substring(1)
+        if (sessionDay === 'unknown' && part.startsWith('d') && part.length > 1) sessionDay = part.substring(1)
       }
 
       // 当前请求的 tag
