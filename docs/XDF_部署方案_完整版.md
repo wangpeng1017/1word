@@ -2,8 +2,8 @@
 
 > **项目**: 英语词汇学习助手 (iEnglish)
 > **版本**: v1.0
-> **更新日期**: 2026-02-12
-> **状态**: ✅ 生产运行中，Storage超限修复已部署
+> **更新日期**: 2026-02-13
+> **状态**: ✅ 生产运行中，补卡星星修复+管理后台类型修复已部署
 
 ---
 
@@ -1125,6 +1125,9 @@ LIMIT 10;
 
 | 日期 | Commit | 变更内容 | 影响范围 | 回滚 Commit |
 |------|--------|----------|---------|-------------|
+| 2026-02-13 | `c780904` | **管理后台**: 修复学习类型"未知"显示(正则bug+兼容unknown/all模式)、删除重复任务日期列、修复page.tsx语法错误；**后端**: 修复session ID解析随机后缀覆盖mode标签bug | learning-sessions API、study-sessions API、learning-data页面 | `b51ae4e` |
+| 2026-02-13 | 小程序发版 | **小程序**: 补卡时调用createSession生成带day标签的记录(移除`!day`条件)、隐藏用时00:00显示 | study.js、index.js | 回滚需发布旧版小程序 |
+| 2026-02-13 | 数据修复 | 批量修复14条旧补卡记录ID(添加`_mnew_d{N}`标签)，使已完成补卡正确显示星星 | study_records表 | 需手动还原ID |
 | 2026-02-11 | `b51ae4e` | 修复复习完成状态检测：completedWords校正、study-days查询放宽、当前天完成检查、前端传mode参数 | study-days API、completeSession API、小程序sync.js/study.js | `690005d` |
 | 2026-02-10 | `690005d` | LISTENING过滤移入SQL + 错题limit改为300 | daily-tasks API、wrong-questions API | `603dd2c` |
 | 2026-02-10 | `603dd2c` | 修复错题本排序bug | wrong-questions API | - |
@@ -1132,19 +1135,20 @@ LIMIT 10;
 #### 快速回滚指令
 
 ```bash
-# 在新东方服务器上执行（回滚到上一个稳定版本 690005d）
+# 回滚 2026-02-13 后端变更（回到 b51ae4e）
 cd /home/dontovertime/apps/1word/web-admin
-git checkout 690005d -- app/api/study-days/route.ts app/api/study-sessions/[id]/complete/route.ts
+git checkout b51ae4e -- app/api/statistics/learning-sessions/route.ts app/api/study-sessions/route.ts app/admin/learning-data/page.tsx
 npm run build
 pm2 restart word-app
 ```
 
-> **注意**: 小程序的 `sync.js` 和 `study.js` 改动未发版，回滚后端即可恢复。小程序侧 mode 参数为 undefined 时后端兜底为 `unknown`，不影响功能。
+> **注意**: 小程序已发版(2026-02-13)，包含 study.js 和 index.js 修改。后端回滚不影响小程序正常使用，但旧的管理后台类型显示bug会恢复。
 
 ### 11.6 变更历史
 
 | 日期 | 版本 | 变更内容 |
 |------|------|----------|
+| 2026-02-13 | v1.4 | 新增补卡星星修复、管理后台类型修复、session ID解析bug修复、小程序发版记录 |
 | 2026-02-11 | v1.3 | 新增 11.5 部署记录表（含 v1.2 修复复习完成状态检测） |
 | 2026-02-11 | v1.2 | 新增 5.4 版本部署记录表，含 commit hash 和快速回滚指令 |
 | 2026-02-07 | v1.1 | 新增 1.6 节「迭代开发关键约束」，明确 AI 禁止修改表结构和直连生产 |
@@ -1159,6 +1163,6 @@ pm2 restart word-app
 
 ---
 
-**文档版本**: v1.2
-**最后更新**: 2026-02-11
+**文档版本**: v1.4
+**最后更新**: 2026-02-13
 **维护者**: 王鹏
