@@ -21,18 +21,17 @@ function toAbsoluteUrl(path: string | null | undefined): string | null {
 }
 
 // 映射任务数据为小程序格式
+// 性能优化：精简返回字段，防止前端 setStorageSync 超过微信 1MB 单条限制
 function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
   return tasks.map((t: any) => {
     const v = t.vocabulary || t.vocabularies || {}
-    // 性能优化：只返回被选中的 1 个 question（而非全部），大幅减少数据量
-    // 解决微信小程序 setStorageSync 超过 1MB 单条限制的问题
+    // 只返回被选中的 1 个 question（而非全部），大幅减少数据量
     const allQuestions = (v.questions || []).filter((q: any) => q.type !== 'LISTENING')
     const mapQuestion = (q: any) => ({
       id: q.id,
       type: q.type,
       content: q.content,
-      sentence: q.sentence,
-      audioUrl: q.audioUrl,
+      // 移除 sentence（仅部分题型用，节省空间）
       correctAnswer: q.correctAnswer,
       options: (q.question_options || q.options || [])
         .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
@@ -40,7 +39,6 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
           id: o.id,
           content: o.content,
           isCorrect: o.isCorrect,
-          order: o.order,
         })),
     })
     // 优先返回 selectedQuestionId 对应的题目，其次按 targetQuestionType，兜底取第一个
@@ -58,40 +56,28 @@ function mapTasksForMiniapp(tasks: any[], isNewMap: Map<string, boolean>) {
     const audios = v.word_audios || v.audios || []
     const audioUs = audios.find((a: any) => (a.accent || '').toUpperCase() === 'US')?.audioUrl
     const audioUk = audios.find((a: any) => (a.accent || '').toUpperCase() === 'UK')?.audioUrl
-    // Fix: Use || instead of ?? to handle empty strings and ensure fallback works
     const defaultAudio = audioUs || audioUk || v.audioUrl || v.audio_url || null
-
-    // 转换为完整URL
-    const audioUsAbsolute = toAbsoluteUrl(audioUs)
-    const audioUkAbsolute = toAbsoluteUrl(audioUk)
+    // 只保留一个合并后的 audioUrl，去掉冗余的 audioUs/audioUk
     const defaultAudioAbsolute = toAbsoluteUrl(defaultAudio)
 
-    const meanings = (v.word_meanings || []).map((m: any) => ({
-      id: m.id,
+    // 精简 meanings：只保留前2条，保留 partOfSpeech+meaning（去掉 examples/id/orderIndex 等大体积数据）
+    const meanings = (v.word_meanings || []).slice(0, 2).map((m: any) => ({
       partOfSpeech: m.partOfSpeech ?? m.part_of_speech,
       meaning: m.meaning,
-      orderIndex: m.orderIndex ?? m.order_index,
-      examples: m.examples || [],
     }))
 
     return {
       id: t.id || `task_${v.id}`,
       vocabularyId: v.id,
       isNew: isNewMap.get(v.id) ?? false,
-      targetQuestionType: t.targetQuestionType || null,
       selectedQuestionId: t.selectedQuestionId || null,
       vocabulary: {
         id: v.id,
         word: v.word,
         primaryMeaning: v.primaryMeaning ?? v.primary_meaning,
-        secondaryMeaning: v.secondaryMeaning ?? v.secondary_meaning,
         meanings,
         audioUrl: defaultAudioAbsolute,
-        audioUs: audioUsAbsolute,
-        audioUk: audioUkAbsolute,
-        imageUrl: v.word_images?.[0]?.imageUrl ?? null, // 单词实物图片（保持原始路径）
-        difficulty: v.difficulty,
-        isHighFrequency: v.isHighFrequency ?? v.is_high_frequency,
+        imageUrl: v.word_images?.[0]?.imageUrl ?? null,
         questions,
       },
     }
