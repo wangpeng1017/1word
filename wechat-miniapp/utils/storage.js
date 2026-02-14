@@ -1,7 +1,9 @@
 /**
  * @file storage.js
  * @desc 本地存储工具函数 - 管理学习进度、离线数据等
- * @see 修复：存储按学生ID隔离，防止不同用户进度混淆
+ * @see PRD: docs/wechat-miniapp/PRD.md
+ * 修复：存储按学生ID隔离，防止不同用户进度混淆
+ * 修复：精简存储数据 + try-catch 防护，彻底解决微信 1MB 单条 entry 限制
  */
 
 /**
@@ -25,17 +27,54 @@ function getSessionKey() {
 }
 
 /**
+ * 安全写入 storage，捕获 entry size limit 等错误
+ * @param {string} key
+ * @param {any} value
+ * @returns {boolean} 是否写入成功
+ */
+function safeSetStorage(key, value) {
+  try {
+    wx.setStorageSync(key, value)
+    return true
+  } catch (e) {
+    console.error('[存储] setStorageSync 失败, key:', key, 'error:', e?.errMsg || e)
+    return false
+  }
+}
+
+/**
+ * 精简 tasks 数组，只保留恢复进度所需的最小字段
+ * 去除 questions/options/meanings/audios 等大体积数据
+ * 恢复进度时从 API 重新拉取完整数据
+ */
+function slimTasks(tasks) {
+  if (!Array.isArray(tasks)) return []
+  return tasks.map(t => {
+    const v = t.vocabulary || {}
+    return {
+      id: t.id,
+      vocabularyId: t.vocabularyId || v.id,
+      isNew: t.isNew,
+      selectedQuestionId: t.selectedQuestionId || null,
+    }
+  })
+}
+
+/**
  * 保存答题进度（绑定学生ID）
+ * tasks 会被精简存储（只保留骨架），恢复时需从 API 重新拉取完整数据
  */
 function saveStudyProgress(data) {
   const studentId = getCurrentStudentId()
   const session = {
     ...data,
-    studentId, // 记录所属学生
+    // 关键：精简 tasks，大幅缩减存储体积
+    tasks: slimTasks(data.tasks),
+    studentId,
     startTime: data.startTime || Date.now(),
     lastUpdateTime: Date.now(),
   }
-  wx.setStorageSync(getSessionKey(), session)
+  safeSetStorage(getSessionKey(), session)
 }
 
 /**
@@ -49,15 +88,13 @@ function getStudyProgress() {
     // 兼容旧版本：检查无前缀的存储
     const oldSession = wx.getStorageSync('currentSession')
     if (oldSession) {
-      // 如果旧进度的studentId匹配或没有studentId字段，迁移到新格式
       if (!oldSession.studentId || oldSession.studentId === currentStudentId) {
         console.log('[存储] 迁移旧版进度到新格式')
         oldSession.studentId = currentStudentId
-        wx.setStorageSync(getSessionKey(), oldSession)
+        safeSetStorage(getSessionKey(), oldSession)
         wx.removeStorageSync('currentSession')
         return oldSession
       } else {
-        // 旧进度属于其他用户，清除
         console.warn('[存储] 旧进度属于其他用户，清除')
         wx.removeStorageSync('currentSession')
         return null
@@ -81,7 +118,6 @@ function getStudyProgress() {
  */
 function clearStudyProgress() {
   wx.removeStorageSync(getSessionKey())
-  // 同时清除旧版本的存储（兼容）
   wx.removeStorageSync('currentSession')
 }
 
@@ -110,10 +146,10 @@ function addToSyncQueue(data) {
   let queue = wx.getStorageSync('syncQueue') || []
   queue.push({
     ...data,
-    studentId, // 记录所属学生
+    studentId,
     timestamp: Date.now(),
   })
-  wx.setStorageSync('syncQueue', queue)
+  safeSetStorage('syncQueue', queue)
 }
 
 /**
@@ -131,20 +167,21 @@ function clearSyncQueue() {
 }
 
 /**
- * 保存今日复习数据（离线模式，绑定学生ID）
+ * 保存今日单词数据（离线缓存，精简版）
+ * 同样精简 tasks 避免超限，离线缓存需要从 API 重新拉取完整数据
  */
 function saveTodayWords(words) {
   const studentId = getCurrentStudentId()
   const today = new Date().toDateString()
-  wx.setStorageSync(`todayWords_${studentId}`, {
+  safeSetStorage(`todayWords_${studentId}`, {
     date: today,
     studentId,
-    words: words,
+    words: slimTasks(words),
   })
 }
 
 /**
- * 获取今日复习数据
+ * 获取今日单词数据
  */
 function getTodayWords() {
   const studentId = getCurrentStudentId()
@@ -153,7 +190,6 @@ function getTodayWords() {
 
   const today = new Date().toDateString()
   if (data.date !== today) {
-    // 不是今天的数据，清除
     wx.removeStorageSync(`todayWords_${studentId}`)
     return null
   }
@@ -167,7 +203,7 @@ function getTodayWords() {
 function saveAudioFile(url, localPath) {
   const audioCache = wx.getStorageSync('audioCache') || {}
   audioCache[url] = localPath
-  wx.setStorageSync('audioCache', audioCache)
+  safeSetStorage('audioCache', audioCache)
 }
 
 /**

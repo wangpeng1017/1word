@@ -6,7 +6,7 @@
 
 const { get, post } = require('../../utils/request')
 const { createSession, syncProgress, completeSession, checkOnline, setCurrentSessionId } = require('../../utils/sync')
-const { saveStudyProgress, getStudyProgress, clearStudyProgress, saveTodayWords, getTodayWords, addToSyncQueue } = require('../../utils/storage')
+const { saveStudyProgress, getStudyProgress, clearStudyProgress, saveTodayWords, addToSyncQueue } = require('../../utils/storage')
 const { SoundType, playSound, preloadSounds } = require('../../utils/audio')
 const app = getApp()
 
@@ -103,34 +103,26 @@ Page({
       wx.showLoading({ title: '加载中...' })
       const studentId = app.globalData.userInfo?.studentId
       if (!studentId) throw new Error('未找到学生ID')
-      const cachedTasks = getTodayWords()
       let tasks = []
-      try {
-        let url = '/students/' + studentId + '/daily-tasks'
-        if (day) url += '?day=' + day
+      let url = '/students/' + studentId + '/daily-tasks'
+      if (day) url += '?day=' + day
 
-        let response = await get(url)
+      let response = await get(url)
+      if (Array.isArray(response)) tasks = response
+      else if (response?.tasks) tasks = response.tasks
+      else if (response?.data?.tasks) tasks = response.data.tasks
+
+      // 只有正常的每日任务才走离线缓存逻辑，补打卡任务不缓存
+      if (tasks.length === 0 && !day) {
+        response = await post('/students/' + studentId + '/daily-tasks')
         if (Array.isArray(response)) tasks = response
         else if (response?.tasks) tasks = response.tasks
         else if (response?.data?.tasks) tasks = response.data.tasks
-
-        // 只有正常的每日任务才走离线缓存逻辑，补打卡任务不缓存
-        if (tasks.length === 0 && !day) {
-          response = await post('/students/' + studentId + '/daily-tasks')
-          if (Array.isArray(response)) tasks = response
-          else if (response?.tasks) tasks = response.tasks
-          else if (response?.data?.tasks) tasks = response.data.tasks
-        }
-
-        if (tasks.length > 0 && !day) saveTodayWords(tasks)
-        this.setData({ isOffline: false })
-      } catch (e) {
-        // 补打卡模式不支持离线
-        if (day) throw e
-
-        if (cachedTasks?.length > 0) { tasks = cachedTasks; this.setData({ isOffline: true }); wx.showToast({ title: '离线模式', icon: 'none' }) }
-        else throw e
       }
+
+      // 离线缓存（saveTodayWords 内部会精简数据，失败也不影响学习）
+      if (tasks.length > 0 && !day) saveTodayWords(tasks)
+      this.setData({ isOffline: false })
 
       if (!tasks?.length) {
         wx.hideLoading();
@@ -515,22 +507,17 @@ Page({
     const progress = getStudyProgress()
     if (!progress) { this.loadTasks(); return }
 
-    // 检查进度日期，如果是今天的才恢复（或者 progress 中没有 timestamp）
+    // 检查进度日期，如果是今天的才恢复
     if (progress.timestamp && new Date(progress.timestamp).toDateString() !== new Date().toDateString()) {
       clearStudyProgress(); this.loadTasks(); return
     }
 
-    // 关键修正：直接信任本地缓存，不再请求后端校验，防止后端数据更新导致进度失效
     try {
       wx.showLoading({ title: '恢复进度中...' })
-      const validLocalTasks = progress.tasks || []
-      if (validLocalTasks.length === 0) { clearStudyProgress(); this.loadTasks(); return }
 
       // 恢复上下文
       this.currentMode = progress.mode || 'all'
       this.currentDay = progress.day || null
-
-      // 恢复重测模式标志
       const isRetestMode = progress.isRetestMode || false
 
       // 设置标题
@@ -542,28 +529,80 @@ Page({
         wx.setNavigationBarTitle({ title: '今日复习' })
       }
 
-      const elapsedSeconds = progress.elapsedSeconds || 0
+      // 判断本地 tasks 是否包含完整数据（有 questions 字段说明是旧版完整数据）
+      const localTasks = progress.tasks || []
+      const hasFullData = localTasks.length > 0 && localTasks[0]?.vocabulary?.questions?.length > 0
+      let fullTasks = []
 
-      // 性能优化：初始化 allTasks
-      this.allTasks = validLocalTasks
+      if (hasFullData) {
+        // 兼容旧版：本地存储包含完整数据，直接使用
+        console.log('[恢复进度] 使用本地完整数据')
+        fullTasks = localTasks
+      } else if (isRetestMode) {
+        // 错题重测模式：重新从 API 拉取错题
+        console.log('[恢复进度] 错题重测模式，重新拉取')
+        wx.hideLoading()
+        clearStudyProgress()
+        this.setData({ isRetestMode: true, retestQuestionIds: '' })
+        this.loadRetestQuestions()
+        return
+      } else {
+        // 新版精简存储：从 API 重新拉取完整 tasks
+        console.log('[恢复进度] 从 API 重新拉取完整数据')
+        const studentId = app.globalData.userInfo?.studentId
+        if (!studentId) { clearStudyProgress(); this.loadTasks(); return }
+
+        let url = '/students/' + studentId + '/daily-tasks'
+        if (this.currentDay) url += '?day=' + this.currentDay
+
+        let apiTasks = []
+        try {
+          const response = await get(url)
+          if (Array.isArray(response)) apiTasks = response
+          else if (response?.tasks) apiTasks = response.tasks
+          else if (response?.data?.tasks) apiTasks = response.data.tasks
+        } catch (apiErr) {
+          console.error('[恢复进度] API 拉取失败:', apiErr)
+          // 无法拉取完整数据，清除进度重新开始
+          wx.hideLoading()
+          clearStudyProgress()
+          this.loadTasks(this.currentMode, this.currentDay)
+          return
+        }
+
+        // 按模式过滤
+        if (this.currentMode === 'new') {
+          apiTasks = apiTasks.filter(t => t.isNew)
+        } else if (this.currentMode === 'review') {
+          apiTasks = apiTasks.filter(t => !t.isNew)
+        }
+
+        fullTasks = apiTasks.filter(t => t.vocabulary?.questions?.length > 0)
+      }
+
+      if (fullTasks.length === 0) {
+        clearStudyProgress()
+        wx.hideLoading()
+        this.loadTasks(this.currentMode, this.currentDay)
+        return
+      }
+
+      const elapsedSeconds = progress.elapsedSeconds || 0
+      this.allTasks = fullTasks
       const resumedIndex = progress.currentIndex || (progress.answers && progress.answers.length) || 0
 
-      // 确保 resumedIndex 不越界
-      if (resumedIndex >= validLocalTasks.length) {
+      // 确保 resumedIndex 不越界（API 可能返回不同数量的 tasks）
+      if (resumedIndex >= fullTasks.length) {
         this.finishStudy(); return
       }
 
-      // 修复：不再分批加载，改为一次性加载所有任务
-      // const initialLoadCount = resumedIndex + 20
-      // const visibleTasks = validLocalTasks.slice(0, initialLoadCount)
-
       this.setData({
-        tasks: validLocalTasks,
+        tasks: fullTasks,
         currentIndex: resumedIndex,
         answers: progress.answers || [],
         correctCount: progress.correctCount || 0,
         wrongCount: progress.wrongCount || 0,
-        totalCount: validLocalTasks.length,
+        totalCount: fullTasks.length,
         sessionStartTime: Date.now() - (elapsedSeconds * 1000),
         isLoading: false,
         sessionId: progress.sessionId || null,
