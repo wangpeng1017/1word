@@ -331,6 +331,24 @@ export async function POST(request: NextRequest) {
       const planMap = new Map(existingPlans.map(p => [p.vocabularyId, p]))
       const masteryMap = new Map(existingMasteries.map(m => [m.vocabularyId, m]))
 
+      // 自动推断学习模式：优先用前端传入的 mode，否则根据词汇是否已有学习计划来判断
+      let completedStatus = 'COMPLETED'
+      if (isRetestMode) {
+        completedStatus = 'COMPLETED' // 错题重测保持 COMPLETED
+      } else if (mode === 'new') {
+        completedStatus = 'COMPLETED_NEW'
+      } else if (mode === 'review') {
+        completedStatus = 'COMPLETED_REVIEW'
+      } else {
+        // mode 为 'all'/undefined 时，根据词汇数据自动推断
+        // 如果大部分词汇已有学习计划 → 复习；否则 → 新学
+        const existingPlanCount = existingPlans.length
+        const totalVocabCount = vocabularyIds.length
+        completedStatus = (existingPlanCount > totalVocabCount / 2)
+          ? 'COMPLETED_REVIEW'
+          : 'COMPLETED_NEW'
+      }
+
       const studyRecord = await tx.study_records.create({
         data: {
           id: srId,
@@ -345,8 +363,8 @@ export async function POST(request: NextRequest) {
           startedAt: new Date(now.getTime() - totalTime * 1000),
           completedAt: new Date(now.getTime()),
           isCompleted: true,
-          isRetestMode: isRetestMode || false, // 保存错题重测标志
-          status: mode === 'new' ? 'COMPLETED_NEW' : (mode === 'review' ? 'COMPLETED_REVIEW' : 'COMPLETED'), // 区分学习模式
+          isRetestMode: isRetestMode || false,
+          status: completedStatus,
           updatedAt: now,
         },
       })
