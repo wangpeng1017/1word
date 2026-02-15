@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
     const classId = searchParams.get('classId')
     const status = searchParams.get('status')
 
-    const where: any = {
-      // 过滤掉孤儿记录（关联的词汇库已被删除）
-      vocabulary_packs: { isNot: null },
-    }
+    const where: any = {}
     if (classId) where.class_id = classId
     if (status) where.status = status
 
