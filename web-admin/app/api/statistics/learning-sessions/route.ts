@@ -193,8 +193,10 @@ export async function GET(request: NextRequest) {
                     studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
                 } else if (idMode === 'retest') {
                     studyType = '错题'
+                } else if (recordStatus === 'COMPLETED' && !modeMatch) {
+                    // UUID格式ID（无mode标签）且status为COMPLETED：默认归类为"新学"
+                    studyType = '新学'
                 }
-                // 其他情况保持"未知"
             }
 
             const session: any = {
