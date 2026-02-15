@@ -196,7 +196,49 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
     if (!id) return errorResponse('缺少词汇库ID')
 
+    // 查询词汇库信息及关联的班级计划
+    const pack = await prisma.vocabulary_packs.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        plan_classes: {
+          select: {
+            id: true,
+            classes: { select: { name: true } },
+          },
+        },
+      },
+    })
+    if (!pack) return errorResponse('词汇库不存在', 404)
+
+    // 如果有关联的班级计划，拒绝删除
+    if (pack.plan_classes.length > 0) {
+      const classNames = pack.plan_classes
+        .map(pc => pc.classes?.name || '未知班级')
+        .join('、')
+      return errorResponse(
+        `该词汇库「${pack.name}」正在被 ${pack.plan_classes.length} 个班级计划使用（${classNames}），请先删除关联的班级计划后再删除词汇库`,
+        400
+      )
+    }
+
     await prisma.vocabulary_packs.delete({ where: { id } })
+
+    // 记录操作日志
+    try {
+      await prisma.operation_logs.create({
+        data: {
+          userId: payload.userId,
+          userName: payload.email || payload.userId,
+          action: 'DELETE',
+          module: 'vocabulary-packs',
+          target: pack.name,
+          targetId: id,
+        },
+      })
+    } catch (logError) {
+      console.error('记录操作日志失败:', logError)
+    }
 
     return successResponse(null, '删除成功')
   } catch (error: any) {
