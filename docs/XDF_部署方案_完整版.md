@@ -412,7 +412,7 @@ mysqldump -uword_mysql -pword_mysql_2024 word_app_mysql \
 # 提交到 Git
 cd /root/word-app
 git add web-admin/exports/data-migration.sql
-git commit -m "feat: 导出 SQL 迁移数据"
+git commit -m "feat: 导出 SQL 迁移数据"https://ienglish.xdf.cn/admin/study-plans
 git push origin main
 
 # ===========================
@@ -627,6 +627,7 @@ pm2 restart word-app
 
 | 日期 | Commit | 改动摘要 | 回滚目标 |
 |------|--------|---------|----------|
+| 2026-02-19 | `c4d8ea9` | **修复学习类型"未知"Bug**: complete/route.ts session_id解析添加first-match保护 + learning-sessions正则精确匹配 | `09fc149` |
 | 2026-02-13 | `09fc149` | **修复补卡Day显示误判**: 正则 `/_d(\d+)/` 误匹配随机后缀，改为 `/_d(\d+)_/` | `33cdead` |
 | 2026-02-13 | `33cdead` | **修复新学筛选**: 覆盖 `_munknown_dnull` 和 `_mall_dnull` 模式记录 | `0ce2f04` |
 | 2026-02-13 | `0ce2f04` | **修复Day页面词数**: 显示实际完成词数而非理论复习词数 | `d01c5f2` |

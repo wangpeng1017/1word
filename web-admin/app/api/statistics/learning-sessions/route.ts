@@ -193,8 +193,10 @@ export async function GET(request: NextRequest) {
                     studyType = dayMatch ? `复习(Day${dayMatch[1]})` : '复习'
                 } else if (idMode === 'retest') {
                     studyType = '错题'
+                } else {
+                    // 无法从ID解析mode（如旧版UUID格式的记录），默认归类为新学
+                    studyType = '新学'
                 }
-                // 其他情况保持"未知"（历史数据通过SQL修复）
             }
 
             const session: any = {
