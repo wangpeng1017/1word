@@ -52,7 +52,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let sessionMode = 'unknown'
     const idParts = sessionId.split('_')
     for (const part of idParts) {
-      if (part.startsWith('m')) sessionMode = part.substring(1)
+      if (sessionMode === 'unknown' && part.startsWith('m') && part.length > 1) {
+        sessionMode = part.substring(1)
+      }
     }
     const completedStatus = sessionMode === 'new' ? 'COMPLETED_NEW'
       : sessionMode === 'review' ? 'COMPLETED_REVIEW'
