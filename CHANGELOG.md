@@ -5,6 +5,8 @@
 ### Fixed
 - **学习类型"未知"Bug**: 修复`complete/route.ts`中session_id解析循环未加first-match保护，随机后缀以`m`开头时（概率~2.8%）会覆盖真实mode值，导致status设为`COMPLETED`而非`COMPLETED_NEW`/`COMPLETED_REVIEW`，最终显示为"未知"。
 - **类型推断正则**: `learning-sessions/route.ts`兜底正则从`/_m([^_]+)/`改为只匹配已知mode值（new/review/unknown/all/retest），避免匹配到随机后缀。
+- **UUID格式记录兜底**: 无法从ID解析mode的学习记录（如`/study-records`路由创建的UUID格式记录），默认归类为"新学"而非"未知"。
+- **小程序 Storage 1MB 超限**: `storage.js`新增`slimTasks`精简存储（只保留id/vocabularyId/isNew/selectedQuestionId）+ `safeSetStorage` try-catch防护，恢复进度时从API重新拉取完整数据。彻底覆盖900词极端场景。
 
 ## [1.0.4] - 2026-02-12
 

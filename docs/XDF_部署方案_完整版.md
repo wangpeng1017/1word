@@ -644,6 +644,8 @@ pm2 restart word-app
 
 | 日期 | Commit | 改动摘要 | 涉及文件 |
 |------|--------|---------|---------|
+| 2026-02-19 | `ede71d0` | **彻底修复 Storage 1MB 超限**: slimTasks 精简存储 + safeSetStorage 防护，恢复进度从 API 重新拉取 | `storage.js` `study.js` |
+| 2026-02-14 | `e39c438` | 补卡走 createSession + createSession 传 mode/day + 错题 limit 300 + Day弹窗隐藏 0:00 | `study.js` `sync.js` `index.js` `wrong.js` |
 | 2026-02-11 | `2c8db57` | 答题时保存选项实际内容到 answer 字段，配合错题本显示 | `study.js` |
 | 2026-02-08 | `fa3a921` | 修复4个统计数据bug(弹窗数据覆盖/正确率分母/Day用时) | `study.js` `result.js` |
 | 2026-02-08 | `a56fda8` | 区分今日学习/复习完成状态，修复 timeline Day 状态判断 | `study.js` `index.js` |
