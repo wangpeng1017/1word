@@ -170,6 +170,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const forcedDayStr = searchParams.get('day')
     const forcedDay = forcedDayStr ? parseInt(forcedDayStr) : null
+    const isRepeat = searchParams.get('repeat') === 'true'
 
     if (planClass?.vocabulary_packs) {
       const pack = planClass.vocabulary_packs
@@ -191,7 +192,7 @@ export async function GET(
         if (packDay) {
           newWords = packDay.day_words
             .map(dw => dw.vocabulary)
-            .filter(v => v && !masteredVocabIds.has(v.id) && !startedVocabIds.has(v.id)) // 过滤掉已掌握 和 已在学习计划中 的词
+            .filter(v => v && !masteredVocabIds.has(v.id) && (isRepeat || !startedVocabIds.has(v.id))) // 过滤掉已掌握 和 已在学习计划中 的词（repeat模式跳过startedVocabIds）
             .filter(v => v.questions && v.questions.length > 0)
             .filter(v => v.word_audios && v.word_audios.length > 0)
             .slice(0, MAX_NEW_WORDS_PER_DAY)
@@ -200,7 +201,7 @@ export async function GET(
 
       // 获取需要复习的单词（基于记忆曲线，从过去天数的词汇包中获取）
       // 注意：如果是补打卡模式 (forcedDay)，则不需要加载复习词，只学新词
-      if (!forcedDay) {
+      if (!forcedDay || isRepeat) {
         const newWordIds = new Set(newWords.map(v => v.id))
         const seenVocabIds = new Set<string>()
 

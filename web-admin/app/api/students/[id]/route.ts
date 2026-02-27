@@ -61,6 +61,24 @@ export async function GET(
       return apiResponse.notFound('学生不存在')
     }
 
+    // 统计 KPI 数据
+    const [totalWords, masteredWords, studyDaysResult] = await Promise.all([
+      // 学习词汇数（word_masteries 总记录数）
+      prisma.word_masteries.count({
+        where: { studentId: id },
+      }),
+      // 已掌握词汇数
+      prisma.word_masteries.count({
+        where: { studentId: id, isMastered: true },
+      }),
+      // 学习天数（去重 taskDate）
+      prisma.study_records.findMany({
+        where: { studentId: id, isCompleted: true },
+        select: { taskDate: true },
+        distinct: ['taskDate'],
+      }),
+    ])
+
     const result = {
       id: student.id,
       name: student.user.name,
@@ -68,6 +86,11 @@ export async function GET(
       class: student.classes,
       email: student.user.email,
       phone: student.user.phone,
+      stats: {
+        totalWords,
+        masteredWords,
+        studyDays: studyDaysResult.length,
+      },
     }
 
     return apiResponse.success(result)

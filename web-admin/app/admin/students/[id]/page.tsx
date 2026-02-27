@@ -25,7 +25,7 @@ export default function StudentDetailPage() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      
+
       // 加载学生信息和错题
       const [studentRes, wrongRes] = await Promise.all([
         fetch(`/api/students/${studentId}`, {
@@ -57,7 +57,7 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token')
       const params = new URLSearchParams({ studentId })
-      
+
       if (dateRange) {
         params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
         params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
@@ -167,12 +167,12 @@ export default function StudentDetailPage() {
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="学习词汇" value={0} />
+            <Statistic title="学习词汇" value={student?.stats?.totalWords ?? 0} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="已掌握" value={0} valueStyle={{ color: '#3f8600' }} />
+            <Statistic title="已掌握" value={student?.stats?.masteredWords ?? 0} valueStyle={{ color: '#3f8600' }} />
           </Card>
         </Col>
         <Col span={6}>
@@ -182,7 +182,7 @@ export default function StudentDetailPage() {
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="学习天数" value={0} />
+            <Statistic title="学习天数" value={student?.stats?.studyDays ?? 0} />
           </Card>
         </Col>
       </Row>

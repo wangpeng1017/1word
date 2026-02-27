@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     const token = getTokenFromHeader(authHeader || '')
-    
+
     const payload = verifyToken(token || '')
     if (!payload || (payload.role !== 'TEACHER' && payload.role !== 'ADMIN')) {
       return unauthorizedResponse('只有教师或管理员可以导出数据')
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     // ========== 第一个工作表：学生基本信息 ==========
     const infoSheet = workbook.addWorksheet('学生信息')
-    
+
     // 标题样式
     const titleStyle = {
       font: { bold: true, size: 14, color: { argb: 'FFFFFFFF' } },
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     // ========== 第二个工作表：学习统计 ==========
     const statsSheet = workbook.addWorksheet('学习统计')
-    
+
     statsSheet.columns = [
       { key: 'metric', width: 25 },
       { key: 'value', width: 20 },
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
 
     // ========== 第三个工作表：学习记录明细 ==========
     const recordsSheet = workbook.addWorksheet('学习记录')
-    
+
     recordsSheet.columns = [
       { key: 'date', header: '日期', width: 15 },
       { key: 'words', header: '完成词数', width: 12 },
@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
 
     // ========== 第四个工作表：错题记录 ==========
     const wrongSheet = workbook.addWorksheet('错题记录')
-    
+
     wrongSheet.columns = [
       { key: 'date', header: '日期', width: 15 },
       { key: 'word', header: '单词', width: 20 },
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
 
     // ========== 第五个工作表：词汇掌握详情 ==========
     const masterySheet = workbook.addWorksheet('词汇掌握详情')
-    
+
     masterySheet.columns = [
       { key: 'word', header: '单词', width: 20 },
       { key: 'meaning', header: '释义', width: 30 },
@@ -255,7 +255,7 @@ export async function GET(request: NextRequest) {
         MEDIUM: '中等',
         HARD: '困难',
       }
-      
+
       masterySheet.addRow({
         word: mastery.vocabularies.word,
         meaning: (mastery.vocabularies as any).primary_meaning,
@@ -270,10 +270,12 @@ export async function GET(request: NextRequest) {
     const buffer = await workbook.xlsx.writeBuffer()
 
     // 返回文件
+    const fileName = `${student.user.name}_学习报告_${new Date().toISOString().split('T')[0]}.xlsx`
+    const encodedFileName = encodeURIComponent(fileName)
     return new Response(buffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(student.user.name)}_学习报告_${new Date().toISOString().split('T')[0]}.xlsx"`,
+        'Content-Disposition': `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
       },
     })
   } catch (error) {

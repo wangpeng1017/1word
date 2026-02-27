@@ -193,7 +193,8 @@ export async function GET(request: NextRequest) {
                             reviewWordsCount = makeupCompletedDays.get(dayNumber)!
                         }
                     } else {
-                        status = 'missed' // 未完成复习，可补卡
+                        // 没有新词可补的 missed Day 自动完成（复习词会被后续天数的艾宾浩斯间隔覆盖）
+                        status = newWordsCount > 0 ? 'missed' : 'completed'
                     }
                 }
 
@@ -234,6 +235,7 @@ export async function GET(request: NextRequest) {
                 date: dateStr,
                 status,
                 wordsCount: reviewWordsCount, // 复习词数（非新词数）
+                newWordsCount, // 新词数（用于前端判断Day1等入口）
                 accuracy: 0, // 复习模式下暂不显示准确率
                 totalTime: dayTotalTime, // 从study_records获取实际用时
             })

@@ -39,7 +39,7 @@ Page({
     } else if (options.resume === 'true') {
       this.resumeProgress()
     } else {
-      this.loadTasks(options.mode || 'all', options.day || null)
+      this.loadTasks(options.mode || 'all', options.day || null, options.repeat === 'true')
     }
   },
 
@@ -87,7 +87,7 @@ Page({
     this.setData({ timer })
   },
 
-  async loadTasks(mode = 'all', day = null) {
+  async loadTasks(mode = 'all', day = null, repeat = false) {
     try {
       this.setData({ isLoading: true })
       // 保存当前模式和天数到实例变量，用于保存进度
@@ -106,6 +106,7 @@ Page({
       let tasks = []
       let url = '/students/' + studentId + '/daily-tasks'
       if (day) url += '?day=' + day
+      if (repeat) url += (day ? '&' : '?') + 'repeat=true'
 
       let response = await get(url)
       if (Array.isArray(response)) tasks = response
@@ -152,11 +153,11 @@ Page({
       // 注意：这里不再处理 resume 逻辑，resume 由 resumeProgress 专门处理
       if (!this.data.isOffline) {
         console.log('[DEBUG] 准备创建会话 - validTasks.length:', validTasks.length)
-        const sr = await createSession(validTasks.length, this.currentMode, this.currentDay)
+        const sr = await createSession(validTasks.length, this.currentMode, this.currentDay, repeat)
         console.log('[DEBUG] createSession 返回结果:', sr)
         if (sr) {
           // 检查是否今天已完成
-          if (sr.isCompleted) {
+          if (sr.isCompleted && !repeat) {
             wx.hideLoading()
             wx.showModal({ title: '提示', content: sr.message || '今天的学习任务已完成', showCancel: false, success: () => wx.navigateBack() })
             return

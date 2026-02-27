@@ -420,10 +420,10 @@ Page({
   handleDayClick(e) {
     const day = e.currentTarget.dataset.day
 
-    // 如果该天没有复习任务（例如Day 1或休息日），提示用户
-    if (day.wordsCount === 0) {
+    // 如果该天没有复习任务也没有新词（例如休息日），提示用户
+    if (day.wordsCount === 0 && (!day.newWordsCount || day.newWordsCount === 0)) {
       wx.showToast({
-        title: '今日无复习任务',
+        title: '今日无学习任务',
         icon: 'none'
       })
       return
@@ -432,11 +432,19 @@ Page({
     if (day.status === 'current') {
       this.startReview()
     } else if (day.status === 'completed') {
-      const timeStr = day.totalTime > 0 ? '\n用时: ' + this.formatTime(day.totalTime) : ''
       wx.showModal({
-        title: 'Day ' + day.day + ' 已完成',
-        content: '复习单词: ' + day.wordsCount + '个' + timeStr,
-        showCancel: false
+        title: 'Day ' + day.day + ' 已完成 ⭐️',
+        content: '是否重新学习？',
+        confirmText: '重新学习',
+        cancelText: '返回',
+        success: (res) => {
+          if (res.confirm) {
+            const mode = day.wordsCount > 0 ? 'review' : 'new'
+            wx.navigateTo({
+              url: `/pages/study/study?mode=${mode}&day=${day.day}&repeat=true`
+            })
+          }
+        }
       })
     } else if (day.status === 'missed') {
       // 补打卡逻辑优化

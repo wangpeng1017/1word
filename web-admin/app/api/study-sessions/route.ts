@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const payload = verifyToken(token)
     if (!payload) return apiResponse.unauthorized('Token无效')
 
-    const { studentId, totalWords, vocabularyIds, mode, day } = await request.json()
+    const { studentId, totalWords, vocabularyIds, mode, day, allowRepeat } = await request.json()
     if (!studentId || !totalWords) {
       return apiResponse.error('参数错误：需要 studentId 和 totalWords', 400)
     }
@@ -126,11 +126,15 @@ export async function POST(request: NextRequest) {
 
         // 3. 如果已完成，返回已完成标记（防止重复学习）
         if (existingSession.status === 'COMPLETED' || existingSession.status === 'COMPLETED_NEW' || existingSession.status === 'COMPLETED_REVIEW') {
-          return apiResponse.success({
-            sessionId: existingSession.id,
-            isCompleted: true,
-            message: '该学习任务已完成',
-          })
+          if (allowRepeat) {
+            // 重复学习模式：跳过完成检查，继续创建新会话
+          } else {
+            return apiResponse.success({
+              sessionId: existingSession.id,
+              isCompleted: true,
+              message: '该学习任务已完成',
+            })
+          }
         }
       }
 

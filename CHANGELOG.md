@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.7] - 2026-02-27
+
+### Fixed
+- **导出学习报告500错误**: 修复`Content-Disposition`头中"学习报告"等中文字符未编码导致`ByteString`转换失败（Unicode码点>255）。整个文件名改用`encodeURIComponent`编码 + RFC 5987 `filename*`格式。
+- **学生详情页KPI全为0**: 学习词汇、已掌握、学习天数三个统计值原为硬编码`0`，现从`word_masteries`和`study_records`表实时查询。
+
+## [1.0.6] - 2026-02-20
+
+### Added
+- **复习可重复学习**: 已完成的 Day（⭐️）可点击"重新学习"按钮再次进入学习。Day1 也可点击学习当天新词。完成一次即亮星星，不阻断后续重复进入。
+  - 后端 `daily-tasks` API 支持 `repeat` 参数（重复学习时加载复习词并跳过已学过滤）
+  - 后端 `study-sessions` API 支持 `allowRepeat` 参数（重复学习时不阻断已完成会话）
+  - 后端 `study-days` API 新增 `newWordsCount` 返回字段
+  - 前端 `index.js` handleDayClick 的 completed 分支增加"重新学习"入口
+
+### Fixed
+- **missed Day 永远无法完成**: 没有新词可补的 missed Day（如纯复习日）自动标记为 completed（⭐️），避免永远卡在 ❗️ 状态。
+
 ## [1.0.5] - 2026-02-19
 
 ### Fixed
