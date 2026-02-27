@@ -1,11 +1,68 @@
+/**
+ * @file route.ts
+ * @desc 导出学生学习报告（Word .docx 格式）
+ * @see PRD: docs/PRD.md
+ */
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { errorResponse, unauthorizedResponse } from '@/lib/response'
-import ExcelJS from 'exceljs'
+import {
+  Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun,
+  AlignmentType, HeadingLevel, WidthType, VerticalAlign,
+  ShadingType,
+} from 'docx'
+
+// ========== 辅助函数 ==========
+
+/** 创建简单两列表格行 */
+function row2(label: string, value: string, bold = false): TableRow {
+  return new TableRow({
+    children: [
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: label, bold: true })] })],
+        verticalAlign: VerticalAlign.CENTER,
+        width: { size: 30, type: WidthType.PERCENTAGE },
+      }),
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: value, bold })] })],
+        verticalAlign: VerticalAlign.CENTER,
+      }),
+    ],
+  })
+}
+
+/** 创建表头单元格 */
+function headerCell(text: string, widthPct?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({
+      children: [new TextRun({ text, bold: true, color: 'FFFFFF', size: 20 })],
+      alignment: AlignmentType.CENTER,
+    })],
+    verticalAlign: VerticalAlign.CENTER,
+    shading: { type: ShadingType.SOLID, color: '4472C4', fill: '4472C4' },
+    ...(widthPct ? { width: { size: widthPct, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+
+/** 创建普通单元格 */
+function cell(text: string, center = false): TableCell {
+  return new TableCell({
+    children: [new Paragraph({
+      children: [new TextRun({ text, size: 20 })],
+      alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
+    })],
+    verticalAlign: VerticalAlign.CENTER,
+  })
+}
+
+/** 创建分隔段落 */
+function spacer(size = 200): Paragraph {
+  return new Paragraph({ text: '', spacing: { before: size } })
+}
 
 /**
- * 导出学生学习报告（Excel格式）
+ * 导出学生学习报告（Word 格式）
  * GET /api/export/student-report?studentId=xxx&startDate=xxx&endDate=xxx
  */
 export async function GET(request: NextRequest) {
@@ -40,241 +97,298 @@ export async function GET(request: NextRequest) {
       return errorResponse('学生不存在', 404)
     }
 
-    // 构建日期筛选条件
+    // 构建日期筛选条件 — 修复 endDate 截断问题
     const dateFilter: any = {}
     if (startDate) dateFilter.gte = new Date(startDate)
-    if (endDate) dateFilter.lte = new Date(endDate)
-
-    // 获取学习记录
-    const studyRecords = await prisma.study_records.findMany({
-      where: {
-        studentId,
-        ...(Object.keys(dateFilter).length > 0 ? { taskDate: dateFilter } : {}),
-      },
-      orderBy: {
-        taskDate: 'desc',
-      },
-    })
-
-    // 获取词汇掌握情况
-    const wordMasteries = await prisma.word_masteries.findMany({
-      where: { studentId },
-      include: {
-        vocabularies: {
-          select: {
-            word: true,
-            primary_meaning: true,
-            difficulty: true,
-          },
-        },
-      },
-    })
-
-    // 获取错题记录
-    const wrongQuestions = await prisma.wrong_questions.findMany({
-      where: {
-        studentId,
-        ...(Object.keys(dateFilter).length > 0 ? { wrongAt: dateFilter } : {}),
-      },
-      include: {
-        vocabularies: {
-          select: {
-            word: true,
-            primary_meaning: true,
-          },
-        },
-      },
-      orderBy: {
-        wrongAt: 'desc',
-      },
-    })
-
-    // 创建Excel工作簿
-    const workbook = new ExcelJS.Workbook()
-    workbook.creator = '智能词汇复习助手'
-    workbook.created = new Date()
-
-    // ========== 第一个工作表：学生基本信息 ==========
-    const infoSheet = workbook.addWorksheet('学生信息')
-
-    // 标题样式
-    const titleStyle = {
-      font: { bold: true, size: 14, color: { argb: 'FFFFFFFF' } },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } } as ExcelJS.FillPattern,
-      alignment: { vertical: 'middle', horizontal: 'center' } as ExcelJS.Alignment,
+    if (endDate) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      dateFilter.lte = end
     }
+    const hasDateFilter = Object.keys(dateFilter).length > 0
 
-    infoSheet.columns = [
-      { key: 'label', width: 20 },
-      { key: 'value', width: 30 },
-    ]
+    // ========== 并行查询所有数据 ==========
+    const [studyRecords, wordMasteries, wrongQuestions] = await Promise.all([
+      // 学习记录（按日期过滤）
+      prisma.study_records.findMany({
+        where: {
+          studentId,
+          ...(hasDateFilter ? { taskDate: dateFilter } : {}),
+        },
+        orderBy: { taskDate: 'desc' },
+      }),
+      // 词汇掌握（无需日期过滤）
+      prisma.word_masteries.findMany({
+        where: { studentId },
+        include: {
+          vocabularies: {
+            select: { word: true, primary_meaning: true, difficulty: true },
+          },
+        },
+        orderBy: { totalWrongCount: 'desc' },
+      }),
+      // 错题记录（只导出活跃错题，不按日期过滤）
+      prisma.wrong_questions.findMany({
+        where: {
+          studentId,
+          status: 'ACTIVE',
+        },
+        include: {
+          vocabularies: {
+            select: { word: true, primary_meaning: true },
+          },
+        },
+        orderBy: { wrongCount: 'desc' },
+      }),
+    ])
 
-    infoSheet.addRow(['学生信息', '']).font = { bold: true, size: 16 }
-    infoSheet.mergeCells('A1:B1')
-    infoSheet.getRow(1).height = 30
-    infoSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
-
-    const studentInfo = [
-      ['姓名', student.user.name],
-      ['学号', student.student_no],
-      ['班级', student.classes?.name || '-'],
-      ['统计日期', `${startDate || '开始'} 至 ${endDate || '今天'}`],
-    ]
-
-    studentInfo.forEach(([label, value]) => {
-      const row = infoSheet.addRow({ label, value })
-      row.getCell(1).font = { bold: true }
-    })
-
-    // ========== 第二个工作表：学习统计 ==========
-    const statsSheet = workbook.addWorksheet('学习统计')
-
-    statsSheet.columns = [
-      { key: 'metric', width: 25 },
-      { key: 'value', width: 20 },
-    ]
-
-    // 标题行
-    statsSheet.addRow(['学习统计数据', '']).font = { bold: true, size: 16 }
-    statsSheet.mergeCells('A1:B1')
-    statsSheet.getRow(1).height = 30
-    statsSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
-
-    // 计算统计数据
+    // ========== 计算统计数据 ==========
     const totalSessions = studyRecords.length
     const completedSessions = studyRecords.filter(r => r.isCompleted).length
     const totalWords = studyRecords.reduce((sum, r) => sum + r.completedWords, 0)
     const totalCorrect = studyRecords.reduce((sum, r) => sum + r.correctCount, 0)
     const totalWrong = studyRecords.reduce((sum, r) => sum + r.wrongCount, 0)
-    const avgAccuracy = totalWords > 0 ? ((totalCorrect / (totalCorrect + totalWrong)) * 100).toFixed(1) : '0'
-    const totalTime = Math.floor(studyRecords.reduce((sum, r) => sum + r.totalTime, 0) / 60)
+    const avgAccuracy = (totalCorrect + totalWrong) > 0
+      ? ((totalCorrect / (totalCorrect + totalWrong)) * 100).toFixed(1) : '0'
+    const totalTimeMin = Math.floor(studyRecords.reduce((sum, r) => sum + r.totalTime, 0) / 60)
 
     const masteredCount = wordMasteries.filter(m => m.isMastered).length
     const learningCount = wordMasteries.filter(m => !m.isMastered).length
     const difficultCount = wordMasteries.filter(m => m.isDifficult).length
 
-    const stats = [
-      ['学习总次数', totalSessions],
-      ['完成次数', completedSessions],
-      ['学习总词数', totalWords],
-      ['正确答题数', totalCorrect],
-      ['错误答题数', totalWrong],
-      ['平均正确率', `${avgAccuracy}%`],
-      ['总学习时长', `${totalTime} 分钟`],
-      ['已掌握词汇', masteredCount],
-      ['学习中词汇', learningCount],
-      ['难点词汇', difficultCount],
-    ]
+    const periodText = startDate && endDate
+      ? `${startDate} 至 ${endDate}`
+      : '全部学习周期'
 
-    stats.forEach(([metric, value]) => {
-      const row = statsSheet.addRow({ metric, value })
-      row.getCell(1).font = { bold: true }
-      row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE7E6E6' } } as ExcelJS.FillPattern
-    })
+    // ========== 构建 Word 文档 ==========
+    const children: (Paragraph | Table)[] = []
 
-    // ========== 第三个工作表：学习记录明细 ==========
-    const recordsSheet = workbook.addWorksheet('学习记录')
+    // ─── 标题 ───
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: `${student.user.name} 学习报告`, bold: true, size: 36 })],
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `生成时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`, color: '888888', size: 18 })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300 },
+      }),
+    )
 
-    recordsSheet.columns = [
-      { key: 'date', header: '日期', width: 15 },
-      { key: 'words', header: '完成词数', width: 12 },
-      { key: 'correct', header: '正确数', width: 12 },
-      { key: 'wrong', header: '错误数', width: 12 },
-      { key: 'accuracy', header: '正确率', width: 12 },
-      { key: 'time', header: '用时(分钟)', width: 15 },
-      { key: 'status', header: '状态', width: 12 },
-    ]
+    // ─── 一、学生信息 ───
+    children.push(
+      new Paragraph({
+        text: '一、学生信息',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 200, after: 100 },
+      }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          row2('姓名', student.user.name),
+          row2('学号', student.student_no),
+          row2('班级', student.classes?.name || '未分配'),
+          row2('统计周期', periodText),
+        ],
+      }),
+    )
 
-    // 设置表头样式
-    recordsSheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } } as ExcelJS.FillPattern
-      cell.alignment = { vertical: 'middle', horizontal: 'center' }
-    })
+    // ─── 二、学习统计 ───
+    children.push(
+      new Paragraph({
+        text: '二、学习统计',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 100 },
+      }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          row2('学习总次数', `${totalSessions} 次`),
+          row2('完成次数', `${completedSessions} 次`),
+          row2('学习总词数', `${totalWords} 个`),
+          row2('正确答题数', `${totalCorrect}`),
+          row2('错误答题数', `${totalWrong}`),
+          row2('平均正确率', `${avgAccuracy}%`, true),
+          row2('总学习时长', `${totalTimeMin} 分钟`),
+          row2('已掌握词汇', `${masteredCount} 个`),
+          row2('学习中词汇', `${learningCount} 个`),
+          row2('难点词汇', `${difficultCount} 个`),
+          row2('活跃错题数', `${wrongQuestions.length} 个`),
+        ],
+      }),
+    )
 
-    studyRecords.forEach((record) => {
-      recordsSheet.addRow({
-        date: record.taskDate.toISOString().split('T')[0],
-        words: record.completedWords,
-        correct: record.correctCount,
-        wrong: record.wrongCount,
-        accuracy: `${(record.accuracy * 100).toFixed(1)}%`,
-        time: Math.floor(record.totalTime / 60),
-        status: record.isCompleted ? '已完成' : '未完成',
+    // ─── 三、学习记录明细 ───
+    children.push(
+      new Paragraph({
+        text: '三、学习记录明细',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 100 },
+      }),
+    )
+
+    if (studyRecords.length > 0) {
+      const recordRows: TableRow[] = [
+        new TableRow({
+          children: [
+            headerCell('日期', 18),
+            headerCell('完成词数', 14),
+            headerCell('正确', 12),
+            headerCell('错误', 12),
+            headerCell('正确率', 14),
+            headerCell('用时(分)', 14),
+            headerCell('状态', 16),
+          ],
+        }),
+      ]
+
+      studyRecords.forEach(record => {
+        recordRows.push(new TableRow({
+          children: [
+            cell(record.taskDate.toISOString().split('T')[0], true),
+            cell(`${record.completedWords}`, true),
+            cell(`${record.correctCount}`, true),
+            cell(`${record.wrongCount}`, true),
+            cell(`${(record.accuracy * 100).toFixed(1)}%`, true),
+            cell(`${Math.floor(record.totalTime / 60)}`, true),
+            cell(record.isCompleted ? '已完成' : '未完成', true),
+          ],
+        }))
       })
-    })
 
-    // ========== 第四个工作表：错题记录 ==========
-    const wrongSheet = workbook.addWorksheet('错题记录')
+      children.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: recordRows,
+      }))
+    } else {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '暂无学习记录', italics: true, color: '888888' })],
+      }))
+    }
 
-    wrongSheet.columns = [
-      { key: 'date', header: '日期', width: 15 },
-      { key: 'word', header: '单词', width: 20 },
-      { key: 'meaning', header: '释义', width: 30 },
-      { key: 'wrongAnswer', header: '错误答案', width: 25 },
-      { key: 'correctAnswer', header: '正确答案', width: 25 },
-    ]
+    // ─── 四、错题记录 ───
+    children.push(
+      new Paragraph({
+        text: '四、错题记录',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 100 },
+      }),
+    )
 
-    wrongSheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF6B6B' } } as ExcelJS.FillPattern
-      cell.alignment = { vertical: 'middle', horizontal: 'center' }
-    })
+    if (wrongQuestions.length > 0) {
+      const wrongRows: TableRow[] = [
+        new TableRow({
+          children: [
+            headerCell('单词', 20),
+            headerCell('释义', 30),
+            headerCell('错误答案', 20),
+            headerCell('正确答案', 20),
+            headerCell('错误次数', 10),
+          ],
+        }),
+      ]
 
-    wrongQuestions.forEach((wq) => {
-      wrongSheet.addRow({
-        date: wq.wrongAt.toISOString().split('T')[0],
-        word: wq.vocabularies.word,
-        meaning: (wq.vocabularies as any).primary_meaning,
-        wrongAnswer: wq.wrongAnswer,
-        correctAnswer: wq.correctAnswer,
+      wrongQuestions.forEach(wq => {
+        wrongRows.push(new TableRow({
+          children: [
+            cell(wq.vocabularies.word),
+            cell((wq.vocabularies as any).primary_meaning),
+            cell(wq.wrongAnswer || '-'),
+            cell(wq.correctAnswer),
+            cell(`${wq.wrongCount}`, true),
+          ],
+        }))
       })
-    })
 
-    // ========== 第五个工作表：词汇掌握详情 ==========
-    const masterySheet = workbook.addWorksheet('词汇掌握详情')
+      children.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: wrongRows,
+      }))
+    } else {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '暂无错题记录', italics: true, color: '888888' })],
+      }))
+    }
 
-    masterySheet.columns = [
-      { key: 'word', header: '单词', width: 20 },
-      { key: 'meaning', header: '释义', width: 30 },
-      { key: 'difficulty', header: '难度', width: 12 },
-      { key: 'wrongCount', header: '错误次数', width: 12 },
-      { key: 'consecutiveCorrect', header: '连续正确', width: 12 },
-      { key: 'status', header: '掌握状态', width: 15 },
-    ]
+    // ─── 五、词汇掌握详情 ───
+    children.push(
+      new Paragraph({
+        text: '五、词汇掌握详情',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 100 },
+      }),
+    )
 
-    masterySheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF52C41A' } } as ExcelJS.FillPattern
-      cell.alignment = { vertical: 'middle', horizontal: 'center' }
-    })
-
-    wordMasteries.forEach((mastery) => {
+    if (wordMasteries.length > 0) {
       const difficultyMap: Record<string, string> = {
-        EASY: '简单',
-        MEDIUM: '中等',
-        HARD: '困难',
+        EASY: '简单', MEDIUM: '中等', HARD: '困难',
       }
 
-      masterySheet.addRow({
-        word: mastery.vocabularies.word,
-        meaning: (mastery.vocabularies as any).primary_meaning,
-        difficulty: difficultyMap[mastery.vocabularies.difficulty],
-        wrongCount: mastery.totalWrongCount,
-        consecutiveCorrect: mastery.consecutiveCorrect,
-        status: mastery.isMastered ? '已掌握' : mastery.isDifficult ? '重点难点' : '学习中',
+      const masteryRows: TableRow[] = [
+        new TableRow({
+          children: [
+            headerCell('单词', 18),
+            headerCell('释义', 28),
+            headerCell('难度', 10),
+            headerCell('错误次数', 12),
+            headerCell('连续正确', 12),
+            headerCell('掌握状态', 20),
+          ],
+        }),
+      ]
+
+      wordMasteries.forEach(mastery => {
+        const status = mastery.isMastered ? '✅ 已掌握'
+          : mastery.isDifficult ? '⚠️ 重点难点'
+            : '📖 学习中'
+
+        masteryRows.push(new TableRow({
+          children: [
+            cell(mastery.vocabularies.word),
+            cell((mastery.vocabularies as any).primary_meaning),
+            cell(difficultyMap[mastery.vocabularies.difficulty] || mastery.vocabularies.difficulty, true),
+            cell(`${mastery.totalWrongCount}`, true),
+            cell(`${mastery.consecutiveCorrect}`, true),
+            cell(status, true),
+          ],
+        }))
       })
+
+      children.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: masteryRows,
+      }))
+    } else {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '暂无词汇掌握数据', italics: true, color: '888888' })],
+      }))
+    }
+
+    // ─── 页脚 ───
+    children.push(spacer(400))
+    children.push(new Paragraph({
+      children: [new TextRun({ text: '— iEnglish 智能词汇复习助手 —', color: 'AAAAAA', size: 16 })],
+      alignment: AlignmentType.CENTER,
+    }))
+
+    // ========== 生成 Word 文件 ==========
+    const doc = new Document({
+      creator: 'iEnglish 智能词汇复习助手',
+      description: `${student.user.name} 学习报告`,
+      sections: [{ properties: {}, children }],
     })
 
-    // 生成Excel文件
-    const buffer = await workbook.xlsx.writeBuffer()
+    const buffer = await Packer.toBuffer(doc)
 
     // 返回文件
-    const fileName = `${student.user.name}_学习报告_${new Date().toISOString().split('T')[0]}.xlsx`
+    const fileName = `${student.user.name}_学习报告_${new Date().toISOString().split('T')[0]}.docx`
     const encodedFileName = encodeURIComponent(fileName)
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
       },
     })

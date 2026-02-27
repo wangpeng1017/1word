@@ -72,7 +72,7 @@ export default function StudentDetailPage() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${student?.name || '学生'}_学习报告_${new Date().toISOString().split('T')[0]}.xlsx`
+        a.download = `${student?.name || '学生'}_学习报告_${new Date().toISOString().split('T')[0]}.docx`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
