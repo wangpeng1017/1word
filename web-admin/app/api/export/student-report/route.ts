@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     const hasDateFilter = Object.keys(dateFilter).length > 0
 
     // ========== 并行查询所有数据 ==========
-    const [studyRecords, wordMasteries, wrongQuestions] = await Promise.all([
+    const [studyRecords, wordMasteries] = await Promise.all([
       // 学习记录（按日期过滤）
       prisma.study_records.findMany({
         where: {
@@ -126,19 +126,6 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { totalWrongCount: 'desc' },
-      }),
-      // 错题记录（只导出活跃错题，不按日期过滤）
-      prisma.wrong_questions.findMany({
-        where: {
-          studentId,
-          status: 'ACTIVE',
-        },
-        include: {
-          vocabularies: {
-            select: { word: true, primary_meaning: true },
-          },
-        },
-        orderBy: { wrongCount: 'desc' },
       }),
     ])
 
@@ -216,7 +203,7 @@ export async function GET(request: NextRequest) {
           row2('已掌握词汇', `${masteredCount} 个`),
           row2('学习中词汇', `${learningCount} 个`),
           row2('难点词汇', `${difficultCount} 个`),
-          row2('活跃错题数', `${wrongQuestions.length} 个`),
+
         ],
       }),
     )
@@ -269,54 +256,12 @@ export async function GET(request: NextRequest) {
       }))
     }
 
-    // ─── 四、错题记录 ───
+
+
+    // ─── 四、词汇掌握详情 ───
     children.push(
       new Paragraph({
-        text: '四、错题记录',
-        heading: HeadingLevel.HEADING_1,
-        spacing: { before: 400, after: 100 },
-      }),
-    )
-
-    if (wrongQuestions.length > 0) {
-      const wrongRows: TableRow[] = [
-        new TableRow({
-          children: [
-            headerCell('单词', 20),
-            headerCell('释义', 30),
-            headerCell('错误答案', 20),
-            headerCell('正确答案', 20),
-            headerCell('错误次数', 10),
-          ],
-        }),
-      ]
-
-      wrongQuestions.forEach(wq => {
-        wrongRows.push(new TableRow({
-          children: [
-            cell(wq.vocabularies.word),
-            cell((wq.vocabularies as any).primary_meaning),
-            cell(wq.wrongAnswer || '-'),
-            cell(wq.correctAnswer),
-            cell(`${wq.wrongCount}`, true),
-          ],
-        }))
-      })
-
-      children.push(new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: wrongRows,
-      }))
-    } else {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: '暂无错题记录', italics: true, color: '888888' })],
-      }))
-    }
-
-    // ─── 五、词汇掌握详情 ───
-    children.push(
-      new Paragraph({
-        text: '五、词汇掌握详情',
+        text: '四、词汇掌握详情',
         heading: HeadingLevel.HEADING_1,
         spacing: { before: 400, after: 100 },
       }),
