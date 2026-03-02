@@ -4,12 +4,10 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth'
 import { apiResponse } from '@/lib/response'
 import { allocateQuestionTypes, selectQuestionByType } from '@/lib/question-type-allocator'
 import { getTodayBeijing, toBeijingDate } from '@/lib/date-utils'
+import { getEffectiveLessons, getDayScheduleInfo, resolveToPackDayNumbers, TOTAL_PLAN_DAYS } from '@/lib/review-schedule'
 
 // 每日新学单词上限
 const MAX_NEW_WORDS_PER_DAY = 2000
-
-// 艾宾浩斯记忆曲线：第N天学的单词，在第N+1, N+2, N+4, N+7, N+15天复习
-const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
 
 // 将相对路径转换为完整URL
 function toAbsoluteUrl(path: string | null | undefined): string | null {
@@ -199,28 +197,42 @@ export async function GET(
         }
       }
 
-      // 获取需要复习的单词（基于记忆曲线，从过去天数的词汇包中获取）
-      // 注意：如果是补打卡模式 (forcedDay)，则不需要加载复习词，只学新词
+      // 获取需要复习的单词（基于91天课表引擎）
+      // 注意：如果是补打卡模式 (forcedDay) 且非 repeat，则不需要加载复习词，只学新词
       if (!forcedDay || isRepeat) {
         const newWordIds = new Set(newWords.map(v => v.id))
         const seenVocabIds = new Set<string>()
 
-        for (const interval of REVIEW_INTERVALS) {
-          const targetDay = dayNumber - interval
-          if (targetDay >= 1 && targetDay <= totalDays) {
-            const packDay = pack.pack_days.find(d => d.dayNumber === targetDay)
-            if (packDay) {
-              const dayReviewWords = packDay.day_words
-                .map(dw => dw.vocabulary)
-                .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
-                .filter(v => v.questions && v.questions.length > 0)
-                .filter(v => v.word_audios && v.word_audios.length > 0)
+        // 构建有效课程映射（跳过空天/节假日）
+        const lessonMap = getEffectiveLessons(pack.pack_days)
+        const totalLessons = lessonMap.size
 
-              dayReviewWords.forEach(v => {
-                seenVocabIds.add(v.id)
-                reviewWords.push({ vocabulary: v })
-              })
-            }
+        // 查找当天正在学习的有效课程序号
+        let currentLessonForDay = 0
+        for (const [lessonIdx, dn] of lessonMap.entries()) {
+          if (dn === dayNumber) { currentLessonForDay = lessonIdx; break }
+        }
+
+        // 获取当天课表信息
+        const scheduleInfo = getDayScheduleInfo(dayNumber, totalDays, totalLessons, currentLessonForDay)
+        // 将有效课程序号转为实际 pack_days dayNumber
+        const reviewDayNumbers = resolveToPackDayNumbers(scheduleInfo.reviewLessons, lessonMap)
+
+        console.log('[daily-tasks] schedule:', scheduleInfo.type, 'reviewLessons:', scheduleInfo.reviewLessons, 'reviewDayNumbers:', reviewDayNumbers)
+
+        for (const targetDayNumber of reviewDayNumbers) {
+          const packDay = pack.pack_days.find(d => d.dayNumber === targetDayNumber)
+          if (packDay) {
+            const dayReviewWords = packDay.day_words
+              .map(dw => dw.vocabulary)
+              .filter(v => v && !masteredVocabIds.has(v.id) && !newWordIds.has(v.id) && !seenVocabIds.has(v.id))
+              .filter(v => v.questions && v.questions.length > 0)
+              .filter(v => v.word_audios && v.word_audios.length > 0)
+
+            dayReviewWords.forEach(v => {
+              seenVocabIds.add(v.id)
+              reviewWords.push({ vocabulary: v })
+            })
           }
         }
       }

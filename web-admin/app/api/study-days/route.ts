@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getTodayBeijing, toBeijingDate, formatDateBeijing } from '@/lib/date-utils'
+import { getEffectiveLessons, getFullScheduleSummary, TOTAL_PLAN_DAYS } from '@/lib/review-schedule'
 
 // GET /api/study-days?studentId=xxx - 获取学生学习天数数据（复习计划模式）
 export async function GET(request: NextRequest) {
@@ -83,9 +84,7 @@ export async function GET(request: NextRequest) {
         })
         const masteredVocabIds = new Set(masteredWords.map(w => w.vocabularyId))
 
-        // 4. 艾宾浩斯记忆曲线间隔
-        const REVIEW_INTERVALS = [1, 2, 4, 7, 15]
-
+        // 4. 构建课表摘要（91天）
         // 5. 构建每一天的词汇包数据
         const packDays = planClass.vocabulary_packs.pack_days || []
         const dayVocabMap = new Map<number, string[]>()
@@ -145,9 +144,11 @@ export async function GET(request: NextRequest) {
             if (match) makeupCompletedDays.set(parseInt(match[1]), r.totalWords || 0)
         }
 
-        // 8. 生成 DAY 列表（复习计划模式）
-        // 修正：复习计划需要延伸到学习结束后的15天（艾宾浩斯最后一个周期）
-        const reviewDuration = totalDays + 15
+        // 8. 生成 DAY 列表（91天复习课表模式）
+        const lessonMap = getEffectiveLessons(packDays)
+        const totalLessons = lessonMap.size
+        const scheduleSummary = getFullScheduleSummary(totalDays, totalLessons, lessonMap)
+        const reviewDuration = TOTAL_PLAN_DAYS
         const days = []
         let streak = 0
         let lastCompletedDate: string | null = null
@@ -161,12 +162,12 @@ export async function GET(request: NextRequest) {
             // 该天的新词数量（学习计划）
             const newWordsCount = dayVocabMap.get(dayNumber)?.length || 0
 
-            // 该天需要复习的词汇数量（基于艾宾浩斯曲线）
+            // 该天需要复习的词汇数量（基于课表引擎）
             let reviewWordsCount = 0
-            for (const interval of REVIEW_INTERVALS) {
-                const reviewTargetDay = dayNumber - interval
-                if (reviewTargetDay >= 1 && reviewTargetDay <= totalDays) {
-                    const reviewVocabIds = dayVocabMap.get(reviewTargetDay) || []
+            const scheduleEntry = scheduleSummary[i] // 0-indexed
+            if (scheduleEntry) {
+                for (const reviewDayNum of scheduleEntry.reviewDayNumbers) {
+                    const reviewVocabIds = dayVocabMap.get(reviewDayNum) || []
                     reviewWordsCount += reviewVocabIds.length
                 }
             }
