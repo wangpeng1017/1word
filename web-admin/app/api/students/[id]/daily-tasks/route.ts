@@ -198,8 +198,8 @@ export async function GET(
       }
 
       // 获取需要复习的单词（基于91天课表引擎）
-      // 注意：如果是补打卡模式 (forcedDay) 且非 repeat，则不需要加载复习词，只学新词
-      if (!forcedDay || isRepeat) {
+      // 课表系统下每天有固定的复习内容，补打卡也应加载该天的复习词
+      {
         const newWordIds = new Set(newWords.map(v => v.id))
         const seenVocabIds = new Set<string>()
 

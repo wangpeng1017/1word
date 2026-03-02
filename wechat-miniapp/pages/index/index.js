@@ -454,19 +454,18 @@ Page({
       // 先检查是否有该天未完成的补卡进度
       const saved = getStudyProgress()
       // 用户要求补卡无需弹窗，直接静默恢复 （silent=true）
-      if (this.checkAndResume(saved, 'new', day.day, true)) return
+      if (this.checkAndResume(saved, 'all', day.day, true)) return
 
       // 无进度，询问是否开始
       wx.showModal({
         title: '补学 Day ' + day.day,
-        content: '确定要补学这天错过的单词吗？\n(仅学习当日新词)',
+        content: '确定要补学这天的内容吗？\n(包含当日新词 + 复习单词)',
         confirmText: '开始补学',
         cancelText: '取消',
         success: (res) => {
           if (res.confirm) {
-            // 跳转学习页，指定 mode=new 和 day 参数
             wx.navigateTo({
-              url: `/pages/study/study?mode=new&day=${day.day}`
+              url: `/pages/study/study?mode=all&day=${day.day}`
             })
           }
         }
