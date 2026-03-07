@@ -56,6 +56,7 @@ function formatDuration(seconds: number): string {
 
 export default function LearningDataPage() {
     const [loading, setLoading] = useState(false)
+    const [exportingAll, setExportingAll] = useState(false)
     const [data, setData] = useState<LearningSession[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(1)
@@ -157,7 +158,7 @@ export default function LearningDataPage() {
         fetchData()
     }, [fetchData])
 
-    // 导出 Excel
+    // 导出当前页 Excel
     const handleExport = () => {
         if (data.length === 0) {
             message.warning('没有数据可导出')
@@ -187,6 +188,78 @@ export default function LearningDataPage() {
         XLSX.utils.book_append_sheet(wb, ws, '学习数据')
         XLSX.writeFile(wb, `学习数据_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`)
         message.success('导出成功')
+    }
+
+    // 全量导出 Excel（不受分页限制，最多 5000 条）
+    const handleExportAll = async () => {
+        if (!selectedClass) {
+            message.warning('请先选择班级后再导出全部数据')
+            return
+        }
+
+        setExportingAll(true)
+        try {
+            const token = localStorage.getItem('token')
+            const params = new URLSearchParams()
+
+            if (selectedClass) params.append('classId', selectedClass)
+            if (selectedStudent) params.append('studentId', selectedStudent)
+            if (selectedType) params.append('studyType', selectedType)
+            if (dateRange) {
+                params.append('startDate', dateRange[0].format('YYYY-MM-DD'))
+                params.append('endDate', dateRange[1].format('YYYY-MM-DD'))
+            }
+            if (searchName.trim()) params.append('studentName', searchName.trim())
+
+            const res = await fetch(`/api/statistics/learning-sessions-export?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const result = await res.json()
+
+            if (!result.success) {
+                message.error('导出失败，请稍后重试')
+                return
+            }
+
+            const sessions: LearningSession[] = result.data.sessions
+            if (sessions.length === 0) {
+                message.warning('当前筛选条件下没有数据可导出')
+                return
+            }
+
+            if (result.data.truncated) {
+                message.warning(`数据量超过 ${result.data.maxRows} 条，已导出前 ${result.data.maxRows} 条，建议缩小日期范围后分批导出`)
+            }
+
+            const exportData = sessions.map((item) => ({
+                '班级': item.className,
+                '学生姓名': item.studentName,
+                '手机号': item.phone,
+                '学习日期': item.taskDate,
+                '学习类型': item.studyType || '未知',
+                '总词数': item.totalWords,
+                '已完成': item.completedWords,
+                '完成率': `${item.completionRate}%`,
+                '正确数': item.correctCount,
+                '错误数': item.wrongCount,
+                '正确率': `${item.accuracy}%`,
+                '答题时长': formatDuration(item.totalTimeSeconds),
+                '开始时间': dayjs(item.startedAt).format('YYYY-MM-DD HH:mm:ss'),
+                '结束时间': item.completedAt ? dayjs(item.completedAt).format('YYYY-MM-DD HH:mm:ss') : '-',
+                '完成状态': item.status === 'COMPLETED' || item.status === 'COMPLETED_NEW' || item.status === 'COMPLETED_REVIEW' ? '已完成' : item.status === 'IN_PROGRESS' ? '进行中' : '已中断',
+            }))
+
+            const ws = XLSX.utils.json_to_sheet(exportData)
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, '学习数据')
+            const className = classes.find((c) => c.id === selectedClass)?.name || '全班'
+            XLSX.writeFile(wb, `学习数据_${className}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`)
+            message.success(`导出成功，共 ${sessions.length} 条记录`)
+        } catch (error) {
+            message.error('导出失败，请稍后重试')
+        } finally {
+            setExportingAll(false)
+        }
     }
 
     const columns: ColumnsType<LearningSession> = [
@@ -370,6 +443,16 @@ export default function LearningDataPage() {
                     </Button>
                     <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport}>
                         导出Excel
+                    </Button>
+                    <Button
+                        type="primary"
+                        icon={<DownloadOutlined />}
+                        onClick={handleExportAll}
+                        loading={exportingAll}
+                        disabled={!selectedClass}
+                        title={!selectedClass ? '请先选择班级' : '导出当前筛选条件下的全部数据'}
+                    >
+                        导出全部
                     </Button>
                 </Space>
                 <Table

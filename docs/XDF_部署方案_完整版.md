@@ -627,6 +627,7 @@ pm2 restart word-app
 
 | 日期 | Commit | 改动摘要 | 回滚目标 |
 |------|--------|---------|----------|
+| **2026-03-07** | `待提交` | **学习数据全量导出**: 新增 `learning-sessions-export` API（无分页，最多5000条）+ `learning-data` 页面「导出全部」按钮，纯新增无侵入 | `f2f38d4` |
 | **2026-03-02** | `f2f38d4` | **91天复习课表引擎**: 新增 `review-schedule.ts`，`daily-tasks` 复习词由艾宾浩斯→课表驱动，`study-days` Timeline 扩展至91天，补打卡升级为新词+复习词全学 | `2528c80` |
 | 2026-02-27 | `2528c80` | **修复导出学习报告500错误**(中文编码) + **学生详情页KPI硬编码为0**(改为实时查询) | `c4d8ea9` |
 | 2026-02-19 | `c4d8ea9` | **修复学习类型"未知"Bug**: complete/route.ts session_id解析添加first-match保护 + learning-sessions正则精确匹配 | `09fc149` |
