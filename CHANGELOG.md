@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.8] - 2026-03-10
+
+### Added
+- **Scripts**: 增加用于解析 Excel 并生成复习计划的辅助脚本（`gen_schedule.py`, `read-excel-tmp.js`, `tmp-parse-excel.js`）。
+
 ## [1.0.7] - 2026-02-27
 
 ### Fixed
