@@ -1,0 +1,86 @@
+{
+	"pages": [
+		{
+			"path": "pages/today-learn/today-learn",
+			"style": {
+				"navigationBarTitleText": "今日学习"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "今日复习"
+			}
+		},
+		{
+			"path": "pages/wrong/wrong",
+			"style": {
+				"navigationBarTitleText": "错题本"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationBarTitleText": "学习数据"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/study/study",
+			"style": {
+				"navigationBarTitleText": "学习",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/study/result",
+			"style": {
+				"navigationBarTitleText": "学习报告"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "智能词汇复习",
+		"navigationBarBackgroundColor": "#FF7A7A",
+		"backgroundColor": "#F3F4F6"
+	},
+	"tabBar": {
+		"color": "#6B7280",
+		"selectedColor": "#FF7A7A",
+		"backgroundColor": "#FFFFFF",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/today-learn/today-learn",
+				"text": "今日学习",
+				"iconPath": "static/images/study.png",
+				"selectedIconPath": "static/images/study-active.png"
+			},
+			{
+				"pagePath": "pages/index/index",
+				"text": "今日复习",
+				"iconPath": "static/images/review.png",
+				"selectedIconPath": "static/images/review-active.png"
+			},
+			{
+				"path": "pages/wrong/wrong",
+				"text": "错题本",
+				"iconPath": "static/images/book.png",
+				"selectedIconPath": "static/images/book-active.png"
+			},
+			{
+				"path": "pages/profile/profile",
+				"text": "学习数据",
+				"iconPath": "static/images/data.png",
+				"selectedIconPath": "static/images/data-active.png"
+			}
+		]
+	}
+}
